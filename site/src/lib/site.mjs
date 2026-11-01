@@ -45,6 +45,7 @@ export const GUIDES = [
   ['kerf', 'Kerf'],
   ['parts-and-sheets', 'Parts and sheets'],
   ['library', 'Standard library'],
+  ['shared-libraries', 'Shared libraries'],
   ['customizer', 'Settings'],
   ['desktop', 'Desktop app'],
   ['cli', 'Command line'],

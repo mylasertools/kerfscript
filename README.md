@@ -229,6 +229,8 @@ Errors are thrown as `KerfError` with `line` and `col`.
   and [WebAssembly](docs/webassembly.md) for other languages
 - [Standard library](docs/library.md): joints, hinges, dividers, hanging
   holes, enclosures and test pieces, with a picture and an example of each
+- [Shared libraries](docs/shared-libraries.md): use and publish `.kerf`
+  libraries, pinned in `kerf.lock` so a design cuts the same everywhere
 - [Coming from OpenSCAD](docs/openscad.md): what is the same and what is not
 - [LANGUAGE.md](LANGUAGE.md): the full language reference
 - [Versions](docs/versions.md): language and package versions, and what stays

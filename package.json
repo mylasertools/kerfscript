@@ -73,6 +73,16 @@
         "default": "./dist/language.cjs"
       }
     },
+    "./libraries": {
+      "import": {
+        "types": "./dist/libraries.d.ts",
+        "default": "./dist/libraries.js"
+      },
+      "require": {
+        "types": "./dist/libraries.d.cts",
+        "default": "./dist/libraries.cjs"
+      }
+    },
     "./cli": "./dist/cli.js",
     "./package.json": "./package.json"
   },

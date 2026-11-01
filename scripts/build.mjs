@@ -40,6 +40,18 @@ for (const name of ['highlight', 'signatures'])
         js: `/*! @mylasertools/kerfscript/${name} | (c) MyLaserTools | AGPL-3.0-only or commercial licence */`,
       },
     });
+// Shared libraries for Node: kerf.json, kerf.lock and finding `use <...>` files
+for (const format of ['esm', 'cjs'])
+  await build({
+    entryPoints: ['src/libraries.ts'],
+    outfile: `dist/libraries.${format === 'esm' ? 'js' : 'cjs'}`,
+    bundle: true,
+    minify: true,
+    format,
+    platform: 'node',
+    target: 'node20',
+    banner,
+  });
 await build({
   entryPoints: ['src/cli.ts'],
   outfile: 'dist/cli.js',

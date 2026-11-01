@@ -287,3 +287,6 @@ render(source, { limits: { maxPoints: DEFAULT_LIMITS.maxPoints / 2 } });
 KerfScript programs have no direct file or network access. `use` and
 `include` can load the standard library and sources returned by your
 `resolve` callback. Restrict that callback to libraries you intend to expose.
+In Node.js, `resolver(file)` from `@mylasertools/kerfscript/libraries`
+finds a design's files and installed libraries as the command line does; see
+[Shared libraries](shared-libraries.md#from-javascript).

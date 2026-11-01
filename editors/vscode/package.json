@@ -81,7 +81,13 @@
       "[kerfscript]": {
         "editor.formatOnSave": true
       }
-    }
+    },
+    "jsonValidation": [
+      {
+        "fileMatch": "kerf.json",
+        "url": "./schemas/kerf.schema.json"
+      }
+    ]
   },
   "scripts": {
     "build": "node build.mjs",

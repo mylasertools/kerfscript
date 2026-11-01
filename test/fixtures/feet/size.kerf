@@ -1,0 +1,2 @@
+// The diameter of a hole for a rubber foot
+function foot_d() = 6;

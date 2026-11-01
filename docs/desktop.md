@@ -79,6 +79,11 @@ other files on your computer. Standard library paths such as `use <kerf/box>` wo
 everywhere. A design that has not been saved yet can only use the standard
 library.
 
+Libraries installed with `kerf install` work too: `use <feet/feet>` reads
+`kerf_libraries/feet/feet.kerf` in the design's project, the nearest folder
+at or above the design's with a `kerf.json`. See
+[Shared libraries](shared-libraries.md).
+
 ## Fonts
 
 `text()` uses Atkinson Hyperlegible, as in the playground. The app does not

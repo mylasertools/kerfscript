@@ -17,6 +17,8 @@ the changelog if you would like.
 
 - A program that reads files, fetches URLs or reaches anything outside the
   `resolve` function a host gives it.
+- `kerf install` writing outside `kerf_libraries/`, or installing files
+  that do not match `kerf.lock`.
 - A program that escapes the step, loop or recursion limits, or hangs or
   exhausts memory in a way a host cannot stop.
 - Output (SVG, DXF, JSON) that can carry script or markup into a page that

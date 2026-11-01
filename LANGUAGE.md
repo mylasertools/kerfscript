@@ -384,7 +384,9 @@ to inspect the settings in a file.
 
 Every renderer has these libraries built in. Load one with `use`, as
 `use <kerf/box>`; [Standard library](docs/library.md) describes each
-module and its parameters.
+module and its parameters. Libraries others publish are installed with
+`kerf add` and loaded by their name, as `use <feet/feet>`; see
+[Shared libraries](docs/shared-libraries.md).
 
 | Library            | Modules and functions                                                       |
 | ------------------ | --------------------------------------------------------------------------- |

@@ -81,8 +81,8 @@ protects or feeds the next.
 - [x] Standard library: tabs and slots, hinges, dividers, hanging holes,
       enclosures and material calibration, each with parameters, a picture,
       an example and tests
-- [ ] Shared libraries: a way to publish, version and pin `.kerf`
-      libraries so a design reproduces
+- [x] Shared libraries: a way to publish, version and pin `.kerf`
+      libraries so a design reproduces ([docs/shared-libraries.md](docs/shared-libraries.md))
 
 ## Next
 

@@ -28,6 +28,7 @@ import {
   type OutlineItem,
   type Problem,
 } from './language.js';
+import { FOLDER, installedPaths, libraryFile } from './libraries.js';
 import { LIBRARIES } from './stdlib.js';
 
 export interface ServerOptions {
@@ -101,12 +102,6 @@ const pathKey = (p: string) => {
   const full = resolvePath(p);
   return process.platform === 'win32' ? full.toLowerCase() : full;
 };
-
-// A library's file next to the design, as `use <path>` finds it
-function libraryFile(base: string, path: string, exists: (p: string) => boolean) {
-  for (const candidate of [join(base, path), join(base, path + '.kerf')])
-    if (exists(candidate)) return candidate;
-}
 
 const isFile = (p: string) => {
   try {
@@ -323,7 +318,13 @@ export function startServer(options: ServerOptions = {}) {
         return;
       }
       for (const e of entries) {
-        if (files.length >= 200 || e.name.startsWith('.') || e.name === 'node_modules') continue;
+        if (
+          files.length >= 200 ||
+          e.name.startsWith('.') ||
+          e.name === 'node_modules' ||
+          e.name === FOLDER
+        )
+          continue;
         const p = join(dir, e.name);
         if (e.isDirectory() && depth < 3) walk(p, depth + 1);
         else if (e.isFile() && e.name.endsWith('.kerf'))
@@ -337,7 +338,10 @@ export function startServer(options: ServerOptions = {}) {
     };
     walk(base, 0);
     const self = filePath(doc.uri);
-    const out = files.filter((f) => !self || join(base, f + '.kerf') !== self);
+    const out = [
+      ...files.filter((f) => !self || join(base, f + '.kerf') !== self),
+      ...installedPaths(base),
+    ];
     listed.set(base, { at: Date.now(), files: out });
     return out;
   };

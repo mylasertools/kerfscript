@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "kerf.json",
+  "description": "A KerfScript project or library: its name and version, and the shared libraries its designs use. See https://kerfscript.mylasertools.com/docs/shared-libraries/",
+  "type": "object",
+  "properties": {
+    "name": {
+      "description": "The library's name. Designs load its files with use <name/...>.",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$",
+      "not": { "const": "kerf" }
+    },
+    "version": {
+      "description": "The library's version, like 1.2.0. Raise the first number when a module's parameters change or existing designs would cut differently.",
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?$"
+    },
+    "description": { "description": "One line on what the library makes.", "type": "string" },
+    "license": {
+      "description": "The licence others may use the library under.",
+      "type": "string"
+    },
+    "language": {
+      "description": "The oldest KerfScript language version the library works with, like 0.1.",
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$"
+    },
+    "libraries": {
+      "description": "The libraries this project uses: name to source. A source is github:owner/repo@tag, an https:// link to a .tar.gz, or a folder like ./my-library. Run kerf install after a change.",
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$", "not": { "const": "kerf" } },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^(github:[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(@.+)?|https?://.+|file:.+|[.]{1,2}/.*|/.*|[A-Za-z]:.+)$"
+      }
+    }
+  }
+}

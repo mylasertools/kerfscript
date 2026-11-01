@@ -51,6 +51,10 @@ kerf fmt <files or folders>
 kerf fmt --check <files or folders>
 kerf fmt -
 kerf lsp [--timeout <seconds>]
+kerf add <source>
+kerf remove <name>
+kerf install [--frozen | --check]
+kerf pack [folder] [-o file]
 ```
 
 `render` exports SVG, DXF or JSON, using the output file's extension to
@@ -69,6 +73,17 @@ left alone.
 `lsp` runs the language server on standard input and output, for editors:
 see [Editors](editors.md). It stops checking a design after `--timeout`
 seconds, 10 by default.
+
+`add`, `remove`, `install` and `pack` manage [shared libraries](shared-libraries.md)
+in the project around the current folder, the nearest one with a `kerf.json`.
+`add` takes `github:owner/repo@tag`, an https link to a `.tar.gz` or a
+folder, records it in `kerf.json` and installs it into `kerf_libraries/`.
+`install` installs what `kerf.json` names, from the exact commits and
+files `kerf.lock` pins; `--frozen` fails instead of changing `kerf.lock`,
+for CI, and `--check` downloads nothing and exits with 1 when
+`kerf_libraries/` differs from `kerf.lock`. `pack` checks a library and
+writes `name-version.tar.gz` to publish. `render` and `check` find the
+installed libraries by themselves.
 
 ## Options
 

@@ -1,0 +1,7 @@
+use <feet/size>
+
+// Holes for rubber feet, inset from the corners of a panel
+module feet(size, inset = 8) {
+  for (x = [inset, size[0] - inset], y = [inset, size[1] - inset])
+    translate([x, y]) circle(d = foot_d());
+}

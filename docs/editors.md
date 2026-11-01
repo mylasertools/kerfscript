@@ -11,13 +11,15 @@ need to work on `.kerf` files:
   the comment above them; the range of a setting
 - completion of modules where a statement starts, functions and variables
   in expressions, named arguments inside a call, and library paths after
-  `use <`
+  `use <`, including those of [shared libraries](shared-libraries.md) in
+  `kerf_libraries/`
 - parameter hints for the argument being typed
 - go to definition, find references, highlighting of a name's uses and
   rename, following the [scope rules](../LANGUAGE.md#scope): a parameter's
   references include the named arguments that set it
 - an outline of modules, functions and variables, and links on
   `use <...>` paths
+- in VS Code, checks and hover help for the fields of `kerf.json`
 - formatting with [`kerf fmt`](cli.md#commands)
 
 Libraries next to a design, as in `use <tabs>`, are read from its folder,

@@ -3,8 +3,9 @@
 //! The files the page can reach. It never names a path: designs come from the
 //! open and save dialogs or from the app's start (a double-clicked file),
 //! exports go where the user picks in a save dialog, and libraries are read
-//! from the open design's folder and the folders below it. Every read is of a
-//! regular file and has a size limit.
+//! from the open design's folder and the folders below it, or from its
+//! project's kerf_libraries folder. Every read is of a regular .kerf file and
+//! has a size limit.
 
 use serde::Serialize;
 use std::io::Read;
@@ -86,9 +87,24 @@ pub fn read_bounded(path: &Path, max: u64) -> Result<String, String> {
     String::from_utf8(bytes).map_err(|_| format!("{shown} is not UTF-8 text"))
 }
 
-/// The file a `use <path>` or `include <path>` names, in the design's folder or
-/// below it, with or without .kerf. Only .kerf files are read, so a design
-/// cannot read other files that happen to be in its folder.
+/// The project a design's folder belongs to, as `kerf render` finds it: the
+/// nearest folder at or above it with a kerf.json, and the name kerf.json
+/// gives the project
+fn project(dir: &Path) -> Option<(PathBuf, Option<String>)> {
+    let here = dir.ancestors().find(|d| d.join("kerf.json").is_file())?;
+    let name = read_bounded(&here.join("kerf.json"), 1 << 20)
+        .ok()
+        .and_then(|text| serde_json::from_str::<serde_json::Value>(&text).ok())
+        .and_then(|v| v.get("name")?.as_str().map(str::to_owned));
+    Some((here.to_path_buf(), name))
+}
+
+/// The file a `use <path>` or `include <path>` names, with or without .kerf,
+/// found as `kerf render` finds it: `<name/...>` is a file of the project
+/// when the project's kerf.json has that name, or of the installed library in
+/// kerf_libraries/name; any other path is in the design's folder or below
+/// it. Only .kerf files are read, so a design cannot read other files that
+/// happen to be in those folders.
 pub fn library_path(design: &Path, path: &str) -> Result<PathBuf, String> {
     let wanted = Path::new(path);
     if wanted
@@ -99,19 +115,28 @@ pub fn library_path(design: &Path, path: &str) -> Result<PathBuf, String> {
             "<{path}>: libraries are read from the design's folder and the folders below it"
         ));
     }
-    let root = design
+    let folder = design
         .parent()
         .ok_or("The design has no folder")?
         .canonicalize()
         .map_err(|e| e.to_string())?;
-    let full = with_extension(root.join(wanted), "kerf");
+    let (root, inside) = match (path.split_once('/'), project(&folder)) {
+        (Some((first, rest)), Some((proj, name))) if name.as_deref() == Some(first) => {
+            (proj, PathBuf::from(rest))
+        }
+        (Some((first, _)), Some((proj, _))) if proj.join("kerf_libraries").join(first).is_dir() => {
+            (proj.join("kerf_libraries"), wanted.to_path_buf())
+        }
+        _ => (folder, wanted.to_path_buf()),
+    };
+    let full = with_extension(root.join(inside), "kerf");
     if !full.is_file() {
-        return Err(format!("<{path}> was not found next to the design"));
+        return Err(format!("<{path}> was not found"));
     }
     // A link may point outside the folder, or to a file that is not .kerf
     let real = full.canonicalize().map_err(|e| e.to_string())?;
     if !real.starts_with(&root) {
-        return Err(format!("<{path}> is outside the design's folder"));
+        return Err(format!("<{path}> is outside the folder it is read from"));
     }
     if !has_extension(&real, "kerf") {
         return Err(format!("<{path}> is not a .kerf file"));
@@ -381,6 +406,30 @@ mod tests {
         ] {
             assert!(library_path(&design, path).is_err(), "{path}");
         }
+    }
+
+    #[test]
+    fn libraries_are_found_as_kerf_render_finds_them() {
+        let dir = folder("project");
+        std::fs::write(dir.join("kerf.json"), r#"{ "name": "shelf" }"#).unwrap();
+        std::fs::create_dir_all(dir.join("kerf_libraries/feet")).unwrap();
+        std::fs::write(
+            dir.join("kerf_libraries/feet/feet.kerf"),
+            "module feet() {}
+",
+        )
+        .unwrap();
+        std::fs::create_dir_all(dir.join("designs/feet")).unwrap();
+        std::fs::write(dir.join("designs/feet/other.kerf"), "").unwrap();
+        let design = dir.join("designs").join("box.kerf");
+        let found = library_path(&design, "feet/feet").unwrap();
+        assert!(found.ends_with(Path::new("kerf_libraries").join("feet").join("feet.kerf")));
+        // The project's own files by its name, from a design in a folder below
+        let own = library_path(&design, "shelf/lib/tab").unwrap();
+        assert!(own.ends_with(Path::new("lib").join("tab.kerf")));
+        // An installed library's name is not looked up next to the design
+        assert!(library_path(&design, "feet/other").is_err());
+        assert!(library_path(&design, "feet/../../secret").is_err());
     }
 
     #[test]

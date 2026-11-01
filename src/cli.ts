@@ -18,6 +18,16 @@ import { parse } from './parser.js';
 import { Evaluator } from './evaluator.js';
 import { BUILTIN_FONT, withBuiltinFont } from './font.js';
 import { startServer, workerMain } from './lsp.js';
+import {
+  add,
+  check as checkLibraries,
+  findProject,
+  install,
+  LibraryError,
+  pack,
+  remove,
+  resolver,
+} from './libraries.js';
 
 const HELP = `kerf ${VERSION}: the KerfScript laser cutting language
 
@@ -30,6 +40,17 @@ Usage:
   kerf fmt -                         format standard input to standard output
   kerf lsp [--timeout <s>]           run the language server for editors (stdio);
                                      stop checking a design after s seconds (10)
+
+Shared libraries (kerf.json, kerf.lock and kerf_libraries/ in the project):
+  kerf add <source>                  add a library and install it; the source is
+                                     github:owner/repo@tag, an https:// link to a
+                                     .tar.gz, or a folder like ./my-library
+  kerf remove <name>                 remove a library
+  kerf install [--frozen]            install the libraries kerf.lock pins;
+                                     --frozen fails if kerf.lock would change
+  kerf install --check               check kerf_libraries/ against kerf.lock
+                                     without downloading; exit 1 on a difference
+  kerf pack [folder] [-o file]       check a library and write name-version.tar.gz
 
 Options:
   -o, --out <file>        output file (.svg, .dxf or .json); default <file>.svg
@@ -71,6 +92,7 @@ function main(argv: string[]) {
   }
   const cmd = argv[0];
   if (cmd === 'fmt') return fmt(argv.slice(1));
+  if (['install', 'add', 'remove', 'pack'].includes(cmd)) return libraries(cmd, argv.slice(1));
   // This file runs the server's programs too, in a worker thread
   if (cmd === 'lsp') {
     const i = argv.indexOf('--timeout');
@@ -130,12 +152,7 @@ function main(argv: string[]) {
   }
   if (!file) fail('Give a .kerf file.');
   const source = readFileSync(file, 'utf8');
-  const base = dirname(resolve(file));
-  const resolveLib = (p: string) => {
-    for (const candidate of [join(base, p), join(base, p + '.kerf')])
-      if (existsSync(candidate)) return readFileSync(candidate, 'utf8');
-    return undefined;
-  };
+  const resolveLib = resolver(file);
   design = { source, file, resolve: resolveLib };
 
   if (cmd === 'params') {
@@ -256,6 +273,57 @@ function fmt(argv: string[]) {
     }
   }
   if (failed || (check && unformatted)) process.exit(1);
+}
+
+async function libraries(cmd: string, argv: string[]) {
+  const log = (line: string) => process.stderr.write(line + '\n');
+  const flags = argv.filter((a) => a.startsWith('-'));
+  const args = argv.filter((a, i) => !a.startsWith('-') && !['-o', '--out'].includes(argv[i - 1]));
+  const allowed: Record<string, string[]> = {
+    install: ['--frozen', '--check'],
+    add: [],
+    remove: [],
+    pack: ['-o', '--out'],
+  };
+  for (const f of flags) if (!allowed[cmd].includes(f)) fail(`Unknown option ${f} for kerf ${cmd}`);
+  const project = () =>
+    findProject(process.cwd()) ??
+    fail('No kerf.json here or in the folders above. Run kerf add <source> to start one.');
+  try {
+    if (cmd === 'pack') {
+      const o = argv.findIndex((a) => a === '-o' || a === '--out');
+      const out = o < 0 ? undefined : (argv[o + 1] ?? fail(`${argv[o]} needs a file`));
+      if (args.length > 1) fail(`Unexpected argument ${args[1]}`);
+      const r = pack(resolve(args[0] ?? '.'), out && resolve(out));
+      log(`Wrote ${r.file}: ${r.name} ${r.version}, ${r.files} files, ${r.integrity}`);
+    } else if (cmd === 'add') {
+      if (args.length !== 1)
+        fail('Give one library source, like kerf add github:owner/repo@v1.0.0');
+      const { name, lock } = await add(findProject(process.cwd()) ?? process.cwd(), args[0], {
+        log,
+      });
+      const v = lock.libraries[name].version;
+      log(`Added ${name}${v ? ' ' + v : ''}. Use it with use <${name}/...>`);
+    } else if (cmd === 'remove') {
+      if (args.length !== 1) fail('Give the name of the library to remove');
+      await remove(project(), args[0], { log });
+      log(`Removed ${args[0]} from kerf.json`);
+    } else if (flags.includes('--check')) {
+      if (args.length) fail(`Unexpected argument ${args[0]}`);
+      const problems = checkLibraries(project());
+      if (problems.length) fail(problems.join('\n'));
+      log('The libraries match kerf.lock');
+    } else {
+      if (args.length)
+        fail(`Unexpected argument ${args[0]}. To add a library, run kerf add ${args[0]}`);
+      const lock = await install(project(), { frozen: flags.includes('--frozen'), log });
+      const n = Object.keys(lock.libraries).length;
+      log(`${n} librar${n === 1 ? 'y' : 'ies'} installed`);
+    }
+  } catch (e) {
+    if (e instanceof LibraryError) fail(e.message);
+    throw e;
+  }
 }
 
 // The design being run, to show the lines an error is on

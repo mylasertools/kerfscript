@@ -425,9 +425,13 @@ Cases: `imports/*`.
 `use <path>` and `include <path>` read another program, a library. The
 renderer decides which text a path names: the built-in standard library
 answers paths that start with `kerf/`, and the application supplies the
-rest (the `resolve` render option; on the command line, the file `path` or
-`path.kerf` in the design's folder). A path that names nothing is the error `Library <path> not
-found`. Each path is read and parsed once per render.
+rest (the `resolve` render option). The command line, the desktop app and
+the language server look in the design's project, the nearest folder at or
+above the design's with a `kerf.json`: `<name/...>` is a file of the
+project when `name` is the project's own name, or of the installed library
+in `kerf_libraries/name/`; any other path is a file in the design's folder.
+Each tries `path`, then `path.kerf` ([Shared libraries](shared-libraries.md)).
+A path that names nothing is the error `Library <path> not found`. Each path is read and parsed once per render.
 
 `use <path>` makes the library's modules and functions available in the
 block containing the `use`, from the start of that block:

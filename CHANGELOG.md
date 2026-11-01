@@ -77,6 +77,18 @@
   except that the drawer organizer's dividers are named `long divider` and
   `cross divider`.
 - The editors colour the new library modules like `box()` and `divider()`.
+- [Shared libraries](docs/shared-libraries.md): `kerf add`, `kerf remove`,
+  `kerf install` and `kerf pack`. A project's `kerf.json` names the
+  libraries it uses, from a GitHub tag, an https `.tar.gz` or a folder;
+  `kerf install` copies them into `kerf_libraries/` and pins each in
+  `kerf.lock` by its commit and a sha256 hash of its files. `--frozen`
+  and `--check` keep CI to exactly what is pinned. Designs load them with
+  `use <name/file>` in `kerf render`, the desktop app and the language
+  server, which also completes their paths. `kerf pack` checks a library's
+  files and `use` paths before it is published.
+- `@mylasertools/kerfscript/libraries`: the same for Node.js, including
+  `resolver(file)`, a `resolve` option that finds libraries as the command
+  line does.
 
 ## 0.4.0 (2026-10-30)
 

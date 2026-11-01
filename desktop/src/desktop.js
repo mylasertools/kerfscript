@@ -119,7 +119,8 @@
 
   // The libraries a program uses (`use <path>` and `include <path>`, found by
   // KerfScript's tokenizer so comments and strings don't count), read from the
-  // design's folder. Standard library paths are not files: the renderer looks
+  // design's folder or its project's kerf_libraries (files.rs finds them as
+  // kerf render does). Standard library paths are not files: the renderer looks
   // them up first, so a failed read here is fine.
   async function libraries(source) {
     if (name === null) return undefined;

@@ -16,13 +16,14 @@ export SVG or DXF.
   they are defined and the comment above them, and for a setting its range
 - **Completion** of modules where a statement starts, functions and
   variables in expressions, named arguments inside a call, and library
-  paths after `use <`
+  paths after `use <`, including installed shared libraries
 - **Parameter hints** for the argument being typed
 - **Go to definition**, **find references**, highlighting of a name's uses
   and **rename**, following KerfScript's scope rules: the parameters of a
   module include the named arguments that set them
 - **Outline** of modules, functions and variables, and links on
   `use <...>` paths
+- **`kerf.json`** checked as you type, with hover help for each field
 - **Formatting** with the official formatter, `kerf fmt`, on save. Turn
   it off with `"[kerfscript]": { "editor.formatOnSave": false }`
 - Highlighting for `.kerf` files: keywords, built-in modules and functions,
