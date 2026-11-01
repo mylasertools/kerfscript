@@ -56,7 +56,8 @@ test('reports errors with a position and a non-zero exit', () => {
   writeFileSync(bad, 'rect(10);\ncircle(4;\n');
   const r = run('render', bad);
   assert.equal(r.status, 1);
-  assert.match(r.stderr, /ERROR: .*line 2/);
+  assert.match(r.stderr, /^error: Expected "," or "\)", found ";"\n --> .*bad\.kerf:2:9\n/);
+  assert.match(r.stderr, /\n2 \| circle\(4;\n {2}\| {9}\^\n/);
 });
 
 test('uses libraries next to the file', () => {

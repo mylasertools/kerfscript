@@ -29,6 +29,22 @@
 - [integrations/](integrations): four working laser-cutting generators, a
   batch script, a web service, a web page and a Python script, each run by
   the tests.
+- Errors show where they are: `formatError()` and the command line print
+  the source line with the problem underlined, the module and function calls
+  it happened inside, and what a built-in takes when it was given an
+  unusable argument. The playground and the desktop app show the same.
+  `KerfError` has `reason`, `trace` and `call` for applications that show
+  errors their own way.
+- Unknown variables, functions, modules and named arguments suggest a close
+  known name: `Unknown variable "widht". Did you mean "width"?`
+- A function that calls itself without end reports the call and its line
+  instead of a message with no position.
+- Positional arguments past a module's or function's parameters, built-in or
+  not, give a warning; they used to be dropped silently.
+- `echo()` writes named and positional arguments in the order they are
+  given; named ones used to come last.
+- Errors in calls point at the name called, and a missing comma says what
+  else could come next: `Expected "," or ")"`.
 - A VS Code extension in `editors/vscode` with a TextMate grammar, snippets
   and file icons. A test checks that it colours every example the same way
   as the highlighter.

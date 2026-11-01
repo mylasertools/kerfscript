@@ -2,7 +2,15 @@
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, join, resolve } from 'node:path';
-import { parameters, render, KerfError, LANGUAGE_VERSION, VERSION, type Value } from './index.js';
+import {
+  formatError,
+  parameters,
+  render,
+  KerfError,
+  LANGUAGE_VERSION,
+  VERSION,
+  type Value,
+} from './index.js';
 import { parse } from './parser.js';
 import { Evaluator } from './evaluator.js';
 import { BUILTIN_FONT, withBuiltinFont } from './font.js';
@@ -111,6 +119,7 @@ function main(argv: string[]) {
       if (existsSync(candidate)) return readFileSync(candidate, 'utf8');
     return undefined;
   };
+  design = { source, file, resolve: resolveLib };
 
   if (cmd === 'params') {
     process.stdout.write(JSON.stringify(parameters(source), null, 2) + '\n');
@@ -179,14 +188,21 @@ function main(argv: string[]) {
   process.stderr.write(`Wrote ${target}\n`);
 }
 
+// The design being run, to show the lines an error is on
+let design:
+  | { source: string; file: string; resolve: (p: string) => string | undefined }
+  | undefined;
+
 try {
   main(process.argv.slice(2));
 } catch (e) {
   if (e instanceof KerfError) {
-    for (const m of e.echoes)
-      process.stderr.write(`ECHO: ${m}
-`);
-    fail(`ERROR: ${e.message}`);
+    for (const m of e.echoes) process.stderr.write(`ECHO: ${m}\n`);
+    fail(
+      design
+        ? formatError(e, design.source, { file: design.file, resolve: design.resolve })
+        : `error: ${e.message}`,
+    );
   }
   throw e;
 }

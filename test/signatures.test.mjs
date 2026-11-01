@@ -126,7 +126,7 @@ test('built-ins warn about named arguments they do not take', () => {
   });
   assert.deepEqual(r.warnings, [
     'rect(): unknown argument "foo" (line 1)',
-    'text_width(): unknown argument "sizee" (line 1)',
+    'text_width(): unknown argument "sizee". Did you mean "size"? (line 1)',
   ]);
   assert.deepEqual(render('rect(10, r = 1, center = true); echo(a = 1);').warnings, []);
 });

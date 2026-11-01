@@ -162,23 +162,46 @@ call one, such as `log(base, x)`.
 
 ## Errors
 
-Language errors use `KerfError`. Its `line` and `col` identify the source
-location when available, and `echoes` contains output produced before the
-error. `missingFonts` lists fonts the application needs to supply.
+Language errors use `KerfError`:
+
+| Property       | Value                                                                                                                                                                    |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `message`      | the message with its position, as `Unknown variable "w" (line 3, column 9)`                                                                                              |
+| `reason`       | the message without its position                                                                                                                                         |
+| `line`, `col`  | where the error is, when known; columns count UTF-16 code units                                                                                                          |
+| `file`         | the library path when the error is inside a library, as `kerf/box`                                                                                                       |
+| `trace`        | the module and function calls it happened inside, innermost first: `{ kind, name, line, col, file, count }`, where `count` is how often a recursive call is on the stack |
+| `call`         | the built-in that was given an unusable argument                                                                                                                         |
+| `echoes`       | `echo()` output before the error                                                                                                                                         |
+| `missingFonts` | fonts the application needs to supply                                                                                                                                    |
+
+`formatError()` writes all of that the way the command line shows it: the
+source line with the problem underlined, the calls, and what a built-in
+takes. Pass the source, and `resolve` to show lines inside your own
+libraries; the standard library is found without it.
 
 ```js
-import { KerfError, render } from '@mylasertools/kerfscript';
+import { formatError, render } from '@mylasertools/kerfscript';
 
 try {
-  render('rect([80, 50]);');
+  render(source);
 } catch (error) {
-  if (error instanceof KerfError) {
-    console.error(error.message, error.line, error.col);
-  } else {
-    throw error;
-  }
+  console.error(formatError(error, source, { file: 'panel.kerf' }));
 }
 ```
+
+```text
+error: Unknown variable "widht". Did you mean "width"?
+ --> panel.kerf:3:9
+  |
+3 |   rect([widht, 20]);
+  |         ^^^^^
+  = in module panel(), called at panel.kerf:5:1
+```
+
+Show it in a monospaced font so the marks line up. `formatError()` takes
+any thrown value; for one that is not a `KerfError` it gives
+`error: <message>`.
 
 ## Running untrusted code
 

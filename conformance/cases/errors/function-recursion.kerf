@@ -1,0 +1,4 @@
+// A function that calls itself without end stops with an error at the call
+// => error: Recursion too deep in f(): it calls itself without stopping (line 3, column 21)
+function f(n) = n + f(n + 1);
+echo(f(0));

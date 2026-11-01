@@ -2,7 +2,7 @@
 
 // Runs KerfScript off the main thread, so a slow program never freezes the page.
 
-import { KerfError, render } from './kerfscript.js';
+import { KerfError, formatError, render } from './kerfscript.js';
 
 const own = (o, k) => (Object.prototype.hasOwnProperty.call(o, k) ? o[k] : undefined);
 
@@ -13,12 +13,13 @@ const font = fetch(new URL('./fonts/AtkinsonHyperlegible-Regular.ttf', import.me
 self.onmessage = async (event) => {
   const { id, source, params, files } = event.data;
   const started = performance.now();
+  const resolve = files ? (p) => own(files, p) ?? own(files, p + '.kerf') : undefined;
   try {
     const result = render(source, {
       params,
       fonts: { Atkinson: await font },
       defaultFont: 'Atkinson',
-      resolve: files ? (p) => own(files, p) ?? own(files, p + '.kerf') : undefined,
+      resolve,
     });
     self.postMessage({
       id,
@@ -44,7 +45,8 @@ self.onmessage = async (event) => {
     self.postMessage({
       id,
       ok: false,
-      error: error instanceof Error ? error.message : String(error),
+      // The message with the line it is on underlined and the calls it is in
+      error: formatError(error, source, { resolve }),
       // A line in the program, not in a library it uses
       line: error instanceof KerfError && !error.file ? error.line : undefined,
       echoes: error instanceof KerfError ? error.echoes : [],

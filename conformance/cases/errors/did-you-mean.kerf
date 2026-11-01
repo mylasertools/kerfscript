@@ -1,0 +1,4 @@
+// An unknown name close to a known one suggests it
+// => error: Unknown variable "widht". Did you mean "width"? (line 4, column 7)
+width = 20;
+rect([widht, 10]);

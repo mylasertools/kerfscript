@@ -206,7 +206,8 @@ numbers use exponent form (`1e+21`); infinities are `Infinity` and
 `-Infinity`, NaN is `NaN`, and -0 is `0`. Lists are written as
 `[a, b]`, ranges as `[start:step:end]`, functions as `function(a, b)` and
 `undef` as `undef`. Strings are written as they are at the top level and in
-double quotes, with escapes, inside a list or after a name.
+double quotes, with escapes, inside a list or after a name. `echo()` writes
+its arguments in the order they are given, a named one as `name = value`.
 
 ## Expressions
 
@@ -292,7 +293,9 @@ parameters:
 - the remaining parameters take positional arguments in order;
 - a parameter with neither takes its default, evaluated in the new scope
   so it can use the parameters before it, or `undef` without one;
-- positional arguments beyond the parameters are ignored;
+- positional arguments beyond the parameters are ignored with the warning
+  `f(): takes at most N positional arguments, got M; the rest are ignored
+(line n)`;
 - a named argument that starts with `$` sets that special variable for the
   call; any other named argument that matches no parameter is ignored with
   the warning `f(): unknown argument "name" (line n)`.
@@ -452,8 +455,22 @@ Cases: `errors/*`, and the errors in every other group.
 
 An error stops the program. It has a message and, in nearly every case, a
 position, written after the message as `(line L, column C)`, or `(line L,
-column C in <path>)` inside a library. Output from `echo()` before the
-error is kept and reported with it.
+column C in <path>)` inside a library. The position is the start of the
+token the error is about: the name in a call that fails, the operator of an
+operation that fails, or the name of a built-in given an unusable argument.
+Output from `echo()` before the error is
+kept and reported with it.
+
+An unknown variable, function, module or named argument whose name is close
+to a known one (one edit for names of three to five characters, two for
+longer ones, or a difference only in case) adds `. Did you mean "name"?`
+to the message.
+
+An error inside a module or function call also records the call: its name
+and the position it was called from, innermost first. A call that is on
+the stack more than once, through recursion, is recorded once with a count.
+`formatError()` in the [JavaScript API](javascript.md#errors) and the
+command line show these under the source line.
 
 Errors come from:
 
@@ -471,7 +488,7 @@ Errors come from:
 | ------------------------------------------- | --------- | ------------------------------------------ |
 | Statements, calls and loop steps            | 5,000,000 | `Stopped after N steps`                    |
 | Nested module calls                         | 1,000     | `Recursion too deep in module name()`      |
-| Nested function calls                       | 2,000     | `Recursion too deep`                       |
+| Nested function calls                       | 2,000     | `Recursion too deep in name()`             |
 | Items in one list, characters in one string | 1,000,000 | `a list of N items` / `a range of N items` |
 | Items in all lists and strings              | 3,000,000 | `The lists and strings hold more than`     |
 | Points in all shapes                        | 2,000,000 | `The shapes have more than`                |
@@ -481,7 +498,12 @@ limit and how to change it.
 
 A warning does not stop the program. Warnings are collected in order, each
 message once, and returned with the output. Examples are unknown named
-arguments and a program that makes no shapes.
+arguments, positional arguments past the parameters and a program that
+makes no shapes.
+
+Running out of interpreter stack in a call that calls itself, before the
+limit on nested calls, is the same error as reaching the limit, at the call
+that went one level too deep.
 
 ## Output
 
@@ -498,11 +520,6 @@ shapes. Shapes outside every `part()` form one part named `part`.
 These are behaviours of KerfScript 0.4 that this specification records as
 they are, but that may change before language version 1.0:
 
-- A function that calls itself without end can exhaust the interpreter's
-  stack before the 2,000-call limit, giving `Recursion too deep: the
-program calls itself without stopping` with no position.
-- Positional arguments beyond the parameters are ignored without a warning.
-- `echo()` writes named arguments after the positional ones, whatever their
-  order in the call.
-- Errors in a call of a value that is not a function point at the `(` of
-  the call rather than the name.
+- An expression nested so deeply that the interpreter runs out of stack,
+  outside any recursion, stops with `Recursion too deep: the program calls
+itself without stopping` and no position.

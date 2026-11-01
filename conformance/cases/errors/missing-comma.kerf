@@ -1,0 +1,3 @@
+// A missing comma between items names both things that could come next
+// => error: Expected "," or "]", found "20" (line 3, column 10)
+rect([10 20]);

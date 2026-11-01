@@ -178,12 +178,57 @@ class Env {
   childCtx(): ChildCtx | undefined {
     for (let e: Env | undefined = this; e; e = e.parent) if (e.children) return e.children;
   }
+
+  // Every name of one kind in scope, for suggestions
+  names(kind: 'vars' | 'fns' | 'mods'): string[] {
+    const out: string[] = [];
+    for (let e: Env | undefined = this; e; e = e.parent) out.push(...e[kind].keys());
+    return out;
+  }
 }
 
 interface Args {
   pos: Value[];
   named: Map<string, Value>;
+  // Every argument in the order written
+  all: { name: string | null; value: Value }[];
   at: Pos;
+}
+
+// A hint as a new sentence after a message that has no full stop
+const sentence = (hint: string) => (hint ? `.${hint}` : '');
+
+// Functions the evaluator runs itself rather than through FUNCTIONS
+const SPECIAL = ['echo', 'assert', 'text_width', 'text_metrics', 'finger_count'];
+
+// ` Did you mean "x"?` for the known name closest to a mistyped one
+export function didYouMean(name: string, known: Iterable<string>): string {
+  let best = '';
+  let bestCost = Math.min(2, Math.floor(name.length / 3)) + 0.5;
+  for (const k of new Set(known)) {
+    if (k === name) continue;
+    const cost = k.toLowerCase() === name.toLowerCase() ? 0 : distance(name, k);
+    if (cost < bestCost) [best, bestCost] = [k, cost];
+  }
+  return best ? ` Did you mean "${best}"?` : '';
+}
+
+// Edits (insert, delete, change, swap two neighbours) between two names
+function distance(a: string, b: string): number {
+  if (Math.abs(a.length - b.length) > 2) return 3;
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++)
+    for (let j = 1; j <= b.length; j++) {
+      d[i][j] = Math.min(
+        d[i - 1][j] + 1,
+        d[i][j - 1] + 1,
+        d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1])
+        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+    }
+  return d[a.length][b.length];
 }
 
 interface BuiltinCtx {
@@ -418,16 +463,18 @@ export class Evaluator {
   private evalArgs(args: Arg[], env: Env, at: Pos): Args {
     const pos: Value[] = [];
     const named = new Map<string, Value>();
+    const all: Args['all'] = [];
     for (const a of args) {
       const v = this.expr(a.value, env);
       if (a.name === null) pos.push(v);
       else named.set(a.name, v);
+      all.push({ name: a.name, value: v });
     }
-    return { pos, named, at };
+    return { pos, named, all, at };
   }
 
   private bindParams(params: Param[], args: Args, env: Env, defEnv: Env, what: string) {
-    const names = new Set(params.map((p) => p.name));
+    const names = params.map((p) => p.name);
     params.forEach((p, i) => {
       let v: Value;
       if (args.named.has(p.name)) v = args.named.get(p.name);
@@ -437,22 +484,36 @@ export class Evaluator {
     });
     for (const k of args.named.keys()) {
       if (k.startsWith('$')) env.vars.set(k, args.named.get(k));
-      else if (!names.has(k)) this.unknownArg(what, k, args.at);
+      else if (!names.includes(k)) this.unknownArg(what, k, args.at, names);
     }
+    this.checkCount(what, params.length, args);
     void defEnv;
   }
 
-  // Warns about named arguments a built-in does not take
-  private checkNamed(name: string, args: Args) {
+  // Warns about arguments a built-in does not take
+  private checkArgs(name: string, args: Args) {
     const sig = signature(name);
-    if (!sig || sig.anyNamed) return;
-    for (const k of args.named.keys())
-      if (!k.startsWith('$') && !sig.params.some((p) => p.name === k))
-        this.unknownArg(`${name}()`, k, args.at);
+    if (!sig) return;
+    const names = sig.params.map((p) => p.name);
+    if (!sig.anyNamed)
+      for (const k of args.named.keys())
+        if (!k.startsWith('$') && !names.includes(k))
+          this.unknownArg(`${name}()`, k, args.at, names);
+    if (!sig.rest) this.checkCount(`${name}()`, sig.params.filter((p) => !p.named).length, args);
   }
 
-  private unknownArg(what: string, name: string, at: Pos) {
-    this.warn(`${what}: unknown argument "${name}" (${where(at, false)})`);
+  // Warns about positional arguments past the parameters, which are ignored
+  private checkCount(what: string, most: number, args: Args) {
+    if (args.pos.length > most)
+      this.warn(
+        `${what}: takes ${most === 0 ? 'no' : `at most ${most}`} positional argument${most === 1 ? '' : 's'}, got ${args.pos.length}; the rest are ignored (${where(args.at, false)})`,
+      );
+  }
+
+  private unknownArg(what: string, name: string, at: Pos, known: string[]) {
+    this.warn(
+      `${what}: unknown argument "${name}"${sentence(didYouMean(name, known))} (${where(at, false)})`,
+    );
   }
 
   // A warning, once however often it comes up
@@ -465,13 +526,18 @@ export class Evaluator {
     const user = env.mod(s.name);
     if (user) {
       if (++this.depth > 1000)
-        throw new KerfError(`Recursion too deep in module ${s.name}()`, s.pos);
+        throw new KerfError(
+          `Recursion too deep in module ${s.name}(): it calls itself without stopping`,
+          s.pos,
+        );
       try {
         const e = new Env(user.env, env);
         this.bindParams(user.params, args, e, user.env, `${s.name}()`);
         e.children = { stmts: s.children, env };
         e.vars.set('$children', this.childStmts(s.children).length);
         return this.block(user.body, e);
+      } catch (e) {
+        throw this.inCall(e, 'module', s.name, s.pos);
       } finally {
         this.depth--;
       }
@@ -481,12 +547,10 @@ export class Evaluator {
       const hint =
         s.name === 'color'
           ? ' Use layer(), cut(), score() or engrave() instead.'
-          : s.name === 'square'
-            ? ' Use rect().'
-            : '';
+          : didYouMean(s.name, [...env.names('mods'), ...Object.keys(this.builtins)]);
       throw new KerfError(`Unknown module ${s.name}().${hint}`, s.pos);
     }
-    this.checkNamed(s.name, args);
+    this.checkArgs(s.name, args);
     const callEnv = new Env(env, env);
     for (const [k, v] of args.named) if (k.startsWith('$')) callEnv.vars.set(k, v);
     const kids = this.childStmts(s.children);
@@ -510,8 +574,10 @@ export class Evaluator {
     try {
       out = b(ctx);
     } catch (e) {
-      if (e instanceof KerfError) throw e;
-      throw new KerfError(`${s.name}(): ${(e as Error).message}`, s.pos);
+      if (e instanceof KerfError || e instanceof RangeError) throw e;
+      const err = new KerfError(`${s.name}(): ${(e as Error).message}`, s.pos);
+      err.call = s.name;
+      throw err;
     }
     this.pointCount += shapePoints(out);
     if (this.pointCount > this.limits.maxPoints)
@@ -530,16 +596,37 @@ export class Evaluator {
   }
 
   callFunction(f: FnDef | Closure, args: Args, caller: Env, name: string): Value {
-    if (++this.depth > 2000) throw new KerfError(`Recursion too deep in ${name}()`, args.at);
+    if (++this.depth > 2000)
+      throw new KerfError(
+        `Recursion too deep in ${name}(): it calls itself without stopping`,
+        args.at,
+      );
     try {
       this.tick(args.at);
       const defEnv = (isFn(f as Value) ? (f as Closure).scope : (f as FnDef).env) as Env;
       const e = new Env(defEnv, caller);
       this.bindParams(f.params, args, e, defEnv, `${name}()`);
       return this.expr(f.body, e);
+    } catch (e) {
+      throw this.inCall(e, 'function', name, args.at);
     } finally {
       this.depth--;
     }
+  }
+
+  // An error leaving a module or function call, with that call added to its
+  // trace. Running out of JavaScript stack becomes an error at the call
+  // that went one level too deep; if making that error runs out of stack
+  // too, the next call out tries again.
+  private inCall(e: unknown, kind: 'module' | 'function', name: string, at: Pos): unknown {
+    // Not a regular expression: with the stack this full, compiling one fails too
+    if (e instanceof Error && !(e instanceof KerfError) && e.message.includes('call stack'))
+      return new KerfError(
+        `Recursion too deep in ${kind === 'module' ? 'module ' : ''}${name}(): it calls itself without stopping`,
+        at,
+      );
+    if (e instanceof KerfError) e.addFrame(kind, name, at);
+    return e;
   }
 
   expr(x: Expr, env: Env): Value {
@@ -557,7 +644,10 @@ export class Evaluator {
         if (f)
           return { type: 'function', params: f.params, body: f.body, scope: f.env, name: x.name };
         if (x.name.startsWith('$')) return undefined;
-        throw new KerfError(`Unknown variable "${x.name}"`, x.pos);
+        throw new KerfError(
+          `Unknown variable "${x.name}"${sentence(didYouMean(x.name, [...env.names('vars'), ...env.names('fns')]))}`,
+          x.pos,
+        );
       }
       case 'list': {
         const out: Value[] = [];
@@ -689,8 +779,7 @@ export class Evaluator {
         const b = own(FUNCTIONS, name);
         if (b) {
           const args = this.evalArgs(x.args, env, x.pos);
-          for (const k of args.named.keys())
-            if (!k.startsWith('$') && !b.params.includes(k)) this.unknownArg(`${name}()`, k, x.pos);
+          this.checkArgs(name, args);
           for (const k of givenTwice(b, args.pos, args.named))
             this.warn(
               `${name}(): "${k}" is given by position and by name; the named value is used (${where(x.pos, false)})`,
@@ -708,15 +797,20 @@ export class Evaluator {
             out = b.run(bound, ctx);
           } catch (e) {
             if (e instanceof KerfError) throw e;
-            throw new KerfError(
+            const err = new KerfError(
               e instanceof RangeError ? `${name}(): the result is too large` : (e as Error).message,
               x.pos,
             );
+            err.call = name;
+            throw err;
           }
           this.checkValue(out, x.pos, name);
           return out;
         }
-        throw new KerfError(`Unknown function ${name}()`, x.pos);
+        throw new KerfError(
+          `Unknown function ${name}()${sentence(didYouMean(name, [...env.names('fns'), ...env.names('vars'), ...Object.keys(FUNCTIONS), ...SPECIAL]))}`,
+          x.pos,
+        );
       }
       if (!isFn(v.value))
         throw new KerfError(`"${name}" is a ${typeName(v.value)}, not a function`, x.pos);
@@ -739,13 +833,13 @@ export class Evaluator {
     }
     if (name === 'assert') {
       const a = this.evalArgs(x.args, env, x.pos);
-      this.checkNamed(name, a);
+      this.checkArgs(name, a);
       this.assert(a);
       return { handled: true, value: true };
     }
     if (name === 'text_width' || name === 'text_metrics') {
       const a = this.evalArgs(x.args, env, x.pos);
-      this.checkNamed(name, a);
+      this.checkArgs(name, a);
       const m = this.measure(a, env);
       if (name === 'text_width') return { handled: true, value: m.advance };
       return {
@@ -755,7 +849,7 @@ export class Evaluator {
     }
     if (name === 'finger_count') {
       const a = this.evalArgs(x.args, env, x.pos);
-      this.checkNamed(name, a);
+      this.checkArgs(name, a);
       const L = this.num(this.arg(a, 'length', 0), 'finger_count', 'length');
       return { handled: true, value: fingerCount(L, this.fingerWidth(a, env, 1)) };
     }
@@ -789,8 +883,9 @@ export class Evaluator {
         );
       parts.push(label + r.text);
     };
-    for (const v of a.pos) add('', v, false);
-    for (const [k, v] of a.named) add(`${k} = `, v, true);
+    for (const { name, value } of a.all)
+      if (name === null) add('', value, false);
+      else add(`${name} = `, value, true);
     return parts.join(', ');
   }
 

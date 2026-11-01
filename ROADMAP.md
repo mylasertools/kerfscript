@@ -72,7 +72,7 @@ protects or feeds the next.
       reference
 - [x] Working generator examples in [integrations/](integrations), run by
       the tests
-- [ ] Diagnostics that show the source line, underline the expression,
+- [x] Diagnostics that show the source line, underline the expression,
       list the expected arguments and trace calls and libraries
 - [ ] `kerf fmt` with a check mode, keeping comments and customizer
       annotations

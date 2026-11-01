@@ -1,0 +1,4 @@
+// An unknown named argument close to a parameter suggests it
+// => warning: rect(): unknown argument "centre". Did you mean "center"? (line 4)
+// => part: "part" size=10x10
+rect(10, centre = true);

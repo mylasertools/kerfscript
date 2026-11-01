@@ -55,6 +55,12 @@ class Parser {
     if (!this.isP(value)) this.fail(`Expected "${value}"`);
     return this.next();
   }
+  // Between items: a comma, or the closing bracket left for the caller
+  separator(close: string) {
+    if (this.isP(close)) return;
+    if (!this.isP(',')) this.fail(`Expected "," or "${close}"`);
+    this.next();
+  }
   ident(): Token {
     const t = this.peek();
     if (t.type !== 'id' || KEYWORDS.has(t.value)) this.fail('Expected a name');
@@ -171,7 +177,7 @@ class Parser {
         def = this.expr();
       }
       out.push({ name, default: def });
-      if (!this.isP(')')) this.expectP(',');
+      this.separator(')');
     }
     this.next();
     return out;
@@ -187,7 +193,7 @@ class Parser {
         this.next();
       }
       out.push({ name, value: this.expr() });
-      if (!this.isP(')')) this.expectP(',');
+      this.separator(')');
     }
     this.next();
     return out;
@@ -200,7 +206,7 @@ class Parser {
       const t = this.ident();
       this.expectP('=');
       out.push({ name: t.value, value: this.expr(), pos: t.pos });
-      if (!this.isP(')')) this.expectP(',');
+      this.separator(')');
     }
     this.next();
     return out;
@@ -271,7 +277,8 @@ class Parser {
     for (;;) {
       const t = this.peek();
       if (this.isP('(')) {
-        e = { kind: 'call', callee: e, args: this.args(), pos: t.pos };
+        // At the name called, which messages point to
+        e = { kind: 'call', callee: e, args: this.args(), pos: e.pos };
       } else if (this.isP('[')) {
         this.next();
         const index = this.expr();
@@ -355,11 +362,11 @@ class Parser {
         this.next();
         return { kind: 'list', items, pos };
       }
-      this.expectP(',');
+      this.separator(']');
     }
     while (!this.isP(']')) {
       items.push(this.listItem());
-      if (!this.isP(']')) this.expectP(',');
+      this.separator(']');
     }
     this.next();
     return { kind: 'list', items, pos };

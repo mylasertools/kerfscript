@@ -1,0 +1,6 @@
+// Positional arguments past the parameters are ignored with a warning
+// => echo: 1
+// => warning: f(): takes at most 1 positional argument, got 2; the rest are ignored (line 6)
+// => warning: Nothing to cut: the program made no shapes.
+function f(a) = a;
+echo(f(1, 2));

@@ -1,0 +1,3 @@
+// echo() writes its arguments in the order they are given
+// => echo: b = 1, 2, c = "x"
+echo(b = 1, 2, c = "x");

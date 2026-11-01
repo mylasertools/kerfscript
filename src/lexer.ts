@@ -28,6 +28,20 @@ export interface Comment {
   own: boolean;
 }
 
+// A module or function call the error happened inside, at its call site
+export interface TraceFrame {
+  kind: 'module' | 'function';
+  name: string;
+  line: number;
+  col: number;
+  file?: string;
+  // How many times this call is on the stack, more than once in recursion
+  count: number;
+}
+
+// Different calls kept in a trace; more are only counted
+const MAX_TRACE = 50;
+
 export class KerfError extends Error {
   line?: number;
   col?: number;
@@ -35,14 +49,42 @@ export class KerfError extends Error {
   missingFonts?: string[];
   // The library the error is in; line and col are in that file
   file?: string;
+  // The message without its position
+  reason: string;
+  // The calls the error happened inside, innermost first
+  trace: TraceFrame[] = [];
+  // Calls past the end of trace
+  traceMore = 0;
+  // The built-in whose arguments were wrong, to show what it takes
+  call?: string;
   constructor(message: string, pos?: Pos) {
     super(pos ? `${message} (${where(pos)})` : message);
     this.name = 'KerfError';
+    this.reason = message;
     if (pos) {
       this.line = pos.line;
       this.col = pos.col;
       this.file = pos.file;
     }
+  }
+
+  // A call the error left, as it leaves it. The same call can only be on
+  // the stack twice through recursion, so it is counted, not repeated.
+  addFrame(kind: TraceFrame['kind'], name: string, pos: Pos) {
+    const same = this.trace.find(
+      (f) => f.name === name && f.line === pos.line && f.col === pos.col && f.file === pos.file,
+    );
+    if (same) same.count++;
+    else if (this.trace.length >= MAX_TRACE) this.traceMore++;
+    else
+      this.trace.push({
+        kind,
+        name,
+        line: pos.line,
+        col: pos.col,
+        ...(pos.file && { file: pos.file }),
+        count: 1,
+      });
   }
 }
 

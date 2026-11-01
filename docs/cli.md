@@ -87,8 +87,18 @@ For multiple sheets, `--split` creates numbered files such as `box-1.svg`
 and `box-2.svg`. Use it for DXF exports of a design with several sheets.
 
 Warnings are written to standard error and allow rendering to continue.
-An error stops the command, reports its location when available and returns
-a non-zero exit code.
+An error stops the command with a non-zero exit code. It shows the line with
+the problem underlined, the calls it happened inside and, for a built-in
+given a bad argument, what that built-in takes:
+
+```text
+error: Unknown variable "widht". Did you mean "width"?
+ --> panel.kerf:3:9
+  |
+3 |   rect([widht, 20]);
+  |         ^^^^^
+  = in module panel(), called at panel.kerf:5:1
+```
 
 ## Fonts
 

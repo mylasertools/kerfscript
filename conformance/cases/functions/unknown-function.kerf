@@ -1,3 +1,3 @@
 // Calling a function that does not exist is an error
-// => error: Unknown function nope() (line 3, column 10)
+// => error: Unknown function nope() (line 3, column 6)
 echo(nope());
