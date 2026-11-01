@@ -74,10 +74,12 @@ Repositories and accounts:
   metainfo; Flathub then makes `github.com/flathub/com.mylasertools.KerfScript`
   for later versions. Flathub checks that the app id's domain belongs to you:
   verify mylasertools.com in the Flathub developer portal. The metainfo's
-  screenshot must exist at
-  `https://kerfscript.mylasertools.com/screenshots/desktop.png`: save a
-  screenshot of the app as `site/public/screenshots/desktop.png` and deploy
-  the site before submitting.
+  screenshot must show the app. Save it as
+  `site/public/screenshots/desktop.png`, deploy the site, and add a
+  `<screenshots>` section to
+  `packaging/flatpak/com.mylasertools.KerfScript.metainfo.xml` with the image
+  URL `https://kerfscript.mylasertools.com/screenshots/desktop.png`.
+  Verify the image loads before submitting.
   The Flathub build uses the GNOME 51 runtime, the last with the
   webkit2gtk-4.1 that Tauri 2 needs; it is supported until about September 2027. Before then the app needs a Tauri release on webkitgtk-6.0, or the
   Flathub build has to bundle WebKitGTK itself.
@@ -87,7 +89,7 @@ Repositories and accounts:
 
 ## Licence lists
 
-Two files list the Rust code compiled into a release, with licences, source
+Three files list the Rust code compiled into a release, with licences, source
 links and licence texts:
 
 - `desktop/THIRD-PARTY-LICENSES.md`: the desktop app. After a change to

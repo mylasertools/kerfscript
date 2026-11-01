@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import ModelCard from '../components/ModelCard.astro';
-import { NPM_URL, SOURCE_PUBLIC, code, highlight, models } from '../lib/site.mjs';
+import { NPM_URL, code, highlight, models } from '../lib/site.mjs';
 
 const hero = models.find((m) => m.slug === 'clock-face');
 const featured = ['umbra', 'hadal', 'wave-cathedral', 'tilt-maze', 'topo-island', 'xenospora'].map(
@@ -183,15 +183,7 @@ const FEATURES = [
         <h3>On your computer</h3>
         <p>
           Use the <code>kerf</code> command to export designs from your terminal.{' '}
-          {
-            SOURCE_PUBLIC ? (
-              <>
-                Install it from <a href={NPM_URL}>npm</a>.
-              </>
-            ) : (
-              'The command-line package will be available with the public release.'
-            )
-          }
+          Install it from <a href={NPM_URL}>npm</a>.
         </p>
         <pre class="code plain"><code>npm install --global @mylasertools/kerfscript
 kerf render box.kerf -o box.svg</code></pre>

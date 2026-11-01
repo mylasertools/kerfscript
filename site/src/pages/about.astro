@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import { LANGUAGE_VERSION, REPO_URL, SOURCE_PUBLIC, VERSION } from '../lib/site.mjs';
+import { LANGUAGE_VERSION, REPO_URL, VERSION } from '../lib/site.mjs';
 ---
 
 <Base
@@ -36,25 +36,16 @@ import { LANGUAGE_VERSION, REPO_URL, SOURCE_PUBLIC, VERSION } from '../lib/site.
       and files you create.
       <a href="/licence/">Licence details</a>.
     </p>
-    {
-      SOURCE_PUBLIC ? (
-        <p>
-          The source, issue tracker and releases are on <a href={REPO_URL}>GitHub</a>. Install it with
-          <code>npm install @mylasertools/kerfscript</code>.
-        </p>
-      ) : (
-        <p>
-          The source and npm package will be available with the public release. You can try the current
-          version in the playground.
-        </p>
-      )
-    }
+    <p>
+      The source, issue tracker and releases are on <a href={REPO_URL}>GitHub</a>. Install it with
+      <code>npm install @mylasertools/kerfscript</code>.
+    </p>
 
     <h2>Reporting a problem</h2>
     <p>
       Send your <code>.kerf</code> file and a description of the problem to <a href="mailto:hi@mylasertools.com"
         >hi@mylasertools.com</a
-      >{SOURCE_PUBLIC && <>, or open an issue on <a href={`${REPO_URL}/issues`}>GitHub</a></>}. Include the name and version of your laser software if the issue involves an exported file.
+      >, or open an issue on <a href={`${REPO_URL}/issues`}>GitHub</a>. Include the name and version of your laser software if the issue involves an exported file.
       Report security issues by email.
     </p>
   </article>

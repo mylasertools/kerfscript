@@ -1,8 +1,8 @@
 // Lambda: a four-legged walker on Chebyshev's lambda linkage. One square
 // shaft turns four eccentrics a quarter turn apart; each drives a lambda whose
-// far end runs dead level for more than half a turn, then lifts and swings
-// back. The legs hang from those ends on flat soles, so the body glides along
-// level as you turn the handle anticlockwise, seen from the handle side.
+// far end follows an approximately level path before lifting and swinging
+// back. The legs hang from those ends on flat soles. Turn the handle
+// anticlockwise, seen from the handle side, to follow the walking motion.
 
 /* [Walker] */
 // Length of each sole; longer soles stand steadier

@@ -1,8 +1,8 @@
 // Crawl: an eight-legged walker on Klann linkages. Each leg is a six-bar
 // linkage: the crank drives a connecting arm held by a lower rocker, and the
 // arm swings the leg, held at the top by an upper rocker. Turn the handle and
-// each foot sweeps flat along the floor for half a turn, then lifts high and
-// reaches forward; four feet are always down, so it stands on its own.
+// each foot follows a walking path, then lifts and reaches forward.
+// The legs are phased to support the body through the crank cycle.
 
 /* [Legs] */
 // Size: every length of the Klann linkage is this many mm per patent unit

@@ -26,12 +26,6 @@
   <url type="bugtracker">https://github.com/mylasertools/kerfscript/issues</url>
   <url type="vcs-browser">https://github.com/mylasertools/kerfscript</url>
   <url type="help">https://kerfscript.mylasertools.com/docs/</url>
-  <screenshots>
-    <screenshot type="default">
-      <image>https://kerfscript.mylasertools.com/screenshots/desktop.png</image>
-      <caption>A design with its settings and the cut file</caption>
-    </screenshot>
-  </screenshots>
   <categories>
     <category>Graphics</category>
     <category>Engineering</category>

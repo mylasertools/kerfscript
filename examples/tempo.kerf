@@ -1,4 +1,4 @@
-// Tempo: a Graham deadbeat escapement that really ticks. A falling weight
+// Tempo: a model of a Graham deadbeat escapement. A falling weight
 // turns the escape wheel; its teeth push the two pallets of the anchor in
 // turn, and the anchor swings the pendulum and lets the wheel on by half a
 // tooth each beat. The hand stands dead still between beats. Wind the knob

@@ -1,6 +1,6 @@
 ---
 import { DISPLAY_DEFS } from '../../public/assets/display.js';
-import { BASE, LOGO, NPM_URL, REPO_URL, SOURCE_PUBLIC, VERSION } from '../lib/site.mjs';
+import { BASE, LOGO, NPM_URL, REPO_URL, VERSION } from '../lib/site.mjs';
 
 interface Props {
   title: string;
@@ -27,7 +27,7 @@ const identity = {
   description:
     'A programming language for laser cutting. Design parametric parts, adjust them for your material and export SVG or DXF.',
   url: BASE,
-  ...(SOURCE_PUBLIC ? { codeRepository: REPO_URL } : {}),
+  codeRepository: REPO_URL,
   programmingLanguage: 'KerfScript',
   runtimePlatform: 'JavaScript',
   license: 'https://www.gnu.org/licenses/agpl-3.0.html',
@@ -78,7 +78,7 @@ const identity = {
               </a>
             ))
           }
-          {SOURCE_PUBLIC && <a href={REPO_URL}>GitHub</a>}
+          <a href={REPO_URL}>GitHub</a>
         </nav>
       </div>
     </header>
@@ -87,17 +87,13 @@ const identity = {
     </main>
     <footer class="site-footer">
       <div class:list={['bar', { wide }]}>
-        {
-          SOURCE_PUBLIC && (
-            <p class="footer-links">
-              <a href={REPO_URL}>Source on GitHub</a>
-              <a href={NPM_URL}>npm package</a>
-              <a href={`${REPO_URL}/issues`}>Report a problem</a>
-              <a href={`${REPO_URL}/blob/main/CHANGELOG.md`}>Changelog</a>
-              <a href={`${REPO_URL}/blob/main/CONTRIBUTING.md`}>Contributing</a>
-            </p>
-          )
-        }
+        <p class="footer-links">
+          <a href={REPO_URL}>Source on GitHub</a>
+          <a href={NPM_URL}>npm package</a>
+          <a href={`${REPO_URL}/issues`}>Report a problem</a>
+          <a href={`${REPO_URL}/blob/main/CHANGELOG.md`}>Changelog</a>
+          <a href={`${REPO_URL}/blob/main/CONTRIBUTING.md`}>Contributing</a>
+        </p>
         <p>
           KerfScript {VERSION} by <a
             href="https://mylasertools.com">MyLaserTools</a
