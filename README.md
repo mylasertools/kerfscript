@@ -22,6 +22,13 @@ is to laser cutters what OpenSCAD is to 3D printers, except it was designed for
 flat parts from the start: cut, score and engrave layers, kerf compensation,
 finger joints, living hinges, parts and sheets are part of the language.
 
+It is also a library for building **laser-cutting generators**: a web page,
+web service, app or script that takes a few settings (a size, a name, a number
+of slots) and returns SVG or DXF files ready to cut. The design is a `.kerf`
+file; your code passes settings in and takes cut files out, in Node.js, the
+browser, or any language that runs WebAssembly. See
+[Build a generator](#build-a-generator).
+
 <p align="center">
   <a href="https://kerfscript.mylasertools.com/playground/?model=fractal-tree"><img src=".github/readme/playground.gif" alt="Moving a slider in the playground changes the number in the code and redraws the fractal tree" width="840"></a>
   <br><sub>The <a href="https://kerfscript.mylasertools.com/playground/">playground</a> runs the interpreter in your browser. A comment after a number turns it into a slider.</sub>
@@ -64,6 +71,41 @@ That writes all six panels packed on a sheet, kerf compensated, as a
 millimetre SVG with one layer per operation. Output is checked automatically
 in Inkscape; see [docs/compatibility.md](docs/compatibility.md) for what has
 and has not been tested in other laser software.
+
+## Build a generator
+
+`parameters()` reads a design's settings, with their captions, ranges and
+choices, so you can build a form or an API from them. `render()` turns
+settings into cut files:
+
+```js
+import { readFile } from 'node:fs/promises';
+import { parameters, render } from '@mylasertools/kerfscript';
+
+const design = await readFile('box.kerf', 'utf8'); // integrations/http-api/box.kerf
+parameters(design).parameters; // width: number from 40 to 400, lid: boolean, ...
+
+const { sheets, parts, warnings } = render(design, { params: { width: 200, lid: false } });
+sheets[0].svg; // or sheets[0].dxf, one per sheet of material
+parts; // [{ name: 'bottom', width: 200, height: 80, cutLength: 740, ... }]
+```
+
+Working generators, each tested on every change, are in
+[integrations/](integrations):
+
+| Example                                     | What it makes                                                                                            |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| [Batch in Node.js](integrations/node-batch) | A name tag for every name in a list, as SVG and DXF, and all of them packed on one sheet                 |
+| [Web service](integrations/http-api)        | A box generator over HTTP: settings as JSON, cut files by URL, each render in a worker with a time limit |
+| [Web page](integrations/browser)            | A form built from the design's settings, a live preview and downloads, with no build step                |
+| [Python](integrations/python)               | Boxes in several sizes from Python through `kerfscript.wasm`, without Node.js                            |
+
+The [playground](https://kerfscript.mylasertools.com/playground/), the
+[desktop app](docs/desktop.md) and the
+[KerfScript Playground on MyLaserTools](https://www.mylasertools.com/kerfscript-playground)
+are generators built the same way. Programs written by other people should
+run in a worker you can stop; see
+[Running untrusted code](docs/javascript.md#running-untrusted-code).
 
 ## Made with KerfScript
 

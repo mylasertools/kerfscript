@@ -36,6 +36,9 @@ jobs:
           echo "$JAVY_SHA256  javy.gz" | sha256sum -c
           gunzip -c javy.gz > "$HOME/.local/bin/javy" && chmod +x "$HOME/.local/bin/javy" && rm javy.gz
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      # For the Python generator example in integrations/
+      - name: Python wasmtime
+        run: pip install wasmtime
       - name: Library, command line and WebAssembly
         run: |
           npm ci

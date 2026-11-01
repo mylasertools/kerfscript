@@ -18,6 +18,17 @@
   error naming the loop, where it used to fail with "Recursion too deep".
 - A comprehension in parentheses can be the first item of a list:
   `[(for (i = [0:2]) i)]`.
+- `SIGNATURES` (also `@mylasertools/kerfscript/signatures`): every built-in
+  module and function with its parameters, defaults and a line of
+  documentation, for editors and help text. Tests keep it in step with the
+  interpreter, the highlighter, the VS Code grammar and the reference.
+- Built-in modules and `assert`, `text_width`, `text_metrics` and
+  `finger_count` warn about named arguments they do not take, as user
+  modules and functions already did: `rect(10, radius = 2)` warns that
+  `radius` is unknown.
+- [integrations/](integrations): four working laser-cutting generators, a
+  batch script, a web service, a web page and a Python script, each run by
+  the tests.
 - A VS Code extension in `editors/vscode` with a TextMate grammar, snippets
   and file icons. A test checks that it colours every example the same way
   as the highlighter.

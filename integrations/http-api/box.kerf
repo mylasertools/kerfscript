@@ -1,0 +1,14 @@
+// A finger-jointed box from its outer size.
+use <kerf/box>
+
+/* [Size] */
+width = 120; // [40:5:400]
+depth = 80; // [40:5:400]
+height = 50; // [20:5:300]
+lid = true;
+
+/* [Material] */
+$thickness = 3; // [1.5:0.5:10]
+$kerf = 0.15; // [0:0.01:0.5]
+
+box([width, depth, height], lid = lid);

@@ -67,9 +67,11 @@ protects or feeds the next.
       ([conformance](conformance/README.md)), and every example's output
       stored so a change to a saved design fails a test
 - [ ] The VS Code extension on the Marketplace and Open VSX
-- [ ] One table of built-in signatures, with parameters, defaults and a
+- [x] One table of built-in signatures, with parameters, defaults and a
       line of documentation each, for errors, hover, completion and the
       reference
+- [x] Working generator examples in [integrations/](integrations), run by
+      the tests
 - [ ] Diagnostics that show the source line, underline the expression,
       list the expected arguments and trace calls and libraries
 - [ ] `kerf fmt` with a check mode, keeping comments and customizer

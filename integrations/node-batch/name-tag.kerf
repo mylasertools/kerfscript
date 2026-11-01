@@ -1,0 +1,26 @@
+// A name tag with a hanging hole; the name sets the width. Render it on its
+// own, or `use <name-tag>` to make many tags with name_tag().
+
+/* [Tag] */
+name = "Ada";
+size = 12; // [8:1:24]
+hole = 4; // [3:0.5:6]
+
+/* [Material] */
+$thickness = 3;
+$kerf = 0.15; // [0:0.01:0.3]
+
+module name_tag(name, size = 12, hole = 4) {
+  pad = 6;
+  width = text_width(name, size) + 2 * pad + hole * 2;
+  height = size + 2 * pad;
+  part(str("tag ", name)) {
+    difference() {
+      rect([width, height], r = 3);
+      translate([pad + hole / 2, height / 2]) circle(d = hole);
+    }
+    engrave() translate([pad + hole * 2, height / 2]) text(name, size, valign = "center");
+  }
+}
+
+name_tag(name, size, hole);

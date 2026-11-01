@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Coaster generator</title>
+    <!-- The KerfScript package from npm, through a CDN. Pin the version. -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@mylasertools/kerfscript": "https://cdn.jsdelivr.net/npm/@mylasertools/kerfscript@0.4.0/dist/index.js"
+        }
+      }
+    </script>
+    <style>
+      body {
+        font:
+          15px system-ui,
+          sans-serif;
+        margin: 24px;
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+      }
+      form {
+        display: grid;
+        gap: 10px;
+        min-width: 240px;
+        align-content: start;
+      }
+      label {
+        display: grid;
+        gap: 4px;
+      }
+      #preview {
+        width: min(480px, 100%);
+        border: 1px solid #ddd;
+        background: #fff;
+      }
+      #preview svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      #message {
+        color: #a3291a;
+        min-height: 1.2em;
+      }
+    </style>
+  </head>
+  <body>
+    <form id="settings">
+      <h1>Coaster generator</h1>
+      <p id="message"></p>
+      <button type="button" id="svg">Download SVG</button>
+      <button type="button" id="dxf">Download DXF</button>
+    </form>
+    <div id="preview"></div>
+    <script type="module" src="generator.js"></script>
+  </body>
+</html>
