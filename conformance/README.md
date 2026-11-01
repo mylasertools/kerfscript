@@ -2,7 +2,7 @@
 
 Small KerfScript programs with their expected results. Together they make
 the [specification](../docs/specification.md) testable: an implementation
-conforms to language version 0.1 when it gives the expected result for
+conforms to language version 0.2 when it gives the expected result for
 every case. They also protect existing designs, since a change that alters
 the result of a case changes the language.
 

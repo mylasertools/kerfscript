@@ -149,7 +149,7 @@ A library's top folder holds its `kerf.json`:
   "version": "1.0.0",
   "description": "Holes for rubber feet",
   "license": "MIT",
-  "language": "0.1",
+  "language": "0.2",
   "libraries": {}
 }
 ```

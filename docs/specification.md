@@ -1,6 +1,6 @@
 # Specification
 
-Language version 0.1. Copyright (c) 2026 MyLaserTools. This document is
+Language version 0.2. Copyright (c) 2026 MyLaserTools. This document is
 licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 This document defines KerfScript programs precisely: what text is a
@@ -11,7 +11,7 @@ differ, this document is the one to fix.
 
 The [conformance suite](../conformance/README.md) turns these rules into
 small programs with expected results. Each section below names the cases
-that test it. An implementation conforms to language version 0.1 when it
+that test it. An implementation conforms to language version 0.2 when it
 passes every case.
 
 ## Notation

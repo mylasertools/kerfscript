@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 (2026-10-31)
+
+Language version 0.2. Programs for 0.1 run as before, except where noted
+below: `echo()` keeps the order of its arguments, built-in modules warn
+about arguments they do not take, and `[(for ...)]` parses. The six new
+standard libraries need 0.2, so a shared library that uses them can say so
+with `"language": "0.2"` in its `kerf.json`.
 
 - `@mylasertools/kerfscript/highlight`: syntax colouring as its own small
   module (4 KB), for editors and pages that show KerfScript code. The site,

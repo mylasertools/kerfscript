@@ -24,5 +24,5 @@ export {
   type ParamInfo,
 } from './signatures.js';
 
-export const VERSION = '0.4.0';
-export const LANGUAGE_VERSION = '0.1';
+export const VERSION = '0.5.0';
+export const LANGUAGE_VERSION = '0.2';

@@ -1,6 +1,6 @@
 {
   "name": "@mylasertools/kerfscript",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "KerfScript: a programming language and library for laser-cutting generators. Write parametric 2D parts with cut, score and engrave layers, kerf compensation and joinery, then turn settings into SVG or DXF cut files from Node.js, the browser, the command line or WebAssembly.",
   "type": "module",
   "license": "AGPL-3.0-only",
