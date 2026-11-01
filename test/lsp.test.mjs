@@ -1,10 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+
+// The standard library's paths, as completion lists them
+const STDLIB = readdirSync('lib/kerf')
+  .filter((f) => f.endsWith('.kerf'))
+  .map((f) => `kerf/${f.slice(0, -5)}`)
+  .sort();
 
 // An editor's side of the Language Server Protocol, talking to kerf lsp
 function client(args = ['dist/cli.js', 'lsp']) {
@@ -216,7 +222,7 @@ test('kerf lsp answers an editor', async (t) => {
     });
     assert.deepEqual(
       libs.result.items.map((i) => i.label),
-      ['kerf/box', 'tabs'],
+      [...STDLIB, 'tabs'],
     );
   });
 

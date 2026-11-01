@@ -158,7 +158,7 @@
         },
         {
           "comment": "Built-in modules",
-          "match": "\\b(rect|square|circle|ellipse|regular_polygon|star|polygon|path|line|polyline|arc|text|translate|rotate|scale|mirror|multmatrix|union|group|difference|intersection|hull|offset|stroke|outline|part|material|children|echo|assert|finger_rect|finger_holes|tslot|living_hinge|box|divider)\\s*(?=\\()",
+          "match": "\\b(rect|square|circle|ellipse|regular_polygon|star|polygon|path|line|polyline|arc|text|translate|rotate|scale|mirror|multmatrix|union|group|difference|intersection|hull|offset|stroke|outline|part|material|children|echo|assert|finger_rect|finger_holes|tslot|living_hinge|box|divider|kerf_gauge|slot_gauge|joint_test|slotted_divider|grid_dividers|enclosure|enclosure_cutouts|vents|keyhole|keyholes|hanging_hole|hanging_loop|flex_rect|flex_box|flex_panel|tabs|slots|tab_rect)\\s*(?=\\()",
           "captures": { "1": { "name": "support.function.builtin.kerfscript" } }
         },
         {

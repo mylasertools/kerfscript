@@ -1,0 +1,42 @@
+// kerf/tabs: tab and slot joints, for one panel standing on another.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+
+// Centres of `count` tabs spread evenly along an edge `length` long.
+// Without a count, one tab for every 50 mm, and at least one.
+function tab_positions(length, count = undef) =
+  let (n = is_undef(count) ? max(1, round(length / 50)) : count)
+  n < 1 ? assert(false, "count must be at least 1") :
+  [for (i = [0:n - 1]) length * (i + 0.5) / n];
+
+// Tabs along x from 0 to `length`, hanging `depth` below y = 0: join them
+// to the bottom edge of a panel, and cut slots() where they go through.
+// Each tab is `width` wide, half the space between tabs by default, and
+// `depth` defaults to $thickness, flush with the far side.
+module tabs(length, count = undef, width = undef, depth = undef) {
+  at = tab_positions(length, count);
+  w = is_undef(width) ? length / (2 * len(at)) : width;
+  h = is_undef(depth) ? $thickness : depth;
+  for (x = at) translate([x - w / 2, -h]) rect([w, h]);
+}
+
+// The slots that tabs() with the same length, count and width go
+// through, centred on y = 0. `clearance` is added to the width and to
+// $thickness, so the tabs slide in.
+module slots(length, count = undef, width = undef, clearance = 0.1) {
+  at = tab_positions(length, count);
+  w = is_undef(width) ? length / (2 * len(at)) : width;
+  for (x = at) translate([x, 0]) rect([w + clearance, $thickness + clearance], center = true);
+}
+
+// A rectangle with tabs on some of its edges, outside `size`. `edges` is
+// true or false for all four, or [bottom, right, top, left].
+module tab_rect(size, edges = true, count = undef, width = undef) {
+  e = is_list(edges) ? edges : [edges, edges, edges, edges];
+  w = size[0];
+  h = size[1];
+  rect([w, h]);
+  if (e[0]) tabs(w, count, width);
+  if (e[1]) translate([w, 0]) rotate(90) tabs(h, count, width);
+  if (e[2]) translate([w, h]) rotate(180) tabs(w, count, width);
+  if (e[3]) translate([0, h]) rotate(270) tabs(h, count, width);
+}

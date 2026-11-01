@@ -1,0 +1,41 @@
+// kerf/dividers: dividers that slot into each other like an egg crate.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+
+// A divider `length` long and `height` tall, with a slot half its height
+// at each x in `at` for a divider that crosses it: from the top, or from
+// the bottom with from = "bottom". Two crossing dividers take one of
+// each. `scoops` dips in the top edge, evenly spaced, make room for a
+// finger; `clearance` is added to the slot width.
+module slotted_divider(length, height, at = [], from = "top", clearance = 0.15, scoops = 0) {
+  s = $thickness + clearance;
+  difference() {
+    rect([length, height], r = 1);
+    if (scoops > 0)
+      for (k = [0:scoops - 1])
+        translate([length * (k + 0.5) / scoops, height])
+          ellipse([min(length / scoops * 0.3, 30), height * 0.35], $fn = 64);
+    for (x = at) translate([x - s / 2, from == "top" ? height / 2 : -1]) rect([s, height / 2 + 1]);
+  }
+}
+
+// A grid of dividers for the inside of a box or drawer, `size` =
+// [width, depth, height], making `cols` compartments across and `rows`
+// front to back. The parts "long divider" run left to right and "cross
+// divider" front to back. They stop `gap` short of the walls, and stand
+// in the assembly with the inside's front left bottom corner at `at`.
+module grid_dividers(size, cols = 2, rows = 2, clearance = 0.15, gap = 0.5, scoops = false, at = [0, 0, 0]) {
+  t = $thickness;
+  w = size[0];
+  d = size[1];
+  h = size[2];
+  if (rows > 1)
+    part("long divider", qty = rows - 1, rotate = [90, 0, 0],
+      at = [for (i = [1:rows - 1]) at + [gap, d * i / rows + t / 2, 0]])
+      slotted_divider(w - 2 * gap, h, cols > 1 ? [for (j = [1:cols - 1]) w * j / cols - gap] : [],
+        "top", clearance, scoops ? cols : 0);
+  if (cols > 1)
+    part("cross divider", qty = cols - 1, rotate = [90, 0, 90],
+      at = [for (j = [1:cols - 1]) at + [w * j / cols - t / 2, gap, 0]])
+      slotted_divider(d - 2 * gap, h, rows > 1 ? [for (i = [1:rows - 1]) d * i / rows - gap] : [],
+        "bottom", clearance, scoops ? rows : 0);
+}

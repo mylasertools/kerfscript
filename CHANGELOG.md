@@ -63,6 +63,20 @@
 - `@mylasertools/kerfscript/language`: the language server's answers as
   functions, for editors in a browser or your own tools.
 - `KerfError` has `warnings`, the warnings before the error.
+- Standard library: six new libraries, each with a picture, an example and
+  tests, described in [Standard library](docs/library.md). `kerf/tabs`:
+  tab and slot joints. `kerf/hinge`: living hinge panels, `bend_length()`
+  and `flex_box()`, a box with round corners. `kerf/dividers`: egg-crate
+  dividers. `kerf/hanging`: keyholes, holes and hanging loops.
+  `kerf/enclosure`: boxes with a lid held by screws and nuts, with cutouts
+  and vents. `kerf/calibration`: a kerf gauge, a slot gauge and finger
+  joint test pairs.
+- New examples built on them: a spice shelf, a flex box, a wall sign, a
+  project enclosure and a calibration set. The drawer organizer, the kerf
+  test and the hinge card now use the libraries; their output is unchanged,
+  except that the drawer organizer's dividers are named `long divider` and
+  `cross divider`.
+- The editors colour the new library modules like `box()` and `divider()`.
 
 ## 0.4.0 (2026-10-30)
 

@@ -78,7 +78,7 @@ protects or feeds the next.
       annotations
 - [x] A language server: errors while typing, hover, parameter hints,
       completion, go to definition, find references and format on save
-- [ ] Standard library: tabs and slots, hinges, dividers, hanging holes,
+- [x] Standard library: tabs and slots, hinges, dividers, hanging holes,
       enclosures and material calibration, each with parameters, a picture,
       an example and tests
 - [ ] Shared libraries: a way to publish, version and pin `.kerf`

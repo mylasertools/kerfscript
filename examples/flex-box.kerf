@@ -1,0 +1,32 @@
+// Flex box: a box with round corners, its four sides one strip of
+// plywood bent by living hinges. The bottom's tabs lock into slots along
+// the strip, and the lid sits on top, kept in place by an insert glued
+// under it. Bend the strip slowly; warm, slightly damp plywood bends best.
+
+use <kerf/hinge>
+
+/* [Box] */
+// Outside width
+width = 120; // [70:5:250]
+// Outside depth
+depth = 80; // [70:5:250]
+// Outside height, lid included
+height = 60; // [30:5:150]
+// Outside corner radius
+radius = 18; // [10:1:35]
+// With a lid, or an open tray
+lid = true;
+
+/* [Material] */
+// Sheet thickness; living hinges suit 3 mm plywood or thinner
+$thickness = 3; // [1.5:0.5:4]
+// Beam width
+$kerf = 0.15; // [0:0.01:0.3]
+// Distance between the hinge cuts: closer bends easier
+spacing = 1.5; // [1:0.25:3]
+
+/* [Hidden] */
+$material = "plywood";
+$fn = 64;
+
+flex_box([width, depth, height], r = radius, lid = lid, spacing = spacing);

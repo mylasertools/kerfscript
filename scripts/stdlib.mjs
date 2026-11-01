@@ -4,7 +4,9 @@ import { join, relative, sep } from 'node:path';
 const root = 'lib';
 const out = {};
 async function walk(dir) {
-  for (const e of await readdir(dir, { withFileTypes: true })) {
+  // Sorted, so the generated file is the same on every system
+  const entries = await readdir(dir, { withFileTypes: true });
+  for (const e of entries.sort((a, b) => (a.name < b.name ? -1 : 1))) {
     const p = join(dir, e.name);
     if (e.isDirectory()) await walk(p);
     else if (e.name.endsWith('.kerf'))

@@ -576,8 +576,7 @@ export function startServer(options: ServerOptions = {}) {
       const base = baseOf(doc);
       return analysis(doc).libraries.flatMap((l) => {
         const range = toRange(doc.starts, l.start, l.end);
-        if (isStdlib(l.path))
-          return [{ range, target: `${STDLIB_SOURCE}${l.path}.kerf` }];
+        if (isStdlib(l.path)) return [{ range, target: `${STDLIB_SOURCE}${l.path}.kerf` }];
         const file = base && libraryFile(base, l.path, isFile);
         return file ? [{ range, target: pathToFileURL(file).href }] : [];
       });

@@ -44,6 +44,7 @@ export const GUIDES = [
   ['layers', 'Layers'],
   ['kerf', 'Kerf'],
   ['parts-and-sheets', 'Parts and sheets'],
+  ['library', 'Standard library'],
   ['customizer', 'Settings'],
   ['desktop', 'Desktop app'],
   ['cli', 'Command line'],
@@ -99,6 +100,17 @@ export const marked = new Marked({
       const text = this.parser.parseInline(tokens);
       const id = slug(text);
       return `<h${depth} id="${id}"><a class="anchor" href="#${id}">${text}</a></h${depth}>\n`;
+    },
+    // Pictures next to the guides, as docs/library/box.svg, are put in the
+    // page, so the site needs no copy of them
+    image({ href, text }) {
+      if (/^[a-z-]+\/[a-z-]+\.svg$/.test(href)) {
+        const svg = read(`docs/${href}`);
+        const [, w, h] = /width="(\d+)" height="(\d+)"/.exec(svg) ?? [];
+        const size = w ? ` width="${w}" height="${h}"` : '';
+        return `<img class="picture" src="data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}" alt="${esc(text)}"${size}>`;
+      }
+      return /^https?:/.test(href) ? `<img src="${esc(href)}" alt="${esc(text)}">` : esc(text);
     },
     link({ href, tokens }) {
       const text = this.parser.parseInline(tokens);

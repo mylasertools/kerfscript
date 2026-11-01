@@ -1,0 +1,62 @@
+// Spice shelf: a wall shelf held together by tabs and slots, no glue or
+// screws in the joints. The shelves and their front rails tab into the
+// sides, and the sides tab into the back, which hangs on two screws by
+// its keyholes.
+
+use <kerf/tabs>
+use <kerf/hanging>
+
+/* [Shelf] */
+// Outside width
+width = 260; // [120:10:500]
+// Outside height
+height = 240; // [120:10:500]
+// Depth from the wall
+depth = 70; // [40:5:150]
+// Number of shelves
+shelves = 2; // [1:1:5]
+// Height of the rail in front of each shelf
+rail = 22; // [0:1:40]
+
+/* [Material] */
+// Sheet thickness, measured
+$thickness = 3; // [2:0.5:6]
+// Beam width
+$kerf = 0.15; // [0:0.01:0.3]
+// Added to every slot, for an easy fit
+clearance = 0.1; // [0:0.05:0.3]
+
+/* [Hidden] */
+$material = "plywood";
+t = $thickness;
+// The back reaches past the sides, so their slots are closed all round
+inset = 6;
+// Between the sides, and out from the back
+span = width - 2 * inset - 2 * t;
+reach = depth - t;
+// Where each shelf's underside is, the lowest one 10 mm up
+levels = [for (i = [0:shelves - 1]) 10 + i * (height - 40) / max(1, shelves)];
+// Where the rails stand, measured on a side from the back
+rail_at = reach - 1.5 * t;
+
+part("back", at = [0, t, 0], rotate = [90, 0, 0])
+  keyholes(span / 2, at = [width / 2, height - 18]) difference() {
+    rect([width, height], r = 4);
+    for (x = [inset + t / 2, width - inset - t / 2]) translate([x, 0]) rotate(90) slots(height, clearance = clearance);
+  }
+
+part("side", qty = 2, rotate = [90, 0, 90], at = [[inset, t, 0], [width - inset - t, t, 0]]) difference() {
+  tab_rect([reach, height], [false, false, false, true]);
+  for (z = levels) {
+    translate([0, z + t / 2]) slots(reach, clearance = clearance);
+    if (rail > 0) translate([rail_at, z + t]) rotate(90) slots(rail, clearance = clearance);
+  }
+}
+
+part("shelf", qty = shelves, at = [for (z = levels) [inset + t, t, z]])
+  tab_rect([span, reach], [false, true, false, true]);
+
+if (rail > 0)
+  part("rail", qty = shelves, rotate = [90, 0, 0],
+    at = [for (z = levels) [inset + t, t + rail_at + t / 2, z + t]])
+    tab_rect([span, rail], [false, true, false, true]);

@@ -1,0 +1,54 @@
+// Project enclosure: a box for a small electronics project, its lid held
+// by four M3 screws and nuts so it comes off again. The front has a
+// switch and a power jack, the back a USB port, and the lid and the
+// sides vents. Change the cutouts to suit your board.
+
+use <kerf/enclosure>
+
+/* [Box] */
+// Outside width, lid included
+width = 150; // [80:5:300]
+// Outside depth
+depth = 100; // [60:5:250]
+// Outside height
+height = 60; // [40:5:150]
+// Vents in the lid and the sides
+vents = true;
+
+/* [Screws] */
+// Screw diameter
+screw = 3; // [2.5, 3, 4]
+// Screw length under the head
+screw_length = 12; // [10:1:25]
+
+/* [Material] */
+// Sheet thickness
+$thickness = 3; // [3:0.5:6]
+// Beam width
+$kerf = 0.15; // [0:0.01:0.3]
+
+/* [Hidden] */
+$material = "plywood";
+$fn = 48;
+// The walls stand in from the lid's edge by a screw's width
+w = width - 2 * screw;
+d = depth - 2 * screw;
+h = height - $thickness;
+
+ports = [
+  ["front", [w * 0.25, h / 2], 12.5],
+  ["front", [w * 0.75, h / 2], 8],
+  ["back", [w / 2, 14], [13, 6.5]],
+  ["bottom", [12, 12], 3.2],
+  ["bottom", [w - 12, 12], 3.2],
+  ["bottom", [12, d - 12], 3.2],
+  ["bottom", [w - 12, d - 12], 3.2],
+];
+air = [
+  ["lid", [width / 2, depth / 2], [width * 0.5, depth * 0.35], "vents"],
+  ["left", [d / 2, h / 2], [d * 0.5, h * 0.4], "vents"],
+  ["right", [d / 2, h / 2], [d * 0.5, h * 0.4], "vents"],
+];
+
+enclosure([width, depth, height], screw = screw, screw_length = screw_length,
+  cutouts = vents ? concat(ports, air) : ports);

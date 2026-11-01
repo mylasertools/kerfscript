@@ -1,0 +1,67 @@
+// kerf/hinge: living hinges, for bending flat sheet around a corner.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+
+use <kerf/tabs>
+
+// Length of living hinge that bends `angle` degrees around an inside
+// radius `r`: the arc along the middle of the sheet.
+function bend_length(r, angle = 90) = PI * (r + $thickness / 2) * angle / 180;
+
+// A rectangle that bends: a living hinge across its full height at each x
+// in `bends`, centred there and `width` wide. The width defaults to a
+// 90° bend around three thicknesses; `r` rounds the corners.
+module flex_rect(size, bends, width = undef, spacing = 1.5, bridge = 3, r = 0) {
+  w = is_undef(width) ? bend_length(3 * $thickness) : width;
+  rect(size, r = r);
+  for (x = bends)
+    translate([x - w / 2, 0]) living_hinge([w, size[1]], spacing = spacing, bridge = bridge);
+}
+
+// Box with rounded corners whose four sides are one strip, bent at the
+// corners by living hinges. The bottom's tabs go through slots in the
+// strip; the lid rests on top, kept in place by an insert glued under it.
+// `size` is the outside [width, depth, height], lid included, and `r` the
+// outside corner radius, more than two thicknesses.
+module flex_box(size, r = 15, lid = true, clearance = 0.1, spacing = 1.5, bridge = 3) {
+  t = $thickness;
+  w = size[0];
+  d = size[1];
+  h = lid ? size[2] - t : size[2];
+  assert(r > 2 * t, "r must be more than two thicknesses");
+  assert(w >= 2 * r && d >= 2 * r, "width and depth must be at least 2 * r");
+  // Straight runs and the bends at the corners, measured along the strip
+  sw = w - 2 * r;
+  sd = d - 2 * r;
+  b = bend_length(r - t);
+  L = 2 * sw + 2 * sd + 4 * b;
+  // The strip starts in the middle of the front and goes round
+  // anticlockwise seen from above: where each run starts, and its length
+  runs = [[-sw / 2, sw], [sw / 2 + b, sd], [sw / 2 + 2 * b + sd, sw], [1.5 * sw + 3 * b + sd, sd]];
+  bends = [sw / 2 + b / 2, sw / 2 + 1.5 * b + sd, 1.5 * sw + 2.5 * b + sd, 1.5 * sw + 3.5 * b + 2 * sd];
+  part("side") difference() {
+    flex_rect([L, h], bends, width = b, spacing = spacing, bridge = bridge);
+    // The front run crosses the ends: its slots are cut at both
+    for (run = runs, o = [0, L])
+      if (run[1] > 0) translate([run[0] + o, 1.5 * t]) slots(run[1], clearance = clearance);
+  }
+  part("bottom") flex_panel([w - 2 * t, d - 2 * t], r - t, sw, sd);
+  if (lid) {
+    part("lid") rect([w, d], r = r);
+    part("lid insert")
+      offset(delta = -clearance) rect([w - 2 * t, d - 2 * t], r = r - t);
+  }
+}
+
+// The bottom of flex_box(): a rounded rectangle with tabs on its straight
+// runs, `sw` long on the front and back and `sd` on the sides.
+module flex_panel(size, r, sw, sd) {
+  rect(size, r = r);
+  if (sw > 0) {
+    translate([r, 0]) tabs(sw);
+    translate([r + sw, size[1]]) rotate(180) tabs(sw);
+  }
+  if (sd > 0) {
+    translate([size[0], r]) rotate(90) tabs(sd);
+    translate([0, r + sd]) rotate(270) tabs(sd);
+  }
+}

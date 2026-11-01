@@ -72,6 +72,16 @@ millimetre SVG with one layer per operation. Output is checked automatically
 in Inkscape; see [docs/compatibility.md](docs/compatibility.md) for what has
 and has not been tested in other laser software.
 
+`kerf/box` is one of the libraries in the
+[standard library](docs/library.md), built into every renderer:
+[tabs and slots](docs/library.md#tabs-and-slots),
+[living hinges](docs/library.md#living-hinges) and a box with round corners,
+[egg-crate dividers](docs/library.md#dividers),
+[keyholes and hanging loops](docs/library.md#hanging),
+[enclosures](docs/library.md#enclosures) with a screwed-on lid, and
+[test pieces](docs/library.md#calibration) that measure your laser's
+kerf and how your sheet fits.
+
 ## Build a generator
 
 `parameters()` reads a design's settings, with their captions, ranges and
@@ -217,12 +227,14 @@ Errors are thrown as `KerfError` with `line` and `col`.
   the [desktop app](docs/desktop.md), the [command line](docs/cli.md), the
   [JavaScript API](docs/javascript.md)
   and [WebAssembly](docs/webassembly.md) for other languages
+- [Standard library](docs/library.md): joints, hinges, dividers, hanging
+  holes, enclosures and test pieces, with a picture and an example of each
 - [Coming from OpenSCAD](docs/openscad.md): what is the same and what is not
 - [LANGUAGE.md](LANGUAGE.md): the full language reference
 - [Versions](docs/versions.md): language and package versions, and what stays
   stable before 1.0
 - [examples/](examples): every model on the website, including a
-  calibration square and a kerf test
+  calibration set, a calibration square and a kerf test
 
 ## Community
 

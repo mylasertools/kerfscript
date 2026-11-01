@@ -1,0 +1,56 @@
+// kerf/calibration: test pieces that measure your laser and your sheet,
+// before you cut a design that depends on them. The labels are text, so
+// they need a font; turn them off with labels = false.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+
+// Kerf gauge: a frame and `strips` strips inside it, all separated by
+// single cuts, which kerf compensation does not move. Push the strips to
+// one side and measure the gap they leave: the kerf is the gap divided by
+// strips + 1. `size` is the window the strips fill.
+module kerf_gauge(strips = 10, size = [60, 25], labels = true) {
+  foot = labels ? 12 : 6;
+  w = size[0] + 12;
+  rect([w, size[1] + 6 + foot], r = 2);
+  translate([6, foot]) {
+    outline() rect(size);
+    for (i = [1:strips - 1]) line([size[0] * i / strips, 0], [size[0] * i / strips, size[1]]);
+  }
+  if (labels)
+    engrave() translate([w / 2, 4]) text(str("kerf = gap / ", strips + 1), size = 3.5, halign = "center");
+}
+
+// Slot gauge: `steps` slots `depth` deep, from narrower than $thickness
+// to wider by `step` each, labelled with the difference. Try a scrap of
+// the same sheet in each: the one that fits as you want is the clearance
+// to add to slots.
+module slot_gauge(steps = 7, step = 0.1, depth = 15, labels = true) {
+  pitch = $thickness + 8;
+  deltas = [for (i = [0:steps - 1]) round((i - (steps - 1) / 2) * step * 100) / 100];
+  difference() {
+    rect([steps * pitch + 4, depth + 12], r = 2);
+    for (i = [0:steps - 1])
+      translate([pitch / 2 + 2 + i * pitch - ($thickness + deltas[i]) / 2, 12])
+        rect([$thickness + deltas[i], depth + 1]);
+  }
+  if (labels)
+    engrave() for (i = [0:steps - 1])
+      translate([pitch / 2 + 2 + i * pitch, 4])
+        text(str(deltas[i] > 0 ? "+" : "", deltas[i]), size = 3.5, halign = "center");
+}
+
+// Finger joint test: a pair of pieces for each kerf in `kerfs`, cut with
+// that kerf compensation, as parts "joint <kerf> out" and "joint <kerf>
+// in". Push each pair together: the kerf of the pair that holds without
+// glue and without forcing is the one to set for this sheet.
+module joint_test(kerfs = [0.1, 0.15, 0.2], size = [40, 20], finger = undef, labels = true) {
+  for (k = kerfs) {
+    $kerf = k;
+    for (edge = ["out", "in"])
+      part(str("joint ", k, " ", edge)) {
+        finger_rect(size, [edge, "flat", "flat", "flat"], finger = finger);
+        if (labels)
+          engrave() translate([size[0] / 2, (size[1] + $thickness) / 2])
+            text(str(k), size = 4, halign = "center", valign = "center");
+      }
+  }
+}

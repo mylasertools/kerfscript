@@ -237,6 +237,16 @@
     "tags": ["joinery", "library", "parts"]
   },
   {
+    "file": "spice-shelf",
+    "title": "Tab-and-slot spice shelf",
+    "tags": ["joinery", "library", "parts", "tabs"]
+  },
+  {
+    "file": "project-enclosure",
+    "title": "Project enclosure",
+    "tags": ["joinery", "library", "parts", "holes"]
+  },
+  {
     "file": "solstice",
     "title": "Solstice lantern",
     "tags": ["lantern", "tabs", "holes"]
@@ -282,12 +292,22 @@
   {
     "file": "hinge-card",
     "title": "Living hinge card",
-    "tags": ["flex", "cut lines"]
+    "tags": ["flex", "cut lines", "library"]
+  },
+  {
+    "file": "flex-box",
+    "title": "Flex box with round corners",
+    "tags": ["flex", "library", "joinery", "parts"]
   },
   {
     "file": "name-sign",
     "title": "Name sign",
     "tags": ["text", "measuring"]
+  },
+  {
+    "file": "wall-sign",
+    "title": "Hanging wall sign",
+    "tags": ["library", "holes", "text", "engrave"]
   },
   {
     "file": "calibration-square",
@@ -297,6 +317,11 @@
   {
     "file": "kerf-test",
     "title": "Kerf and fit test",
-    "tags": ["calibration", "kerf", "joinery"]
+    "tags": ["calibration", "kerf", "joinery", "library"]
+  },
+  {
+    "file": "calibration-set",
+    "title": "Calibration set",
+    "tags": ["calibration", "kerf", "library", "joinery"]
   }
 ]

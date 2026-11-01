@@ -52,7 +52,11 @@ export const BUILTINS = new Set(
     'rect square circle ellipse regular_polygon star polygon path line polyline arc text ' +
     'translate rotate scale mirror multmatrix union group difference intersection hull offset ' +
     'stroke outline part material children echo assert finger_rect finger_holes tslot ' +
-    'living_hinge box divider ' +
+    'living_hinge ' +
+    // Modules in the standard library
+    'box divider kerf_gauge slot_gauge joint_test slotted_divider grid_dividers enclosure ' +
+    'enclosure_cutouts vents keyhole keyholes hanging_hole hanging_loop flex_rect flex_box ' +
+    'flex_panel tabs slots tab_rect ' +
     'abs sign floor ceil round sqrt pow exp ln log sin cos tan asin acos atan atan2 min max clamp ' +
     'lerp norm cross len concat reverse sum slice str chr ord upper lower split join search ' +
     'contains lookup is_num is_string is_bool is_list is_undef is_function type_of rands ' +

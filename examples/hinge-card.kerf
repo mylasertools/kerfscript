@@ -1,8 +1,9 @@
-// Card with a living hinge down the middle and a scored fold guide.
+// Card with a living hinge down the middle, from the hinge library.
+
+use <kerf/hinge>
 
 width = 160; // [80:5:300]
 height = 100; // [50:5:200]
 hinge = 24; // [10:1:60]
 
-rect([width, height], r = 4);
-translate([(width - hinge) / 2, 0]) living_hinge([hinge, height], spacing = 1.5);
+flex_rect([width, height], bends = [width / 2], width = hinge, r = 4);

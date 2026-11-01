@@ -1,0 +1,25 @@
+// Calibration set: cut it once for every new material, before anything
+// that has to fit. The kerf gauge measures the beam, the slot gauge how
+// wide a slot your sheet needs, and the joint pairs which kerf setting
+// makes finger joints that hold.
+
+use <kerf/calibration>
+
+/* [Tests] */
+// Which pieces to cut
+pieces = "all"; // [all:All three, kerf:Kerf gauge, slots:Slot gauge, joints:Joint pairs]
+// Strips in the kerf gauge
+strips = 10; // [5:1:20]
+// Kerf settings to try on the joint pairs
+kerfs = [0.1, 0.15, 0.2];
+
+/* [Material] */
+// Sheet thickness, as you measured it
+$thickness = 3; // [1:0.5:10]
+
+/* [Hidden] */
+$material = "plywood";
+
+if (pieces == "all" || pieces == "kerf") part("kerf gauge") kerf_gauge(strips);
+if (pieces == "all" || pieces == "slots") part("slot gauge") slot_gauge();
+if (pieces == "all" || pieces == "joints") joint_test(kerfs);

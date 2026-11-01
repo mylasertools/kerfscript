@@ -169,10 +169,10 @@ def drawer_organizer(w=240, d=160, h=50, t=3, cols=4, rows=2):
 
     def place(p, parts):
         n = p["name"]
-        if n == "Long divider":
+        if n == "long divider":
             y = t + inner[1] * p["copy"] / rows
             return T(t + 0.5, y + t / 2, t) @ R("X", 90)
-        if n == "Cross divider":
+        if n == "cross divider":
             x = t + inner[0] * p["copy"] / cols
             return T(x - t / 2, t + 0.5, t) @ SIDEWAYS
         return panels(p, parts)

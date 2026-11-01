@@ -14,6 +14,12 @@ import {
   signatureHelp,
 } from '../dist/language.js';
 
+// The standard library's paths, as completion lists them
+const STDLIB = readdirSync('lib/kerf')
+  .filter((f) => f.endsWith('.kerf'))
+  .map((f) => `kerf/${f.slice(0, -5)}`)
+  .sort();
+
 // The offset of the nth match of text that is not part of a longer name,
 // plus some characters
 const at = (src, text, n = 0, plus = 0) => {
@@ -190,7 +196,7 @@ test('completion knows statements, expressions and arguments', () => {
   assert.deepEqual(labels('module '), []);
   assert.deepEqual(labels('x = 1'), []);
   const lib = complete(analyze('use <ke', { libraries: ['tabs'] }), 7);
-  assert.deepEqual([lib.from, lib.items.map((i) => i.label)], [5, ['kerf/box', 'tabs']]);
+  assert.deepEqual([lib.from, lib.items.map((i) => i.label)], [5, [...STDLIB, 'tabs']]);
 });
 
 test('parameter hints follow the argument being typed', () => {

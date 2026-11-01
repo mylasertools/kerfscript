@@ -518,6 +518,127 @@
   "echoes": [],
   "warnings": []
  },
+ "calibration-set.kerf": {
+  "parts": [
+   {
+    "name": "kerf gauge",
+    "qty": 1,
+    "size": [
+     72,
+     43
+    ],
+    "pieces": 1,
+    "cut": 622,
+    "thickness": 3,
+    "kerf": 0,
+    "material": "plywood"
+   },
+   {
+    "name": "slot gauge",
+    "qty": 1,
+    "size": [
+     81,
+     27
+    ],
+    "pieces": 1,
+    "cut": 423,
+    "thickness": 3,
+    "kerf": 0,
+    "material": "plywood"
+   },
+   {
+    "name": "joint 0.1 out",
+    "qty": 1,
+    "size": [
+     40,
+     20
+    ],
+    "pieces": 1,
+    "cut": 132,
+    "thickness": 3,
+    "kerf": 0.1,
+    "material": "plywood"
+   },
+   {
+    "name": "joint 0.1 in",
+    "qty": 1,
+    "size": [
+     40,
+     20
+    ],
+    "pieces": 1,
+    "cut": 126,
+    "thickness": 3,
+    "kerf": 0.1,
+    "material": "plywood"
+   },
+   {
+    "name": "joint 0.15 out",
+    "qty": 1,
+    "size": [
+     40,
+     20
+    ],
+    "pieces": 1,
+    "cut": 132,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "joint 0.15 in",
+    "qty": 1,
+    "size": [
+     40,
+     20
+    ],
+    "pieces": 1,
+    "cut": 126,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "joint 0.2 out",
+    "qty": 1,
+    "size": [
+     40,
+     20
+    ],
+    "pieces": 1,
+    "cut": 132,
+    "thickness": 3,
+    "kerf": 0.2,
+    "material": "plywood"
+   },
+   {
+    "name": "joint 0.2 in",
+    "qty": 1,
+    "size": [
+     40,
+     20
+    ],
+    "pieces": 1,
+    "cut": 126,
+    "thickness": 3,
+    "kerf": 0.2,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 72.11,
+    "length": 0
+   },
+   "cut": {
+    "area": 9459.2,
+    "length": 395
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
  "calibration-square.kerf": {
   "parts": [
    {
@@ -1661,7 +1782,7 @@
     "material": "plywood"
    },
    {
-    "name": "Long divider",
+    "name": "long divider",
     "qty": 1,
     "size": [
      233,
@@ -1674,7 +1795,7 @@
     "material": "plywood"
    },
    {
-    "name": "Cross divider",
+    "name": "cross divider",
     "qty": 3,
     "size": [
      153,
@@ -2045,6 +2166,71 @@
   "echoes": [
    "Expanse: two 100 x 140 x 30 mm trays, 48.3 mm travel each, base 330.6 x 190 mm"
   ],
+  "warnings": []
+ },
+ "flex-box.kerf": {
+  "parts": [
+   {
+    "name": "side",
+    "qty": 1,
+    "size": [
+     359.67,
+     57
+    ],
+    "pieces": 1,
+    "cut": 4692,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "bottom",
+    "qty": 1,
+    "size": [
+     120,
+     80
+    ],
+    "pieces": 1,
+    "cut": 386,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "lid",
+    "qty": 1,
+    "size": [
+     120,
+     80
+    ],
+    "pieces": 1,
+    "cut": 369,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "lid insert",
+    "qty": 1,
+    "size": [
+     113.8,
+     73.8
+    ],
+    "pieces": 1,
+    "cut": 350,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 46422.76,
+    "length": 3564
+   }
+  },
+  "echoes": [],
   "warnings": []
  },
  "flight.kerf": {
@@ -5277,6 +5463,97 @@
   "echoes": [],
   "warnings": []
  },
+ "project-enclosure.kerf": {
+  "parts": [
+   {
+    "name": "bottom",
+    "qty": 1,
+    "size": [
+     144,
+     94
+    ],
+    "pieces": 1,
+    "cut": 660,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "lid",
+    "qty": 1,
+    "size": [
+     150,
+     100
+    ],
+    "pieces": 1,
+    "cut": 1496,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "front",
+    "qty": 1,
+    "size": [
+     144,
+     57
+    ],
+    "pieces": 1,
+    "cut": 585,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "back",
+    "qty": 1,
+    "size": [
+     144,
+     57
+    ],
+    "pieces": 1,
+    "cut": 560,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "left",
+    "qty": 1,
+    "size": [
+     94,
+     57
+    ],
+    "pieces": 1,
+    "cut": 742,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "right",
+    "qty": 1,
+    "size": [
+     94,
+     57
+    ],
+    "pieces": 1,
+    "cut": 742,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 51088.88,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
  "round-badge.kerf": {
   "parts": [
    {
@@ -5498,6 +5775,71 @@
    },
    "cut": {
     "area": 80625.49,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "spice-shelf.kerf": {
+  "parts": [
+   {
+    "name": "back",
+    "qty": 1,
+    "size": [
+     260,
+     240
+    ],
+    "pieces": 1,
+    "cut": 1623,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "side",
+    "qty": 2,
+    "size": [
+     70,
+     240
+    ],
+    "pieces": 1,
+    "cut": 848,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "shelf",
+    "qty": 2,
+    "size": [
+     248,
+     67
+    ],
+    "pieces": 1,
+    "cut": 630,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "rail",
+    "qty": 2,
+    "size": [
+     248,
+     22
+    ],
+    "pieces": 1,
+    "cut": 540,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 137804.51,
     "length": 0
    }
   },
@@ -7811,6 +8153,40 @@
   "echoes": [
    "Vault: code 3-1-7, 260 x 180 x 93 mm; fence guide sleeves 9.4 mm long"
   ],
+  "warnings": []
+ },
+ "wall-sign.kerf": {
+  "parts": [
+   {
+    "name": "sign",
+    "qty": 1,
+    "size": [
+     200,
+     70
+    ],
+    "pieces": 1,
+    "cut": 615,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 747.53,
+    "length": 0
+   },
+   "score": {
+    "area": 0,
+    "length": 504.53
+   },
+   "cut": {
+    "area": 13820.85,
+    "length": 0
+   }
+  },
+  "echoes": [],
   "warnings": []
  },
  "wave-cathedral.kerf": {

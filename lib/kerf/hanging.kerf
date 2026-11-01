@@ -1,0 +1,50 @@
+// kerf/hanging: holes, keyholes and loops for hanging things on a wall.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+//
+// Each module cuts its hole out of the shapes it is given, as in
+// keyhole([0, 40]) rect([100, 50]). Given nothing, it makes the hole
+// itself, to subtract in a difference() of your own.
+
+// A keyhole for hanging on a screw: the head goes through the round hole,
+// then the panel drops `drop` mm so the screw rests at `at`, at the top of
+// the slot. `head` and `shank` are the hole and slot widths; measure the
+// screw and add a little.
+module keyhole(at = [0, 0], head = 9, shank = 4.5, drop = 10) {
+  assert(drop >= (head + shank) / 2, "drop must be at least (head + shank) / 2");
+  module hole() translate(at) {
+    translate([0, -drop]) circle(d = head);
+    hull() {
+      circle(d = shank);
+      translate([0, -drop]) circle(d = shank);
+    }
+  }
+  if ($children > 0) difference() { children(); hole(); } else hole();
+}
+
+// Two keyholes `spacing` apart, centred on `at`, for a panel that hangs
+// level and does not turn.
+module keyholes(spacing, at = [0, 0], head = 9, shank = 4.5, drop = 10) {
+  module holes() for (x = [-spacing / 2, spacing / 2]) keyhole(at + [x, 0], head, shank, drop);
+  if ($children > 0) difference() { children(); holes(); } else holes();
+}
+
+// A round hole of diameter `d` at `at`, for a nail, a hook or a cord.
+// Give `spacing` for two holes that far apart, centred on `at`.
+module hanging_hole(at = [0, 0], d = 5, spacing = 0) {
+  module holes() for (x = spacing > 0 ? [-spacing / 2, spacing / 2] : [0])
+    translate(at + [x, 0]) circle(d = d);
+  if ($children > 0) difference() { children(); holes(); } else holes();
+}
+
+// A ring around a hole of diameter `d` at `at`, `wall` wide, joined to the
+// shapes it is given: put it on the edge of an ornament or a tag, and the
+// hole stays open even where the ring overlaps the shape.
+module hanging_loop(at = [0, 0], d = 4, wall = 3) {
+  difference() {
+    union() {
+      children();
+      translate(at) circle(d = d + 2 * wall);
+    }
+    translate(at) circle(d = d);
+  }
+}

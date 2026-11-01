@@ -1,0 +1,45 @@
+// Wall sign: a name or a word on a panel that hangs on screws, a nail
+// or a cord, from the hanging library. The keyholes take a screw head;
+// measure yours and set the sizes to match.
+
+use <kerf/hanging>
+
+/* [Sign] */
+// Text, engraved
+label = "Workshop"; // 16
+// Panel width
+width = 200; // [100:10:400]
+// Panel height
+height = 70; // [40:5:200]
+// How it hangs
+hang = "keyholes"; // [keyholes:Two keyholes, holes:Two holes for a cord, loop:A loop on top]
+
+/* [Screws] */
+// Diameter of the screw head
+head = 9; // [6:0.5:14]
+// Diameter of the screw's shank
+shank = 4.5; // [2.5:0.5:6]
+
+/* [Material] */
+$thickness = 3; // [2:0.5:6]
+// Beam width
+$kerf = 0.15; // [0:0.01:0.3]
+
+/* [Hidden] */
+$material = "plywood";
+$fn = 64;
+text_size = min(height * 0.4, width * 0.7 / max(1, text_width(label, 1)));
+
+module panel() rect([width, height], r = 6);
+
+module hung() {
+  if (hang == "keyholes") keyholes(width - 30, at = [width / 2, height - 10], head = head, shank = shank) panel();
+  if (hang == "holes") hanging_hole(at = [width / 2, height - 8], d = 5, spacing = width - 20) panel();
+  if (hang == "loop") hanging_loop(at = [width / 2, height + 3], d = 6) panel();
+}
+
+part("sign") {
+  hung();
+  engrave() translate([width / 2, height * 0.42]) text(label, size = text_size, halign = "center", valign = "center");
+  score() outline() offset(delta = -4) panel();
+}

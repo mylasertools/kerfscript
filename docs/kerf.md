@@ -43,6 +43,11 @@ kerf compensation in either KerfScript or your laser software, once per job.
 Repeat the measurement when the material or cutting settings change. Thick
 material can have a different cut width at its top and bottom faces.
 
+The [kerf gauge](library.md#calibration) in the calibration library
+measures it another way, without calipers on a square: it cuts strips in a
+frame with single lines. Push the strips to one side and divide the gap
+they leave by the number of strips plus one.
+
 ## Checking a fit
 
 After calibrating kerf, measure your sheet's thickness and set `$thickness`
@@ -56,6 +61,11 @@ one. Choose the fit you need and use the result to refine your dimensions.
 
 Both kerf and sheet thickness affect the fit. A tight or loose slot alone
 does not tell you which value needs adjusting.
+
+For finger joints, `joint_test()` in the calibration library cuts a pair
+of pieces for each of a few kerf values; the pair that holds without glue
+has the kerf to use. The [calibration set](../examples/calibration-set.kerf)
+cuts the gauge, the slots and the joint pairs together.
 
 ## Limits
 

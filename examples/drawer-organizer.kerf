@@ -1,8 +1,9 @@
 // Drawer organizer: a finger-jointed tray from the box library, and a grid
-// of dividers that slot into each other like an egg crate. Measure your
-// drawer, then pick how many compartments you want.
+// of dividers from the dividers library that slot into each other like an
+// egg crate. Measure your drawer, then pick how many compartments you want.
 
 use <kerf/box>
+use <kerf/dividers>
 
 /* [Tray] */
 // Outside width
@@ -31,38 +32,9 @@ clearance = 0.15; // [0:0.05:0.4]
 /* [Hidden] */
 $material = "plywood";
 t = $thickness;
-// Inside of the tray, and the dividers that stand on its floor
-inner = [width - 2 * t, depth - 2 * t];
-gap = 0.5;
-tall = height - t - 2;
-slot = t + clearance;
 
 box([width, depth, height]);
 
-// A dip in the top edge over the middle of every compartment
-module scoops(length, count) if (scoops) for (k = [0:count - 1])
-  translate([length * (k + 0.5) / count, tall]) ellipse([min(length / count * 0.3, 30), tall * 0.35], $fn = 64);
-
-// Runs left to right; slots from the top for the dividers that cross it
-module long_divider() difference() {
-  rect([inner[0] - 2 * gap, tall], r = 1);
-  scoops(inner[0] - 2 * gap, cols);
-  if (cols > 1) for (j = [1:cols - 1]) translate([inner[0] * j / cols - gap - slot / 2, tall / 2])
-    rect([slot, tall / 2 + 1]);
-}
-
-// Runs front to back; slots from the bottom
-module cross_divider() difference() {
-  rect([inner[1] - 2 * gap, tall], r = 1);
-  scoops(inner[1] - 2 * gap, rows);
-  if (rows > 1) for (i = [1:rows - 1]) translate([inner[1] * i / rows - gap - slot / 2, -1])
-    rect([slot, tall / 2 + 1]);
-}
-
-// The dividers stand on the tray floor, each centred on its line
-if (rows > 1) part("Long divider", qty = rows - 1, rotate = [90, 0, 0],
-  at = [for (i = [1:rows - 1]) [t + gap, t + inner[1] * i / rows + t / 2, t]])
-  long_divider();
-if (cols > 1) part("Cross divider", qty = cols - 1, rotate = [90, 0, 90],
-  at = [for (j = [1:cols - 1]) [t + inner[0] * j / cols - t / 2, t + gap, t]])
-  cross_divider();
+// Inside the tray, standing on its floor, a little lower than the walls
+grid_dividers([width - 2 * t, depth - 2 * t, height - t - 2], cols, rows,
+  clearance = clearance, scoops = scoops, at = [t, t, t]);

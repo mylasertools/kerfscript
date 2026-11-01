@@ -382,12 +382,23 @@ to inspect the settings in a file.
 
 ## Standard library
 
-Load the box modules with `use <kerf/box>`:
+Every renderer has these libraries built in. Load one with `use`, as
+`use <kerf/box>`; [Standard library](docs/library.md) describes each
+module and its parameters.
 
-- `box([w, d, h], lid = false, finger)` makes the six (or five) panels of a
-  finger-jointed box as parts `bottom`, `lid`, `front`, `back`, `left`,
-  `right`. Sizes are outer sizes.
-- `divider([w, h], finger)` makes a divider with finger tabs on both sides.
+| Library            | Modules and functions                                                       |
+| ------------------ | --------------------------------------------------------------------------- |
+| `kerf/box`         | `box([w, d, h], lid = false, finger)`, `divider([w, h], finger)`            |
+| `kerf/tabs`        | `tabs()`, `slots()`, `tab_rect()`, `tab_positions()`: tab and slot joints   |
+| `kerf/hinge`       | `flex_rect()`, `flex_box()`, `flex_panel()`, `bend_length()`: living hinges |
+| `kerf/dividers`    | `grid_dividers()`, `slotted_divider()`: egg-crate dividers                  |
+| `kerf/hanging`     | `keyhole()`, `keyholes()`, `hanging_hole()`, `hanging_loop()`               |
+| `kerf/enclosure`   | `enclosure()`, `enclosure_cutouts()`, `vents()`: boxes with a screwed lid   |
+| `kerf/calibration` | `kerf_gauge()`, `slot_gauge()`, `joint_test()`: test pieces                 |
+
+`box()` makes the six (or five) panels of a finger-jointed box as parts
+`bottom`, `lid`, `front`, `back`, `left`, `right`, from the outer size.
+`divider()` makes a divider with finger tabs on both sides.
 
 ## Output
 

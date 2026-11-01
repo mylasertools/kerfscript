@@ -1,0 +1,81 @@
+// kerf/enclosure: boxes with a screwed-on lid, for electronics and parts
+// you need to get back to.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+
+// Box with a lid held by screws. The walls and the bottom are finger
+// jointed, as box() in kerf/box; the lid lies on the walls and overhangs
+// them by `lip`, and each screw goes through it into the top of the front
+// or back wall, into a nut in a T-slot. `size` is the outside [width,
+// depth, height], lid included. `screw` is the diameter and
+// `screw_length` the length under the head; `nut` is [width, height] of
+// the nut's slot. `cutouts` lists holes in the panels, see
+// enclosure_cutouts().
+module enclosure(size, screw = 3, screw_length = 12, nut = undef, lip = undef, cutouts = [], finger = undef) {
+  t = $thickness;
+  o = is_undef(lip) ? screw : lip;
+  // The box under the lid
+  w = size[0] - 2 * o;
+  d = size[1] - 2 * o;
+  h = size[2] - t;
+  into = screw_length - t;
+  nut_slot = is_undef(nut) ? [screw * 1.9, screw * 0.9] : nut;
+  assert(into > nut_slot[1], "screw_length is too short for the lid and the nut");
+  assert(h > into + 2 * t, "the walls are too low for the screws");
+  // Two screws on the front and the back, and one more for every 80 mm
+  n = max(2, round(w / 80));
+  xs = [for (i = [0:n - 1]) w * (i + 0.5) / n];
+  part("bottom", at = [o, o, 0]) difference() {
+    finger_rect([w, d], "out", finger = finger);
+    enclosure_cutouts("bottom", cutouts);
+  }
+  part("lid", at = [0, 0, h]) difference() {
+    rect([w + 2 * o, d + 2 * o]);
+    for (x = xs, y = [t / 2, d - t / 2]) translate([o + x, o + y]) circle(d = screw + 0.3, $fn = 24);
+    enclosure_cutouts("lid", cutouts);
+  }
+  part("front", at = [o, o + t, 0], rotate = [90, 0, 0]) difference() {
+    finger_rect([w, h], ["in", "out", "flat", "out"], finger = finger);
+    for (x = xs) translate([x, h]) rotate(180) tslot(screw, into, nut_slot);
+    enclosure_cutouts("front", cutouts);
+  }
+  part("back", at = [o, o + d, 0], rotate = [90, 0, 0]) difference() {
+    finger_rect([w, h], ["in", "out", "flat", "out"], finger = finger);
+    for (x = xs) translate([x, h]) rotate(180) tslot(screw, into, nut_slot);
+    enclosure_cutouts("back", cutouts);
+  }
+  part("left", at = [o, o, 0], rotate = [90, 0, 90]) difference() {
+    finger_rect([d, h], ["in", "in", "flat", "in"], finger = finger);
+    enclosure_cutouts("left", cutouts);
+  }
+  part("right", at = [o + w - t, o, 0], rotate = [90, 0, 90]) difference() {
+    finger_rect([d, h], ["in", "in", "flat", "in"], finger = finger);
+    enclosure_cutouts("right", cutouts);
+  }
+}
+
+// The holes listed in `cutouts` for one panel. Each is [side, [x, y],
+// size]: side is "front", "back", "left", "right", "lid" or "bottom";
+// [x, y] is the hole's centre on the panel as it is drawn, from its
+// bottom left corner; a number size is a round hole of that diameter, and
+// [width, height] a rectangle. Add "vents" after the size for vents()
+// filling that rectangle.
+module enclosure_cutouts(side, cutouts) {
+  for (c = cutouts)
+    if (c[0] == side) translate(c[1]) {
+      if (c[3] == "vents") vents(c[2]);
+      else if (is_list(c[2])) rect(c[2], center = true);
+      else circle(d = c[2]);
+    }
+}
+
+// Ventilation slots across [width, height], centred on the origin:
+// upright slots `slot` wide with round ends, `pitch` apart.
+module vents(size, slot = 3, pitch = 6) {
+  n = max(1, floor((size[0] - slot) / pitch) + 1);
+  ends = max(0, size[1] - slot) / 2;
+  for (i = [0:n - 1])
+    translate([(i - (n - 1) / 2) * pitch, 0]) hull() {
+      translate([0, -ends]) circle(d = slot, $fn = 24);
+      translate([0, ends]) circle(d = slot, $fn = 24);
+    }
+}
