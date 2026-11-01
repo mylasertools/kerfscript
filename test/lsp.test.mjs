@@ -353,3 +353,38 @@ test('a design that runs too long is stopped, and the server keeps working', asy
   const [e] = await c.diagnostics(uri, 2);
   assert.match(e.message, /Unknown variable "widht"/);
 });
+
+test('closing a library without saving shows its saved text in the designs that use it', async (t) => {
+  const folder = mkdtempSync(join(tmpdir(), 'kerfscript-lsp-close-'));
+  const lib = '// A tab\nmodule tab(w = 5) { rect([w, 3]); }\n';
+  const design = 'use <lib>\ntab(4);\n';
+  writeFileSync(join(folder, 'lib.kerf'), lib);
+  writeFileSync(join(folder, 'design.kerf'), design);
+  const designUri = pathToFileURL(join(folder, 'design.kerf')).href;
+  const libUri = pathToFileURL(join(folder, 'lib.kerf')).href;
+  const c = client();
+  t.after(() => c.server.kill());
+  await c.request('initialize', { processId: null, rootUri: null, capabilities: {} });
+  c.notify('initialized', {});
+  const open = (u, text) =>
+    c.notify('textDocument/didOpen', {
+      textDocument: { uri: u, languageId: 'kerfscript', version: 1, text },
+    });
+  open(designUri, design);
+  open(libUri, lib);
+  const hover = async () =>
+    (
+      await c.request('textDocument/hover', {
+        textDocument: { uri: designUri },
+        position: position(design, 'tab(', 0, 1),
+      })
+    ).result.contents.value;
+  assert.match(await hover(), /module tab\(w = 5\)/);
+  c.notify('textDocument/didChange', {
+    textDocument: { uri: libUri, version: 2 },
+    contentChanges: [{ text: lib.replace('w = 5', 'w = 9') }],
+  });
+  assert.match(await hover(), /module tab\(w = 9\)/);
+  c.notify('textDocument/didClose', { textDocument: { uri: libUri } });
+  assert.match(await hover(), /module tab\(w = 5\)/);
+});

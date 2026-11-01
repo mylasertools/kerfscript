@@ -607,11 +607,13 @@ export function startServer(options: ServerOptions = {}) {
       const doc = docs.get(t.uri);
       docs.delete(t.uri);
       clearTimeout(timers.get(t.uri));
-      if (doc)
-        send({
-          method: 'textDocument/publishDiagnostics',
-          params: { uri: t.uri, diagnostics: [] },
-        });
+      if (!doc) return;
+      send({
+        method: 'textDocument/publishDiagnostics',
+        params: { uri: t.uri, diagnostics: [] },
+      });
+      // Its unsaved text is gone: designs that use it read the file again
+      scheduleUsers();
     },
     'workspace/didChangeWatchedFiles': () => {
       listed.clear();

@@ -61,7 +61,8 @@ kerf pack [folder] [-o file]
 choose the format. `params` lists the editable settings as JSON. `check`
 reports parts, dimensions, cut lengths, sheets and warnings.
 
-`fmt` formats `.kerf` files in place, searching folders for them. It sets
+`fmt` formats `.kerf` files in place, searching folders for them, except
+`kerf_libraries/`, whose files `kerf.lock` pins as they are. It sets
 indentation (two spaces), the spaces between tokens, blank lines (at most one
 in a row) and line endings, and keeps your line breaks and every comment
 where it is, customizer comments included. It never joins or splits lines.

@@ -429,3 +429,91 @@ test('the VS Code schema for kerf.json takes what kerf install takes', () => {
   assert.ok(new RegExp(props.version.pattern).test('1.2.0-beta.1'));
   assert.ok(!new RegExp(props.version.pattern).test('one'));
 });
+
+test('the same source text from two folders is two libraries, and must be settled', async () => {
+  const lib = (name, uses, common) => ({
+    [`${name}/kerf.json`]: { name, libraries: { common: uses } },
+    [`${name}/${name}.kerf`]: `use <common/c>\nmodule ${name}() c();\n`,
+    ...(common ? { [`${name}/common/kerf.json`]: { name: 'common' } } : {}),
+    ...(common ? { [`${name}/common/c.kerf`]: `module c() circle(${common});\n` } : {}),
+  });
+  const root = folder({
+    'kerf.json': { libraries: { a: './a', b: './b' } },
+    ...lib('a', './common', 2),
+    ...lib('b', './common', 9),
+  });
+  await assert.rejects(
+    install(root),
+    /b uses common from \.\/common \(.+b.common\), and a uses it from \.\/common \(.+a.common\)\. Add common to kerf.json/,
+  );
+  // Different text for the same folder is one library
+  const shared = folder({
+    'kerf.json': { libraries: { a: './a', b: './b' } },
+    ...lib('a', '../common', 0),
+    ...lib('b', './../common', 0),
+    'common/kerf.json': { name: 'common' },
+    'common/c.kerf': 'module c() circle(4);\n',
+  });
+  const lock = await install(shared);
+  assert.deepEqual(Object.keys(lock.libraries), ['a', 'b', 'common']);
+});
+
+test('a library may be named constructor, or anything else objects have', async () => {
+  const root = folder({
+    'kerf.json': { libraries: { constructor: './c' } },
+    'c/kerf.json': { name: 'constructor', version: '1.0.0' },
+    'c/c.kerf': 'module c() rect(4);\n',
+  });
+  const lock = await install(root);
+  assert.deepEqual(Object.keys(lock.libraries), ['constructor']);
+  assert.ok(existsSync(join(root, 'kerf_libraries/constructor/c.kerf')));
+  assert.deepEqual(check(root), []);
+  await remove(root, 'constructor');
+  assert.deepEqual(json(root, 'kerf.lock').libraries, {});
+  await assert.rejects(remove(root, 'constructor'), /has no library named constructor/);
+});
+
+test('kerf fmt leaves installed libraries alone', async () => {
+  const lib = folder({ 'kerf.json': { name: 'messy' }, 'm.kerf': 'module   m()   rect(4);\n' });
+  const root = folder({ 'design.kerf': 'use <messy/m>\nm(  );\n' });
+  await add(root, lib);
+  await run(process.execPath, [CLI, 'fmt', '.'], { cwd: root });
+  assert.equal(read(root, 'design.kerf'), 'use <messy/m>\nm();\n');
+  assert.equal(read(root, 'kerf_libraries/messy/m.kerf'), 'module   m()   rect(4);\n');
+  assert.deepEqual(check(root), []);
+});
+
+test('a download stops at 20 MB as it arrives', { timeout: 30000 }, async () => {
+  let sent = 0;
+  const chunk = Buffer.alloc(1 << 16);
+  // A server that sends without end, with no length given
+  const server = createServer((req, res) => {
+    res.writeHead(200);
+    const pump = () => {
+      while (!res.destroyed && res.write(chunk)) sent += chunk.length;
+      if (!res.destroyed) res.once('drain', pump);
+    };
+    res.on('close', () => res.removeAllListeners('drain'));
+    pump();
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  try {
+    const url = `http://127.0.0.1:${server.address().port}/big.tar.gz`;
+    const root = folder({ 'kerf.json': { libraries: { big: url } } });
+    await assert.rejects(install(root), /big.tar.gz is larger than 20 MB/);
+    assert.ok(sent < 40 << 20, `sent ${sent >> 20} MB`);
+  } finally {
+    server.closeAllConnections();
+    await new Promise((r) => server.close(r));
+  }
+  // A length over the limit is refused before reading anything
+  const root = folder({ 'kerf.json': { libraries: { big: 'https://x.test/big.tar.gz' } } });
+  const fetch = async () => ({
+    ok: true,
+    status: 200,
+    headers: { get: (h) => (h === 'content-length' ? String(30 << 20) : null) },
+    body: null,
+    arrayBuffer: () => assert.fail('the body was read'),
+  });
+  await assert.rejects(install(root, { fetch }), /larger than 20 MB/);
+});

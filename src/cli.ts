@@ -22,6 +22,7 @@ import {
   add,
   check as checkLibraries,
   findProject,
+  FOLDER,
   install,
   LibraryError,
   pack,
@@ -222,13 +223,15 @@ function main(argv: string[]) {
   process.stderr.write(`Wrote ${target}\n`);
 }
 
-// .kerf files in the paths given, folders searched through
+// .kerf files in the paths given, folders searched through. Installed
+// libraries are left out: kerf.lock pins their files as they are.
 function kerfFiles(paths: string[]): string[] {
   const out: string[] = [];
   const walk = (p: string) => {
     if (statSync(p).isDirectory()) {
       for (const e of readdirSync(p, { withFileTypes: true }))
-        if (e.name !== 'node_modules' && !e.name.startsWith('.')) walk(join(p, e.name));
+        if (e.name !== 'node_modules' && e.name !== FOLDER && !e.name.startsWith('.'))
+          walk(join(p, e.name));
     } else if (p.endsWith('.kerf') || paths.includes(p)) out.push(p);
   };
   for (const p of paths) {

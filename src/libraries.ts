@@ -65,9 +65,20 @@ export interface Lock {
   libraries: Record<string, Locked>;
 }
 
-export type Fetch = (
-  url: string,
-) => Promise<{ ok: boolean; status: number; arrayBuffer(): Promise<ArrayBuffer> }>;
+/** A download, as the global fetch makes one. When the response has a
+ * body stream, it is read a piece at a time and stopped at the size limit. */
+export type Fetch = (url: string) => Promise<{
+  ok: boolean;
+  status: number;
+  headers?: { get(name: string): string | null };
+  body?: {
+    getReader(): {
+      read(): Promise<{ done: boolean; value?: Uint8Array }>;
+      cancel(): Promise<void>;
+    };
+  } | null;
+  arrayBuffer(): Promise<ArrayBuffer>;
+}>;
 
 export interface InstallOptions {
   /** Downloads a link; the global fetch by default */
@@ -95,6 +106,11 @@ const isDir = (p: string) => {
     return false;
   }
 };
+
+// A value of an object's own, so a library named constructor is not found
+// on every object
+const own = <T>(o: Record<string, T> | undefined, key: string): T | undefined =>
+  o && Object.prototype.hasOwnProperty.call(o, key) ? o[key] : undefined;
 
 const fail = (msg: string): never => {
   throw new LibraryError(msg);
@@ -285,6 +301,15 @@ type Source =
   | { kind: 'url'; url: string }
   | { kind: 'folder'; path: string };
 
+// Where a source points: the same text from two folders is two libraries
+function where(source: Source): string {
+  if (source.kind === 'folder')
+    return 'folder:' + (process.platform === 'win32' ? source.path.toLowerCase() : source.path);
+  if (source.kind === 'github')
+    return `github:${source.owner}/${source.repo}@${source.ref}`.toLowerCase();
+  return source.url;
+}
+
 function parseSource(spec: string, base: string): Source {
   const gh = /^github:([\w.-]+)\/([\w.-]+?)(?:\.git)?(?:@(\S+))?$/.exec(spec);
   if (gh) return { kind: 'github', owner: gh[1], repo: gh[2], ref: gh[3] ?? 'HEAD' };
@@ -321,9 +346,27 @@ async function download(url: string, fetchFn: Fetch): Promise<Buffer> {
       `Could not download ${url}: HTTP ${res.status}` +
         (res.status === 404 ? '. Check the name and the tag, and that it is public.' : ''),
     );
-  const data = Buffer.from(await res.arrayBuffer());
-  if (data.length > MAX_DOWNLOAD) fail(`${url} is larger than ${MAX_DOWNLOAD >> 20} MB`);
-  return data;
+  const tooLarge = () => fail(`${url} is larger than ${MAX_DOWNLOAD >> 20} MB`);
+  if (Number(res.headers?.get('content-length')) > MAX_DOWNLOAD) tooLarge();
+  if (!res.body) {
+    const data = Buffer.from(await res.arrayBuffer());
+    return data.length > MAX_DOWNLOAD ? tooLarge() : data;
+  }
+  // Read as it arrives, so a server that sends without end is stopped
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done || !value) break;
+    size += value.length;
+    if (size > MAX_DOWNLOAD) {
+      await reader.cancel().catch(() => {});
+      tooLarge();
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks);
 }
 
 // The files in a .tar.gz, and the commit git archive records in it
@@ -489,10 +532,9 @@ function writeLibrary(dir: string, files: Files) {
   }
 }
 
-const lockText = (lock: Lock) => {
-  const libraries: Record<string, Locked> = {};
-  for (const name of Object.keys(lock.libraries).sort()) libraries[name] = lock.libraries[name];
-  return JSON.stringify({ lockVersion: 1, libraries }, null, 2) + '\n';
+const lockText = (libraries: Map<string, Locked>) => {
+  const sorted = [...libraries].sort(([a], [b]) => (a < b ? -1 : 1));
+  return JSON.stringify({ lockVersion: 1, libraries: Object.fromEntries(sorted) }, null, 2) + '\n';
 };
 
 /** Makes kerf_libraries/ match kerf.json, with the libraries those
@@ -507,8 +549,8 @@ export async function install(
   const cache = options.cache ?? new Map<string, Buffer>();
   const manifest = readManifest(root);
   const old = readLock(root);
-  const lock: Lock = { lockVersion: 1, libraries: {} };
-  const neededBy: Record<string, string> = {};
+  // The libraries chosen so far: what each is, where it points and who asked
+  const chosen = new Map<string, { entry: Locked; at: string; shown: string; from: string }>();
   const queue = Object.entries(manifest.libraries).map(([name, source]) => ({
     name,
     source,
@@ -518,19 +560,27 @@ export async function install(
   const folder = join(root, FOLDER);
   while (queue.length) {
     const { name, source, base, from } = queue.shift()!;
-    const have = lock.libraries[name];
+    const parsed = parseSource(source, base);
+    const local = parsed.kind === 'folder';
+    const shown = local ? `${source} (${parsed.path})` : source;
+    const have = chosen.get(name);
     if (have) {
-      // A library kerf.json names itself wins over the ones libraries ask for
-      if (have.source !== source && !(name in manifest.libraries))
+      // The same text can point at different folders, so compare where they
+      // point. A library kerf.json names itself wins over the ones
+      // libraries ask for.
+      if (have.at !== where(parsed) && !own(manifest.libraries, name))
         fail(
-          `${from} uses ${name} from ${source}, and ${neededBy[name]} uses it from ${have.source}. Add ${name} to kerf.json with the source to use.`,
+          `${from} uses ${name} from ${shown}, and ${have.from} uses it from ${have.shown}. Add ${name} to kerf.json with the source to use.`,
         );
       continue;
     }
-    const pinned = old?.libraries[name]?.source === source ? old.libraries[name] : undefined;
+    const before = own(old?.libraries, name);
+    const pinned =
+      before?.source === source && (!local || resolve(root, before.resolved) === parsed.path)
+        ? before
+        : undefined;
     if (options.frozen && !pinned)
       fail(`kerf.lock does not pin ${name} from ${source}. Run kerf install without --frozen.`);
-    const local = parseSource(source, base).kind === 'folder';
     const dir = join(folder, name);
     let entry: Locked;
     if (pinned && !local && isDir(dir) && integrity(readFolder(dir)) === pinned.integrity)
@@ -566,9 +616,8 @@ export async function install(
           `${pinned ? 'Restored' : 'Installed'} ${name}${entry.version ? ' ' + entry.version : ''} from ${source}`,
         );
     }
-    lock.libraries[name] = entry;
-    neededBy[name] = from;
-    const libBase = local ? (parseSource(source, base) as { path: string }).path : undefined;
+    chosen.set(name, { entry, at: where(parsed), shown, from });
+    const libBase = parsed.kind === 'folder' ? parsed.path : undefined;
     for (const [n, s] of Object.entries(
       readManifest(dir, `${FOLDER}/${name}/${MANIFEST}`).libraries,
     )) {
@@ -579,13 +628,13 @@ export async function install(
       queue.push({ name: n, source: s, base: libBase ?? root, from: name });
     }
   }
-  const text = lockText(lock);
+  const text = lockText(new Map([...chosen].map(([name, c]) => [name, c.entry])));
   const oldText = existsSync(join(root, LOCK)) ? readFileSync(join(root, LOCK), 'utf8') : '';
   if (options.frozen && text !== oldText.replace(/\r\n/g, '\n'))
     fail('kerf.lock is out of date. Run kerf install without --frozen.');
   if (isDir(folder))
     for (const e of readdirSync(folder, { withFileTypes: true }))
-      if (e.isDirectory() && NAME.test(e.name) && !(e.name in lock.libraries)) {
+      if (e.isDirectory() && NAME.test(e.name) && !chosen.has(e.name)) {
         rmSync(join(folder, e.name), { recursive: true, force: true });
         log(`Removed ${e.name}`);
       }
@@ -607,7 +656,7 @@ export function check(root: string): string[] {
     const name = queue.shift()!;
     if (seen.has(name)) continue;
     seen.add(name);
-    const pinned = lock.libraries[name];
+    const pinned = own(lock.libraries, name);
     if (!pinned) {
       problems.push(`${name} is not in kerf.lock. Run kerf install.`);
       continue;
@@ -697,7 +746,7 @@ export async function remove(
   return withManifest(
     root,
     (libs) => {
-      if (!(name in libs)) fail(`kerf.json has no library named ${name}`);
+      if (own(libs, name) === undefined) fail(`kerf.json has no library named ${name}`);
       delete libs[name];
     },
     options,
@@ -782,7 +831,7 @@ export function pack(
       const ok =
         Object.prototype.hasOwnProperty.call(LIBRARIES, u.path) ||
         (first === name && has(u.path.slice(name.length + 1))) ||
-        (u.path.includes('/') && first in manifest.libraries);
+        (u.path.includes('/') && own(manifest.libraries, first) !== undefined);
       if (!ok)
         problems.push(
           `${p}, line ${u.line}: <${u.path}> will not be found once the library is installed` +
