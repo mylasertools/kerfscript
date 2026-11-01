@@ -1,0 +1,7 @@
+// Built-in modules and functions warn about named arguments they do not
+// take, like user modules and functions; $ arguments are always allowed
+// => warning: rect(): unknown argument "radius" (line 6)
+// => warning: pow(): unknown argument "base" (line 7)
+// => part: "part" size=10x10
+rect(10, radius = 2, $fn = 8);
+x = pow(2, 3, base = 2);

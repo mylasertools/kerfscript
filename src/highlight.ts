@@ -45,7 +45,7 @@ const KEYWORDS = new Set([
 
 const CONSTANTS = new Set(['true', 'false', 'undef', 'PI']);
 
-const LAYERS = new Set(['cut', 'score', 'engrave', 'guide', 'layer']);
+export const LAYERS = new Set(['cut', 'score', 'engrave', 'guide', 'layer']);
 
 export const BUILTINS = new Set(
   (

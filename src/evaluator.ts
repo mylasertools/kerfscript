@@ -30,6 +30,7 @@ import { fingerCount, fingerHoles, fingerRect, livingHinge, tslot, type Edge } f
 import type { Placement, Vec3 } from './assembly.js';
 import { KerfError, where, type Pos } from './lexer.js';
 import { parse } from './parser.js';
+import { signature } from './signatures.js';
 import { LIBRARIES } from './stdlib.js';
 import { flatten, parseSvgPath } from './paths.js';
 import { textMetrics, textRegions, type FontBook } from './text.js';
@@ -441,6 +442,15 @@ export class Evaluator {
     void defEnv;
   }
 
+  // Warns about named arguments a built-in does not take
+  private checkNamed(name: string, args: Args) {
+    const sig = signature(name);
+    if (!sig || sig.anyNamed) return;
+    for (const k of args.named.keys())
+      if (!k.startsWith('$') && !sig.params.some((p) => p.name === k))
+        this.unknownArg(`${name}()`, k, args.at);
+  }
+
   private unknownArg(what: string, name: string, at: Pos) {
     this.warn(`${what}: unknown argument "${name}" (${where(at, false)})`);
   }
@@ -476,6 +486,7 @@ export class Evaluator {
             : '';
       throw new KerfError(`Unknown module ${s.name}().${hint}`, s.pos);
     }
+    this.checkNamed(s.name, args);
     const callEnv = new Env(env, env);
     for (const [k, v] of args.named) if (k.startsWith('$')) callEnv.vars.set(k, v);
     const kids = this.childStmts(s.children);
@@ -727,11 +738,14 @@ export class Evaluator {
       return { handled: true, value: undefined };
     }
     if (name === 'assert') {
-      this.assert(this.evalArgs(x.args, env, x.pos));
+      const a = this.evalArgs(x.args, env, x.pos);
+      this.checkNamed(name, a);
+      this.assert(a);
       return { handled: true, value: true };
     }
     if (name === 'text_width' || name === 'text_metrics') {
       const a = this.evalArgs(x.args, env, x.pos);
+      this.checkNamed(name, a);
       const m = this.measure(a, env);
       if (name === 'text_width') return { handled: true, value: m.advance };
       return {
@@ -741,6 +755,7 @@ export class Evaluator {
     }
     if (name === 'finger_count') {
       const a = this.evalArgs(x.args, env, x.pos);
+      this.checkNamed(name, a);
       const L = this.num(this.arg(a, 'length', 0), 'finger_count', 'length');
       return { handled: true, value: fingerCount(L, this.fingerWidth(a, env, 1)) };
     }

@@ -137,6 +137,29 @@ for (const line of source.split('\n')) {
 split into lines. `section` and `control` are customizer comments
 (`/* [Size] */` and `// [40:5:400]`).
 
+## Built-in signatures
+
+`SIGNATURES` lists every built-in module and function with its parameters,
+defaults and a line of documentation, for editors, completion and help
+text. `@mylasertools/kerfscript/signatures` has the same table without the
+interpreter.
+
+```js
+import { formatSignature, signature } from '@mylasertools/kerfscript/signatures';
+
+const rect = signature('rect');
+formatSignature(rect); // 'rect(size = 1, center = false, r = 0)'
+rect.doc; // 'A rectangle with its corner at the origin'
+rect.params[2]; // { name: 'r', default: '0', doc: 'Corner radius', named: true }
+```
+
+Each signature has a `kind` (`module`, `function`, or `both` for `echo` and
+`assert`), `params` in positional order, and `section`, the heading in the
+[language reference](../LANGUAGE.md) that documents it. A parameter with
+`named: true` can only be given by name. `rest` marks built-ins that take
+any number of values, such as `str(...)`, and `forms` lists other ways to
+call one, such as `log(base, x)`.
+
 ## Errors
 
 Language errors use `KerfError`. Its `line` and `col` identify the source

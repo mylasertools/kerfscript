@@ -14,6 +14,13 @@ export { DEFAULT_LAYERS, DEFAULT_LIMITS, type LayerDef, type Limits } from './ev
 export type { LayerPath } from './export/svg.js';
 export type { FontSource } from './text.js';
 export type { Value } from './values.js';
+export {
+  SIGNATURES,
+  signature,
+  formatSignature,
+  type Signature,
+  type ParamInfo,
+} from './signatures.js';
 
 export const VERSION = '0.4.0';
 export const LANGUAGE_VERSION = '0.1';

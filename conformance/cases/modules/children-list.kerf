@@ -1,0 +1,8 @@
+// children() takes a list or range of positions
+// => echo: a
+// => echo: c
+// => echo: b
+// => echo: c
+module some(i) children(i);
+some([0, 2]) { echo("a"); echo("b"); echo("c"); }
+some([1:2]) { echo("a"); echo("b"); echo("c"); }

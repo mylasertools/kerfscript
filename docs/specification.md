@@ -297,6 +297,11 @@ parameters:
   call; any other named argument that matches no parameter is ignored with
   the warning `f(): unknown argument "name" (line n)`.
 
+Built-in modules and functions bind arguments the same way, with the
+parameters listed in the signature table (`SIGNATURES` in the JavaScript
+API). Some of their parameters can only be given by name, as `r` in
+`rect(10, r = 2)`; `echo()` takes any named arguments.
+
 A function call evaluates its body expression in a new scope whose parent
 is the scope the function was defined or made in. A function value made
 with `function (params) expr` keeps the scope it was made in and reads its
@@ -373,8 +378,9 @@ A statement `name(args) children` calls a module:
 1. A module definition named `name` in scope runs its body in a new scope
    whose parent is the scope it was defined in, with the arguments bound
    like a function call's. `children()` inside it runs the call's child
-   statements in the caller's scope; `children(i)` runs only the child
-   statement at index `i` from 0 (an index outside them runs nothing);
+   statements in the caller's scope; `children(index)` runs only the child
+   statement at that position from 0, or those at a list or range of
+   positions (a position outside them runs nothing);
    `$children` is the number of child statements that are not assignments
    or definitions.
 2. Otherwise a built-in module named `name` runs.
@@ -495,8 +501,6 @@ they are, but that may change before language version 1.0:
 - A function that calls itself without end can exhaust the interpreter's
   stack before the 2,000-call limit, giving `Recursion too deep: the
 program calls itself without stopping` with no position.
-- Built-in modules do not warn about unknown named arguments; user modules
-  and functions do.
 - Positional arguments beyond the parameters are ignored without a warning.
 - `echo()` writes named arguments after the positional ones, whatever their
   order in the call.

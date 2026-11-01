@@ -10,7 +10,7 @@ You can use familiar building blocks:
 
 - Modules, functions, `for`, `if`, `let`, `each`, list comprehensions,
   ranges and function literals.
-- `children()`, `children(i)` and `$children`.
+- `children()`, `children(index)` and `$children`.
 - Dynamically scoped `$` variables, plus `$fn`, `$fa` and `$fs` for curve
   resolution.
 - 2D shapes: `square()` or `rect()`, `circle()`, `polygon()` and `text()`.

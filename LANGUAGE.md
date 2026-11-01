@@ -133,7 +133,7 @@ the render options. `!` is accepted for OpenSCAD files and has no effect.
 ### children()
 
 Inside a module, `children()` renders all child statements passed by the
-caller. `children(i)` selects one child, using a zero-based index.
+caller. `children(index)` selects one child by its position from 0, or several with a list of positions.
 `$children` is the number of children.
 
 ```kerf

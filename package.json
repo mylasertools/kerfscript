@@ -47,6 +47,16 @@
         "default": "./dist/highlight.cjs"
       }
     },
+    "./signatures": {
+      "import": {
+        "types": "./dist/signatures.d.ts",
+        "default": "./dist/signatures.js"
+      },
+      "require": {
+        "types": "./dist/signatures.d.cts",
+        "default": "./dist/signatures.cjs"
+      }
+    },
     "./cli": "./dist/cli.js",
     "./package.json": "./package.json"
   },
