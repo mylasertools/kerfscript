@@ -1,0 +1,7 @@
+// Functions and modules are visible in their whole block, before their definition
+// => echo: 4
+// => echo: m
+echo(twice(2));
+m();
+function twice(x) = x * 2;
+module m() echo("m");

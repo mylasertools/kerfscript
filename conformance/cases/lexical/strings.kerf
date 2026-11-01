@@ -1,0 +1,3 @@
+// String escapes: \n \t \" \\ and \uXXXX; any other escaped character is itself
+// => echo: 10, 9, "q", \, é, q
+echo(ord("\n"), ord("\t"), "\"q\"", "\\", "é", "\q");

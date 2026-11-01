@@ -1,0 +1,8 @@
+// use imports a library's functions and modules; its own variables stay
+// private and its other statements do not run
+// => echo: 5
+// => echo: shape, 5
+x = 9;
+use <values>
+echo(lib_value());
+lib_module();

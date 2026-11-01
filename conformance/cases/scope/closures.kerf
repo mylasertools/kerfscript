@@ -1,0 +1,10 @@
+// A function value reads variables of the scope it was made in when it is called
+// => echo: 11
+// => echo: 2
+k = 10;
+add_k = function(x) x + k;
+echo(add_k(1));
+j = 1;
+get_j = function() j;
+j = 2;
+echo(get_j());

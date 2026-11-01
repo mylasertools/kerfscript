@@ -1,0 +1,4 @@
+// each inserts the items of a list, range or string; a single value is one
+// item and undef is none
+// => echo: [0, 1, 2, "a", "b", 5]
+echo([each [0:2], each "ab", each 5, each undef]);

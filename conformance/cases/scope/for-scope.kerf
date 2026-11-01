@@ -1,0 +1,4 @@
+// Names assigned inside a for body are not visible after it
+// => error: Unknown variable "a" (line 4, column 6)
+for (i = [0:1]) { a = i; }
+echo(a);

@@ -327,7 +327,8 @@ class Parser {
       !this.isK('for') &&
       !this.isK('if') &&
       !this.isK('each') &&
-      !(this.isK('let') && this.isP('(', 1))
+      !(this.isK('let') && this.isP('(', 1)) &&
+      !(this.isP('(') && (this.isK('for', 1) || this.isK('if', 1)))
     ) {
       const first = this.expr();
       if (this.isP(':')) {

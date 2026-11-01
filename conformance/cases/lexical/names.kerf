@@ -1,0 +1,6 @@
+// Names use letters, digits and _, and do not start with a digit
+// => echo: 1, 2, 3
+_a = 1;
+a2 = 2;
+snake_case = 3;
+echo(_a, a2, snake_case);

@@ -1,0 +1,7 @@
+// score() and engrave() put shapes on their own layers
+// => layer: "cut" area=100
+// => layer: "score" length=5
+// => layer: "engrave" area=4
+rect(10);
+score() line([1, 1], [6, 1]);
+engrave() translate([2, 4]) rect(2);

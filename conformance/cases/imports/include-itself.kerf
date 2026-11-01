@@ -1,0 +1,3 @@
+// A file that includes itself is an error
+// => error: Library <self> includes itself (line 1, column 1 in <self>)
+include <self>

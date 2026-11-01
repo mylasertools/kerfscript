@@ -1,0 +1,6 @@
+// Module arguments bind like function arguments
+// => echo: 1, 2
+// => echo: undef, 3
+module m(a, b = 2) echo(a, b);
+m(1);
+m(b = 3);

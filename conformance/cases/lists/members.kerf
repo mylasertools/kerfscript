@@ -1,0 +1,5 @@
+// .x .y .z read the first three items; .begin .step .end read a range
+// => echo: 1, 2, undef, 0, 2, 6, undef
+p = [1, 2];
+r = [0:2:6];
+echo(p.x, p.y, p.z, r.begin, r.step, r.end, p.w);

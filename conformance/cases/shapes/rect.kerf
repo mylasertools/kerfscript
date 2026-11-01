@@ -1,0 +1,4 @@
+// Shapes outside any part form one part named "part"
+// => part: "part" qty=1 size=20x10 pieces=1 cut=60
+// => layer: "cut" area=200
+rect([20, 10]);

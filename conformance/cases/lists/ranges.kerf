@@ -1,0 +1,4 @@
+// A range [start:end] or [start:step:end] includes its end; it is empty when
+// the step is 0 or points away from the end
+// => echo: [0:1:3], [0, 1, 2, 3], [0, 0.1, 0.2, 0.3], [3, 2, 1], [], []
+echo([0:3], [for (i = [0:3]) i], [for (i = [0:0.1:0.3]) i], [for (i = [3:-1:1]) i], [for (i = [5:1]) i], [for (i = [0:0:3]) i]);

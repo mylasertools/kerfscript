@@ -1,0 +1,2 @@
+use <loop_b>
+function loop_a() = 1;

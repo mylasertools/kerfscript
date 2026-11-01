@@ -1,0 +1,5 @@
+// A program that runs too long stops with an error
+// => error: Stopped after 1000 steps. Is there an endless loop? (line 4, column 22)
+// => with: {"maxSteps": 1000}
+for (i = [0:100000]) echo_nothing(i);
+module echo_nothing(i) {}

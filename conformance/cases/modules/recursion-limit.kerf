@@ -1,0 +1,4 @@
+// A module that calls itself without end stops with an error
+// => error: Recursion too deep in module r() (line 3, column 13)
+module r(n) r(n + 1);
+r(0);

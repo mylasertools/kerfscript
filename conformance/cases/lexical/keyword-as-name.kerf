@@ -1,0 +1,3 @@
+// Keywords cannot be used as names
+// => error: Expected "(", found "=" (line 3, column 4)
+if = 1;

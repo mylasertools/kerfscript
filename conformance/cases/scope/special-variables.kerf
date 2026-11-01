@@ -1,0 +1,11 @@
+// $ variables are seen by everything a caller calls; an unset one is undef
+// => echo: 2
+// => echo: 1
+// => echo: undef, 4
+$v = 1;
+module show() echo($v);
+module inner() { $v = 2; show(); }
+inner();
+show();
+function z() = $z;
+echo(z(), z($z = 4));

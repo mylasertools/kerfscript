@@ -1,0 +1,7 @@
+// difference() subtracts its later children from the first
+// => part: "part" size=20x10 pieces=1 cut=76
+// => layer: "cut" area=184
+difference() {
+  rect([20, 10]);
+  translate([8, 3]) rect(4);
+}

@@ -1,0 +1,3 @@
+// The special variables start with these values
+// => echo: 0, 2, 0.2, 3, 0, [600, 400], 3, 3.141592654, material = "material", layout = "pack"
+echo($fn, $fa, $fs, $thickness, $kerf, $sheet, $gap, PI, material = $material, layout = $layout);

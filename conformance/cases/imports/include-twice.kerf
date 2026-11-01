@@ -1,0 +1,5 @@
+// Including a file twice runs it twice
+// => echo: included
+// => echo: included
+include <runs>
+include <runs>

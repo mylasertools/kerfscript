@@ -1,0 +1,3 @@
+// for goes through a list, range or string; a single value once, undef never
+// => echo: ["a", "b", "c"], [5], []
+echo([for (c = "abc") c], [for (x = 5) x], [for (x = undef) x]);

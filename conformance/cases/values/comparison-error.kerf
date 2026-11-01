@@ -1,0 +1,3 @@
+// Comparing values of different types is an error
+// => error: Can't compare number < string (line 3, column 8)
+echo(1 < "a");

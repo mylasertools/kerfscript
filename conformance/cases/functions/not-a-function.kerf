@@ -1,0 +1,3 @@
+// Calling a value that is not a function is an error
+// => error: Can't call a number (line 3, column 9)
+echo((1)(2));

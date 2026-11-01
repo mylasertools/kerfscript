@@ -52,6 +52,7 @@ export const GUIDES = [
   ['openscad', 'Coming from OpenSCAD'],
   ['compatibility', 'Laser software'],
   ['versions', 'Versions'],
+  ['specification', 'Specification'],
 ];
 
 const slug = (text) =>
@@ -78,6 +79,9 @@ function linkTarget(href) {
   if (guide && GUIDES.some(([s]) => s === guide[1]))
     return `/docs/${guide[1]}/${hash ? `#${hash}` : ''}`;
   if (/^(?:\.\.\/)?LANGUAGE\.md$/.test(path)) return `/docs/reference/${hash ? `#${hash}` : ''}`;
+  // The conformance suite lives in the repository, not on the site
+  if (/^(?:\.\.\/)?conformance\//.test(path))
+    return `${REPO_URL}/blob/main/${path.replace(/^\.\.\//, '')}${hash ? `#${hash}` : ''}`;
   if (/^(?:\.\.\/)?examples\/([a-z-]+)\.kerf$/.test(path))
     return `/models/${path.replace(/^.*examples\//, '').replace(/\.kerf$/, '')}/`;
   return /^https?:|^#|^\/|^mailto:/.test(href) ? href : null;

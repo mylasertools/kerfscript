@@ -1,0 +1,4 @@
+// ?: nests to the right
+// => echo: 1, 2, 3
+function pick(a, b) = a ? 1 : b ? 2 : 3;
+echo(pick(true, false), pick(false, true), pick(false, false));

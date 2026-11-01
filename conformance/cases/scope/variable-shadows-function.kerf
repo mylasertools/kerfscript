@@ -1,0 +1,5 @@
+// A variable with the same name as a function hides it, also in calls
+// => error: "f" is a number, not a function (line 5, column 7)
+function f(x) = 10;
+f = 3;
+echo(f(1));

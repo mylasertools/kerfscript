@@ -1,0 +1,3 @@
+// echo() writes numbers with up to 10 significant digits
+// => echo: 0.3333333333, 0.3, 123456789012, 1e+21, 0, 2.5
+echo(1 / 3, 0.1 + 0.2, 123456789012, 1e21, -0, 2.50);

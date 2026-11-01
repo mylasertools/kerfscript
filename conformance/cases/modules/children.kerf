@@ -1,0 +1,10 @@
+// children() runs the caller's child statements, children(i) one of them;
+// $children counts them
+// => echo: 2
+// => echo: a
+// => echo: b
+// => echo: b
+module all() { echo($children); children(); }
+module second() children(1);
+all() { echo("a"); echo("b"); }
+second() { echo("a"); echo("b"); }

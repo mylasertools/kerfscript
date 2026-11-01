@@ -1,0 +1,4 @@
+// echo() writes strings bare at the top level and quoted inside lists and
+// named arguments; named arguments follow the positional ones
+// => echo: a, [1, "b", [true, undef]], [0:2:6], function(x), n = 1, s = "t"
+echo("a", [1, "b", [true, undef]], [0:2:6], function(x) x, n = 1, s = "t");

@@ -16,3 +16,4 @@ packaging/cli/THIRD-PARTY-LICENSES.md
 packaging/licenses/
 desktop/src-tauri/gen/
 site/3d/.build/
+test/snapshots/

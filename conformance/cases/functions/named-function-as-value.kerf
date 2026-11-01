@@ -1,0 +1,5 @@
+// A named function can be passed by its name
+// => echo: [1, 4]
+function sq(x) = x * x;
+function map(f, xs) = [for (x = xs) f(x)];
+echo(map(sq, [1, 2]));

@@ -1,0 +1,3 @@
+// false, 0, NaN, "", [] and undef are false in a condition; everything else is true
+// => echo: [0, 1, 0, 1, 0, 1, 0, 0, 1, 0]
+echo([for (v = [0, 1, "", "a", [], [0], undef, false, true, 0 / 0]) v ? 1 : 0]);

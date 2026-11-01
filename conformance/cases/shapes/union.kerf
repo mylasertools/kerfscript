@@ -1,0 +1,5 @@
+// Overlapping shapes join into one piece
+// => part: "part" size=15x10 pieces=1
+// => layer: "cut" area=125
+rect([10, 10]);
+translate([5, 0]) rect([10, 5]);

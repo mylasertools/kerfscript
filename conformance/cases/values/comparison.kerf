@@ -1,0 +1,3 @@
+// < <= > >= compare two numbers or two strings; strings compare by character code
+// => echo: true, true, true, false, true
+echo(1 < 2, 2 <= 2, "ab" < "b", "a" < "B", "B" < "a");

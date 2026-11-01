@@ -1,0 +1,3 @@
+// Range values must be numbers
+// => error: Range values must be numbers (line 3, column 6)
+echo(["a":2]);

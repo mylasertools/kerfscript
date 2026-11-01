@@ -1,0 +1,11 @@
+// * disables a module call; # and % move its shapes to the guide layer;
+// ! has no effect
+// => echo: shown
+// => layer: "cut" area=100
+// => layer: "guide" length=8
+// => with: {"guides": true}
+* echo("hidden");
+! echo("shown");
+# rect(2);
+% rect([2, 2]);
+rect(10);

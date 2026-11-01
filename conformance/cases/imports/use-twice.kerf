@@ -1,0 +1,5 @@
+// Using a library twice is the same as using it once
+// => echo: 5
+use <values>
+use <values>
+echo(lib_value());

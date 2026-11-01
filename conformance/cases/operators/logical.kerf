@@ -1,0 +1,3 @@
+// && and || give true or false and skip the right side when the left decides
+// => echo: false, true, true, false
+echo(false && missing, true || missing, false || 0 || "x", !"x");

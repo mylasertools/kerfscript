@@ -1,0 +1,5 @@
+// Settings passed to the renderer replace top-level assignments
+// => part: "part" size=50x10
+// => with: {"params": {"width": 50}}
+width = 20;
+rect([width, 10]);

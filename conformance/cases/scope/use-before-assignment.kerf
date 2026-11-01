@@ -1,0 +1,4 @@
+// A variable cannot be read before it is assigned
+// => error: Unknown variable "y" (line 3, column 6)
+echo(y);
+y = 1;

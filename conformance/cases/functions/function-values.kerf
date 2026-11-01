@@ -1,0 +1,5 @@
+// Functions are values: assigned, passed and called
+// => echo: 42, [2, 4]
+double = function(x) x * 2;
+function map(f, xs) = [for (x = xs) f(x)];
+echo(double(21), map(double, [1, 2]));

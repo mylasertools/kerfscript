@@ -1,0 +1,3 @@
+// % keeps the sign of the left operand
+// => echo: 1, -1, 1, 1.5
+echo(7 % 3, -7 % 3, 7 % -3, 5.5 % 2);

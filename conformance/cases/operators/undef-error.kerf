@@ -1,0 +1,3 @@
+// undef takes part in no arithmetic
+// => error: Can't add undef and number (line 3, column 12)
+echo(undef + 1);

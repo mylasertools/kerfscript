@@ -1,0 +1,4 @@
+// A library's variables are not visible to the program that uses it
+// => error: Unknown variable "lib_x" (line 4, column 6)
+use <values>
+echo(lib_x);

@@ -1,0 +1,5 @@
+// include runs a file in place: its variables, definitions and statements
+// => echo: included
+// => echo: 7, 7
+include <runs>
+echo(inc_y, inc_f());

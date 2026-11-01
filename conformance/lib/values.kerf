@@ -1,0 +1,5 @@
+// Used by imports/use and others
+lib_x = 5;
+function lib_value() = lib_x;
+module lib_module() echo("shape", lib_x);
+echo("this does not run when used");

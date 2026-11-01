@@ -1,0 +1,3 @@
+// + joins two strings
+// => echo: ab, kerf3
+echo("a" + "b", str("kerf", 3));

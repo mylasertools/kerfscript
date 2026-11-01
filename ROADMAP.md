@@ -54,11 +54,36 @@ first time the app or `kerf` runs, and [docs/desktop.md](docs/desktop.md) and
 - [x] The website's 3D views play each automaton's motion
 - [ ] The website's 3D views built from `render().assembly`
 
+## Language maturity
+
+What people expect from a language they build on, in order: each step
+protects or feeds the next.
+
+- [x] Editor support: a TextMate grammar, a VS Code extension and one
+      highlighter shared by the site, the desktop app and other apps
+- [x] A specification with a formal grammar and exact rules for scope,
+      evaluation, libraries and errors ([docs/specification.md](docs/specification.md))
+- [x] A conformance suite of small programs with expected results
+      ([conformance](conformance/README.md)), and every example's output
+      stored so a change to a saved design fails a test
+- [ ] The VS Code extension on the Marketplace and Open VSX
+- [ ] One table of built-in signatures, with parameters, defaults and a
+      line of documentation each, for errors, hover, completion and the
+      reference
+- [ ] Diagnostics that show the source line, underline the expression,
+      list the expected arguments and trace calls and libraries
+- [ ] `kerf fmt` with a check mode, keeping comments and customizer
+      annotations
+- [ ] A language server: errors while typing, hover, parameter hints,
+      completion, go to definition, find references and format on save
+- [ ] Standard library: tabs and slots, hinges, dividers, hanging holes,
+      enclosures and material calibration, each with parameters, a picture,
+      an example and tests
+- [ ] Shared libraries: a way to publish, version and pin `.kerf`
+      libraries so a design reproduces
+
 ## Next
 
-- Standard library: tabs and slots, hinges, dividers, hanging holes,
-  enclosures, each with parameters, a picture, an example and tests
-- Editor support: a TextMate grammar and a VS Code extension
 - More fabrication warnings: features thinner than the kerf, tiny parts,
   overlapping cuts
 - A small group of outside makers trying the reference projects on their
@@ -70,6 +95,5 @@ first time the app or `kerf` runs, and [docs/desktop.md](docs/desktop.md) and
   Homebrew cask for the app
 - SVG import for existing artwork, once the units, transforms and safety
   rules are settled
-- Formatter and language server, after the language settles
 - Language version 1.0 with the stability promise in
   [docs/versions.md](docs/versions.md)

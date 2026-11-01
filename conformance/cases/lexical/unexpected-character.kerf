@@ -1,0 +1,3 @@
+// Characters outside the language are an error at their position
+// => error: Unexpected character "@" (line 3, column 7)
+x = 1 @ 2;

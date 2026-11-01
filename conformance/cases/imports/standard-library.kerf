@@ -1,0 +1,8 @@
+// The standard library is built in
+// => part: "bottom" size=100x60
+// => part: "front" size=100x40
+// => part: "back" size=100x40
+// => part: "left" size=60x40
+// => part: "right" size=60x40
+use <kerf/box>
+box([100, 60, 40]);

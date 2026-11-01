@@ -1,0 +1,3 @@
+// Arithmetic on unsupported types is an error at the operator
+// => error: Can't add boolean and number (line 3, column 11)
+echo(true + 1);

@@ -1,0 +1,6 @@
+// A named argument that is not a parameter is a warning
+// => echo: 1
+// => warning: f(): unknown argument "q" (line 6)
+// => warning: Nothing to cut: the program made no shapes.
+function f(a) = a;
+echo(f(1, q = 2));

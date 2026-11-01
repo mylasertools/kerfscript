@@ -1,0 +1,10 @@
+// Blocks, if bodies and let have their own scope
+// => echo: 2
+// => echo: 3
+// => echo: 4
+// => echo: 1
+x = 1;
+{ x = 2; echo(x); }
+if (true) { x = 3; echo(x); }
+let (x = 4) echo(x);
+echo(x);

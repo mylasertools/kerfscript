@@ -1,0 +1,3 @@
+// \u needs four hex digits
+// => error: Bad \u escape (line 3, column 9)
+echo("ab\u12");

@@ -1,0 +1,5 @@
+// Line and block comments are ignored, including inside an expression
+// => echo: 3
+/* a block comment
+   over several lines */
+echo(1 + /* inline */ 2); // a trailing comment

@@ -1,0 +1,5 @@
+// part() names a component and sets how many copies to cut
+// => part: "side" qty=2 size=30x20
+// => part: "base" qty=1 size=10x10
+part("side", qty = 2) rect([30, 20]);
+part("base") rect(10);

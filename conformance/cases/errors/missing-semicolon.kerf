@@ -1,0 +1,3 @@
+// A missing ; is reported at the next token
+// => error: Expected ";", found "echo" (line 3, column 7)
+x = 1 echo(x);

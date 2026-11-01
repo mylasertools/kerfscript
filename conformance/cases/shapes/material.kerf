@@ -1,0 +1,3 @@
+// material() sets thickness, kerf and material name for its parts
+// => part: "panel" thickness=4 kerf=0.1 material=birch
+material(thickness = 4, kerf = 0.1, name = "birch") part("panel") rect(10);

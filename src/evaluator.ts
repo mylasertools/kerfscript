@@ -270,15 +270,37 @@ export class Evaluator {
       if (s.kind === 'module') env.mods.set(s.name, { params: s.params, body: s.body, env });
       else if (s.kind === 'function') env.fns.set(s.name, { params: s.params, body: s.body, env });
       else if (s.kind === 'use' && !s.include) {
-        const body = this.included(this.load(s.path, s.pos).body, new Set([s.path]));
-        const libEnv = new Env(env);
-        this.hoist(body, libEnv);
-        for (const ls of body)
-          if (ls.kind === 'assign') this.assign(ls.name, this.expr(ls.value, libEnv), libEnv);
-        for (const [k, v] of libEnv.mods) env.mods.set(k, v);
-        for (const [k, v] of libEnv.fns) env.fns.set(k, v);
+        this.enter(this.using, s.path, s.pos, 'use');
+        try {
+          const body = this.included(this.load(s.path, s.pos).body, new Set([s.path]));
+          const libEnv = new Env(env);
+          this.hoist(body, libEnv);
+          for (const ls of body)
+            if (ls.kind === 'assign') this.assign(ls.name, this.expr(ls.value, libEnv), libEnv);
+          for (const [k, v] of libEnv.mods) env.mods.set(k, v);
+          for (const [k, v] of libEnv.fns) env.fns.set(k, v);
+        } finally {
+          this.using.pop();
+        }
       }
     }
+  }
+
+  // Libraries being used or included, innermost last, to catch a loop
+  private using: string[] = [];
+  private including: string[] = [];
+
+  private enter(chain: string[], path: string, at: Pos, verb: 'use' | 'include') {
+    if (chain.includes(path)) {
+      const loop = [...chain.slice(chain.indexOf(path)), path].map((p) => `<${p}>`);
+      throw new KerfError(
+        loop.length === 2
+          ? `Library ${loop[0]} ${verb}s itself`
+          : `Libraries ${verb} each other in a loop: ${loop.join(' → ')}`,
+        at,
+      );
+    }
+    chain.push(path);
   }
 
   // A library's statements with the files it includes written out in place
@@ -325,8 +347,12 @@ export class Evaluator {
         return null;
       case 'use': {
         if (!s.include) return null;
-        const lib = this.load(s.path, s.pos);
-        return this.block(lib.body, env);
+        this.enter(this.including, s.path, s.pos, 'include');
+        try {
+          return this.block(this.load(s.path, s.pos).body, env);
+        } finally {
+          this.including.pop();
+        }
       }
       case 'block':
         return this.block(s.body, new Env(env));

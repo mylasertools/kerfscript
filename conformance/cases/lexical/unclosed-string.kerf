@@ -1,0 +1,4 @@
+// A string must close on the line it starts
+// => error: Unclosed string (line 3, column 6)
+echo("open
+);

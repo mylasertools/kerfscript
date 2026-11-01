@@ -1,0 +1,3 @@
+// Libraries that use each other in a loop are an error
+// => error: Libraries use each other in a loop: <loop_a> → <loop_b> → <loop_a> (line 1, column 1 in <loop_b>)
+use <loop_a>

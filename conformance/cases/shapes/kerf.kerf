@@ -1,0 +1,6 @@
+// $kerf grows each cut outline by half the kerf; the part size is the
+// size before the kerf
+// => part: "part" size=20x10
+// => layer: "cut" area=206.03
+$kerf = 0.2;
+rect([20, 10]);

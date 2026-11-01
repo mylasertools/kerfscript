@@ -1,0 +1,4 @@
+// Used by imports/include
+inc_y = 7;
+function inc_f() = inc_y;
+echo("included");

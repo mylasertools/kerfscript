@@ -1,0 +1,5 @@
+// Output written before an error is kept
+// => echo: before
+// => error: Unknown variable "nope" (line 5, column 6)
+echo("before");
+echo(nope);

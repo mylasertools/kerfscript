@@ -1,0 +1,4 @@
+// Lists add and subtract item by item, scale by a number, and multiply as
+// dot products, matrix times vector and vector times matrix
+// => echo: [4, 6], [-2, -2], [3, 6], [3, 6], [1, 2], 11, [3, 8], [1, 2]
+echo([1, 2] + [3, 4], [1, 2] - [3, 4], [1, 2] * 3, 3 * [1, 2], [2, 4] / 2, [1, 2] * [3, 4], [[1, 0], [0, 2]] * [3, 4], [1, 2] * [[1, 0], [0, 1]]);

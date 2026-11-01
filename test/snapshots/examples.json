@@ -1,0 +1,8832 @@
+{
+ "ascent.kerf": {
+  "parts": [
+   {
+    "name": "Wheel",
+    "qty": 6,
+    "size": [
+     220,
+     219.24
+    ],
+    "pieces": 1,
+    "cut": 1667,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Crank",
+    "qty": 2,
+    "size": [
+     59,
+     24
+    ],
+    "pieces": 1,
+    "cut": 180,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Hub ring",
+    "qty": 4,
+    "size": [
+     28,
+     28
+    ],
+    "pieces": 1,
+    "cut": 108,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Grip",
+    "qty": 4,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 77,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rear cheek",
+    "qty": 1,
+    "size": [
+     388,
+     350
+    ],
+    "pieces": 1,
+    "cut": 1722,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Front cheek",
+    "qty": 1,
+    "size": [
+     388,
+     350
+    ],
+    "pieces": 1,
+    "cut": 3558,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Shroud",
+    "qty": 7,
+    "size": [
+     260,
+     260
+    ],
+    "pieces": 1,
+    "cut": 1470,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Base",
+    "qty": 1,
+    "size": [
+     450,
+     110
+    ],
+    "pieces": 1,
+    "cut": 1224,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Loading gate",
+    "qty": 1,
+    "size": [
+     41,
+     28
+    ],
+    "pieces": 1,
+    "cut": 122,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Gusset",
+    "qty": 4,
+    "size": [
+     40,
+     55
+    ],
+    "pieces": 1,
+    "cut": 177,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Chute floor",
+    "qty": 1,
+    "size": [
+     198.94,
+     21
+    ],
+    "pieces": 1,
+    "cut": 440,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Catch floor",
+    "qty": 1,
+    "size": [
+     50,
+     50
+    ],
+    "pieces": 1,
+    "cut": 200,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Catch lid",
+    "qty": 1,
+    "size": [
+     50,
+     50
+    ],
+    "pieces": 1,
+    "cut": 200,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Catch side wall",
+    "qty": 2,
+    "size": [
+     50,
+     22
+    ],
+    "pieces": 1,
+    "cut": 144,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Catch end wall",
+    "qty": 1,
+    "size": [
+     44,
+     22
+    ],
+    "pieces": 1,
+    "cut": 132,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Catch pedestal",
+    "qty": 2,
+    "size": [
+     40,
+     58.75
+    ],
+    "pieces": 1,
+    "cut": 198,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     90,
+     40
+    ],
+    "pieces": 1,
+    "cut": 426,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 10,
+  "layers": {
+   "cut": {
+    "area": 491017.78,
+    "length": 0
+   },
+   "score": {
+    "area": 0,
+    "length": 1108.31
+   }
+  },
+  "echoes": [
+   "Ascent: 6 wheel layers in a 21 mm cheek gap, 220 mm wheel, 16 mm marble"
+  ],
+  "warnings": []
+ },
+ "bloom.kerf": {
+  "parts": [
+   {
+    "name": "Base",
+    "qty": 2,
+    "size": [
+     356,
+     311.52
+    ],
+    "pieces": 1,
+    "cut": 2849,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Hub",
+    "qty": 1,
+    "size": [
+     50,
+     50
+    ],
+    "pieces": 1,
+    "cut": 171,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Retainer",
+    "qty": 1,
+    "size": [
+     62,
+     62
+    ],
+    "pieces": 1,
+    "cut": 209,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Foot cap",
+    "qty": 6,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 70,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Foot ring",
+    "qty": 30,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 88,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drive ring",
+    "qty": 1,
+    "size": [
+     140,
+     140
+    ],
+    "pieces": 1,
+    "cut": 852,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Coupler",
+    "qty": 6,
+    "size": [
+     83,
+     13
+    ],
+    "pieces": 1,
+    "cut": 220,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Petal",
+    "qty": 6,
+    "size": [
+     92,
+     34
+    ],
+    "pieces": 1,
+    "cut": 234,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Grip ring",
+    "qty": 5,
+    "size": [
+     16,
+     16
+    ],
+    "pieces": 1,
+    "cut": 70,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Ring pivot spacer",
+    "qty": 6,
+    "size": [
+     12,
+     12
+    ],
+    "pieces": 1,
+    "cut": 57,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Inner pin spacer",
+    "qty": 12,
+    "size": [
+     12,
+     12
+    ],
+    "pieces": 1,
+    "cut": 57,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Outer pin spacer",
+    "qty": 18,
+    "size": [
+     12,
+     12
+    ],
+    "pieces": 1,
+    "cut": 57,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     150,
+     65
+    ],
+    "pieces": 1,
+    "cut": 660,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 3,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 1676.15
+   },
+   "cut": {
+    "area": 112863.33,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Bloom: 6 petals travel 42 mm; the tips span 339 mm closed and 422 mm open"
+  ],
+  "warnings": []
+ },
+ "box.kerf": {
+  "parts": [
+   {
+    "name": "bottom",
+    "qty": 1,
+    "size": [
+     120,
+     80
+    ],
+    "pieces": 1,
+    "cut": 520,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "material"
+   },
+   {
+    "name": "lid",
+    "qty": 1,
+    "size": [
+     120,
+     80
+    ],
+    "pieces": 1,
+    "cut": 520,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "material"
+   },
+   {
+    "name": "front",
+    "qty": 1,
+    "size": [
+     120,
+     50
+    ],
+    "pieces": 1,
+    "cut": 424,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "material"
+   },
+   {
+    "name": "back",
+    "qty": 1,
+    "size": [
+     120,
+     50
+    ],
+    "pieces": 1,
+    "cut": 424,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "material"
+   },
+   {
+    "name": "left",
+    "qty": 1,
+    "size": [
+     80,
+     50
+    ],
+    "pieces": 1,
+    "cut": 308,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "material"
+   },
+   {
+    "name": "right",
+    "qty": 1,
+    "size": [
+     80,
+     50
+    ],
+    "pieces": 1,
+    "cut": 308,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "material"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 36459.57,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "calibration-square.kerf": {
+  "parts": [
+   {
+    "name": "part",
+    "qty": 1,
+    "size": [
+     100,
+     100
+    ],
+    "pieces": 1,
+    "cut": 463,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "material"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 28.03,
+    "length": 0
+   },
+   "score": {
+    "area": 0,
+    "length": 200
+   },
+   "cut": {
+    "area": 9720.61,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "cascade.kerf": {
+  "parts": [
+   {
+    "name": "Board face",
+    "qty": 1,
+    "size": [
+     184,
+     476
+    ],
+    "pieces": 1,
+    "cut": 1561,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Board back",
+    "qty": 1,
+    "size": [
+     184,
+     476
+    ],
+    "pieces": 1,
+    "cut": 1561,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Stand foot",
+    "qty": 4,
+    "size": [
+     205,
+     103.14
+    ],
+    "pieces": 1,
+    "cut": 567,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rocker face",
+    "qty": 5,
+    "size": [
+     68,
+     26.55
+    ],
+    "pieces": 1,
+    "cut": 170,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rocker",
+    "qty": 10,
+    "size": [
+     68,
+     26.55
+    ],
+    "pieces": 1,
+    "cut": 170,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Reset lever",
+    "qty": 10,
+    "size": [
+     60,
+     10
+    ],
+    "pieces": 1,
+    "cut": 145,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Reset bar face",
+    "qty": 1,
+    "size": [
+     44,
+     493
+    ],
+    "pieces": 1,
+    "cut": 1319,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Reset bar",
+    "qty": 1,
+    "size": [
+     44,
+     493
+    ],
+    "pieces": 1,
+    "cut": 1319,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Chute rail",
+    "qty": 15,
+    "size": [
+     95,
+     32.19
+    ],
+    "pieces": 1,
+    "cut": 219,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Stop rail",
+    "qty": 12,
+    "size": [
+     51,
+     47.6
+    ],
+    "pieces": 1,
+    "cut": 186,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Last stop rail",
+    "qty": 3,
+    "size": [
+     51,
+     30.6
+    ],
+    "pieces": 1,
+    "cut": 147,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Hopper",
+    "qty": 3,
+    "size": [
+     119,
+     90.19
+    ],
+    "pieces": 1,
+    "cut": 351,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Return wall",
+    "qty": 3,
+    "size": [
+     6,
+     382
+    ],
+    "pieces": 1,
+    "cut": 776,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tray floor",
+    "qty": 1,
+    "size": [
+     152,
+     80
+    ],
+    "pieces": 1,
+    "cut": 464,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tray side",
+    "qty": 2,
+    "size": [
+     80,
+     25
+    ],
+    "pieces": 1,
+    "cut": 210,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tray end",
+    "qty": 2,
+    "size": [
+     146,
+     25
+    ],
+    "pieces": 1,
+    "cut": 342,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     120,
+     44
+    ],
+    "pieces": 1,
+    "cut": 516,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 4,
+  "layers": {
+   "engrave": {
+    "area": 267.07,
+    "length": 0
+   },
+   "cut": {
+    "area": 329526.93,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Cascade: 5 bits, counts 0 to 31; board 184 x 476 mm leaning 20 degrees; rockers tip 20 degrees, cups 20 mm out"
+  ],
+  "warnings": []
+ },
+ "celestial.kerf": {
+  "parts": [
+   {
+    "name": "Lower orbit gear",
+    "qty": 2,
+    "size": [
+     186,
+     186
+    ],
+    "pieces": 1,
+    "cut": 1168,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Lower drive gear",
+    "qty": 2,
+    "size": [
+     95.66,
+     96
+    ],
+    "pieces": 1,
+    "cut": 633,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Middle orbit gear",
+    "qty": 2,
+    "size": [
+     140.89,
+     140.97
+    ],
+    "pieces": 1,
+    "cut": 888,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Middle drive gear",
+    "qty": 2,
+    "size": [
+     140.89,
+     140.97
+    ],
+    "pieces": 1,
+    "cut": 909,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Upper orbit gear",
+    "qty": 2,
+    "size": [
+     96,
+     95.66
+    ],
+    "pieces": 1,
+    "cut": 612,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Upper drive gear",
+    "qty": 2,
+    "size": [
+     185.84,
+     185.84
+    ],
+    "pieces": 1,
+    "cut": 1189,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Base",
+    "qty": 2,
+    "size": [
+     357,
+     222
+    ],
+    "pieces": 1,
+    "cut": 1235,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Foot",
+    "qty": 12,
+    "size": [
+     22,
+     22
+    ],
+    "pieces": 1,
+    "cut": 107,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Journal pedestal",
+    "qty": 4,
+    "size": [
+     16,
+     16
+    ],
+    "pieces": 1,
+    "cut": 76,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Planet",
+    "qty": 9,
+    "size": [
+     12,
+     12
+    ],
+    "pieces": 1,
+    "cut": 38,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Sun",
+    "qty": 2,
+    "size": [
+     28,
+     28
+    ],
+    "pieces": 1,
+    "cut": 108,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Crank",
+    "qty": 2,
+    "size": [
+     40,
+     70
+    ],
+    "pieces": 1,
+    "cut": 238,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Handle",
+    "qty": 5,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 76,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     110,
+     48
+    ],
+    "pieces": 1,
+    "cut": 459,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 4,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 3973.56
+   },
+   "cut": {
+    "area": 356699.29,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Celestial: axles 135 mm apart, gear levels at 15, 35 and 55 mm; the orbits turn 1/2, 1 and 2 times per crank turn"
+  ],
+  "warnings": []
+ },
+ "clock-face.kerf": {
+  "parts": [
+   {
+    "name": "part",
+    "qty": 1,
+    "size": [
+     150,
+     150
+    ],
+    "pieces": 1,
+    "cut": 496,
+    "thickness": 3,
+    "kerf": 0,
+    "material": "material"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 191.83,
+    "length": 0
+   },
+   "score": {
+    "area": 0,
+    "length": 240
+   },
+   "cut": {
+    "area": 17617.63,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "coaster.kerf": {
+  "parts": [
+   {
+    "name": "part",
+    "qty": 1,
+    "size": [
+     90,
+     90
+    ],
+    "pieces": 1,
+    "cut": 302,
+    "thickness": 3,
+    "kerf": 0,
+    "material": "material"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 669.02,
+    "length": 0
+   },
+   "score": {
+    "area": 0,
+    "length": 263.88
+   },
+   "cut": {
+    "area": 6332.19,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "crawl.kerf": {
+  "parts": [
+   {
+    "name": "Side plate",
+    "qty": 2,
+    "size": [
+     122.4,
+     91.36
+    ],
+    "pieces": 1,
+    "cut": 471,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Outer plate",
+    "qty": 2,
+    "size": [
+     116.4,
+     85.36
+    ],
+    "pieces": 1,
+    "cut": 453,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Crank disc",
+    "qty": 12,
+    "size": [
+     58.88,
+     58.88
+    ],
+    "pieces": 1,
+    "cut": 223,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Journal",
+    "qty": 4,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 81,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Hub ring",
+    "qty": 15,
+    "size": [
+     14,
+     14
+    ],
+    "pieces": 1,
+    "cut": 69,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Handle crank",
+    "qty": 2,
+    "size": [
+     55,
+     22
+    ],
+    "pieces": 1,
+    "cut": 170,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Handle grip",
+    "qty": 6,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 76,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "End cap",
+    "qty": 1,
+    "size": [
+     24,
+     24
+    ],
+    "pieces": 1,
+    "cut": 100,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Connecting arm",
+    "qty": 8,
+    "size": [
+     101.92,
+     23.28
+    ],
+    "pieces": 1,
+    "cut": 285,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Leg",
+    "qty": 8,
+    "size": [
+     147.84,
+     49.86
+    ],
+    "pieces": 1,
+    "cut": 375,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Upper rocker",
+    "qty": 8,
+    "size": [
+     55.41,
+     14
+    ],
+    "pieces": 1,
+    "cut": 168,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Lower rocker",
+    "qty": 8,
+    "size": [
+     39.65,
+     14
+    ],
+    "pieces": 1,
+    "cut": 137,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Spacer ring",
+    "qty": 44,
+    "size": [
+     11,
+     11
+    ],
+    "pieces": 1,
+    "cut": 54,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     120,
+     48
+    ],
+    "pieces": 1,
+    "cut": 505,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 2,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 2334.4
+   },
+   "cut": {
+    "area": 106464.43,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Crawl: stride 81 mm, lift 38 mm, crank 21.4 mm; crank axle 71 mm up at most; 270 mm long, 240 mm across the outer plates"
+  ],
+  "warnings": []
+ },
+ "dabble.kerf": {
+  "parts": [
+   {
+    "name": "Base",
+    "qty": 2,
+    "size": [
+     210,
+     90
+    ],
+    "pieces": 1,
+    "cut": 756,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "End wall",
+    "qty": 4,
+    "size": [
+     90,
+     131
+    ],
+    "pieces": 1,
+    "cut": 894,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Guide rail",
+    "qty": 2,
+    "size": [
+     198,
+     30
+    ],
+    "pieces": 1,
+    "cut": 511,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Deck",
+    "qty": 2,
+    "size": [
+     210,
+     90
+    ],
+    "pieces": 1,
+    "cut": 980,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Neck cam",
+    "qty": 3,
+    "size": [
+     62,
+     73.54
+    ],
+    "pieces": 1,
+    "cut": 234,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Wing cam",
+    "qty": 3,
+    "size": [
+     60,
+     50
+    ],
+    "pieces": 1,
+    "cut": 196,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tail cam",
+    "qty": 3,
+    "size": [
+     58,
+     50.3
+    ],
+    "pieces": 1,
+    "cut": 197,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Journal",
+    "qty": 4,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 81,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Thrust washer",
+    "qty": 2,
+    "size": [
+     26,
+     26
+    ],
+    "pieces": 1,
+    "cut": 111,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Shaft collar",
+    "qty": 2,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 81,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Spacer ring",
+    "qty": 50,
+    "size": [
+     14,
+     14
+    ],
+    "pieces": 1,
+    "cut": 73,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Follower disc",
+    "qty": 6,
+    "size": [
+     34,
+     34
+    ],
+    "pieces": 1,
+    "cut": 126,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left side",
+    "qty": 2,
+    "size": [
+     114,
+     54
+    ],
+    "pieces": 1,
+    "cut": 405,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right side",
+    "qty": 2,
+    "size": [
+     114,
+     54
+    ],
+    "pieces": 1,
+    "cut": 405,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Body core",
+    "qty": 3,
+    "size": [
+     78.82,
+     48
+    ],
+    "pieces": 1,
+    "cut": 365,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Neck front",
+    "qty": 1,
+    "size": [
+     45.82,
+     80
+    ],
+    "pieces": 1,
+    "cut": 235,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Neck back",
+    "qty": 1,
+    "size": [
+     45.82,
+     80
+    ],
+    "pieces": 1,
+    "cut": 235,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tail front",
+    "qty": 1,
+    "size": [
+     54.23,
+     29.6
+    ],
+    "pieces": 1,
+    "cut": 168,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tail back",
+    "qty": 1,
+    "size": [
+     54.23,
+     29.6
+    ],
+    "pieces": 1,
+    "cut": 168,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left wing",
+    "qty": 1,
+    "size": [
+     90.56,
+     24.95
+    ],
+    "pieces": 1,
+    "cut": 231,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right wing",
+    "qty": 1,
+    "size": [
+     90.56,
+     24.95
+    ],
+    "pieces": 1,
+    "cut": 231,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Crank",
+    "qty": 3,
+    "size": [
+     32,
+     56
+    ],
+    "pieces": 1,
+    "cut": 182,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Handle",
+    "qty": 6,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 71,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     120,
+     52
+    ],
+    "pieces": 1,
+    "cut": 617,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 2,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 3272.24
+   },
+   "cut": {
+    "area": 196674.59,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Dabble: head dips 66 degrees, wings lift 32, tail 33; box 210 x 90 x 131 mm; shaft 223 mm, 50 spacer rings; dowels 61, 80 and 73 mm"
+  ],
+  "warnings": []
+ },
+ "drawer-organizer.kerf": {
+  "parts": [
+   {
+    "name": "bottom",
+    "qty": 1,
+    "size": [
+     240,
+     160
+    ],
+    "pieces": 1,
+    "cut": 1052,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "front",
+    "qty": 1,
+    "size": [
+     240,
+     50
+    ],
+    "pieces": 1,
+    "cut": 676,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "back",
+    "qty": 1,
+    "size": [
+     240,
+     50
+    ],
+    "pieces": 1,
+    "cut": 676,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "left",
+    "qty": 1,
+    "size": [
+     160,
+     50
+    ],
+    "pieces": 1,
+    "cut": 474,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "right",
+    "qty": 1,
+    "size": [
+     160,
+     50
+    ],
+    "pieces": 1,
+    "cut": 474,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Long divider",
+    "qty": 1,
+    "size": [
+     233,
+     45
+    ],
+    "pieces": 1,
+    "cut": 758,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Cross divider",
+    "qty": 3,
+    "size": [
+     153,
+     45
+    ],
+    "pieces": 1,
+    "cut": 470,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 101433.29,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "echo.kerf": {
+  "parts": [
+   {
+    "name": "Anchor arm",
+    "qty": 1,
+    "size": [
+     264,
+     24
+    ],
+    "pieces": 1,
+    "cut": 595,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Pencil arm",
+    "qty": 1,
+    "size": [
+     324,
+     24
+    ],
+    "pieces": 1,
+    "cut": 844,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Stylus arm",
+    "qty": 1,
+    "size": [
+     264,
+     24
+    ],
+    "pieces": 1,
+    "cut": 724,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link",
+    "qty": 1,
+    "size": [
+     96,
+     24
+    ],
+    "pieces": 1,
+    "cut": 259,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Base board",
+    "qty": 1,
+    "size": [
+     560,
+     380
+    ],
+    "pieces": 1,
+    "cut": 1887,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Nut block",
+    "qty": 1,
+    "size": [
+     44,
+     44
+    ],
+    "pieces": 1,
+    "cut": 163,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Anchor block",
+    "qty": 1,
+    "size": [
+     44,
+     44
+    ],
+    "pieces": 1,
+    "cut": 152,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Glide foot",
+    "qty": 6,
+    "size": [
+     20,
+     20
+    ],
+    "pieces": 1,
+    "cut": 94,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Stylus collar",
+    "qty": 2,
+    "size": [
+     14,
+     14
+    ],
+    "pieces": 1,
+    "cut": 69,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Pencil guide",
+    "qty": 3,
+    "size": [
+     14,
+     14
+    ],
+    "pieces": 1,
+    "cut": 70,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     130,
+     42
+    ],
+    "pieces": 1,
+    "cut": 514,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 2,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 1803.19
+   },
+   "cut": {
+    "area": 244647.71,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Echo: 2.5x copy; stylus 96 mm from the link joint, pencil 180 mm from the elbow; original up to 86 mm square, copy 215 mm"
+  ],
+  "warnings": []
+ },
+ "expanse.kerf": {
+  "parts": [
+   {
+    "name": "Base",
+    "qty": 1,
+    "size": [
+     330.64,
+     190
+    ],
+    "pieces": 1,
+    "cut": 1308,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Deck",
+    "qty": 1,
+    "size": [
+     330.64,
+     190
+    ],
+    "pieces": 1,
+    "cut": 2236,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Foot",
+    "qty": 12,
+    "size": [
+     20,
+     20
+    ],
+    "pieces": 1,
+    "cut": 94,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Guide rail",
+    "qty": 2,
+    "size": [
+     290.64,
+     21
+    ],
+    "pieces": 1,
+    "cut": 647,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right follower",
+    "qty": 1,
+    "size": [
+     100,
+     160
+    ],
+    "pieces": 1,
+    "cut": 934,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left follower",
+    "qty": 1,
+    "size": [
+     100,
+     160
+    ],
+    "pieces": 1,
+    "cut": 934,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tray floor",
+    "qty": 2,
+    "size": [
+     100,
+     140
+    ],
+    "pieces": 1,
+    "cut": 581,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tray side wall",
+    "qty": 4,
+    "size": [
+     134,
+     33
+    ],
+    "pieces": 1,
+    "cut": 338,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tray end wall",
+    "qty": 4,
+    "size": [
+     100,
+     33
+    ],
+    "pieces": 1,
+    "cut": 270,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drive disc",
+    "qty": 1,
+    "size": [
+     176,
+     176
+    ],
+    "pieces": 1,
+    "cut": 785,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Well side wall",
+    "qty": 2,
+    "size": [
+     87,
+     20
+    ],
+    "pieces": 1,
+    "cut": 218,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Well end wall",
+    "qty": 2,
+    "size": [
+     93,
+     20
+    ],
+    "pieces": 1,
+    "cut": 230,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     120,
+     45
+    ],
+    "pieces": 1,
+    "cut": 449,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 2,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 622.99
+   },
+   "cut": {
+    "area": 248065.03,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Expanse: two 100 x 140 x 30 mm trays, 48.3 mm travel each, base 330.6 x 190 mm"
+  ],
+  "warnings": []
+ },
+ "flight.kerf": {
+  "parts": [
+   {
+    "name": "Backboard",
+    "qty": 3,
+    "size": [
+     130,
+     230
+    ],
+    "pieces": 1,
+    "cut": 1150,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Stand foot",
+    "qty": 4,
+    "size": [
+     130,
+     42
+    ],
+    "pieces": 1,
+    "cut": 318,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right wing",
+    "qty": 1,
+    "size": [
+     182,
+     94
+    ],
+    "pieces": 1,
+    "cut": 737,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left wing",
+    "qty": 1,
+    "size": [
+     182,
+     94
+    ],
+    "pieces": 1,
+    "cut": 737,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Crank disc",
+    "qty": 1,
+    "size": [
+     46,
+     46
+    ],
+    "pieces": 1,
+    "cut": 178,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rear crank",
+    "qty": 3,
+    "size": [
+     20,
+     49
+    ],
+    "pieces": 1,
+    "cut": 147,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drive rod",
+    "qty": 1,
+    "size": [
+     14,
+     64
+    ],
+    "pieces": 1,
+    "cut": 184,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Wing link",
+    "qty": 2,
+    "size": [
+     14,
+     64
+    ],
+    "pieces": 1,
+    "cut": 184,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Slider",
+    "qty": 1,
+    "size": [
+     16,
+     90
+    ],
+    "pieces": 1,
+    "cut": 355,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Handle grip",
+    "qty": 5,
+    "size": [
+     16,
+     16
+    ],
+    "pieces": 1,
+    "cut": 70,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Root standoff",
+    "qty": 32,
+    "size": [
+     16,
+     16
+    ],
+    "pieces": 1,
+    "cut": 70,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Guide standoff",
+    "qty": 14,
+    "size": [
+     14,
+     14
+    ],
+    "pieces": 1,
+    "cut": 64,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Spare standoff",
+    "qty": 1,
+    "size": [
+     14,
+     14
+    ],
+    "pieces": 1,
+    "cut": 64,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Spacer ring",
+    "qty": 18,
+    "size": [
+     12,
+     12
+    ],
+    "pieces": 1,
+    "cut": 57,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     110,
+     44
+    ],
+    "pieces": 1,
+    "cut": 445,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 2,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 2197.85
+   },
+   "cut": {
+    "area": 129529.36,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Flight: wings beat from -36.2 to 19.4 degrees; 24 mm slider stroke; 370 mm across the wings"
+  ],
+  "warnings": []
+ },
+ "fractal-tree.kerf": {
+  "parts": [
+   {
+    "name": "part",
+    "qty": 1,
+    "size": [
+     120,
+     126
+    ],
+    "pieces": 1,
+    "cut": 1867,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 20.45,
+    "length": 0
+   },
+   "cut": {
+    "area": 4505.02,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "fracture.kerf": {
+  "parts": [
+   {
+    "name": "Layer 0",
+    "qty": 1,
+    "size": [
+     400,
+     400
+    ],
+    "pieces": 1,
+    "cut": 10756,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 1",
+    "qty": 1,
+    "size": [
+     400,
+     400
+    ],
+    "pieces": 1,
+    "cut": 7178,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 2",
+    "qty": 1,
+    "size": [
+     400,
+     400
+    ],
+    "pieces": 1,
+    "cut": 6435,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 3",
+    "qty": 1,
+    "size": [
+     400,
+     400
+    ],
+    "pieces": 1,
+    "cut": 5692,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 4",
+    "qty": 1,
+    "size": [
+     400,
+     400
+    ],
+    "pieces": 1,
+    "cut": 4950,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Backer",
+    "qty": 1,
+    "size": [
+     400,
+     400
+    ],
+    "pieces": 1,
+    "cut": 1299,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 6,
+  "layers": {
+   "cut": {
+    "area": 622527.63,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Layer, 0, openings, 240",
+   "Layer, 1, openings, 78",
+   "Layer, 2, openings, 78",
+   "Layer, 3, openings, 78",
+   "Layer, 4, openings, 78"
+  ],
+  "warnings": []
+ },
+ "gears.kerf": {
+  "parts": [
+   {
+    "name": "large gear",
+    "qty": 1,
+    "size": [
+     101.98,
+     101.98
+    ],
+    "pieces": 1,
+    "cut": 1069,
+    "thickness": 3,
+    "kerf": 0,
+    "material": "material"
+   },
+   {
+    "name": "small gear",
+    "qty": 1,
+    "size": [
+     47.96,
+     47.19
+    ],
+    "pieces": 1,
+    "cut": 295,
+    "thickness": 3,
+    "kerf": 0,
+    "material": "material"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 6313.15,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "gift-tags.kerf": {
+  "parts": [
+   {
+    "name": "Mila",
+    "qty": 1,
+    "size": [
+     72,
+     31.68
+    ],
+    "pieces": 1,
+    "cut": 211,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Theo",
+    "qty": 1,
+    "size": [
+     72,
+     31.68
+    ],
+    "pieces": 1,
+    "cut": 211,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Grandma",
+    "qty": 1,
+    "size": [
+     72,
+     31.68
+    ],
+    "pieces": 1,
+    "cut": 211,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Oliver",
+    "qty": 1,
+    "size": [
+     72,
+     31.68
+    ],
+    "pieces": 1,
+    "cut": 211,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Nora",
+    "qty": 1,
+    "size": [
+     72,
+     31.68
+    ],
+    "pieces": 1,
+    "cut": 211,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 490.05,
+    "length": 0
+   },
+   "score": {
+    "area": 0,
+    "length": 864.51
+   },
+   "cut": {
+    "area": 10981.59,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "guilloche-coaster.kerf": {
+  "parts": [
+   {
+    "name": "part",
+    "qty": 1,
+    "size": [
+     95,
+     95
+    ],
+    "pieces": 1,
+    "cut": 298,
+    "thickness": 3,
+    "kerf": 0,
+    "material": "material"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 25.51,
+    "length": 0
+   },
+   "score": {
+    "area": 0,
+    "length": 4669.94
+   },
+   "cut": {
+    "area": 7084.98,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "hadal.kerf": {
+  "parts": [
+   {
+    "name": "Spine",
+    "qty": 1,
+    "size": [
+     270,
+     68.32
+    ],
+    "pieces": 1,
+    "cut": 1075,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 1",
+    "qty": 1,
+    "size": [
+     59.42,
+     34.24
+    ],
+    "pieces": 1,
+    "cut": 272,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 2",
+    "qty": 1,
+    "size": [
+     100.39,
+     46.11
+    ],
+    "pieces": 1,
+    "cut": 558,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 3",
+    "qty": 1,
+    "size": [
+     151.61,
+     53.69
+    ],
+    "pieces": 1,
+    "cut": 870,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 4",
+    "qty": 1,
+    "size": [
+     192.59,
+     56.08
+    ],
+    "pieces": 1,
+    "cut": 1102,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 5",
+    "qty": 1,
+    "size": [
+     180.29,
+     53.31
+    ],
+    "pieces": 1,
+    "cut": 1004,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 6",
+    "qty": 1,
+    "size": [
+     141.37,
+     48.87
+    ],
+    "pieces": 1,
+    "cut": 761,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 7",
+    "qty": 1,
+    "size": [
+     100.39,
+     42.1
+    ],
+    "pieces": 1,
+    "cut": 511,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 8",
+    "qty": 1,
+    "size": [
+     65.56,
+     35.59
+    ],
+    "pieces": 1,
+    "cut": 296,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 9",
+    "qty": 1,
+    "size": [
+     40.98,
+     29.31
+    ],
+    "pieces": 1,
+    "cut": 128,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Cradle A",
+    "qty": 1,
+    "size": [
+     64,
+     82.86
+    ],
+    "pieces": 1,
+    "cut": 469,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Cradle B",
+    "qty": 1,
+    "size": [
+     64,
+     80.86
+    ],
+    "pieces": 1,
+    "cut": 465,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Plinth",
+    "qty": 1,
+    "size": [
+     190,
+     106
+    ],
+    "pieces": 1,
+    "cut": 672,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 4501.53
+   },
+   "cut": {
+    "area": 49184.8,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "helix.kerf": {
+  "parts": [
+   {
+    "name": "Screw plate",
+    "qty": 120,
+    "size": [
+     39.5,
+     25.93
+    ],
+    "pieces": 1,
+    "cut": 172,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Journal",
+    "qty": 4,
+    "size": [
+     20,
+     20
+    ],
+    "pieces": 1,
+    "cut": 115,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Collar",
+    "qty": 4,
+    "size": [
+     32,
+     32
+    ],
+    "pieces": 1,
+    "cut": 152,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Crank",
+    "qty": 2,
+    "size": [
+     55,
+     22
+    ],
+    "pieces": 1,
+    "cut": 198,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Grip ring",
+    "qty": 4,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 77,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Board",
+    "qty": 1,
+    "size": [
+     312,
+     348
+    ],
+    "pieces": 1,
+    "cut": 2269,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Base",
+    "qty": 1,
+    "size": [
+     380,
+     150
+    ],
+    "pieces": 1,
+    "cut": 1251,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Lower end plate",
+    "qty": 2,
+    "size": [
+     99.95,
+     58
+    ],
+    "pieces": 1,
+    "cut": 424,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Upper end plate",
+    "qty": 2,
+    "size": [
+     99.95,
+     58
+    ],
+    "pieces": 1,
+    "cut": 424,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Exit rib",
+    "qty": 1,
+    "size": [
+     51.21,
+     36.84
+    ],
+    "pieces": 1,
+    "cut": 194,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Track floor 1",
+    "qty": 1,
+    "size": [
+     244.88,
+     27
+    ],
+    "pieces": 1,
+    "cut": 556,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Track rail 1",
+    "qty": 1,
+    "size": [
+     241.87,
+     10
+    ],
+    "pieces": 1,
+    "cut": 504,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Track floor 2",
+    "qty": 1,
+    "size": [
+     249.9,
+     27
+    ],
+    "pieces": 1,
+    "cut": 566,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Track rail 2",
+    "qty": 1,
+    "size": [
+     246.89,
+     10
+    ],
+    "pieces": 1,
+    "cut": 514,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Track floor 3",
+    "qty": 1,
+    "size": [
+     199.72,
+     27
+    ],
+    "pieces": 1,
+    "cut": 465,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Track rail 3",
+    "qty": 1,
+    "size": [
+     196.71,
+     10
+    ],
+    "pieces": 1,
+    "cut": 413,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "End wall 1",
+    "qty": 1,
+    "size": [
+     27,
+     13
+    ],
+    "pieces": 1,
+    "cut": 80,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "End wall 2",
+    "qty": 1,
+    "size": [
+     27,
+     37.22
+    ],
+    "pieces": 1,
+    "cut": 128,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "End wall 3",
+    "qty": 1,
+    "size": [
+     27,
+     37.47
+    ],
+    "pieces": 1,
+    "cut": 129,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Exit floor",
+    "qty": 1,
+    "size": [
+     32,
+     79.29
+    ],
+    "pieces": 1,
+    "cut": 285,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Exit wall",
+    "qty": 2,
+    "size": [
+     79,
+     17
+    ],
+    "pieces": 1,
+    "cut": 175,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Exit front wall",
+    "qty": 1,
+    "size": [
+     26,
+     10
+    ],
+    "pieces": 1,
+    "cut": 72,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Intake floor",
+    "qty": 1,
+    "size": [
+     26,
+     29.75
+    ],
+    "pieces": 1,
+    "cut": 111,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Intake wall",
+    "qty": 1,
+    "size": [
+     30,
+     14.7
+    ],
+    "pieces": 1,
+    "cut": 84,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Intake back wall",
+    "qty": 1,
+    "size": [
+     30,
+     39.87
+    ],
+    "pieces": 1,
+    "cut": 135,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Ramp",
+    "qty": 1,
+    "size": [
+     70,
+     60.05
+    ],
+    "pieces": 1,
+    "cut": 260,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     150,
+     60
+    ],
+    "pieces": 1,
+    "cut": 920,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 3,
+  "layers": {
+   "engrave": {
+    "area": 717.43,
+    "length": 0
+   },
+   "score": {
+    "area": 0,
+    "length": 2879.69
+   },
+   "cut": {
+    "area": 308655.98,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Helix: 120 plates on a 10 mm square bar, 36 mm pitch, 10 turns; lifts 197.3 mm; track legs at 4.9 degrees"
+  ],
+  "warnings": []
+ },
+ "hinge-card.kerf": {
+  "parts": [
+   {
+    "name": "part",
+    "qty": 1,
+    "size": [
+     160,
+     100
+    ],
+    "pieces": 1,
+    "cut": 2084,
+    "thickness": 3,
+    "kerf": 0,
+    "material": "material"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 15986.25,
+    "length": 1571
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "honeycomb-trivet.kerf": {
+  "parts": [
+   {
+    "name": "part",
+    "qty": 1,
+    "size": [
+     155.88,
+     177.52
+    ],
+    "pieces": 1,
+    "cut": 3463,
+    "thickness": 3,
+    "kerf": 0,
+    "material": "material"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 10880.6,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "hours.kerf": {
+  "parts": [
+   {
+    "name": "Back plate",
+    "qty": 2,
+    "size": [
+     176,
+     323.04
+    ],
+    "pieces": 1,
+    "cut": 2577,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Front plate",
+    "qty": 2,
+    "size": [
+     176,
+     323.04
+    ],
+    "pieces": 1,
+    "cut": 2826,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Wall bar",
+    "qty": 1,
+    "size": [
+     142,
+     22
+    ],
+    "pieces": 1,
+    "cut": 377,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Wall bar, nut layer",
+    "qty": 1,
+    "size": [
+     142,
+     22
+    ],
+    "pieces": 1,
+    "cut": 403,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Wall pad",
+    "qty": 2,
+    "size": [
+     20,
+     20
+    ],
+    "pieces": 1,
+    "cut": 77,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Wall pad, nut layer",
+    "qty": 2,
+    "size": [
+     20,
+     20
+    ],
+    "pieces": 1,
+    "cut": 89,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Great wheel",
+    "qty": 2,
+    "size": [
+     129.8,
+     129.8
+    ],
+    "pieces": 1,
+    "cut": 1542,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Centre pinion",
+    "qty": 3,
+    "size": [
+     20.75,
+     20.75
+    ],
+    "pieces": 1,
+    "cut": 107,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Centre wheel",
+    "qty": 1,
+    "size": [
+     129.8,
+     129.8
+    ],
+    "pieces": 1,
+    "cut": 1652,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Third pinion",
+    "qty": 2,
+    "size": [
+     20.75,
+     20.75
+    ],
+    "pieces": 1,
+    "cut": 107,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Third wheel",
+    "qty": 1,
+    "size": [
+     121.8,
+     121.8
+    ],
+    "pieces": 1,
+    "cut": 1538,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Escape pinion",
+    "qty": 2,
+    "size": [
+     20.75,
+     20.75
+    ],
+    "pieces": 1,
+    "cut": 107,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Escape wheel",
+    "qty": 2,
+    "size": [
+     90,
+     90
+    ],
+    "pieces": 1,
+    "cut": 1158,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Anchor",
+    "qty": 2,
+    "size": [
+     83.01,
+     46.18
+    ],
+    "pieces": 1,
+    "cut": 261,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drum",
+    "qty": 4,
+    "size": [
+     36,
+     36
+    ],
+    "pieces": 1,
+    "cut": 126,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drum flange",
+    "qty": 1,
+    "size": [
+     56,
+     56
+    ],
+    "pieces": 1,
+    "cut": 189,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Ratchet wheel",
+    "qty": 1,
+    "size": [
+     50,
+     50
+    ],
+    "pieces": 1,
+    "cut": 233,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Click",
+    "qty": 1,
+    "size": [
+     43.27,
+     34.69
+    ],
+    "pieces": 1,
+    "cut": 141,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Winding knob",
+    "qty": 2,
+    "size": [
+     21.66,
+     21.66
+    ],
+    "pieces": 1,
+    "cut": 95,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Cannon pinion",
+    "qty": 2,
+    "size": [
+     24.91,
+     24.03
+    ],
+    "pieces": 1,
+    "cut": 131,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Minute wheel",
+    "qty": 1,
+    "size": [
+     61.8,
+     61.6
+    ],
+    "pieces": 1,
+    "cut": 673,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Minute pinion",
+    "qty": 2,
+    "size": [
+     20.75,
+     20.75
+    ],
+    "pieces": 1,
+    "cut": 114,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Hour wheel",
+    "qty": 1,
+    "size": [
+     65.8,
+     65.8
+    ],
+    "pieces": 1,
+    "cut": 728,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Dial",
+    "qty": 1,
+    "size": [
+     176,
+     176
+    ],
+    "pieces": 1,
+    "cut": 1035,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Hour hand",
+    "qty": 1,
+    "size": [
+     13,
+     61.5
+    ],
+    "pieces": 1,
+    "cut": 170,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Minute hand",
+    "qty": 1,
+    "size": [
+     11,
+     102.8
+    ],
+    "pieces": 1,
+    "cut": 242,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Pendulum top",
+    "qty": 2,
+    "size": [
+     18,
+     73
+    ],
+    "pieces": 1,
+    "cut": 188,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Pendulum top, channel",
+    "qty": 2,
+    "size": [
+     18,
+     73
+    ],
+    "pieces": 1,
+    "cut": 288,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Bob",
+    "qty": 1,
+    "size": [
+     90,
+     90
+    ],
+    "pieces": 1,
+    "cut": 283,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Bob back",
+    "qty": 1,
+    "size": [
+     90,
+     90
+    ],
+    "pieces": 1,
+    "cut": 283,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Bob, channel",
+    "qty": 2,
+    "size": [
+     90,
+     89.88
+    ],
+    "pieces": 1,
+    "cut": 422,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     130,
+     40
+    ],
+    "pieces": 1,
+    "cut": 414,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 3,
+  "layers": {
+   "cut": {
+    "area": 156136.85,
+    "length": 0
+   },
+   "engrave": {
+    "area": 351.94,
+    "length": 0
+   },
+   "score": {
+    "area": 0,
+    "length": 715.46
+   }
+  },
+  "echoes": [
+   "Hours: 0.75 s beat, pendulum 559 mm from arbor to bob centre; 40-tooth escape wheel turns once a minute; train 64/8 x 60/8 = 60 from minute arbor to escape wheel; motion works 30/10 x 32/8 = 12:1; great wheel turns once in 8 h, so 69 h on a 1000 mm drop; dowel 567 mm"
+  ],
+  "warnings": []
+ },
+ "index-sequencer.kerf": {
+  "parts": [
+   {
+    "name": "Driver arm",
+    "qty": 2,
+    "size": [
+     112.19,
+     26
+    ],
+    "pieces": 1,
+    "cut": 300,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Locking disc",
+    "qty": 2,
+    "size": [
+     78.08,
+     91.64
+    ],
+    "pieces": 1,
+    "cut": 328,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Geneva wheel",
+    "qty": 2,
+    "size": [
+     127.26,
+     127.26
+    ],
+    "pieces": 1,
+    "cut": 770,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Grip ring",
+    "qty": 5,
+    "size": [
+     16,
+     16
+    ],
+    "pieces": 1,
+    "cut": 70,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Output hub",
+    "qty": 4,
+    "size": [
+     28,
+     28
+    ],
+    "pieces": 1,
+    "cut": 114,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Base",
+    "qty": 2,
+    "size": [
+     257.35,
+     167.42
+    ],
+    "pieces": 1,
+    "cut": 921,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Output pedestal",
+    "qty": 2,
+    "size": [
+     20,
+     20
+    ],
+    "pieces": 1,
+    "cut": 77,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Foot ring",
+    "qty": 12,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 94,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Foot cap",
+    "qty": 4,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 71,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Station dial",
+    "qty": 1,
+    "size": [
+     46,
+     46
+    ],
+    "pieces": 1,
+    "cut": 171,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Pointer",
+    "qty": 1,
+    "size": [
+     35,
+     35
+    ],
+    "pieces": 1,
+    "cut": 210,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Pointer spacer",
+    "qty": 2,
+    "size": [
+     12,
+     12
+    ],
+    "pieces": 1,
+    "cut": 52,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     140,
+     55
+    ],
+    "pieces": 1,
+    "cut": 610,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 1646.39
+   },
+   "cut": {
+    "area": 134146.35,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Index: 4 stations, 90 degrees a step, waits 75% of each turn; pin on a 63.6 mm radius"
+  ],
+  "warnings": []
+ },
+ "inversor.kerf": {
+  "parts": [
+   {
+    "name": "Base",
+    "qty": 2,
+    "size": [
+     255,
+     240
+    ],
+    "pieces": 1,
+    "cut": 1042,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Foot",
+    "qty": 8,
+    "size": [
+     20,
+     20
+    ],
+    "pieces": 1,
+    "cut": 63,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Input link",
+    "qty": 1,
+    "size": [
+     69,
+     14
+    ],
+    "pieces": 1,
+    "cut": 194,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Arm",
+    "qty": 2,
+    "size": [
+     164,
+     14
+    ],
+    "pieces": 1,
+    "cut": 384,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Short link",
+    "qty": 2,
+    "size": [
+     74,
+     14
+    ],
+    "pieces": 1,
+    "cut": 204,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Pen link",
+    "qty": 2,
+    "size": [
+     74,
+     14
+    ],
+    "pieces": 1,
+    "cut": 210,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Post ring",
+    "qty": 8,
+    "size": [
+     16,
+     16
+    ],
+    "pieces": 1,
+    "cut": 70,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Spacer ring",
+    "qty": 9,
+    "size": [
+     12,
+     12
+    ],
+    "pieces": 1,
+    "cut": 57,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Glide",
+    "qty": 3,
+    "size": [
+     14,
+     14
+    ],
+    "pieces": 1,
+    "cut": 70,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Glide ring",
+    "qty": 4,
+    "size": [
+     14,
+     14
+    ],
+    "pieces": 1,
+    "cut": 64,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Pencil sleeve",
+    "qty": 7,
+    "size": [
+     14,
+     14
+    ],
+    "pieces": 1,
+    "cut": 70,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Handle grip",
+    "qty": 4,
+    "size": [
+     16,
+     16
+    ],
+    "pieces": 1,
+    "cut": 70,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     140,
+     48
+    ],
+    "pieces": 1,
+    "cut": 527,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 3785
+   },
+   "cut": {
+    "area": 144803.45,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Inversor: 140 mm line 171.8 mm from O; input link swings 44.3 degrees each way; base 255 x 240 mm"
+  ],
+  "warnings": []
+ },
+ "jigsaw.kerf": {
+  "parts": [
+   {
+    "name": "part",
+    "qty": 1,
+    "size": [
+     150,
+     120
+    ],
+    "pieces": 1,
+    "cut": 1958,
+    "thickness": 3,
+    "kerf": 0,
+    "material": "material"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 17992.25,
+    "length": 1423
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "kerf-test.kerf": {
+  "parts": [
+   {
+    "name": "part",
+    "qty": 1,
+    "size": [
+     81,
+     27
+    ],
+    "pieces": 1,
+    "cut": 423,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "material"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 28.01,
+    "length": 0
+   },
+   "cut": {
+    "area": 1900.23,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "lambda.kerf": {
+  "parts": [
+   {
+    "name": "Right frame",
+    "qty": 2,
+    "size": [
+     173,
+     104
+    ],
+    "pieces": 1,
+    "cut": 1077,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left frame",
+    "qty": 2,
+    "size": [
+     173,
+     104
+    ],
+    "pieces": 1,
+    "cut": 1077,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Front plate",
+    "qty": 1,
+    "size": [
+     104,
+     104
+    ],
+    "pieces": 1,
+    "cut": 666,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rear plate",
+    "qty": 1,
+    "size": [
+     104,
+     104
+    ],
+    "pieces": 1,
+    "cut": 666,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Journal",
+    "qty": 4,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 81,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Eccentric",
+    "qty": 8,
+    "size": [
+     46,
+     46
+    ],
+    "pieces": 1,
+    "cut": 169,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Coupler",
+    "qty": 8,
+    "size": [
+     113.2,
+     60.4
+    ],
+    "pieces": 1,
+    "cut": 462,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rocker",
+    "qty": 4,
+    "size": [
+     51.5,
+     14
+    ],
+    "pieces": 1,
+    "cut": 159,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Leg",
+    "qty": 8,
+    "size": [
+     74,
+     124
+    ],
+    "pieces": 1,
+    "cut": 392,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Thrust collar",
+    "qty": 4,
+    "size": [
+     26,
+     26
+    ],
+    "pieces": 1,
+    "cut": 106,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Spacer ring",
+    "qty": 12,
+    "size": [
+     12,
+     12
+    ],
+    "pieces": 1,
+    "cut": 57,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Handle",
+    "qty": 2,
+    "size": [
+     53,
+     20
+    ],
+    "pieces": 1,
+    "cut": 165,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Handle grip",
+    "qty": 5,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 76,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     150,
+     58
+    ],
+    "pieces": 1,
+    "cut": 703,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 2,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 2735.9
+   },
+   "cut": {
+    "area": 159535.66,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Lambda: feet move 67 mm level to 0.2 mm for 214 degrees of each turn and lift 13.5 mm; square shaft 159 mm, body 173 mm long"
+  ],
+  "warnings": []
+ },
+ "morph.kerf": {
+  "parts": [
+   {
+    "name": "Layer 1",
+    "qty": 1,
+    "size": [
+     107.52,
+     96
+    ],
+    "pieces": 1,
+    "cut": 416,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 2",
+    "qty": 1,
+    "size": [
+     110.39,
+     99.53
+    ],
+    "pieces": 1,
+    "cut": 1024,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 3",
+    "qty": 1,
+    "size": [
+     114.41,
+     104.56
+    ],
+    "pieces": 1,
+    "cut": 1035,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 4",
+    "qty": 1,
+    "size": [
+     118.79,
+     110.16
+    ],
+    "pieces": 1,
+    "cut": 1053,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 5",
+    "qty": 1,
+    "size": [
+     123.19,
+     115.96
+    ],
+    "pieces": 1,
+    "cut": 1073,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 6",
+    "qty": 1,
+    "size": [
+     127.33,
+     121.65
+    ],
+    "pieces": 1,
+    "cut": 1094,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 7",
+    "qty": 1,
+    "size": [
+     130.9,
+     126.93
+    ],
+    "pieces": 1,
+    "cut": 1115,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 8",
+    "qty": 1,
+    "size": [
+     133.65,
+     131.51
+    ],
+    "pieces": 1,
+    "cut": 1134,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 9",
+    "qty": 1,
+    "size": [
+     135.31,
+     135.11
+    ],
+    "pieces": 1,
+    "cut": 1149,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 10",
+    "qty": 1,
+    "size": [
+     135.69,
+     137.49
+    ],
+    "pieces": 1,
+    "cut": 1160,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 11",
+    "qty": 1,
+    "size": [
+     134.66,
+     138.48
+    ],
+    "pieces": 1,
+    "cut": 1167,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 12",
+    "qty": 1,
+    "size": [
+     132.21,
+     137.98
+    ],
+    "pieces": 1,
+    "cut": 1171,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 13",
+    "qty": 1,
+    "size": [
+     128.39,
+     135.99
+    ],
+    "pieces": 1,
+    "cut": 1172,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 14",
+    "qty": 1,
+    "size": [
+     123.31,
+     132.58
+    ],
+    "pieces": 1,
+    "cut": 1168,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 15",
+    "qty": 1,
+    "size": [
+     117.32,
+     128.01
+    ],
+    "pieces": 1,
+    "cut": 1160,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 16",
+    "qty": 1,
+    "size": [
+     110.9,
+     122.69
+    ],
+    "pieces": 1,
+    "cut": 1145,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 17",
+    "qty": 1,
+    "size": [
+     104.95,
+     117.4
+    ],
+    "pieces": 1,
+    "cut": 1125,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 18",
+    "qty": 1,
+    "size": [
+     105.11,
+     116.86
+    ],
+    "pieces": 1,
+    "cut": 1102,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 19",
+    "qty": 1,
+    "size": [
+     107.38,
+     117.83
+    ],
+    "pieces": 1,
+    "cut": 1079,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 20",
+    "qty": 1,
+    "size": [
+     109.82,
+     118.77
+    ],
+    "pieces": 1,
+    "cut": 1056,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 21",
+    "qty": 1,
+    "size": [
+     112.24,
+     119.6
+    ],
+    "pieces": 1,
+    "cut": 1037,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 22",
+    "qty": 1,
+    "size": [
+     114.64,
+     120.35
+    ],
+    "pieces": 1,
+    "cut": 1024,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 23",
+    "qty": 1,
+    "size": [
+     117.08,
+     121.1
+    ],
+    "pieces": 1,
+    "cut": 1020,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 24",
+    "qty": 1,
+    "size": [
+     120.03,
+     122.33
+    ],
+    "pieces": 1,
+    "cut": 1028,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 25",
+    "qty": 1,
+    "size": [
+     123.99,
+     124.54
+    ],
+    "pieces": 1,
+    "cut": 1053,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 26",
+    "qty": 1,
+    "size": [
+     127.96,
+     126.66
+    ],
+    "pieces": 1,
+    "cut": 1085,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 27",
+    "qty": 1,
+    "size": [
+     130.58,
+     127.37
+    ],
+    "pieces": 1,
+    "cut": 1110,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 28",
+    "qty": 1,
+    "size": [
+     130.75,
+     125.67
+    ],
+    "pieces": 1,
+    "cut": 1119,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Spacer",
+    "qty": 54,
+    "size": [
+     62,
+     62
+    ],
+    "pieces": 1,
+    "cut": 354,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Bottom cover",
+    "qty": 1,
+    "size": [
+     139.44,
+     139.44
+    ],
+    "pieces": 1,
+    "cut": 438,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 4,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 956.96
+   },
+   "cut": {
+    "area": 314108.01,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Three dowels, each, 249, mm long"
+  ],
+  "warnings": []
+ },
+ "morphogen.kerf": {
+  "parts": [
+   {
+    "name": "Layer 0",
+    "qty": 1,
+    "size": [
+     360,
+     360
+    ],
+    "pieces": 1,
+    "cut": 7036,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 1",
+    "qty": 1,
+    "size": [
+     360,
+     360
+    ],
+    "pieces": 1,
+    "cut": 6249,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 2",
+    "qty": 1,
+    "size": [
+     360,
+     360
+    ],
+    "pieces": 1,
+    "cut": 5123,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 3",
+    "qty": 1,
+    "size": [
+     360,
+     360
+    ],
+    "pieces": 1,
+    "cut": 4255,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Backer",
+    "qty": 1,
+    "size": [
+     360,
+     360
+    ],
+    "pieces": 1,
+    "cut": 1173,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 5,
+  "layers": {
+   "cut": {
+    "area": 421036.16,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "name-sign.kerf": {
+  "parts": [
+   {
+    "name": "part",
+    "qty": 1,
+    "size": [
+     99.73,
+     46.8
+    ],
+    "pieces": 1,
+    "cut": 308,
+    "thickness": 3,
+    "kerf": 0,
+    "material": "material"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 379.21,
+    "length": 0
+   },
+   "score": {
+    "area": 0,
+    "length": 270.19
+   },
+   "cut": {
+    "area": 4611.44,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "orbit.kerf": {
+  "parts": [
+   {
+    "name": "Sun gear",
+    "qty": 2,
+    "size": [
+     78,
+     78
+    ],
+    "pieces": 1,
+    "cut": 492,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Planet gear",
+    "qty": 6,
+    "size": [
+     78,
+     78
+    ],
+    "pieces": 1,
+    "cut": 492,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Ring gear",
+    "qty": 3,
+    "size": [
+     260,
+     260
+    ],
+    "pieces": 1,
+    "cut": 2217,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Base",
+    "qty": 2,
+    "size": [
+     260,
+     260
+    ],
+    "pieces": 1,
+    "cut": 879,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Spindle pedestal",
+    "qty": 2,
+    "size": [
+     34,
+     34
+    ],
+    "pieces": 1,
+    "cut": 126,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Ring standoff",
+    "qty": 12,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 71,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Foot",
+    "qty": 21,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 94,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Carrier",
+    "qty": 2,
+    "size": [
+     130,
+     146.71
+    ],
+    "pieces": 1,
+    "cut": 602,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Hub sleeve",
+    "qty": 8,
+    "size": [
+     22,
+     22
+    ],
+    "pieces": 1,
+    "cut": 89,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Carrier spacer",
+    "qty": 1,
+    "size": [
+     32,
+     32
+    ],
+    "pieces": 1,
+    "cut": 171,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Crank",
+    "qty": 2,
+    "size": [
+     36,
+     73
+    ],
+    "pieces": 1,
+    "cut": 214,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Handle",
+    "qty": 6,
+    "size": [
+     20,
+     20
+    ],
+    "pieces": 1,
+    "cut": 83,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     110,
+     48
+    ],
+    "pieces": 1,
+    "cut": 473,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Timing card",
+    "qty": 1,
+    "size": [
+     190,
+     80
+    ],
+    "pieces": 1,
+    "cut": 535,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 4,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 2044.88
+   },
+   "cut": {
+    "area": 233811.07,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Orbit: 24 / 24 / 72 teeth, 4 crank turns per carrier turn, 260 mm across"
+  ],
+  "warnings": []
+ },
+ "peck.kerf": {
+  "parts": [
+   {
+    "name": "Paddle top",
+    "qty": 1,
+    "size": [
+     240,
+     350
+    ],
+    "pieces": 1,
+    "cut": 1323,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Paddle base",
+    "qty": 1,
+    "size": [
+     240,
+     350
+    ],
+    "pieces": 1,
+    "cut": 1323,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right body",
+    "qty": 6,
+    "size": [
+     40,
+     39.5
+    ],
+    "pieces": 1,
+    "cut": 140,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left body",
+    "qty": 6,
+    "size": [
+     40,
+     39.5
+    ],
+    "pieces": 1,
+    "cut": 140,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Body spacer",
+    "qty": 6,
+    "size": [
+     19.61,
+     20.48
+    ],
+    "pieces": 1,
+    "cut": 69,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Head",
+    "qty": 6,
+    "size": [
+     87,
+     50.5
+    ],
+    "pieces": 1,
+    "cut": 285,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right tail",
+    "qty": 6,
+    "size": [
+     27.63,
+     43
+    ],
+    "pieces": 1,
+    "cut": 121,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left tail",
+    "qty": 6,
+    "size": [
+     27.63,
+     43
+    ],
+    "pieces": 1,
+    "cut": 121,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Weight disc",
+    "qty": 7,
+    "size": [
+     44,
+     44
+    ],
+    "pieces": 1,
+    "cut": 152,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Knot ring",
+    "qty": 1,
+    "size": [
+     44,
+     44
+    ],
+    "pieces": 1,
+    "cut": 201,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "String plate",
+    "qty": 1,
+    "size": [
+     26,
+     26
+    ],
+    "pieces": 1,
+    "cut": 126,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     96,
+     40
+    ],
+    "pieces": 1,
+    "cut": 348,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 2,
+  "layers": {
+   "engrave": {
+    "area": 163.04,
+    "length": 0
+   },
+   "score": {
+    "area": 0,
+    "length": 3739.45
+   },
+   "cut": {
+    "area": 146277.88,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Peck: 6 hens, heads tip 59 degrees to peck, 10.8 mm of string travel; tie each string 146 mm from neck to plate; weight 110 mm below the paddle"
+  ],
+  "warnings": []
+ },
+ "phone-stand.kerf": {
+  "parts": [
+   {
+    "name": "side",
+    "qty": 2,
+    "size": [
+     91.59,
+     103.35
+    ],
+    "pieces": 1,
+    "cut": 372,
+    "thickness": 4,
+    "kerf": 0.1,
+    "material": "plywood"
+   },
+   {
+    "name": "brace",
+    "qty": 1,
+    "size": [
+     96,
+     30
+    ],
+    "pieces": 1,
+    "cut": 307,
+    "thickness": 4,
+    "kerf": 0.1,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 33.85,
+    "length": 0
+   },
+   "cut": {
+    "area": 12576.73,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "pocket-dinosaur.kerf": {
+  "parts": [
+   {
+    "name": "Dinosaur card",
+    "qty": 1,
+    "size": [
+     150,
+     100
+    ],
+    "pieces": 1,
+    "cut": 1675,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "material"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 50.73,
+    "length": 0
+   },
+   "score": {
+    "area": 0,
+    "length": 9.01
+   },
+   "cut": {
+    "area": 15015.19,
+    "length": 1183.37
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "pocket-dragonfly.kerf": {
+  "parts": [
+   {
+    "name": "Dragonfly card",
+    "qty": 1,
+    "size": [
+     150,
+     100
+    ],
+    "pieces": 1,
+    "cut": 2058,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "material"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 45.69,
+    "length": 0
+   },
+   "score": {
+    "area": 0,
+    "length": 94.18
+   },
+   "cut": {
+    "area": 15015.19,
+    "length": 1567.1
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "pocket-owl.kerf": {
+  "parts": [
+   {
+    "name": "Owl card",
+    "qty": 1,
+    "size": [
+     150,
+     100
+    ],
+    "pieces": 1,
+    "cut": 1730,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "material"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 57.32,
+    "length": 0
+   },
+   "score": {
+    "area": 0,
+    "length": 145.67
+   },
+   "cut": {
+    "area": 15015.19,
+    "length": 1238.26
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "round-badge.kerf": {
+  "parts": [
+   {
+    "name": "part",
+    "qty": 1,
+    "size": [
+     90,
+     90
+    ],
+    "pieces": 1,
+    "cut": 366,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 199.19,
+    "length": 0
+   },
+   "score": {
+    "area": 0,
+    "length": 574.85
+   },
+   "cut": {
+    "area": 6053.96,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "ruler.kerf": {
+  "parts": [
+   {
+    "name": "part",
+    "qty": 1,
+    "size": [
+     176,
+     28
+    ],
+    "pieces": 1,
+    "cut": 419,
+    "thickness": 3,
+    "kerf": 0,
+    "material": "material"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 52.55,
+    "length": 0
+   },
+   "score": {
+    "area": 0,
+    "length": 986.16
+   },
+   "cut": {
+    "area": 4900.6,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "slot-desk-sign.kerf": {
+  "parts": [
+   {
+    "name": "Panel",
+    "qty": 1,
+    "size": [
+     120,
+     112.85
+    ],
+    "pieces": 1,
+    "cut": 419,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Base",
+    "qty": 1,
+    "size": [
+     108,
+     66
+    ],
+    "pieces": 1,
+    "cut": 427,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 817.4
+   },
+   "cut": {
+    "area": 19048.4,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "snowflake.kerf": {
+  "parts": [
+   {
+    "name": "part",
+    "qty": 1,
+    "size": [
+     76.13,
+     90.7
+    ],
+    "pieces": 1,
+    "cut": 1316,
+    "thickness": 3,
+    "kerf": 0,
+    "material": "material"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 11.66,
+    "length": 0
+   },
+   "cut": {
+    "area": 2019.96,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "solstice.kerf": {
+  "parts": [
+   {
+    "name": "Sun wall",
+    "qty": 2,
+    "size": [
+     94,
+     176
+    ],
+    "pieces": 1,
+    "cut": 1514,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "birch plywood"
+   },
+   {
+    "name": "Moon wall",
+    "qty": 2,
+    "size": [
+     94,
+     176
+    ],
+    "pieces": 1,
+    "cut": 1498,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "birch plywood"
+   },
+   {
+    "name": "Base",
+    "qty": 1,
+    "size": [
+     116,
+     116
+    ],
+    "pieces": 1,
+    "cut": 666,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "birch plywood"
+   },
+   {
+    "name": "Crown",
+    "qty": 1,
+    "size": [
+     116,
+     116
+    ],
+    "pieces": 1,
+    "cut": 969,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "birch plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     68,
+     26
+    ],
+    "pieces": 1,
+    "cut": 263,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "birch plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 44.98,
+    "length": 0
+   },
+   "score": {
+    "area": 0,
+    "length": 6438.31
+   },
+   "cut": {
+    "area": 80625.49,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "stride.kerf": {
+  "parts": [
+   {
+    "name": "C crank",
+    "qty": 1,
+    "size": [
+     46,
+     16
+    ],
+    "pieces": 1,
+    "cut": 144,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "A upper link",
+    "qty": 1,
+    "size": [
+     114,
+     14
+    ],
+    "pieces": 1,
+    "cut": 286,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "B lower link",
+    "qty": 1,
+    "size": [
+     137.8,
+     14
+    ],
+    "pieces": 1,
+    "cut": 333,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "R rocker",
+    "qty": 1,
+    "size": [
+     115.56,
+     92.14
+    ],
+    "pieces": 1,
+    "cut": 599,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "D anchor link",
+    "qty": 1,
+    "size": [
+     92.6,
+     14
+    ],
+    "pieces": 1,
+    "cut": 243,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "E coupler",
+    "qty": 1,
+    "size": [
+     92.8,
+     14
+    ],
+    "pieces": 1,
+    "cut": 243,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "F foot",
+    "qty": 1,
+    "size": [
+     78.56,
+     141.41
+    ],
+    "pieces": 1,
+    "cut": 647,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Backboard",
+    "qty": 3,
+    "size": [
+     360,
+     340
+    ],
+    "pieces": 1,
+    "cut": 1480,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Stand foot",
+    "qty": 4,
+    "size": [
+     130,
+     35
+    ],
+    "pieces": 1,
+    "cut": 365,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Spacer Z, C to A",
+    "qty": 1,
+    "size": [
+     12,
+     12
+    ],
+    "pieces": 1,
+    "cut": 58,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Spacer Z, A to B",
+    "qty": 7,
+    "size": [
+     12,
+     12
+    ],
+    "pieces": 1,
+    "cut": 58,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Spacer X, A to R",
+    "qty": 1,
+    "size": [
+     12,
+     12
+    ],
+    "pieces": 1,
+    "cut": 58,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Spacer W, D to B",
+    "qty": 1,
+    "size": [
+     12,
+     12
+    ],
+    "pieces": 1,
+    "cut": 58,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Spacer W, B to F",
+    "qty": 4,
+    "size": [
+     12,
+     12
+    ],
+    "pieces": 1,
+    "cut": 58,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Spacer U, E to F",
+    "qty": 1,
+    "size": [
+     12,
+     12
+    ],
+    "pieces": 1,
+    "cut": 58,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Spacer V, R to E",
+    "qty": 7,
+    "size": [
+     12,
+     12
+    ],
+    "pieces": 1,
+    "cut": 58,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Spacer Y, R to D",
+    "qty": 1,
+    "size": [
+     12,
+     12
+    ],
+    "pieces": 1,
+    "cut": 58,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Spacer Y, board to R",
+    "qty": 8,
+    "size": [
+     12,
+     12
+    ],
+    "pieces": 1,
+    "cut": 58,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Handle grip",
+    "qty": 6,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 76,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rear crank",
+    "qty": 2,
+    "size": [
+     60,
+     20
+    ],
+    "pieces": 1,
+    "cut": 170,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Hex socket",
+    "qty": 2,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 81,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     130,
+     50
+    ],
+    "pieces": 1,
+    "cut": 525,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 4,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 3129.84
+   },
+   "cut": {
+    "area": 407882.51,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Board 360 x 340 mm; crank radius 30 mm"
+  ],
+  "warnings": []
+ },
+ "sunflower-panel.kerf": {
+  "parts": [
+   {
+    "name": "part",
+    "qty": 1,
+    "size": [
+     150,
+     150
+    ],
+    "pieces": 1,
+    "cut": 3899,
+    "thickness": 3,
+    "kerf": 0,
+    "material": "material"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 538.8
+   },
+   "cut": {
+    "area": 18755.03,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "tag.kerf": {
+  "parts": [
+   {
+    "name": "part",
+    "qty": 1,
+    "size": [
+     40,
+     60
+    ],
+    "pieces": 1,
+    "cut": 207,
+    "thickness": 3,
+    "kerf": 0,
+    "material": "material"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 2358.9,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "tally.kerf": {
+  "parts": [
+   {
+    "name": "Digit ring",
+    "qty": 4,
+    "size": [
+     66,
+     66
+    ],
+    "pieces": 1,
+    "cut": 427,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Carry gear",
+    "qty": 4,
+    "size": [
+     58.47,
+     52.5
+    ],
+    "pieces": 1,
+    "cut": 219,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Lock disc",
+    "qty": 4,
+    "size": [
+     55.71,
+     56
+    ],
+    "pieces": 1,
+    "cut": 215,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drum disc",
+    "qty": 20,
+    "size": [
+     62.31,
+     62.31
+    ],
+    "pieces": 1,
+    "cut": 228,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 0",
+    "qty": 4,
+    "size": [
+     15,
+     19.2
+    ],
+    "pieces": 1,
+    "cut": 68,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 1",
+    "qty": 4,
+    "size": [
+     15,
+     19.2
+    ],
+    "pieces": 1,
+    "cut": 68,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 2",
+    "qty": 4,
+    "size": [
+     15,
+     19.2
+    ],
+    "pieces": 1,
+    "cut": 68,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 3",
+    "qty": 4,
+    "size": [
+     15,
+     19.2
+    ],
+    "pieces": 1,
+    "cut": 68,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 4",
+    "qty": 4,
+    "size": [
+     15,
+     19.2
+    ],
+    "pieces": 1,
+    "cut": 68,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 5",
+    "qty": 4,
+    "size": [
+     15,
+     19.2
+    ],
+    "pieces": 1,
+    "cut": 68,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 6",
+    "qty": 4,
+    "size": [
+     15,
+     19.2
+    ],
+    "pieces": 1,
+    "cut": 68,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 7",
+    "qty": 4,
+    "size": [
+     15,
+     19.2
+    ],
+    "pieces": 1,
+    "cut": 68,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 8",
+    "qty": 4,
+    "size": [
+     15,
+     19.2
+    ],
+    "pieces": 1,
+    "cut": 68,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 9",
+    "qty": 4,
+    "size": [
+     15,
+     19.2
+    ],
+    "pieces": 1,
+    "cut": 68,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Shaft spacer",
+    "qty": 1,
+    "size": [
+     16,
+     16
+    ],
+    "pieces": 1,
+    "cut": 70,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Pinion gear",
+    "qty": 8,
+    "size": [
+     30,
+     30
+    ],
+    "pieces": 1,
+    "cut": 174,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Pinion lock",
+    "qty": 4,
+    "size": [
+     39,
+     39
+    ],
+    "pieces": 1,
+    "cut": 139,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Crank hub",
+    "qty": 3,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 90,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Crank inner",
+    "qty": 1,
+    "size": [
+     35.12,
+     48.23
+    ],
+    "pieces": 1,
+    "cut": 186,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Crank outer",
+    "qty": 1,
+    "size": [
+     35.12,
+     48.23
+    ],
+    "pieces": 1,
+    "cut": 175,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Handle ring",
+    "qty": 4,
+    "size": [
+     16,
+     16
+    ],
+    "pieces": 1,
+    "cut": 70,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Cap ring",
+    "qty": 2,
+    "size": [
+     16,
+     16
+    ],
+    "pieces": 1,
+    "cut": 69,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Cap",
+    "qty": 2,
+    "size": [
+     16,
+     16
+    ],
+    "pieces": 1,
+    "cut": 50,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Base",
+    "qty": 1,
+    "size": [
+     105.5,
+     106
+    ],
+    "pieces": 1,
+    "cut": 421,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left wall",
+    "qty": 1,
+    "size": [
+     106,
+     75
+    ],
+    "pieces": 1,
+    "cut": 442,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right wall",
+    "qty": 1,
+    "size": [
+     106,
+     75
+    ],
+    "pieces": 1,
+    "cut": 481,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Bearing pad",
+    "qty": 1,
+    "size": [
+     40,
+     40
+    ],
+    "pieces": 1,
+    "cut": 184,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Front",
+    "qty": 1,
+    "size": [
+     105.5,
+     75
+    ],
+    "pieces": 1,
+    "cut": 397,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Back",
+    "qty": 1,
+    "size": [
+     105.5,
+     75
+    ],
+    "pieces": 1,
+    "cut": 397,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Lid",
+    "qty": 1,
+    "size": [
+     105.5,
+     106
+    ],
+    "pieces": 1,
+    "cut": 646,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Lid locator",
+    "qty": 2,
+    "size": [
+     79.5,
+     8
+    ],
+    "pieces": 1,
+    "cut": 175,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     118,
+     50
+    ],
+    "pieces": 1,
+    "cut": 521,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 2,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 1552.85
+   },
+   "cut": {
+    "area": 169920.26,
+    "length": 0
+   },
+   "engrave": {
+    "area": 861.01,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Tally: 4 drums, counts to 9999; pinion shaft 42 mm behind the drum shaft; box 105.5 x 106 x 81 mm; drum shaft 123.5 mm long, pinion shaft 105.5 mm"
+  ],
+  "warnings": []
+ },
+ "tempo.kerf": {
+  "parts": [
+   {
+    "name": "Front plate",
+    "qty": 1,
+    "size": [
+     223.24,
+     380
+    ],
+    "pieces": 1,
+    "cut": 2422,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Front plate inner",
+    "qty": 1,
+    "size": [
+     223.24,
+     380
+    ],
+    "pieces": 1,
+    "cut": 2422,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Back plate",
+    "qty": 2,
+    "size": [
+     223.24,
+     380
+    ],
+    "pieces": 1,
+    "cut": 1295,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Base",
+    "qty": 1,
+    "size": [
+     243.24,
+     155.5
+    ],
+    "pieces": 1,
+    "cut": 1027,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Base lower",
+    "qty": 1,
+    "size": [
+     243.24,
+     155.5
+    ],
+    "pieces": 1,
+    "cut": 1027,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Pillar ring",
+    "qty": 16,
+    "size": [
+     14,
+     14
+    ],
+    "pieces": 1,
+    "cut": 58,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Escape wheel",
+    "qty": 2,
+    "size": [
+     142.58,
+     143.24
+    ],
+    "pieces": 1,
+    "cut": 1790,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Anchor",
+    "qty": 2,
+    "size": [
+     151.26,
+     65.69
+    ],
+    "pieces": 1,
+    "cut": 444,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Hand",
+    "qty": 1,
+    "size": [
+     14,
+     40.23
+    ],
+    "pieces": 1,
+    "cut": 104,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Arbor spacer",
+    "qty": 6,
+    "size": [
+     12,
+     12
+    ],
+    "pieces": 1,
+    "cut": 52,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Crutch",
+    "qty": 2,
+    "size": [
+     22,
+     78
+    ],
+    "pieces": 1,
+    "cut": 225,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Pendulum rod",
+    "qty": 2,
+    "size": [
+     14,
+     255
+    ],
+    "pieces": 1,
+    "cut": 676,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Bob face",
+    "qty": 1,
+    "size": [
+     90,
+     90
+    ],
+    "pieces": 1,
+    "cut": 310,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Bob disc",
+    "qty": 5,
+    "size": [
+     90,
+     90
+    ],
+    "pieces": 1,
+    "cut": 310,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Bob cheek",
+    "qty": 4,
+    "size": [
+     37.7,
+     88.76
+    ],
+    "pieces": 1,
+    "cut": 215,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Click disc",
+    "qty": 1,
+    "size": [
+     64,
+     64
+    ],
+    "pieces": 1,
+    "cut": 214,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Click ring",
+    "qty": 1,
+    "size": [
+     64,
+     64
+    ],
+    "pieces": 1,
+    "cut": 577,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Ratchet wheel",
+    "qty": 1,
+    "size": [
+     30,
+     30
+    ],
+    "pieces": 1,
+    "cut": 138,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drum core",
+    "qty": 3,
+    "size": [
+     10,
+     10
+    ],
+    "pieces": 1,
+    "cut": 45,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drum flange",
+    "qty": 1,
+    "size": [
+     44,
+     44
+    ],
+    "pieces": 1,
+    "cut": 157,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Winding knob",
+    "qty": 2,
+    "size": [
+     34,
+     34
+    ],
+    "pieces": 1,
+    "cut": 151,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "End collar",
+    "qty": 1,
+    "size": [
+     16,
+     16
+    ],
+    "pieces": 1,
+    "cut": 63,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Weight base",
+    "qty": 1,
+    "size": [
+     70,
+     70
+    ],
+    "pieces": 1,
+    "cut": 220,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Weight ring",
+    "qty": 15,
+    "size": [
+     70,
+     70
+    ],
+    "pieces": 1,
+    "cut": 389,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Weight bail",
+    "qty": 1,
+    "size": [
+     70,
+     70
+    ],
+    "pieces": 1,
+    "cut": 485,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     130,
+     52
+    ],
+    "pieces": 1,
+    "cut": 544,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 5,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 2289.77
+   },
+   "cut": {
+    "area": 483131.01,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Tempo: pendulum 250 mm, period 1.00 s (2 pi root L/g), a tick every 0.50 s; 30 teeth on a 143 mm wheel, once round in 30 s; anchor spans 7.5 teeth, lift 3, lock 1.5, drop 1.5 degrees; about 122 s per wind"
+  ],
+  "warnings": []
+ },
+ "tidal.kerf": {
+  "parts": [
+   {
+    "name": "Base",
+    "qty": 2,
+    "size": [
+     237.8,
+     110
+    ],
+    "pieces": 1,
+    "cut": 762,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "End wall",
+    "qty": 6,
+    "size": [
+     110,
+     145
+    ],
+    "pieces": 1,
+    "cut": 847,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Guide half",
+    "qty": 4,
+    "size": [
+     232.8,
+     45
+    ],
+    "pieces": 1,
+    "cut": 642,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Journal",
+    "qty": 6,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 81,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Thrust washer",
+    "qty": 4,
+    "size": [
+     26,
+     26
+    ],
+    "pieces": 1,
+    "cut": 111,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Cam 1",
+    "qty": 3,
+    "size": [
+     44,
+     44
+    ],
+    "pieces": 1,
+    "cut": 182,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Cam 2",
+    "qty": 3,
+    "size": [
+     44,
+     44
+    ],
+    "pieces": 1,
+    "cut": 182,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Cam 3",
+    "qty": 3,
+    "size": [
+     44,
+     44
+    ],
+    "pieces": 1,
+    "cut": 182,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Cam 4",
+    "qty": 3,
+    "size": [
+     44,
+     44
+    ],
+    "pieces": 1,
+    "cut": 182,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Cam 5",
+    "qty": 3,
+    "size": [
+     44,
+     44
+    ],
+    "pieces": 1,
+    "cut": 182,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Cam 6",
+    "qty": 3,
+    "size": [
+     44,
+     44
+    ],
+    "pieces": 1,
+    "cut": 182,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Cam 7",
+    "qty": 3,
+    "size": [
+     44,
+     44
+    ],
+    "pieces": 1,
+    "cut": 182,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 1",
+    "qty": 2,
+    "size": [
+     73.92,
+     165.72
+    ],
+    "pieces": 1,
+    "cut": 467,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 2",
+    "qty": 2,
+    "size": [
+     73.92,
+     165.72
+    ],
+    "pieces": 1,
+    "cut": 467,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 3",
+    "qty": 2,
+    "size": [
+     73.92,
+     165.72
+    ],
+    "pieces": 1,
+    "cut": 467,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 4",
+    "qty": 2,
+    "size": [
+     73.92,
+     165.72
+    ],
+    "pieces": 1,
+    "cut": 467,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 5",
+    "qty": 2,
+    "size": [
+     73.92,
+     165.72
+    ],
+    "pieces": 1,
+    "cut": 467,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 6",
+    "qty": 2,
+    "size": [
+     73.92,
+     165.72
+    ],
+    "pieces": 1,
+    "cut": 467,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 7",
+    "qty": 2,
+    "size": [
+     73.92,
+     165.72
+    ],
+    "pieces": 1,
+    "cut": 467,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Spacer ring",
+    "qty": 52,
+    "size": [
+     14,
+     14
+    ],
+    "pieces": 1,
+    "cut": 73,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Crank",
+    "qty": 3,
+    "size": [
+     32,
+     56
+    ],
+    "pieces": 1,
+    "cut": 182,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Handle",
+    "qty": 6,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 71,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     110,
+     48
+    ],
+    "pieces": 1,
+    "cut": 505,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Timing card",
+    "qty": 1,
+    "size": [
+     336,
+     56
+    ],
+    "pieces": 1,
+    "cut": 779,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 4,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 5474.03
+   },
+   "cut": {
+    "area": 306186.02,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Body 237.8 x 110 mm; square shaft at least 312.8 mm long"
+  ],
+  "warnings": []
+ },
+ "tilt-maze.kerf": {
+  "parts": [
+   {
+    "name": "Base",
+    "qty": 1,
+    "size": [
+     144,
+     144
+    ],
+    "pieces": 1,
+    "cut": 610,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Maze layer",
+    "qty": 3,
+    "size": [
+     144,
+     144
+    ],
+    "pieces": 1,
+    "cut": 3643,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Cover",
+    "qty": 1,
+    "size": [
+     144,
+     144
+    ],
+    "pieces": 1,
+    "cut": 610,
+    "thickness": 2,
+    "kerf": 0.15,
+    "material": "clear acrylic"
+   }
+  ],
+  "sheets": 2,
+  "layers": {
+   "engrave": {
+    "area": 25.77,
+    "length": 0
+   },
+   "cut": {
+    "area": 70347.63,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "topo-island.kerf": {
+  "parts": [
+   {
+    "name": "Base",
+    "qty": 1,
+    "size": [
+     200,
+     150
+    ],
+    "pieces": 1,
+    "cut": 693,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 1",
+    "qty": 1,
+    "size": [
+     80.8,
+     140.09
+    ],
+    "pieces": 1,
+    "cut": 392,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 2",
+    "qty": 1,
+    "size": [
+     68.29,
+     132.02
+    ],
+    "pieces": 1,
+    "cut": 354,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 3",
+    "qty": 1,
+    "size": [
+     56.31,
+     124.09
+    ],
+    "pieces": 1,
+    "cut": 321,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 4",
+    "qty": 1,
+    "size": [
+     49.56,
+     117.37
+    ],
+    "pieces": 1,
+    "cut": 281,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 5",
+    "qty": 1,
+    "size": [
+     43,
+     67.68
+    ],
+    "pieces": 1,
+    "cut": 174,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 6",
+    "qty": 1,
+    "size": [
+     36.02,
+     56.25
+    ],
+    "pieces": 1,
+    "cut": 145,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 7",
+    "qty": 1,
+    "size": [
+     30.37,
+     38.53
+    ],
+    "pieces": 1,
+    "cut": 107,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Layer 8",
+    "qty": 1,
+    "size": [
+     23.06,
+     28.33
+    ],
+    "pieces": 1,
+    "cut": 80,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 60.63,
+    "length": 0
+   },
+   "score": {
+    "area": 0,
+    "length": 1891.96
+   },
+   "cut": {
+    "area": 58309.21,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "trace.kerf": {
+  "parts": [
+   {
+    "name": "Ring gear",
+    "qty": 2,
+    "size": [
+     280,
+     280
+    ],
+    "pieces": 1,
+    "cut": 2430,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rolling gear",
+    "qty": 2,
+    "size": [
+     78,
+     78
+    ],
+    "pieces": 1,
+    "cut": 518,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Base",
+    "qty": 2,
+    "size": [
+     280,
+     280
+    ],
+    "pieces": 1,
+    "cut": 941,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Ring standoff",
+    "qty": 12,
+    "size": [
+     16,
+     16
+    ],
+    "pieces": 1,
+    "cut": 64,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Pedestal",
+    "qty": 9,
+    "size": [
+     22,
+     22
+    ],
+    "pieces": 1,
+    "cut": 89,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Foot",
+    "qty": 15,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 94,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Carrier",
+    "qty": 2,
+    "size": [
+     141,
+     30
+    ],
+    "pieces": 1,
+    "cut": 355,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Planet spacer",
+    "qty": 3,
+    "size": [
+     14,
+     14
+    ],
+    "pieces": 1,
+    "cut": 63,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Handle",
+    "qty": 5,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 76,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Pencil sleeve",
+    "qty": 3,
+    "size": [
+     14,
+     14
+    ],
+    "pieces": 1,
+    "cut": 70,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     130,
+     45
+    ],
+    "pieces": 1,
+    "cut": 464,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 3,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 1666.09
+   },
+   "cut": {
+    "area": 185609.49,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Trace: 3 crank turns per drawing, pencil 62 to 106 mm from the centre, 280 mm across"
+  ],
+  "warnings": []
+ },
+ "umbra.kerf": {
+  "parts": [
+   {
+    "name": "Fin 1",
+    "qty": 1,
+    "size": [
+     74.16,
+     123.02
+    ],
+    "pieces": 1,
+    "cut": 390,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 2",
+    "qty": 1,
+    "size": [
+     89.52,
+     155.06
+    ],
+    "pieces": 1,
+    "cut": 459,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 3",
+    "qty": 1,
+    "size": [
+     42.58,
+     94.47
+    ],
+    "pieces": 1,
+    "cut": 282,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 4",
+    "qty": 1,
+    "size": [
+     56.74,
+     56.21
+    ],
+    "pieces": 1,
+    "cut": 240,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 5",
+    "qty": 1,
+    "size": [
+     28,
+     57.13
+    ],
+    "pieces": 1,
+    "cut": 190,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 6",
+    "qty": 1,
+    "size": [
+     52.88,
+     100.09
+    ],
+    "pieces": 1,
+    "cut": 366,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Base",
+    "qty": 1,
+    "size": [
+     200,
+     350
+    ],
+    "pieces": 1,
+    "cut": 1390,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Stone",
+    "qty": 1,
+    "size": [
+     60.67,
+     42.67
+    ],
+    "pieces": 1,
+    "cut": 195,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Light holder",
+    "qty": 1,
+    "size": [
+     50,
+     48
+    ],
+    "pieces": 1,
+    "cut": 228,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 2,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 2060.91
+   },
+   "cut": {
+    "area": 84059,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "vault.kerf": {
+  "parts": [
+   {
+    "name": "Base",
+    "qty": 1,
+    "size": [
+     260,
+     180
+    ],
+    "pieces": 1,
+    "cut": 880,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Front wall",
+    "qty": 1,
+    "size": [
+     260,
+     90
+    ],
+    "pieces": 1,
+    "cut": 700,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Front inner wall",
+    "qty": 1,
+    "size": [
+     260,
+     90
+    ],
+    "pieces": 1,
+    "cut": 729,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rear wall",
+    "qty": 1,
+    "size": [
+     260,
+     90
+    ],
+    "pieces": 1,
+    "cut": 700,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rear inner wall",
+    "qty": 1,
+    "size": [
+     260,
+     90
+    ],
+    "pieces": 1,
+    "cut": 806,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Side wall",
+    "qty": 2,
+    "size": [
+     168,
+     90
+    ],
+    "pieces": 1,
+    "cut": 516,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Corner cleat",
+    "qty": 8,
+    "size": [
+     12,
+     66
+    ],
+    "pieces": 1,
+    "cut": 156,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Floor cleat",
+    "qty": 4,
+    "size": [
+     100,
+     12
+    ],
+    "pieces": 1,
+    "cut": 224,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Lid ledge",
+    "qty": 4,
+    "size": [
+     100,
+     12
+    ],
+    "pieces": 1,
+    "cut": 224,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Lid",
+    "qty": 1,
+    "size": [
+     252.8,
+     166.8
+    ],
+    "pieces": 1,
+    "cut": 1082,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Bearing pad",
+    "qty": 6,
+    "size": [
+     32,
+     32
+    ],
+    "pieces": 1,
+    "cut": 159,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rear tongue",
+    "qty": 2,
+    "size": [
+     20,
+     22
+    ],
+    "pieces": 1,
+    "cut": 84,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tongue spacer",
+    "qty": 4,
+    "size": [
+     20,
+     12
+    ],
+    "pieces": 1,
+    "cut": 64,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Gate wheel 1, code 3",
+    "qty": 1,
+    "size": [
+     48,
+     48
+    ],
+    "pieces": 1,
+    "cut": 202,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Gate wheel 2, code 1",
+    "qty": 1,
+    "size": [
+     48,
+     48
+    ],
+    "pieces": 1,
+    "cut": 202,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Gate wheel 3, code 7",
+    "qty": 1,
+    "size": [
+     48,
+     48
+    ],
+    "pieces": 1,
+    "cut": 202,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Dial",
+    "qty": 3,
+    "size": [
+     48,
+     48
+    ],
+    "pieces": 1,
+    "cut": 178,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Hub disc",
+    "qty": 9,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 84,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fence",
+    "qty": 1,
+    "size": [
+     210,
+     46.5
+    ],
+    "pieces": 1,
+    "cut": 649,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fence spacer",
+    "qty": 4,
+    "size": [
+     14,
+     14
+    ],
+    "pieces": 1,
+    "cut": 63,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fence keeper",
+    "qty": 2,
+    "size": [
+     16,
+     16
+    ],
+    "pieces": 1,
+    "cut": 61,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Knob stem",
+    "qty": 3,
+    "size": [
+     8,
+     8
+    ],
+    "pieces": 1,
+    "cut": 39,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Knob",
+    "qty": 1,
+    "size": [
+     24,
+     24
+    ],
+    "pieces": 1,
+    "cut": 89,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     140,
+     65
+    ],
+    "pieces": 1,
+    "cut": 696,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 2,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 2058.1
+   },
+   "cut": {
+    "area": 261059.87,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Vault: code 3-1-7, 260 x 180 x 93 mm; fence guide sleeves 9.4 mm long"
+  ],
+  "warnings": []
+ },
+ "wave-cathedral.kerf": {
+  "parts": [
+   {
+    "name": "Rib 1",
+    "qty": 1,
+    "size": [
+     224,
+     113.02
+    ],
+    "pieces": 1,
+    "cut": 748,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 2",
+    "qty": 1,
+    "size": [
+     224,
+     126.97
+    ],
+    "pieces": 1,
+    "cut": 792,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 3",
+    "qty": 1,
+    "size": [
+     224,
+     143.9
+    ],
+    "pieces": 1,
+    "cut": 848,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 4",
+    "qty": 1,
+    "size": [
+     224,
+     156.14
+    ],
+    "pieces": 1,
+    "cut": 892,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 5",
+    "qty": 1,
+    "size": [
+     224,
+     156.42
+    ],
+    "pieces": 1,
+    "cut": 895,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 6",
+    "qty": 1,
+    "size": [
+     224,
+     144.6
+    ],
+    "pieces": 1,
+    "cut": 857,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 7",
+    "qty": 1,
+    "size": [
+     224,
+     127.89
+    ],
+    "pieces": 1,
+    "cut": 801,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 8",
+    "qty": 1,
+    "size": [
+     224,
+     114.4
+    ],
+    "pieces": 1,
+    "cut": 755,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 9",
+    "qty": 1,
+    "size": [
+     224,
+     107.94
+    ],
+    "pieces": 1,
+    "cut": 732,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 10",
+    "qty": 1,
+    "size": [
+     224,
+     108.41
+    ],
+    "pieces": 1,
+    "cut": 732,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 11",
+    "qty": 1,
+    "size": [
+     224,
+     114.28
+    ],
+    "pieces": 1,
+    "cut": 751,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 12",
+    "qty": 1,
+    "size": [
+     224,
+     123.28
+    ],
+    "pieces": 1,
+    "cut": 782,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 13",
+    "qty": 1,
+    "size": [
+     224,
+     131.86
+    ],
+    "pieces": 1,
+    "cut": 813,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 14",
+    "qty": 1,
+    "size": [
+     224,
+     135.95
+    ],
+    "pieces": 1,
+    "cut": 828,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 15",
+    "qty": 1,
+    "size": [
+     224,
+     133.38
+    ],
+    "pieces": 1,
+    "cut": 819,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 16",
+    "qty": 1,
+    "size": [
+     224,
+     125.49
+    ],
+    "pieces": 1,
+    "cut": 791,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rib 17",
+    "qty": 1,
+    "size": [
+     224,
+     116.01
+    ],
+    "pieces": 1,
+    "cut": 758,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rail L",
+    "qty": 1,
+    "size": [
+     304,
+     27
+    ],
+    "pieces": 1,
+    "cut": 1082,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rail R",
+    "qty": 1,
+    "size": [
+     304,
+     27
+    ],
+    "pieces": 1,
+    "cut": 1082,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Base",
+    "qty": 1,
+    "size": [
+     252,
+     320
+    ],
+    "pieces": 1,
+    "cut": 1314,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 5,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 7992.1
+   },
+   "cut": {
+    "area": 221856.11,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "weave.kerf": {
+  "parts": [
+   {
+    "name": "Base",
+    "qty": 2,
+    "size": [
+     375,
+     375
+    ],
+    "pieces": 1,
+    "cut": 1521,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Foot",
+    "qty": 8,
+    "size": [
+     30,
+     30
+    ],
+    "pieces": 1,
+    "cut": 94,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left disc",
+    "qty": 2,
+    "size": [
+     155,
+     155
+    ],
+    "pieces": 1,
+    "cut": 1027,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right disc",
+    "qty": 2,
+    "size": [
+     162.46,
+     162.48
+    ],
+    "pieces": 1,
+    "cut": 1074,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drive gear",
+    "qty": 2,
+    "size": [
+     80,
+     79.72
+    ],
+    "pieces": 1,
+    "cut": 522,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Arm",
+    "qty": 2,
+    "size": [
+     229,
+     18
+    ],
+    "pieces": 1,
+    "cut": 522,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Pen sleeve",
+    "qty": 3,
+    "size": [
+     16,
+     16
+    ],
+    "pieces": 1,
+    "cut": 77,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Axle spacer",
+    "qty": 6,
+    "size": [
+     16,
+     16
+    ],
+    "pieces": 1,
+    "cut": 70,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Pin spacer",
+    "qty": 3,
+    "size": [
+     14,
+     14
+    ],
+    "pieces": 1,
+    "cut": 64,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Handle",
+    "qty": 5,
+    "size": [
+     18,
+     18
+    ],
+    "pieces": 1,
+    "cut": 76,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     130,
+     45
+    ],
+    "pieces": 1,
+    "cut": 464,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 3,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 8472.79
+   },
+   "cut": {
+    "area": 385317.78,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Weave: the drawing closes after 42 crank turns (21 loops), 151 x 82 mm, on A5 paper 101 mm above the disc axles; the arms meet at 34 to 82 degrees"
+  ],
+  "warnings": []
+ },
+ "wellspring.kerf": {
+  "parts": [
+   {
+    "name": "Base",
+    "qty": 2,
+    "size": [
+     454.01,
+     345.51
+    ],
+    "pieces": 1,
+    "cut": 2225,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Walkway",
+    "qty": 1,
+    "size": [
+     329.51,
+     329.51
+    ],
+    "pieces": 1,
+    "cut": 1931,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Walkway post",
+    "qty": 5,
+    "size": [
+     48,
+     115
+    ],
+    "pieces": 1,
+    "cut": 526,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tower disc",
+    "qty": 40,
+    "size": [
+     24,
+     24
+    ],
+    "pieces": 1,
+    "cut": 95,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Crown wheel",
+    "qty": 2,
+    "size": [
+     155.51,
+     155.51
+    ],
+    "pieces": 1,
+    "cut": 1790,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Shaft collar",
+    "qty": 11,
+    "size": [
+     26,
+     26
+    ],
+    "pieces": 1,
+    "cut": 95,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Draw-bar",
+    "qty": 2,
+    "size": [
+     161.75,
+     26
+    ],
+    "pieces": 1,
+    "cut": 396,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Lantern plate",
+    "qty": 4,
+    "size": [
+     59.84,
+     59.84
+    ],
+    "pieces": 1,
+    "cut": 354,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Lantern bearing",
+    "qty": 2,
+    "size": [
+     36,
+     118
+    ],
+    "pieces": 1,
+    "cut": 324,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Water wheel",
+    "qty": 2,
+    "size": [
+     150,
+     150
+    ],
+    "pieces": 1,
+    "cut": 1370,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Wheel hub",
+    "qty": 2,
+    "size": [
+     30,
+     30
+    ],
+    "pieces": 1,
+    "cut": 108,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Pot",
+    "qty": 20,
+    "size": [
+     32,
+     20
+    ],
+    "pieces": 1,
+    "cut": 93,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Inner upright",
+    "qty": 2,
+    "size": [
+     146,
+     112
+    ],
+    "pieces": 1,
+    "cut": 755,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Outer upright",
+    "qty": 2,
+    "size": [
+     146,
+     138
+    ],
+    "pieces": 1,
+    "cut": 819,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Well wall",
+    "qty": 2,
+    "size": [
+     20.4,
+     46
+    ],
+    "pieces": 1,
+    "cut": 133,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Trough floor",
+    "qty": 1,
+    "size": [
+     100,
+     34
+    ],
+    "pieces": 1,
+    "cut": 268,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Trough side",
+    "qty": 2,
+    "size": [
+     100,
+     14
+    ],
+    "pieces": 1,
+    "cut": 228,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Trough end",
+    "qty": 1,
+    "size": [
+     28,
+     14
+    ],
+    "pieces": 1,
+    "cut": 84,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Trough post",
+    "qty": 2,
+    "size": [
+     34,
+     138
+    ],
+    "pieces": 1,
+    "cut": 566,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Ox",
+    "qty": 2,
+    "size": [
+     108.5,
+     60.92
+    ],
+    "pieces": 1,
+    "cut": 455,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fit test",
+    "qty": 1,
+    "size": [
+     150,
+     50
+    ],
+    "pieces": 1,
+    "cut": 610,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 5,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 7006.02
+   },
+   "cut": {
+    "area": 542204.73,
+    "length": 0
+   },
+   "engrave": {
+    "area": 144.18,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "Wellspring: 24 pegs to 8 staves, so the wheel turns 3 times for each round of the ox; pitch radii 68.75 and 22.92 mm at 18 mm pitch; axle 100 mm up; base 454.01 x 345.51 mm"
+  ],
+  "warnings": []
+ },
+ "winterlight.kerf": {
+  "parts": [
+   {
+    "name": "Frost",
+    "qty": 1,
+    "size": [
+     84,
+     95.5
+    ],
+    "pieces": 1,
+    "cut": 1203,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "birch plywood"
+   },
+   {
+    "name": "Grove",
+    "qty": 1,
+    "size": [
+     84,
+     95.5
+    ],
+    "pieces": 1,
+    "cut": 773,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "birch plywood"
+   },
+   {
+    "name": "Nova",
+    "qty": 1,
+    "size": [
+     73.79,
+     92.01
+    ],
+    "pieces": 1,
+    "cut": 654,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "birch plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 1736.79
+   },
+   "cut": {
+    "area": 8880.04,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "xenospora.kerf": {
+  "parts": [
+   {
+    "name": "Fin 1",
+    "qty": 1,
+    "size": [
+     85.08,
+     226
+    ],
+    "pieces": 1,
+    "cut": 862,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 2",
+    "qty": 1,
+    "size": [
+     85.08,
+     226
+    ],
+    "pieces": 1,
+    "cut": 862,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 3",
+    "qty": 1,
+    "size": [
+     85.08,
+     226
+    ],
+    "pieces": 1,
+    "cut": 862,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 4",
+    "qty": 1,
+    "size": [
+     85.08,
+     226
+    ],
+    "pieces": 1,
+    "cut": 862,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 5",
+    "qty": 1,
+    "size": [
+     85.08,
+     226
+    ],
+    "pieces": 1,
+    "cut": 862,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 6",
+    "qty": 1,
+    "size": [
+     85.08,
+     226
+    ],
+    "pieces": 1,
+    "cut": 862,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 7",
+    "qty": 1,
+    "size": [
+     85.08,
+     226
+    ],
+    "pieces": 1,
+    "cut": 862,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 8",
+    "qty": 1,
+    "size": [
+     85.08,
+     226
+    ],
+    "pieces": 1,
+    "cut": 862,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 9",
+    "qty": 1,
+    "size": [
+     85.08,
+     226
+    ],
+    "pieces": 1,
+    "cut": 862,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 10",
+    "qty": 1,
+    "size": [
+     85.08,
+     226
+    ],
+    "pieces": 1,
+    "cut": 862,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 11",
+    "qty": 1,
+    "size": [
+     85.08,
+     226
+    ],
+    "pieces": 1,
+    "cut": 862,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fin 12",
+    "qty": 1,
+    "size": [
+     85.08,
+     226
+    ],
+    "pieces": 1,
+    "cut": 862,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Root",
+    "qty": 1,
+    "size": [
+     120,
+     120
+    ],
+    "pieces": 1,
+    "cut": 697,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Crown",
+    "qty": 1,
+    "size": [
+     86,
+     86
+    ],
+    "pieces": 1,
+    "cut": 590,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Core A",
+    "qty": 1,
+    "size": [
+     42,
+     226
+    ],
+    "pieces": 1,
+    "cut": 856,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Core B",
+    "qty": 1,
+    "size": [
+     42,
+     226
+    ],
+    "pieces": 1,
+    "cut": 856,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 3,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 9077.48
+   },
+   "cut": {
+    "area": 73759.63,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ }
+}

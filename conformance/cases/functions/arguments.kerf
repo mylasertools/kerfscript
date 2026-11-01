@@ -1,0 +1,6 @@
+// Arguments bind by position or name; a missing one takes its default or undef;
+// defaults can use earlier parameters; extra positional arguments are ignored
+// => echo: [1, 2, undef], [1, 5, undef], [undef, 2, 3], [3, 6, undef], [1, 2, 3]
+function f(a, b = 2, c) = [a, b, c];
+function g(a, b = a * 2) = [a, b, undef];
+echo(f(1), f(1, 5), f(c = 3), g(3), f(1, 2, 3, 4));

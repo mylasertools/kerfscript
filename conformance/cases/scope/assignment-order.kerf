@@ -1,0 +1,7 @@
+// Assignments run in order; a later one replaces the value from that point on
+// => echo: 1
+// => echo: 2
+x = 1;
+echo(x);
+x = 2;
+echo(x);

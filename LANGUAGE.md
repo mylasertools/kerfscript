@@ -5,7 +5,9 @@ licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 "KerfScript" is a trademark of MyLaserTools, see [TRADEMARKS.md](TRADEMARKS.md).
 
 This reference covers KerfScript syntax, built-in modules and functions.
-For a first project, follow [Getting started](docs/getting-started.md).
+For a first project, follow [Getting started](docs/getting-started.md). The
+[specification](docs/specification.md) gives the formal grammar and the
+exact rules for scope, evaluation, libraries and errors.
 
 Programs build 2D shapes, assign them to cut, score or engrave layers, and
 group them into parts. Rendering applies kerf compensation, arranges the
@@ -64,7 +66,7 @@ to change the order of evaluation.
 | `<` `<=` `>` `>=`   | compare numbers or strings                                                                                     |
 | `+` `-`             | add or subtract numbers or equal length lists; `+` joins strings                                               |
 | `*` `/` `%`         | multiply, divide, remainder; list times number scales; list times list is the dot product; matrix times vector |
-| `-x` `!x`           | negate, not                                                                                                    |
+| `-x` `+x` `!x`      | negate, same, not                                                                                              |
 | `a ^ b`             | power, right associative and tighter than unary minus                                                          |
 | `f(x)` `a[i]` `a.x` | call, index, member                                                                                            |
 
@@ -126,7 +128,7 @@ Arguments can be positional or named: `rect([20, 10], r = 2)`.
 
 Place `*` before a module call to disable it. Use `#` or `%` to move its
 geometry to the guide layer. Guides are included only when requested in
-the render options.
+the render options. `!` is accepted for OpenSCAD files and has no effect.
 
 ### children()
 

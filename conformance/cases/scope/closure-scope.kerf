@@ -1,0 +1,5 @@
+// A function value keeps the scope it was made in
+// => echo: 15
+function adder(n) = function(x) x + n;
+add5 = adder(5);
+echo(add5(10));
