@@ -1,0 +1,58 @@
+{
+  "name": "@mylasertools/kerfscript-mcp",
+  "version": "0.1.0",
+  "description": "KerfScript tools for building parametric laser-cutting generators: documentation, examples, parameters and SVG/DXF rendering.",
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mylasertools/kerfscript.git",
+    "directory": "mcp"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/types/src/tools.d.ts",
+      "default": "./dist/tools.js"
+    },
+    "./node": {
+      "types": "./dist/types/src/isolated.d.ts",
+      "default": "./dist/isolated.js"
+    },
+    "./execute": {
+      "types": "./dist/types/src/execute.d.ts",
+      "default": "./dist/execute.js"
+    }
+  },
+  "bin": {
+    "kerfscript-mcp": "dist/stdio.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "THIRD-PARTY-NOTICES.md",
+    "OFL.txt"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test test/*.test.mjs",
+    "check": "npm run build && npm run types && tsc --declaration --emitDeclarationOnly --noEmit false --outDir dist/types && npm test",
+    "dev": "wrangler dev",
+    "types": "wrangler types",
+    "deploy:check": "wrangler deploy --dry-run",
+    "prepack": "npm run check"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.43",
+    "esbuild": "0.25.12",
+    "typescript": "5.9.3",
+    "wrangler": "4.156.0"
+  }
+}

@@ -51,6 +51,11 @@ jobs:
         run: |
           npm --prefix site ci
           npm --prefix site run build
+      - name: KerfScript MCP
+        run: |
+          npm --prefix mcp ci
+          npm --prefix mcp run check
+          npm --prefix mcp run deploy:check
       # Needs the library build above: it compares the grammar with dist/highlight.js
       - name: VS Code extension
         run: |

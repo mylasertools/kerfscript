@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "kerfscript-mcp",
+  "main": "dist/worker.js",
+  // Latest date supported by the pinned local runtime.
+  "compatibility_date": "2026-10-30",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "limits": { "cpu_ms": 1000 },
+  "vars": { "ALLOWED_ORIGINS": "https://kerfscript.mylasertools.com,https://www.mylasertools.com" },
+  "ratelimits": [
+    { "name": "REQUEST_LIMIT", "namespace_id": "482601", "simple": { "limit": 60, "period": 60 } },
+  ],
+  "observability": { "enabled": true, "head_sampling_rate": 0.1 },
+}
