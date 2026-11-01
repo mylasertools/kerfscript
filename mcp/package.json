@@ -2,12 +2,31 @@
   "name": "@mylasertools/kerfscript-mcp",
   "version": "0.1.0",
   "description": "KerfScript tools for building parametric laser-cutting generators: documentation, examples, parameters and SVG/DXF rendering.",
+  "mcpName": "com.mylasertools/kerfscript",
   "type": "module",
   "license": "AGPL-3.0-only",
+  "author": "MyLaserTools",
+  "homepage": "https://kerfscript.mylasertools.com/docs/mcp/",
+  "bugs": "https://github.com/mylasertools/kerfscript/issues",
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "kerfscript",
+    "laser-cutting",
+    "parametric",
+    "svg",
+    "dxf",
+    "generator"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/mylasertools/kerfscript.git",
     "directory": "mcp"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "exports": {
     ".": {

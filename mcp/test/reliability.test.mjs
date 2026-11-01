@@ -180,8 +180,18 @@ test('the daily budget caps each client and the total, and resets each UTC day',
   assert.equal(secondsToMidnight(Date.UTC(2026, 10, 1, 23, 59, 59)), 1);
 });
 
-test('MCP and health versions match package metadata', async (t) => {
-  const { version } = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
+test('MCP, health and registry versions match package metadata', async (t) => {
+  const { name, version, mcpName } = JSON.parse(
+    await readFile(new URL('../package.json', import.meta.url)),
+  );
+  const listing = JSON.parse(await readFile(new URL('../server.json', import.meta.url)));
+  assert.equal(listing.name, mcpName);
+  assert.equal(listing.version, version);
+  assert.deepEqual(
+    listing.packages.map((p) => [p.identifier, p.version]),
+    [[name, version]],
+  );
+  assert.ok(listing.description.length <= 100);
   assert.equal(
     (await (await worker.fetch(new Request('https://example.com/health'), {})).json()).version,
     version,

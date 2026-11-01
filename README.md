@@ -117,6 +117,14 @@ are generators built the same way. Programs written by other people should
 run in a worker you can stop; see
 [Running untrusted code](docs/javascript.md#running-untrusted-code).
 
+## AI assistants
+
+The KerfScript MCP server lets Claude, Cursor, VS Code and other assistants
+read the docs and examples and render designs to check them. Add
+`https://mcp.mylasertools.com/mcp`, which needs no account, or run it locally
+with `npx -y @mylasertools/kerfscript-mcp`. See
+[AI assistants](docs/mcp.md).
+
 ## Made with KerfScript
 
 Every model is a file in [examples/](examples). Open one on the website to
@@ -225,8 +233,9 @@ Errors are thrown as `KerfError` with `line` and `col`.
   [layers](docs/layers.md), [kerf](docs/kerf.md),
   [parts and sheets](docs/parts-and-sheets.md), [settings](docs/customizer.md),
   the [desktop app](docs/desktop.md), the [command line](docs/cli.md), the
-  [JavaScript API](docs/javascript.md)
-  and [WebAssembly](docs/webassembly.md) for other languages
+  [JavaScript API](docs/javascript.md),
+  [WebAssembly](docs/webassembly.md) for other languages and
+  [AI assistants](docs/mcp.md)
 - [Standard library](docs/library.md): joints, hinges, dividers, hanging
   holes, enclosures and test pieces, with a picture and an example of each
 - [Shared libraries](docs/shared-libraries.md): use and publish `.kerf`

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "com.mylasertools/kerfscript",
+  "title": "KerfScript",
+  "description": "Write, check and render parametric laser-cutting designs in KerfScript, as SVG or DXF.",
+  "websiteUrl": "https://kerfscript.mylasertools.com/docs/mcp/",
+  "repository": {
+    "url": "https://github.com/mylasertools/kerfscript",
+    "source": "github",
+    "subfolder": "mcp"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@mylasertools/kerfscript-mcp",
+      "version": "0.1.0",
+      "transport": { "type": "stdio" }
+    }
+  ],
+  "remotes": [{ "type": "streamable-http", "url": "https://mcp.mylasertools.com/mcp" }]
+}

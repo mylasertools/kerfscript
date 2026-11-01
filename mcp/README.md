@@ -4,10 +4,35 @@ Tools for agents writing parametric laser-cutting designs and building generator
 The standalone server needs no MyLaserTools account. It provides documentation,
 examples, editable parameters, and SVG/DXF rendering through the official MCP SDK.
 
-This package is prepared for release; the npm package and hosted endpoint must be
-published before public install instructions can use them.
+## Use it
 
-## Local setup
+The hosted server needs no account or key. Add this address to any client that
+supports remote MCP servers:
+
+```text
+https://mcp.mylasertools.com/mcp
+```
+
+In Claude Code:
+
+```sh
+claude mcp add --transport http kerfscript https://mcp.mylasertools.com/mcp
+```
+
+To run it locally over stdio with Node.js 20 or newer:
+
+```json
+{
+  "mcpServers": {
+    "kerfscript": { "command": "npx", "args": ["-y", "@mylasertools/kerfscript-mcp"] }
+  }
+}
+```
+
+[AI assistants](https://kerfscript.mylasertools.com/docs/mcp/) has the setup for
+Claude, Cursor and VS Code.
+
+## Building from source
 
 From the repository root:
 
@@ -178,10 +203,21 @@ logs still include request metadata according to the account's retention setting
 Build from the intended interpreter release; docs and examples are embedded from
 that same checkout, so rendering never depends on a mutable documentation URL.
 Run the package checks, Worker dry run, and a live initialize/list/render smoke
-test on staging before publishing. Inspect `npm pack --dry-run`, verify the npm
-account, and publish the package. Register the deployed endpoint with the official
-MCP Registry and Smithery using the verified public URL. A listing does not make
-the server automatically available in every agent client.
+test before publishing. Inspect `npm pack --dry-run`, verify the npm account, and
+publish the package with `npm publish` from `mcp/`.
+
+The server is listed in the official MCP Registry as `com.mylasertools/kerfscript`,
+described by `server.json`. Keep its two `version` fields equal to the package
+version. The name is proven by a `v=MCPv1` TXT record on `mylasertools.com`; the
+matching private key is kept outside the repository. After publishing the npm
+package:
+
+```sh
+mcp-publisher login dns --domain mylasertools.com --private-key <hex key>
+mcp-publisher publish
+```
+
+A listing does not make the server automatically available in every agent client.
 
 MCP dependencies are confined to this package. Installing the core KerfScript
 library does not install a server or the MCP SDK. The core library, its third-party
