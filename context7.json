@@ -1,4 +1,21 @@
 {
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "KerfScript",
+  "description": "KerfScript is a programming language for laser cutting, like OpenSCAD for flat parts. Write a part once as code, change a number, and get a new cut file. Cut, score and engrave layers, kerf compensation, finger joints, living hinges, parts and sheets are built in. It is also a JavaScript and WebAssembly library for building generators that take a few settings and return SVG or DXF files ready to cut.",
+  "rules": [
+    "KerfScript uses OpenSCAD syntax but makes 2D parts only. cube, sphere, cylinder, polyhedron, linear_extrude, rotate_extrude, projection, minkowski, resize, color, import, surface and render are errors.",
+    "Lengths are millimetres and angles are degrees. The x axis points right and the y axis up. rect() starts at [0, 0] unless center = true.",
+    "Assignments take effect in order, unlike OpenSCAD: a value assigned later does not change geometry made earlier.",
+    "Choose the operation with cut(), score(), engrave(), guide() or layer(), not color(). Shapes go on the cut layer by default.",
+    "Name pieces with part(\"name\", qty = n). Put score() and engrave() inside a part, not around it.",
+    "Set $kerf and $thickness in millimetres for the material, or per material with material(thickness = ..., kerf = ...). Apply kerf compensation in KerfScript or in the laser software, never both.",
+    "A comment after an assignment makes it a setting: width = 80; // [40:5:200] is a slider from 40 to 200 in steps of 5.",
+    "Load standard library modules with use, for example use <kerf/box> for box().",
+    "Type errors stop evaluation with an error instead of producing undef.",
+    "Fonts come from the application or the CLI, not from system fonts.",
+    "In JavaScript, parameters(source) reads a design's settings, and render(source, { params }) returns sheets (each with svg and dxf), parts and warnings.",
+    "Run programs you did not write in a web worker with a timeout, and limit the resolve callback to the libraries you intend to expose."
+  ],
   "url": "https://context7.com/mylasertools/kerfscript",
   "public_key": "pk_2XdFJClNkFsOBhmegScYD"
 }
