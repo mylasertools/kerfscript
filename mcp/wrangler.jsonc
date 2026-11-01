@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "kerfscript-mcp",
-  "main": "dist/worker.js",
+  "main": "dist/service.js",
   // Latest date supported by the pinned local runtime.
   "compatibility_date": "2026-10-30",
   "compatibility_flags": ["nodejs_compat"],

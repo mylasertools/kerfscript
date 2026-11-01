@@ -1,7 +1,14 @@
 // Copyright (c) 2026 MyLaserTools. SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-MyLaserTools-Commercial
-import { render, parameters, KerfError, VERSION, LANGUAGE_VERSION } from '../../dist/index.js';
+import {
+  render,
+  parameters,
+  KerfError,
+  formatError,
+  VERSION,
+  LANGUAGE_VERSION,
+} from '../../dist/index.js';
 import font from '../../fonts/AtkinsonHyperlegible-Regular.ttf';
-import { MAX_REPLY, sourceSchema, renderSchema, type Job, type Result } from './schema.js';
+import { sourceSchema, renderSchema, type Job, type Result } from './schema.js';
 
 // Fixed service limits cannot be increased by callers.
 const limits = {
@@ -55,14 +62,6 @@ export function execute(job: Job): Result {
         })),
       };
     }
-    if (new TextEncoder().encode(JSON.stringify(result)).length > MAX_REPLY)
-      return {
-        ok: false,
-        error: {
-          message:
-            'Result exceeds the MCP output limit. Reduce the design or render locally with the KerfScript package.',
-        },
-      };
     return result;
   } catch (error) {
     if (error instanceof KerfError)
@@ -75,6 +74,18 @@ export function execute(job: Job): Result {
           file: error.file,
           missingFonts: error.missingFonts,
           echoes: error.echoes,
+          diagnostic: formatError(
+            error,
+            job.operation === 'render' ? job.input.source : job.source,
+            {
+              resolve: (path) =>
+                job.operation === 'render' &&
+                job.input.libraries &&
+                Object.hasOwn(job.input.libraries, path)
+                  ? job.input.libraries[path]
+                  : undefined,
+            },
+          ),
         },
       };
     if (error instanceof RangeError)

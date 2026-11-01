@@ -44,7 +44,8 @@ Only protocol messages are written to stdout.
 | `kerfscript_render`     | Pass `source`, optional `params`, `libraries`, sheet/layout settings and `format` (`svg` or `dxf`). Returns one file per sheet, part sizes, layers, warnings and interpreter version. |
 
 Results are returned as structured JSON and text for client compatibility.
-Language failures return `isError: true` with source positions when available.
+Language failures return `isError: true` with source positions and formatted
+diagnostics, including call traces and built-in signatures when available.
 File contents are returned inline; no public download links or stored designs are
 created. Output dimensions are in millimetres. Sheet dimensions include layout
 margins; `parts` reports individual part dimensions.
@@ -65,13 +66,36 @@ import { isolatedExecute } from '@mylasertools/kerfscript-mcp/node';
 registerKerfScriptTools(existingServer, isolatedExecute);
 ```
 
-The Node executor runs each job in a separate worker thread with a five second
-deadline, a 96 MiB old-generation heap limit and at most two concurrent jobs.
-Cancellation terminates its worker. These are execution limits, not an OS sandbox.
+The Node executor reuses two worker threads with a 96 MiB old-generation heap
+limit each. Up to 16 additional jobs wait in FIFO order for at most five seconds.
+Startup has its own five second deadline; each execution gets five seconds after
+the worker is ready. Cancellation or a timeout terminates that worker; the next
+job gets a replacement. Idle workers do not keep Node running.
+Use `createExecutorPool()` from the same Node export for a separate host or tenant
+pool, and call `pool.close()` when that host shuts down. The default
+`isolatedExecute` shares a process-wide pool.
+These are execution limits, not an OS sandbox.
 KerfScript itself has no general JavaScript, filesystem or network access.
 
-For a Workers host, use a service binding to the standalone Worker or supply an
-executor with equivalent isolation and limits. The `./execute` export is
+For a Workers host, bind to the named `KerfScriptService` entry point:
+
+```json
+{
+  "services": [
+    { "binding": "KERFSCRIPT", "service": "kerfscript-mcp", "entrypoint": "KerfScriptService" }
+  ]
+}
+```
+
+Forward MCP requests using
+`env.KERFSCRIPT.fetchForCaller(request, "mylasertools:" + authenticatedUser.id)`.
+The calling Worker must authenticate the user and supply a stable, namespaced
+identifier. Caller identity is an RPC argument, never a public HTTP header.
+Service callers have separate allowances from public IP clients. Requests
+without `CF-Connecting-IP` must use this method; ordinary fetch requests without
+that header receive 400 rather than sharing a fallback allowance.
+
+Alternatively, supply an executor with equivalent isolation and limits. The `./execute` export is
 synchronous and must run inside a host that enforces a CPU budget. A JavaScript
 timer cannot interrupt synchronous geometry work. Never run it directly on a
 shared Node HTTP event loop.
@@ -114,8 +138,12 @@ Programs have at most 64,000 characters. Up to 20 virtual imports may be provide
 with a combined 64,000 characters; exact import names are resolved only in that
 map or the bundled standard library. No local paths or remote URLs are fetched.
 The service limits evaluation to 100,000 steps, 100 parts, 512 segments per arc,
-50,000 created points, 30,000 output points and 10 sheets. Serialized results are
-limited to 1,000,000 UTF-8 bytes. Callers cannot increase these limits.
+50,000 created points, 30,000 output points and 10 sheets. Complete serialized MCP
+tool results, including text and structured content, are limited to 1,000,000
+UTF-8 bytes. This excludes the JSON-RPC wrapper and transport headers. Oversized
+results, including errors, are replaced with a small error reply. Callers cannot
+increase these limits. Documentation paging uses UTF-16 offsets and preserves
+surrogate pairs; follow the returned `nextOffset`.
 
 The bundled font is Atkinson Hyperlegible (`Atkinson`). Arbitrary font uploads
 are not supported by this endpoint. Use the library directly for other fonts.

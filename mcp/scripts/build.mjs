@@ -1,5 +1,5 @@
 // Copyright (c) 2026 MyLaserTools. SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-MyLaserTools-Commercial
-import { readFile, writeFile, mkdir, copyFile, readdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, copyFile, readdir, unlink } from 'node:fs/promises';
 import { build } from 'esbuild';
 
 await mkdir('generated', { recursive: true });
@@ -22,19 +22,34 @@ await writeFile(
   'generated/content.json',
   JSON.stringify({ docs, examples, version: VERSION, languageVersion: LANGUAGE_VERSION }),
 );
-for (const name of ['tools', 'stdio', 'runner', 'worker', 'isolated', 'execute']) {
-  await build({
-    entryPoints: [`src/${name}.ts`],
-    outfile: `dist/${name}.js`,
-    bundle: true,
-    format: 'esm',
-    platform: ['stdio', 'runner', 'isolated'].includes(name) ? 'node' : 'neutral',
-    packages: 'external',
-    target: 'es2022',
-    loader: { '.ttf': 'binary' },
-    ...(name === 'stdio' ? { banner: { js: '#!/usr/bin/env node' } } : {}),
-  });
+// One graph shares the interpreter, font and docs between entry points.
+// Remove only generated chunks from previous builds so npm never packs stale code.
+await mkdir('dist', { recursive: true });
+for (const name of await readdir('dist')) {
+  if (/^chunk-[A-Z0-9]+\.js$/.test(name)) await unlink(`dist/${name}`);
 }
+await build({
+  entryPoints: [
+    'tools',
+    'stdio',
+    'runner',
+    'worker',
+    'service',
+    'isolated',
+    'execute',
+    'replies',
+  ].map((name) => `src/${name}.ts`),
+  outdir: 'dist',
+  bundle: true,
+  splitting: true,
+  format: 'esm',
+  platform: 'neutral',
+  packages: 'external',
+  target: 'es2022',
+  loader: { '.ttf': 'binary' },
+});
+const stdio = await readFile('dist/stdio.js', 'utf8');
+await writeFile('dist/stdio.js', '#!/usr/bin/env node\n' + stdio);
 await copyFile('../LICENSE', 'LICENSE');
 await copyFile('../THIRD-PARTY-NOTICES.md', 'THIRD-PARTY-NOTICES.md');
 await copyFile('../fonts/OFL.txt', 'OFL.txt');

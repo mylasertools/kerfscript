@@ -98,7 +98,11 @@ test('errors are actionable and callers cannot raise limits or fetch files', asy
 test('HTTP SDK client initializes and renders across independent stateless requests', async (t) => {
   const client = new Client(clientInfo);
   const transport = new StreamableHTTPClientTransport(new URL('https://mcp.example/mcp'), {
-    fetch: async (url, init) => worker.fetch(new Request(url, init), env),
+    fetch: async (url, init) => {
+      const request = new Request(url, init);
+      request.headers.set('CF-Connecting-IP', '192.0.2.1');
+      return worker.fetch(request, env);
+    },
   });
   t.after(() => client.close());
   await client.connect(transport);
@@ -115,6 +119,7 @@ test('HTTP rejects origins, oversized bodies, malformed JSON and rate-limited re
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'CF-Connecting-IP': '192.0.2.1',
         Accept: 'application/json, text/event-stream',
         ...headers,
       },

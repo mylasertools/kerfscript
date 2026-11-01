@@ -2,7 +2,9 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import content from '../generated/content.json';
-import { renderSchema, sourceSchema, type Executor, type Result } from './schema.js';
+import { renderSchema, sourceSchema, type Executor } from './schema.js';
+import { reply, page } from './replies.js';
+import { version } from '../package.json';
 
 const annotations = {
   readOnlyHint: true,
@@ -10,11 +12,6 @@ const annotations = {
   idempotentHint: true,
   openWorldHint: false,
 };
-const reply = (result: Result) => ({
-  content: [{ type: 'text' as const, text: JSON.stringify(result) }],
-  structuredContent: result,
-  ...(result.ok === false ? { isError: true } : {}),
-});
 
 /** Register on an existing MyLaserTools McpServer. The host supplies isolated execution. */
 export function registerKerfScriptTools(server: McpServer, execute: Executor) {
@@ -46,8 +43,7 @@ export function registerKerfScriptTools(server: McpServer, execute: Executor) {
       const text = content.docs[topic as keyof typeof content.docs];
       return reply({
         topic,
-        text: text.slice(offset, offset + 12000),
-        nextOffset: offset + 12000 < text.length ? offset + 12000 : null,
+        ...page(text, offset),
       });
     },
   );
@@ -110,7 +106,7 @@ export function registerKerfScriptTools(server: McpServer, execute: Executor) {
 
 export function createKerfScriptServer(execute: Executor) {
   const server = new McpServer(
-    { name: 'kerfscript', version: '0.1.0', title: 'KerfScript by MyLaserTools' },
+    { name: 'kerfscript', version, title: 'KerfScript by MyLaserTools' },
     {
       instructions:
         'Use KerfScript to build parametric laser-cutting designs and generators. Read the javascript and customizer guides for application integration. Rendering returns files in millimetres; machine settings and physical fit require verification. Tools do not store submitted designs.',
