@@ -30,6 +30,10 @@ jobs:
             site/package-lock.json
             editors/vscode/package-lock.json
             mcp/package-lock.json
+      # For test/binary.test.mjs, which compiles kerf as a release does
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: 2.8.3
       - name: Install Javy
         run: |
           mkdir -p "$HOME/.local/bin"

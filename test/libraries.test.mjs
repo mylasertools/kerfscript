@@ -517,3 +517,34 @@ test('a download stops at 20 MB as it arrives', { timeout: 30000 }, async () => 
   });
   await assert.rejects(install(root, { fetch }), /larger than 20 MB/);
 });
+
+test('GitHub sources match in any case of owner and repository, but not of the ref', async () => {
+  const lib = (name, feet) => ({
+    'kerf.json': { name, libraries: { feet } },
+    [`${name}.kerf`]: `use <feet/feet>\nmodule ${name}() feet([50, 50]);\n`,
+  });
+  const archives = {};
+  for (const ref of ['Release', 'release', 'v1'])
+    for (const repo of ['maker/kerf-feet', 'Maker/Kerf-Feet'])
+      archives[`https://github.com/${repo}/archive/${ref}.tar.gz`] = tgz({
+        ...FEET,
+        'kerf.json': { name: 'feet', version: ref === 'Release' ? '2.0.0' : '1.0.0' },
+      });
+  archives['https://x.test/stand.tar.gz'] = tgz(lib('stand', 'github:maker/kerf-feet@Release'));
+  archives['https://x.test/lamp.tar.gz'] = tgz(lib('lamp', 'github:maker/kerf-feet@release'));
+  archives['https://x.test/desk.tar.gz'] = tgz(lib('desk', 'github:Maker/Kerf-Feet@v1'));
+  archives['https://x.test/shelf.tar.gz'] = tgz(lib('shelf', 'github:maker/kerf-feet@v1'));
+  const fetch = fetcher(archives);
+  const project = (libraries) => folder({ 'kerf.json': { libraries } });
+  await assert.rejects(
+    install(project({ stand: 'https://x.test/stand.tar.gz', lamp: 'https://x.test/lamp.tar.gz' }), {
+      fetch,
+    }),
+    /lamp uses feet from github:maker\/kerf-feet@release, and stand uses it from github:maker\/kerf-feet@Release/,
+  );
+  const lock = await install(
+    project({ desk: 'https://x.test/desk.tar.gz', shelf: 'https://x.test/shelf.tar.gz' }),
+    { fetch },
+  );
+  assert.deepEqual(Object.keys(lock.libraries), ['desk', 'feet', 'shelf']);
+});

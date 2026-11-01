@@ -98,7 +98,7 @@ links and licence texts:
   `scripts/wasm-licenses.mjs`), run `node scripts/wasm-licenses.mjs`.
 - `packaging/cli/THIRD-PARTY-LICENSES.md`: the Deno runtime, with V8, that
   `deno compile` builds into the `kerf` binaries. After changing
-  `deno-version` in the release workflow (and `DENO_VERSION` in
+  `deno-version` in the release and CI workflows (and `DENO_VERSION` in
   `scripts/cli-licenses.mjs`, which the workflow checks), run
   `node scripts/cli-licenses.mjs`. The `v8` crate ships none of the licence
   files of V8 and the libraries built into it, so

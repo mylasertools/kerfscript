@@ -305,8 +305,10 @@ type Source =
 function where(source: Source): string {
   if (source.kind === 'folder')
     return 'folder:' + (process.platform === 'win32' ? source.path.toLowerCase() : source.path);
+  // GitHub matches owners and repositories in any case, but not tags and
+  // branches: @Release and @release are two refs
   if (source.kind === 'github')
-    return `github:${source.owner}/${source.repo}@${source.ref}`.toLowerCase();
+    return `github:${source.owner}/${source.repo}`.toLowerCase() + `@${source.ref}`;
   return source.url;
 }
 

@@ -15,6 +15,7 @@ import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSy
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { checksums } from './checksums.mjs';
+import { compile } from './deno-compile.mjs';
 
 const TARGETS = [
   ['linux-x64', 'x86_64-unknown-linux-gnu'],
@@ -68,22 +69,7 @@ for (const [name, triple] of targets) {
   const dir = `kerf-${label}-${name}`;
   const exe = name.startsWith('windows') ? 'kerf.exe' : 'kerf';
   mkdirSync(join(work, dir));
-  run(
-    'deno',
-    [
-      'compile',
-      '--quiet',
-      '--no-check',
-      '--allow-read',
-      '--allow-write',
-      '--target',
-      triple,
-      '-o',
-      join(dir, exe),
-      'kerf.js',
-    ],
-    work,
-  );
+  compile(work, 'kerf.js', join(dir, exe), triple);
   for (const [from, to] of DOCS) copyFileSync(from, join(work, dir, to));
   // The Deno runtime that deno compile builds into kerf
   copyFileSync('packaging/cli/THIRD-PARTY-LICENSES.md', join(work, dir, 'THIRD-PARTY-LICENSES.md'));

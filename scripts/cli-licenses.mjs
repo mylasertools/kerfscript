@@ -17,7 +17,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { rustLicenses, writeOrCheck } from './rust-licenses.mjs';
 
-// Keep in step with deno-version in .github/workflows/release.yml
+// Keep in step with deno-version in .github/workflows/release.yml and ci.yml
 export const DENO_VERSION = 'v2.8.3';
 
 const work = mkdtempSync(join(tmpdir(), 'kerf-deno-'));
