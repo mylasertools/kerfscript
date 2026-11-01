@@ -1,3 +1,5 @@
 node_modules/
 *.vsix
 LICENSE
+dist/
+THIRD-PARTY-NOTICES.md

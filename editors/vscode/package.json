@@ -1,7 +1,7 @@
 {
   "name": "kerfscript",
   "displayName": "KerfScript",
-  "description": "Syntax highlighting and snippets for KerfScript (.kerf), the programming language for laser cutting.",
+  "description": "KerfScript (.kerf), the programming language for laser cutting: highlighting, problems while you type, hover, completion, parameter hints, go to definition, references, rename, outline and formatting.",
   "version": "0.1.0",
   "publisher": "mylasertools",
   "license": "AGPL-3.0-only",
@@ -14,10 +14,12 @@
   },
   "bugs": "https://github.com/mylasertools/kerfscript/issues",
   "engines": {
-    "vscode": "^1.75.0"
+    "vscode": "^1.82.0"
   },
   "categories": [
     "Programming Languages",
+    "Linters",
+    "Formatters",
     "Snippets"
   ],
   "keywords": [
@@ -32,6 +34,7 @@
     "dxf",
     "openscad"
   ],
+  "main": "./dist/extension.js",
   "contributes": {
     "languages": [
       {
@@ -73,18 +76,26 @@
         "language": "kerfscript",
         "path": "./snippets/kerfscript.json"
       }
-    ]
+    ],
+    "configurationDefaults": {
+      "[kerfscript]": {
+        "editor.formatOnSave": true
+      }
+    }
   },
   "scripts": {
-    "vscode:prepublish": "node -e \"require('fs').copyFileSync('../../LICENSE', 'LICENSE')\"",
-    "test": "node test/grammar.mjs && node test/parity.mjs",
+    "build": "node build.mjs",
+    "vscode:prepublish": "node -e \"require('fs').copyFileSync('../../LICENSE', 'LICENSE')\" && node build.mjs",
+    "test": "node test/grammar.mjs && node test/parity.mjs && node test/server.mjs",
     "package": "vsce package",
     "publish:vsce": "vsce publish",
     "publish:ovsx": "ovsx publish"
   },
   "devDependencies": {
     "@vscode/vsce": "^3.2.0",
+    "esbuild": "0.25.12",
     "ovsx": "^0.10.0",
+    "vscode-languageclient": "9.0.1",
     "vscode-oniguruma": "^2.0.1",
     "vscode-textmate": "^9.1.0"
   }

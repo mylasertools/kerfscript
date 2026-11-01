@@ -122,6 +122,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
         : e;
     if (err instanceof KerfError) {
       err.echoes = ev.echoes;
+      err.warnings = [...ev.warnings];
       if (fonts?.missing.size) err.missingFonts = [...fonts.missing];
     }
     throw err;

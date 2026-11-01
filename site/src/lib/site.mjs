@@ -48,6 +48,7 @@ export const GUIDES = [
   ['desktop', 'Desktop app'],
   ['cli', 'Command line'],
   ['javascript', 'JavaScript API'],
+  ['editors', 'Editors'],
   ['webassembly', 'WebAssembly'],
   ['openscad', 'Coming from OpenSCAD'],
   ['compatibility', 'Laser software'],

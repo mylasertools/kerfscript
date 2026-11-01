@@ -24,7 +24,9 @@
     "generator",
     "laser-cutter",
     "svg-generator",
-    "dxf-generator"
+    "dxf-generator",
+    "language-server",
+    "lsp"
   ],
   "sideEffects": false,
   "main": "./dist/index.cjs",
@@ -59,6 +61,16 @@
       "require": {
         "types": "./dist/signatures.d.cts",
         "default": "./dist/signatures.cjs"
+      }
+    },
+    "./language": {
+      "import": {
+        "types": "./dist/language.d.ts",
+        "default": "./dist/language.js"
+      },
+      "require": {
+        "types": "./dist/language.d.cts",
+        "default": "./dist/language.cjs"
       }
     },
     "./cli": "./dist/cli.js",

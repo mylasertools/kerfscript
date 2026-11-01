@@ -29,6 +29,10 @@ const SHOWN = 8;
 const TOKEN =
   /^(?:[A-Za-z_$][A-Za-z0-9_]*|(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?|"(?:[^"\\]|\\.)*"?|<=|>=|==|!=|&&|\|\|)/;
 
+// How much of a line to mark for a problem at col: the token there
+export const markLength = (line: string, col: number) =>
+  Math.max(1, TOKEN.exec(line.slice(col - 1))?.[0].length ?? 1);
+
 export function formatError(error: unknown, source: string, options: FormatOptions = {}): string {
   if (!(error instanceof KerfError))
     return `error: ${error instanceof Error ? error.message : String(error)}`;
@@ -50,7 +54,7 @@ export function formatError(error: unknown, source: string, options: FormatOptio
       const num = String(error.line);
       const pad = ' '.repeat(num.length);
       const before = line.slice(0, error.col - 1);
-      const length = Math.max(1, TOKEN.exec(line.slice(error.col - 1))?.[0].length ?? 1);
+      const length = markLength(line, error.col);
       // Tabs stay tabs so the marks line up under them
       const indent = before.replace(/[^\t]/g, ' ');
       out.push(`${pad} |`, `${num} | ${line}`, `${pad} | ${indent}${'^'.repeat(length)}`);

@@ -67,7 +67,18 @@ class Parser {
     return this.next();
   }
 
+  // The offset just after the last token read
+  last(): number {
+    return this.tokens[this.i - 1].end;
+  }
+
   statement(): Stmt[] {
+    const out = this.stmt();
+    for (const s of out) s.end = this.last();
+    return out;
+  }
+
+  stmt(): Stmt[] {
     const t = this.peek();
     if (this.isP(';')) {
       this.next();
@@ -85,18 +96,27 @@ class Parser {
     }
     if (this.isK('module')) {
       this.next();
-      const name = this.ident().value;
+      const name = this.ident();
       const params = this.params();
-      return [{ kind: 'module', name, params, body: this.body(), pos: t.pos }];
+      return [
+        {
+          kind: 'module',
+          name: name.value,
+          params,
+          body: this.body(),
+          pos: t.pos,
+          namePos: name.pos,
+        },
+      ];
     }
     if (this.isK('function') && this.at('id', undefined, 1)) {
       this.next();
-      const name = this.ident().value;
+      const name = this.ident();
       const params = this.params();
       this.expectP('=');
       const body = this.expr();
       this.expectP(';');
-      return [{ kind: 'function', name, params, body, pos: t.pos }];
+      return [{ kind: 'function', name: name.value, params, body, pos: t.pos, namePos: name.pos }];
     }
     if (this.isK('use') || this.isK('include')) {
       this.next();
@@ -170,13 +190,13 @@ class Parser {
     this.expectP('(');
     const out: Param[] = [];
     while (!this.isP(')')) {
-      const name = this.ident().value;
+      const name = this.ident();
       let def: Expr | null = null;
       if (this.isP('=')) {
         this.next();
         def = this.expr();
       }
-      out.push({ name, default: def });
+      out.push({ name: name.value, default: def, pos: name.pos });
       this.separator(')');
     }
     this.next();
@@ -187,12 +207,11 @@ class Parser {
     this.expectP('(');
     const out: Arg[] = [];
     while (!this.isP(')')) {
-      let name: string | null = null;
       if (this.at('id') && this.isP('=', 1)) {
-        name = this.next().value;
+        const name = this.next();
         this.next();
-      }
-      out.push({ name, value: this.expr() });
+        out.push({ name: name.value, value: this.expr(), pos: name.pos });
+      } else out.push({ name: null, value: this.expr() });
       this.separator(')');
     }
     this.next();
@@ -217,12 +236,14 @@ class Parser {
     if (this.isK('function') && this.isP('(', 1)) {
       this.next();
       const params = this.params();
-      return { kind: 'lambda', params, body: this.expr(), pos: t.pos };
+      const body = this.expr();
+      return { kind: 'lambda', params, body, pos: t.pos, end: this.last() };
     }
     if (this.isK('let') && this.isP('(', 1)) {
       this.next();
       const assigns = this.assigns();
-      return { kind: 'let', assigns, body: this.expr(), pos: t.pos };
+      const body = this.expr();
+      return { kind: 'let', assigns, body, pos: t.pos, end: this.last() };
     }
     const cond = this.binary(0);
     if (this.isP('?')) {
@@ -373,10 +394,12 @@ class Parser {
   }
 
   listItem(): ListItem {
+    const t = this.peek();
     if (this.isK('for') && this.isP('(', 1)) {
       this.next();
       const assigns = this.assigns();
-      return { kind: 'for', assigns, body: this.listItem() };
+      const body = this.listItem();
+      return { kind: 'for', assigns, body, pos: t.pos, end: this.last() };
     }
     if (this.isK('if') && this.isP('(', 1)) {
       this.next();
@@ -394,7 +417,8 @@ class Parser {
     if (this.isK('let') && this.isP('(', 1)) {
       this.next();
       const assigns = this.assigns();
-      return { kind: 'let', assigns, body: this.listItem() };
+      const body = this.listItem();
+      return { kind: 'let', assigns, body, pos: t.pos, end: this.last() };
     }
     if (this.isK('each')) {
       this.next();

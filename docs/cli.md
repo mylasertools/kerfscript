@@ -50,6 +50,7 @@ kerf check <file.kerf>
 kerf fmt <files or folders>
 kerf fmt --check <files or folders>
 kerf fmt -
+kerf lsp [--timeout <seconds>]
 ```
 
 `render` exports SVG, DXF or JSON, using the output file's extension to
@@ -64,6 +65,10 @@ where it is, customizer comments included. It never joins or splits lines.
 exits with 1 when there are any, for CI. `kerf fmt -` formats standard input
 to standard output, for editors. A file that does not parse is reported and
 left alone.
+
+`lsp` runs the language server on standard input and output, for editors:
+see [Editors](editors.md). It stops checking a design after `--timeout`
+seconds, 10 by default.
 
 ## Options
 

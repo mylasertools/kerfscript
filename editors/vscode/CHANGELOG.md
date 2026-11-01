@@ -2,6 +2,10 @@
 
 ## 0.1.0
 
+- The KerfScript language server: problems while you type, hover,
+  completion, parameter hints, go to definition, find references, rename,
+  outline, links on library paths, and formatting with `kerf fmt`, on save
+  by default
 - Syntax highlighting for `.kerf` files: keywords, built-in modules and
   functions, layer modules, special variables, modifiers, `use <...>` paths
   and customizer comments

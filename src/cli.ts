@@ -2,6 +2,8 @@
 
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { isMainThread } from 'node:worker_threads';
 import {
   format,
   formatError,
@@ -15,6 +17,7 @@ import {
 import { parse } from './parser.js';
 import { Evaluator } from './evaluator.js';
 import { BUILTIN_FONT, withBuiltinFont } from './font.js';
+import { startServer, workerMain } from './lsp.js';
 
 const HELP = `kerf ${VERSION}: the KerfScript laser cutting language
 
@@ -25,6 +28,8 @@ Usage:
   kerf fmt <files or folders>        format .kerf files in place
   kerf fmt --check <files>           list files that are not formatted; exit 1 if any
   kerf fmt -                         format standard input to standard output
+  kerf lsp [--timeout <s>]           run the language server for editors (stdio);
+                                     stop checking a design after s seconds (10)
 
 Options:
   -o, --out <file>        output file (.svg, .dxf or .json); default <file>.svg
@@ -66,6 +71,13 @@ function main(argv: string[]) {
   }
   const cmd = argv[0];
   if (cmd === 'fmt') return fmt(argv.slice(1));
+  // This file runs the server's programs too, in a worker thread
+  if (cmd === 'lsp') {
+    const i = argv.indexOf('--timeout');
+    const timeout = i < 0 ? 10 : Number(argv[i + 1]);
+    if (!(timeout > 0)) fail('--timeout needs a number of seconds');
+    return startServer({ worker: fileURLToPath(import.meta.url), timeout: timeout * 1000 });
+  }
   if (!['render', 'params', 'check'].includes(cmd))
     fail(`Unknown command "${cmd}". Run kerf --help.`);
   let file = '';
@@ -251,16 +263,18 @@ let design:
   | { source: string; file: string; resolve: (p: string) => string | undefined }
   | undefined;
 
-try {
-  main(process.argv.slice(2));
-} catch (e) {
-  if (e instanceof KerfError) {
-    for (const m of e.echoes) process.stderr.write(`ECHO: ${m}\n`);
-    fail(
-      design
-        ? formatError(e, design.source, { file: design.file, resolve: design.resolve })
-        : `error: ${e.message}`,
-    );
+if (!isMainThread) workerMain();
+else
+  try {
+    main(process.argv.slice(2));
+  } catch (e) {
+    if (e instanceof KerfError) {
+      for (const m of e.echoes) process.stderr.write(`ECHO: ${m}\n`);
+      fail(
+        design
+          ? formatError(e, design.source, { file: design.file, resolve: design.resolve })
+          : `error: ${e.message}`,
+      );
+    }
+    throw e;
   }
-  throw e;
-}

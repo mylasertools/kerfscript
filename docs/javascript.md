@@ -178,6 +178,48 @@ Each signature has a `kind` (`module`, `function`, or `both` for `echo` and
 any number of values, such as `str(...)`, and `forms` lists other ways to
 call one, such as `log(base, x)`.
 
+## Language service
+
+`@mylasertools/kerfscript/language` answers what an editor asks about a
+program. It is what `kerf lsp` uses ([Editors](editors.md)), and it runs in
+browsers too, for an editor on a web page. Positions are offsets into the
+source in UTF-16 code units, as JavaScript strings count them.
+
+```js
+import {
+  analyze,
+  complete,
+  hover,
+  problems,
+  signatureHelp,
+} from '@mylasertools/kerfscript/language';
+
+const a = analyze(source, { resolve });
+hover(a, offset); // { start, end, text } with Markdown text, or undefined
+complete(a, offset); // { from, to, items: [{ label, kind, detail, doc, insert }] }
+signatureHelp(a, offset); // { label, params: [{ start, end, doc }], active }
+problems(source, { resolve }); // [{ severity, message, start, end, related }]
+```
+
+`analyze()` reads the program's names, scopes and libraries once for the
+other functions, and works on code that does not parse: the lines with
+errors are left out. Its `resolve` option finds libraries, as `render()`'s
+does.
+
+| Function                    | Returns                                                                           |
+| --------------------------- | --------------------------------------------------------------------------------- |
+| `hover(a, offset)`          | What the name or library path at the offset is, as Markdown                       |
+| `complete(a, offset)`       | What can be typed there, to replace the source from `from` to `to`                |
+| `signatureHelp(a, offset)`  | The parameters of the call being typed and the one being typed                    |
+| `definition(a, offset)`     | Where the name is defined; `file` names the library when it is not in the program |
+| `references(a, offset)`     | Every place in the program the name is defined and used                           |
+| `rename(a, offset, name)`   | The places to change, or `{ error }` for a built-in or a library's name           |
+| `outline(a)`                | Modules, functions and variables, nested as written                               |
+| `problems(source, options)` | The errors and warnings from running the program; it takes `render()`'s options   |
+
+`problems()` runs the program, so call it in a worker on a page, as the
+playground does with `render()`.
+
 ## Errors
 
 Language errors use `KerfError`:
@@ -191,6 +233,7 @@ Language errors use `KerfError`:
 | `trace`        | the module and function calls it happened inside, innermost first: `{ kind, name, line, col, file, count }`, where `count` is how often a recursive call is on the stack |
 | `call`         | the built-in that was given an unusable argument                                                                                                                         |
 | `echoes`       | `echo()` output before the error                                                                                                                                         |
+| `warnings`     | warnings before the error                                                                                                                                                |
 | `missingFonts` | fonts the application needs to supply                                                                                                                                    |
 
 `formatError()` writes all of that the way the command line shows it: the

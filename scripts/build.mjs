@@ -10,19 +10,21 @@ const noNodeBuiltins = {
 const banner = {
   js: '/*! @mylasertools/kerfscript | (c) MyLaserTools | AGPL-3.0-only or commercial licence, see COMMERCIAL-LICENSE.md. Includes Clipper2 (BSL-1.0), opentype.js, tiny-inflate and string.prototype.codepointat (MIT), see THIRD-PARTY-NOTICES.md. */',
 };
-for (const format of ['esm', 'cjs'])
-  await build({
-    entryPoints: ['src/index.ts'],
-    outfile: `dist/index.${format === 'esm' ? 'js' : 'cjs'}`,
-    bundle: true,
-    minify: true,
-    format,
-    platform: 'neutral',
-    mainFields: ['module', 'main'],
-    target: 'es2020',
-    banner,
-    plugins: [noNodeBuiltins],
-  });
+// The library, and the language service for editors on its own
+for (const name of ['index', 'language'])
+  for (const format of ['esm', 'cjs'])
+    await build({
+      entryPoints: [`src/${name}.ts`],
+      outfile: `dist/${name}.${format === 'esm' ? 'js' : 'cjs'}`,
+      bundle: true,
+      minify: true,
+      format,
+      platform: 'neutral',
+      mainFields: ['module', 'main'],
+      target: 'es2020',
+      banner,
+      plugins: [noNodeBuiltins],
+    });
 // The highlighter and the signatures on their own, for editors and pages
 // that do not run programs
 for (const name of ['highlight', 'signatures'])

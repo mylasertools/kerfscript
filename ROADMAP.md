@@ -76,7 +76,7 @@ protects or feeds the next.
       list the expected arguments and trace calls and libraries
 - [x] `kerf fmt` with a check mode, keeping comments and customizer
       annotations
-- [ ] A language server: errors while typing, hover, parameter hints,
+- [x] A language server: errors while typing, hover, parameter hints,
       completion, go to definition, find references and format on save
 - [ ] Standard library: tabs and slots, hinges, dividers, hanging holes,
       enclosures and material calibration, each with parameters, a picture,

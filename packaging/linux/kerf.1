@@ -13,6 +13,16 @@ kerf \- the KerfScript laser cutting language
 .br
 .B kerf check
 .I file.kerf
+.br
+.B kerf fmt
+.RB [ \-\-check ]
+.I files or folders
+.br
+.B kerf fmt \-
+.br
+.B kerf lsp
+.RB [ \-\-timeout
+.IR seconds ]
 .SH DESCRIPTION
 KerfScript is a programming language for laser cutting. A program describes
 parametric 2D parts with cut, score and engrave layers, kerf compensation and
@@ -29,6 +39,21 @@ Print the customizer parameters as JSON.
 .TP
 .B check
 Run the program and print its parts, sheets and warnings.
+.TP
+.B fmt
+Format .kerf files in place, searching folders for them. Line breaks and
+comments stay where they are.
+.B \-\-check
+changes nothing, lists the files that are not formatted and exits with 1 when
+there are any.
+.B kerf fmt \-
+formats standard input to standard output.
+.TP
+.B lsp
+Run the language server on standard input and output, for editors. It stops
+checking a design after
+.B \-\-timeout
+seconds, 10 by default.
 .SH OPTIONS
 .TP
 .BR \-o ", " \-\-out " \fIfile\fR"

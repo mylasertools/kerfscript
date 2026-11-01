@@ -19,6 +19,8 @@ export interface Token {
   type: TokenType;
   value: string;
   pos: Pos;
+  // The offset just after the token
+  end: number;
 }
 
 export interface Comment {
@@ -26,6 +28,9 @@ export interface Comment {
   line: number;
   block: boolean;
   own: boolean;
+  // Offsets of the whole comment, markers included
+  start: number;
+  end: number;
 }
 
 // A module or function call the error happened inside, at its call site
@@ -46,6 +51,8 @@ export class KerfError extends Error {
   line?: number;
   col?: number;
   echoes: string[] = [];
+  // Warnings before the error
+  warnings: string[] = [];
   missingFonts?: string[];
   // The library the error is in; line and col are in that file
   file?: string;
@@ -145,7 +152,14 @@ export function tokenize(src: string, file?: string): { tokens: Token[]; comment
       const end = src.indexOf('\n', i);
       const stop = end < 0 ? src.length : end;
       const own = /^[ \t]*$/.test(src.slice(src.lastIndexOf('\n', i - 1) + 1, i));
-      comments.push({ text: src.slice(i + 2, stop).trim(), line, block: false, own });
+      comments.push({
+        text: src.slice(i + 2, stop).trim(),
+        line,
+        block: false,
+        own,
+        start: i,
+        end: stop,
+      });
       i = stop;
       continue;
     }
@@ -158,6 +172,8 @@ export function tokenize(src: string, file?: string): { tokens: Token[]; comment
         line: start.line,
         block: true,
         own: true,
+        start: i,
+        end: end + 2,
       });
       advance(end + 2 - i);
       continue;
@@ -165,13 +181,13 @@ export function tokenize(src: string, file?: string): { tokens: Token[]; comment
     const p = pos();
     if (/[0-9]/.test(c) || (c === '.' && /[0-9]/.test(src[i + 1] ?? ''))) {
       const m = /^(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/.exec(src.slice(i))!;
-      tokens.push({ type: 'num', value: m[0], pos: p });
+      tokens.push({ type: 'num', value: m[0], pos: p, end: i + m[0].length });
       advance(m[0].length);
       continue;
     }
     if (/[A-Za-z_$]/.test(c)) {
       const m = /^[A-Za-z_$][A-Za-z0-9_]*/.exec(src.slice(i))!;
-      tokens.push({ type: 'id', value: m[0], pos: p });
+      tokens.push({ type: 'id', value: m[0], pos: p, end: i + m[0].length });
       advance(m[0].length);
       continue;
     }
@@ -198,23 +214,23 @@ export function tokenize(src: string, file?: string): { tokens: Token[]; comment
       }
       if (i >= src.length) throw new KerfError('Unclosed string', p);
       advance(1);
-      tokens.push({ type: 'str', value: out, pos: p });
+      tokens.push({ type: 'str', value: out, pos: p, end: i });
       continue;
     }
     if (c === '<' && /^<[A-Za-z0-9_./-]+>/.test(src.slice(i))) {
       const prev = tokens[tokens.length - 1];
       if (prev && prev.type === 'id' && (prev.value === 'use' || prev.value === 'include')) {
         const m = /^<([A-Za-z0-9_./-]+)>/.exec(src.slice(i))!;
-        tokens.push({ type: 'str', value: m[1], pos: p });
+        tokens.push({ type: 'str', value: m[1], pos: p, end: i + m[0].length });
         advance(m[0].length);
         continue;
       }
     }
     const op = PUNCT.find((s) => src.startsWith(s, i));
     if (!op) throw new KerfError(`Unexpected character "${c}"`, p);
-    tokens.push({ type: 'punct', value: op, pos: p });
+    tokens.push({ type: 'punct', value: op, pos: p, end: i + op.length });
     advance(op.length);
   }
-  tokens.push({ type: 'eof', value: '', pos: pos() });
+  tokens.push({ type: 'eof', value: '', pos: pos(), end: i });
   return { tokens, comments };
 }

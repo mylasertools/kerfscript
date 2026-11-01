@@ -54,6 +54,15 @@
 - A VS Code extension in `editors/vscode` with a TextMate grammar, snippets
   and file icons. A test checks that it colours every example the same way
   as the highlighter.
+- `kerf lsp`, the KerfScript language server, for VS Code (the extension
+  bundles it) and any editor with a Language Server Protocol client:
+  problems while you type, hover, completion, parameter hints, go to
+  definition, find references, rename, outline, links on library paths and
+  formatting. Designs run in a worker thread and stop after 10 seconds. See
+  [Editors](docs/editors.md).
+- `@mylasertools/kerfscript/language`: the language server's answers as
+  functions, for editors in a browser or your own tools.
+- `KerfError` has `warnings`, the warnings before the error.
 
 ## 0.4.0 (2026-10-30)
 

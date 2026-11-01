@@ -57,10 +57,12 @@ jobs:
           npm --prefix mcp ci
           npm --prefix mcp run check
           npm --prefix mcp run deploy:check
-      # Needs the library build above: it compares the grammar with dist/highlight.js
+      # Needs the library build above: it compares the grammar with dist/highlight.js.
+      # The extension bundles the language server from src/.
       - name: VS Code extension
         run: |
           npm --prefix editors/vscode ci
+          npm --prefix editors/vscode run build
           npm --prefix editors/vscode test
           cd editors/vscode && npx vsce package
 
