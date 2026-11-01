@@ -23,6 +23,19 @@ for (const format of ['esm', 'cjs'])
     banner,
     plugins: [noNodeBuiltins],
   });
+// The highlighter on its own, for editors and pages that only colour code
+for (const format of ['esm', 'cjs'])
+  await build({
+    entryPoints: ['src/highlight.ts'],
+    outfile: `dist/highlight.${format === 'esm' ? 'js' : 'cjs'}`,
+    bundle: true,
+    format,
+    platform: 'neutral',
+    target: 'es2020',
+    banner: {
+      js: '/*! @mylasertools/kerfscript/highlight | (c) MyLaserTools | AGPL-3.0-only or commercial licence */',
+    },
+  });
 await build({
   entryPoints: ['src/cli.ts'],
   outfile: 'dist/cli.js',

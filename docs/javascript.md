@@ -111,6 +111,32 @@ if (width) {
 Read the settings again after editing the source; the offsets refer to the
 string passed to `parameters()`.
 
+## Syntax colouring
+
+`@mylasertools/kerfscript/highlight` colours KerfScript code without loading
+the interpreter. It never throws, so it works on unfinished code in an editor.
+Its categories match the VS Code extension's grammar.
+
+```js
+import { highlight, highlightLine } from '@mylasertools/kerfscript/highlight';
+
+// HTML with a t-keyword, t-builtin, t-comment ... span per token
+pre.innerHTML = highlight(source);
+
+// Line by line, for editors such as CodeMirror
+const state = { inBlock: false };
+for (const line of source.split('\n')) {
+  for (const { kind, text } of highlightLine(line, state)) {
+    // kind: comment, section, control, string, number, keyword, constant,
+    // definition, builtin, layer, call, special, modifier or plain
+  }
+}
+```
+
+`highlight()` never puts a span across a line break, so its result can be
+split into lines. `section` and `control` are customizer comments
+(`/* [Size] */` and `// [40:5:400]`).
+
 ## Errors
 
 Language errors use `KerfError`. Its `line` and `col` identify the source

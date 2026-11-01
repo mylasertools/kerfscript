@@ -3,5 +3,6 @@ dist/
 .wrangler/
 node_modules/
 public/assets/kerfscript.js
+public/assets/highlight.js
 public/assets/THIRD-PARTY-NOTICES.md
 public/assets/fonts/

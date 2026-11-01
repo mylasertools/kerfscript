@@ -1,0 +1,235 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "KerfScript",
+  "scopeName": "source.kerfscript",
+  "fileTypes": ["kerf"],
+  "patterns": [{ "include": "#statements" }],
+  "repository": {
+    "statements": {
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#import" },
+        { "include": "#module-definition" },
+        { "include": "#function-definition" },
+        { "include": "#modifier" },
+        { "include": "#expression" }
+      ]
+    },
+    "expression": {
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#strings" },
+        { "include": "#numbers" },
+        { "include": "#constants" },
+        { "include": "#special-variables" },
+        { "include": "#lambda" },
+        { "include": "#keywords" },
+        { "include": "#builtin-call" },
+        { "include": "#call" },
+        { "include": "#parens" },
+        { "include": "#brackets" },
+        { "include": "#braces" },
+        { "include": "#member" },
+        { "include": "#assignment" },
+        { "include": "#operators" },
+        { "include": "#punctuation" }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.customizer-group.kerfscript",
+          "match": "(/\\*)\\s*(\\[)([^\\]\\n]*)(\\])\\s*(\\*/)",
+          "captures": {
+            "1": { "name": "punctuation.definition.comment.begin.kerfscript" },
+            "2": { "name": "punctuation.definition.tag.begin.kerfscript" },
+            "3": { "name": "entity.name.section.customizer.kerfscript" },
+            "4": { "name": "punctuation.definition.tag.end.kerfscript" },
+            "5": { "name": "punctuation.definition.comment.end.kerfscript" }
+          }
+        },
+        {
+          "name": "comment.block.kerfscript",
+          "begin": "/\\*",
+          "end": "\\*/",
+          "beginCaptures": { "0": { "name": "punctuation.definition.comment.begin.kerfscript" } },
+          "endCaptures": { "0": { "name": "punctuation.definition.comment.end.kerfscript" } }
+        },
+        {
+          "name": "comment.line.double-slash.customizer.kerfscript",
+          "match": "(//)\\s*(\\[[^\\]\\n]*\\])\\s*$",
+          "captures": {
+            "1": { "name": "punctuation.definition.comment.kerfscript" },
+            "2": { "name": "meta.customizer.control.kerfscript" }
+          }
+        },
+        {
+          "name": "comment.line.double-slash.kerfscript",
+          "begin": "//",
+          "end": "$",
+          "beginCaptures": { "0": { "name": "punctuation.definition.comment.kerfscript" } }
+        }
+      ]
+    },
+    "import": {
+      "match": "\\b(use|include)\\s*(<)([A-Za-z0-9_./-]*)(>)",
+      "captures": {
+        "1": { "name": "keyword.control.import.kerfscript" },
+        "2": { "name": "punctuation.definition.string.begin.kerfscript" },
+        "3": { "name": "string.quoted.other.lt-gt.include.kerfscript" },
+        "4": { "name": "punctuation.definition.string.end.kerfscript" }
+      }
+    },
+    "module-definition": {
+      "match": "\\b(module)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+      "captures": {
+        "1": { "name": "storage.type.module.kerfscript" },
+        "2": { "name": "entity.name.function.module.kerfscript" }
+      }
+    },
+    "function-definition": {
+      "match": "\\b(function)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+      "captures": {
+        "1": { "name": "storage.type.function.kerfscript" },
+        "2": { "name": "entity.name.function.kerfscript" }
+      }
+    },
+    "lambda": {
+      "match": "\\b(function)\\s*(?=\\()",
+      "captures": { "1": { "name": "storage.type.function.kerfscript" } }
+    },
+    "modifier": {
+      "comment": "* disables a module call, # and % move it to the guide layer",
+      "match": "(?:^|(?<=[;{}]))\\s*([*#%])(?=\\s*[A-Za-z_$])",
+      "captures": { "1": { "name": "keyword.other.modifier.kerfscript" } }
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.kerfscript",
+          "match": "\\b(if|else|for|let|each)\\b"
+        },
+        {
+          "name": "keyword.control.import.kerfscript",
+          "match": "\\b(use|include)\\b"
+        },
+        {
+          "name": "storage.type.kerfscript",
+          "match": "\\b(module|function)\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        { "name": "constant.language.boolean.kerfscript", "match": "\\b(true|false)\\b" },
+        { "name": "constant.language.undef.kerfscript", "match": "\\bundef\\b" },
+        { "name": "constant.language.kerfscript", "match": "\\bPI\\b" }
+      ]
+    },
+    "special-variables": {
+      "name": "variable.language.special.kerfscript",
+      "match": "\\$[A-Za-z_][A-Za-z0-9_]*"
+    },
+    "numbers": {
+      "name": "constant.numeric.decimal.kerfscript",
+      "match": "(?<![A-Za-z0-9_$])(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?"
+    },
+    "strings": {
+      "name": "string.quoted.double.kerfscript",
+      "begin": "\"",
+      "end": "(\")|(\\n)",
+      "beginCaptures": { "0": { "name": "punctuation.definition.string.begin.kerfscript" } },
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.string.end.kerfscript" },
+        "2": { "name": "invalid.illegal.newline.kerfscript" }
+      },
+      "patterns": [
+        { "name": "constant.character.escape.unicode.kerfscript", "match": "\\\\u[0-9A-Fa-f]{4}" },
+        { "name": "invalid.illegal.escape.kerfscript", "match": "\\\\u" },
+        { "name": "constant.character.escape.kerfscript", "match": "\\\\." }
+      ]
+    },
+    "builtin-call": {
+      "patterns": [
+        {
+          "comment": "Layer modules",
+          "match": "\\b(cut|score|engrave|guide|layer)\\s*(?=\\()",
+          "captures": { "1": { "name": "support.function.layer.kerfscript" } }
+        },
+        {
+          "comment": "Built-in modules",
+          "match": "\\b(rect|square|circle|ellipse|regular_polygon|star|polygon|path|line|polyline|arc|text|translate|rotate|scale|mirror|multmatrix|union|group|difference|intersection|hull|offset|stroke|outline|part|material|children|echo|assert|finger_rect|finger_holes|tslot|living_hinge|box|divider)\\s*(?=\\()",
+          "captures": { "1": { "name": "support.function.builtin.kerfscript" } }
+        },
+        {
+          "comment": "Built-in functions",
+          "match": "\\b(abs|sign|floor|ceil|round|sqrt|pow|exp|ln|log|sin|cos|tan|asin|acos|atan|atan2|min|max|clamp|lerp|norm|cross|len|concat|reverse|sum|slice|str|chr|ord|upper|lower|split|join|search|contains|lookup|is_num|is_string|is_bool|is_list|is_undef|is_function|type_of|rands|text_width|text_metrics|finger_count)\\s*(?=\\()",
+          "captures": { "1": { "name": "support.function.builtin.kerfscript" } }
+        }
+      ]
+    },
+    "call": {
+      "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*(?=\\()",
+      "captures": { "1": { "name": "entity.name.function.call.kerfscript" } }
+    },
+    "parens": {
+      "begin": "\\(",
+      "end": "\\)",
+      "beginCaptures": { "0": { "name": "punctuation.section.parens.begin.kerfscript" } },
+      "endCaptures": { "0": { "name": "punctuation.section.parens.end.kerfscript" } },
+      "patterns": [{ "include": "#named-argument" }, { "include": "#expression" }]
+    },
+    "brackets": {
+      "begin": "\\[",
+      "end": "\\]",
+      "beginCaptures": { "0": { "name": "punctuation.section.brackets.begin.kerfscript" } },
+      "endCaptures": { "0": { "name": "punctuation.section.brackets.end.kerfscript" } },
+      "patterns": [{ "include": "#expression" }]
+    },
+    "braces": {
+      "begin": "\\{",
+      "end": "\\}",
+      "beginCaptures": { "0": { "name": "punctuation.section.block.begin.kerfscript" } },
+      "endCaptures": { "0": { "name": "punctuation.section.block.end.kerfscript" } },
+      "patterns": [{ "include": "#statements" }]
+    },
+    "named-argument": {
+      "comment": "rect([20, 10], r = 2), and parameters with defaults in definitions",
+      "match": "(?<![$\\w.])([A-Za-z_][A-Za-z0-9_]*)\\s*(=)(?!=)",
+      "captures": {
+        "1": { "name": "variable.parameter.kerfscript" },
+        "2": { "name": "keyword.operator.assignment.kerfscript" }
+      }
+    },
+    "assignment": {
+      "match": "(?<![$\\w.])([A-Za-z_][A-Za-z0-9_]*)\\s*(=)(?!=)",
+      "captures": {
+        "1": { "name": "variable.other.assignment.kerfscript" },
+        "2": { "name": "keyword.operator.assignment.kerfscript" }
+      }
+    },
+    "member": {
+      "match": "(\\.)([A-Za-z_][A-Za-z0-9_]*)",
+      "captures": {
+        "1": { "name": "punctuation.accessor.kerfscript" },
+        "2": { "name": "variable.other.property.kerfscript" }
+      }
+    },
+    "operators": {
+      "patterns": [
+        { "name": "keyword.operator.comparison.kerfscript", "match": "==|!=|<=|>=|<|>" },
+        { "name": "keyword.operator.logical.kerfscript", "match": "&&|\\|\\||!" },
+        { "name": "keyword.operator.ternary.kerfscript", "match": "\\?|:" },
+        { "name": "keyword.operator.arithmetic.kerfscript", "match": "[-+*/%^]" },
+        { "name": "keyword.operator.assignment.kerfscript", "match": "=" },
+        { "name": "keyword.other.modifier.kerfscript", "match": "#" }
+      ]
+    },
+    "punctuation": {
+      "patterns": [
+        { "name": "punctuation.terminator.statement.kerfscript", "match": ";" },
+        { "name": "punctuation.separator.comma.kerfscript", "match": "," }
+      ]
+    }
+  }
+}

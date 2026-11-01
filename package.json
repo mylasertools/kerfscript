@@ -37,6 +37,16 @@
         "default": "./dist/index.cjs"
       }
     },
+    "./highlight": {
+      "import": {
+        "types": "./dist/highlight.d.ts",
+        "default": "./dist/highlight.js"
+      },
+      "require": {
+        "types": "./dist/highlight.d.cts",
+        "default": "./dist/highlight.cjs"
+      }
+    },
     "./cli": "./dist/cli.js",
     "./package.json": "./package.json"
   },
@@ -66,7 +76,7 @@
   },
   "scripts": {
     "build": "node scripts/stdlib.mjs && tsc -p tsconfig.json && node scripts/build.mjs",
-    "test": "node --test",
+    "test": "node --test \"test/**/*.test.mjs\"",
     "check": "npm run build && npm test",
     "examples": "node scripts/examples.mjs",
     "site": "npm run build && npm --prefix site run build",

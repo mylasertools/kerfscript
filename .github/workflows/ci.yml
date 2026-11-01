@@ -28,6 +28,7 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             site/package-lock.json
+            editors/vscode/package-lock.json
       - name: Install Javy
         run: |
           mkdir -p "$HOME/.local/bin"
@@ -47,6 +48,12 @@ jobs:
         run: |
           npm --prefix site ci
           npm --prefix site run build
+      # Needs the library build above: it compares the grammar with dist/highlight.js
+      - name: VS Code extension
+        run: |
+          npm --prefix editors/vscode ci
+          npm --prefix editors/vscode test
+          cd editors/vscode && npx vsce package
 
   desktop:
     runs-on: ubuntu-22.04

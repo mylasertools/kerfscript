@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- `@mylasertools/kerfscript/highlight`: syntax colouring as its own small
+  module (4 KB), for editors and pages that show KerfScript code. The site,
+  the playground and the desktop app use it. It also colours module and
+  function names where they are defined, layer modules, `true`, `false`,
+  `undef` and `PI`, the `* # %` modifiers, and customizer group headers
+  and controls.
+- The playground keeps a block comment coloured across all its lines.
+- A VS Code extension in `editors/vscode` with a TextMate grammar, snippets
+  and file icons. A test checks that it colours every example the same way
+  as the highlighter.
+
 ## 0.4.0 (2026-10-30)
 
 - Assembly: `part()` takes `at` and `rotate` to place a part in 3D, rotated

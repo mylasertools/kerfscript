@@ -1,0 +1,91 @@
+{
+  "name": "kerfscript",
+  "displayName": "KerfScript",
+  "description": "Syntax highlighting and snippets for KerfScript (.kerf), the programming language for laser cutting.",
+  "version": "0.1.0",
+  "publisher": "mylasertools",
+  "license": "AGPL-3.0-only",
+  "icon": "images/icon.png",
+  "homepage": "https://kerfscript.mylasertools.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mylasertools/kerfscript.git",
+    "directory": "editors/vscode"
+  },
+  "bugs": "https://github.com/mylasertools/kerfscript/issues",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "keywords": [
+    "kerfscript",
+    "kerf",
+    "laser cutting",
+    "laser",
+    "cnc",
+    "cad",
+    "parametric",
+    "svg",
+    "dxf",
+    "openscad"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "kerfscript",
+        "aliases": [
+          "KerfScript",
+          "kerfscript",
+          "kerf"
+        ],
+        "extensions": [
+          ".kerf"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./images/kerf-file-light.svg",
+          "dark": "./images/kerf-file-dark.svg"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "kerfscript",
+        "scopeName": "source.kerfscript",
+        "path": "./syntaxes/kerfscript.tmLanguage.json"
+      },
+      {
+        "scopeName": "markdown.kerfscript.codeblock",
+        "path": "./syntaxes/kerfscript.markdown.tmLanguage.json",
+        "injectTo": [
+          "text.html.markdown"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.kerfscript": "kerfscript"
+        }
+      }
+    ],
+    "snippets": [
+      {
+        "language": "kerfscript",
+        "path": "./snippets/kerfscript.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "node -e \"require('fs').copyFileSync('../../LICENSE', 'LICENSE')\"",
+    "test": "node test/grammar.mjs && node test/parity.mjs",
+    "package": "vsce package",
+    "publish:vsce": "vsce publish",
+    "publish:ovsx": "ovsx publish"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^3.2.0",
+    "ovsx": "^0.10.0",
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.1.0"
+  }
+}

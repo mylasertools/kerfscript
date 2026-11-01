@@ -290,6 +290,37 @@ main.wide {
   color: #7b3f8f;
 }
 
+.t-constant {
+  color: #8a4b08;
+  font-weight: 500;
+}
+
+.t-definition {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.t-layer {
+  color: #0f6b5c;
+  font-weight: 500;
+}
+
+.t-modifier {
+  color: #a12c1a;
+  font-weight: 600;
+}
+
+/* Customizer comments: group headers and setting controls */
+.t-section {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.t-control {
+  color: #7b3f8f;
+  font-style: italic;
+}
+
 /* Material figures */
 
 .sheet {
