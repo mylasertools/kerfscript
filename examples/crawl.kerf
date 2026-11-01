@@ -70,13 +70,13 @@ B = mm(pB);
 crank = norm(mm(pP));
 
 function polar(rad, a) = [rad * cos(a), rad * sin(a)];
-function meet(p, rad, q, rad2, sgn) = let(v = q - p, d = norm(v), a = (rad * rad - rad2 * rad2 + d * d) / (2 * d), h = sqrt(max(0, rad * rad - a * a)))
+function meet(p, rad, q, rad2, sgn) = let (v = q - p, d = norm(v), a = (rad * rad - rad2 * rad2 + d * d) / (2 * d), h = sqrt(max(0, rad * rad - a * a)))
   p + v * a / d + [-v[1], v[0]] * h / d * sgn;
 // Where c sits seen from a, with b straight along +x
-function canon(a, b, c) = let(v = b - a, g = atan2(v[1], v[0]), q = c - a)
+function canon(a, b, c) = let (v = b - a, g = atan2(v[1], v[0]), q = c - a)
   [q[0] * cos(g) + q[1] * sin(g), q[1] * cos(g) - q[0] * sin(g)];
 // The joints with the crank pin at angle a: E, K, H, F
-function leg(a) = let(
+function leg(a) = let (
   P = polar(crank, a),
   E = meet(P, norm(mm(pE) - mm(pP)), B, norm(mm(pE) - B), 1),
   K = meet(P, norm(mm(pK) - mm(pP)), E, norm(mm(pK) - mm(pE)), 1),
@@ -85,7 +85,7 @@ function leg(a) = let(
   [E, K, H, F];
 // P, E, K, H, F, A, B of a front leg, or of a rear leg (its mirror image on
 // the same crank pin)
-function joints(a, rear = false) = let(j = concat([polar(crank, rear ? 180 - a : a)], leg(rear ? 180 - a : a), [A, B]))
+function joints(a, rear = false) = let (j = concat([polar(crank, rear ? 180 - a : a)], leg(rear ? 180 - a : a), [A, B]))
   rear ? [for (p = j) [-p[0], p[1]]] : j;
 iP = 0; iE = 1; iK = 2; iH = 3; iF = 4; iA = 5; iB = 6;
 path = [for (a = [0:3:357]) leg(a)[3]];
@@ -111,7 +111,7 @@ module link(pts, holes, name) {
     for (p = holes) translate(p) circle(d = hole);
   }
   // Along the first bar, never upside down
-  score() let(a = pts[0], b = pts[1], g = atan2(b[1] - a[1], b[0] - a[0]))
+  score() let (a = pts[0], b = pts[1], g = atan2(b[1] - a[1], b[0] - a[0]))
     translate((a + b) / 2) rotate(abs(g) > 90 ? g + 180 : g) text(name, size = 3.2, halign = "center", valign = "center");
 }
 
@@ -185,7 +185,7 @@ function side_at(p, y, flipped = false) = [p[0], flipped ? y : y + t, ride + p[1
 function side_rot(a, flipped = false) = [flipped ? -90 : 90, -a, 0];
 // Eight links, two per group: [at, rotate] drawn from joint i1 towards i2,
 // on layer lf for the front leg and lr for the rear one
-function links(i1, i2, lf, lr) = [for (c = [0:7]) let(g = floor(c / 2), r = c % 2 == 1, j = gj(g, r), a = j[i1], b = j[i2])
+function links(i1, i2, lf, lr) = [for (c = [0:7]) let (g = floor(c / 2), r = c % 2 == 1, j = gj(g, r), a = j[i1], b = j[i2])
   [side_at(a, lo(g, lay[r ? lr : lf]), r), side_rot(atan2(b[1] - a[1], b[0] - a[0]), r)]];
 // Spacer rings on the joints: joint, rear leg, offset of the ring's near face
 rings = [for (g = [0:3], q = [[iE, false, lay[0] + t], [iE, false, lay[1]], [iE, false, lay[1] + t], [iE, true, lay[1] + t],

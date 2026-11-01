@@ -39,8 +39,8 @@ function land(p) = bump(p, peak, reach * 0.26)
   + hills[0][2] * bump(p, hills[0][0], hills[0][1])
   + hills[1][2] * bump(p, hills[1][0], hills[1][1])
   + roughness * (0.07 * sin(p.x * 360 / (reach * 0.9) + rnd[8] * 360) * sin(p.y * 360 / (reach * 1.1) + rnd[9] * 360)
-    + 0.03 * sin((p.x + p.y) * 360 / (reach * 0.45) + rnd[10] * 360)
-    + 0.01 * sin((p.x - 2 * p.y) * 360 / (reach * 0.22) + rnd[11] * 360));
+      + 0.03 * sin((p.x + p.y) * 360 / (reach * 0.45) + rnd[10] * 360)
+      + 0.01 * sin((p.x - 2 * p.y) * 360 / (reach * 0.22) + rnd[11] * 360));
 
 // Sample the land along rays from the peak once; every layer reuses them
 rays = 144;

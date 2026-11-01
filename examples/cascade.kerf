@@ -195,7 +195,7 @@ module foot() {
   a = back_at(lap);
   difference() {
     polygon([[-55, 0], [150, 0], [150, 10], a, a + 2 * t * n_, [-55, 18]]);
-    let(e = 0.125, p = back_at(lap / 2) - e * n_, q = back_at(lap + 20) - e * n_, w = (2 * t + 2 * e) * n_)
+    let (e = 0.125, p = back_at(lap / 2) - e * n_, q = back_at(lap + 20) - e * n_, w = (2 * t + 2 * e) * n_)
       polygon([p, q, q + w, p + w]);
   }
 }
@@ -222,7 +222,7 @@ module coupon() {
 function board_at(p, d) = [p.x, -(2 * t + d) * cos(lean) + p.y * sin(lean), rise + (2 * t + d) * sin(lean) + p.y * cos(lean)];
 // Standing the part up (90 - lean about x) after turning it a about z, as
 // the x, y, z angles that rotate takes
-function board_turn(a = 0) = let(b = 90 - lean)
+function board_turn(a = 0) = let (b = 90 - lean)
   [atan2(sin(b) * cos(a), cos(b)), -asin(sin(b) * sin(a)), atan2(cos(b) * sin(a), cos(a))];
 // A 1 tips its rocker's right end down
 function tilt(k) = floor(value / pow(2, k)) % 2 == 1 ? -tip : tip;

@@ -132,7 +132,7 @@ bob_back = rod_d - 3 * t;
 base_front = rod_d + 5 * t + 15;
 base_back = -core_d + 35 + 12;
 
-function fix2(v) = let(n = round(v * 100)) str(floor(n / 100), ".", n % 100 < 10 ? "0" : "", n % 100);
+function fix2(v) = let (n = round(v * 100)) str(floor(n / 100), ".", n % 100 < 10 ? "0" : "", n % 100);
 module label(s, p, size = 5) {
   score() translate(p) text(s, size = size, halign = "center", valign = "center");
 }
@@ -146,10 +146,10 @@ module ring(od, id) {
 // Graham teeth: a straight front face leaning forward, so only the tip
 // touches a locking face, and a curved back that leaves room for the
 // pallets. The wheel turns clockwise from the front.
-function tooth(k) = let(f = 90 + k * pitch_a) concat(
+function tooth(k) = let (f = 90 + k * pitch_a) concat(
   [for (j = [1:5]) polar(Rr, f - pitch_a + d2 + j * (pitch_a + d1 - d2) / 6)],
   [polar(Rr, f + d1), polar(R, f), polar(R, f + tau)],
-  [for (j = [1:8]) let(s = j / 8) polar(R - h * s, f + tau + d1 * s + (d2 - d1 - tau) * pow(s, 1.6))]
+  [for (j = [1:8]) let (s = j / 8) polar(R - h * s, f + tau + d1 * s + (d2 - d1 - tau) * pow(s, 1.6))]
 );
 
 module escape_wheel() {
@@ -324,8 +324,8 @@ function impulse(u) = max(0, w * u - 0.05);
 cycle = floor((swing_phase + 90) / 360);
 psi = swing_phase - 360 * cycle;
 theta = theta_x + pitch_a * cycle + (psi <= 90
-  ? (alpha < -c ? 0 : alpha < lift - c ? impulse((alpha + c) / lift) : pitch_a / 2)
-  : (alpha > c ? pitch_a / 2 : alpha > c - lift ? pitch_a / 2 + impulse((c - alpha) / lift) : pitch_a));
+    ? (alpha < -c ? 0 : alpha < lift - c ? impulse((alpha + c) / lift) : pitch_a / 2)
+    : (alpha > c ? pitch_a / 2 : alpha > c - lift ? pitch_a / 2 + impulse((c - alpha) / lift) : pitch_a));
 // A part in the plane of the plates, its origin at p (x, height above the
 // base top) and its back face at depth d; world y points to the back
 function at_front(p, d) = [p[0], -d, p[1] + 2 * t];
@@ -368,9 +368,9 @@ if (output == "all" || output == "pendulum") {
   // Either side of the rod, in its two layers
   part("Bob cheek", qty = 4, at = [for (k = [0:3]) at_front(bob_at, rod_d + floor(k / 2) * t)],
     rotate = [for (k = [0:3]) turned(alpha + 180 * (k % 2))]) intersection() {
-    circle(d = bob_d);
-    translate([7.3, -bob_d / 2]) rect([bob_d, bob_d]);
-  }
+      circle(d = bob_d);
+      translate([7.3, -bob_d / 2]) rect([bob_d, bob_d]);
+    }
 }
 if (output == "all" || output == "drive") {
   part("Click disc", at = at_front([0, zW], click_d), rotate = turned(-theta)) ring(64, 4.1);

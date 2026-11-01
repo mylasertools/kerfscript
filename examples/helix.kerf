@@ -150,8 +150,8 @@ module screw_plate() {
     union() {
       circle(r = core);
       offset(r = 2) offset(delta = -2) polygon(concat(
-        [for (i = [0:12]) let(a = -g / 2 + g * i / 12) [tip * cos(a), tip * sin(a)]],
-        [for (i = [12:-1:0]) let(a = -g / 2 + g * i / 12) [9 * cos(a), 9 * sin(a)]]));
+        [for (i = [0:12]) let (a = -g / 2 + g * i / 12) [tip * cos(a), tip * sin(a)]],
+        [for (i = [12:-1:0]) let (a = -g / 2 + g * i / 12) [9 * cos(a), 9 * sin(a)]]));
     }
     star_hole();
   }
@@ -203,7 +203,7 @@ module end_plate() {
 // Holds the ends of the trough dowels. Its edge stays clear of the marble
 // over the trough and of the flight elsewhere.
 module exit_rib() {
-  function arc(r, a0, a1) = [for (i = [0:16]) let(a = lerp(a0, a1, i / 16)) [-r * sin(a), -r * cos(a)]];
+  function arc(r, a0, a1) = [for (i = [0:16]) let (a = lerp(a0, a1, i / 16)) [-r * sin(a), -r * cos(a)]];
   difference() {
     polygon(concat(arc(41, -15, 82), arc(29.5, 82, 30), arc(33.5, 30, -15)));
     for (a = rods) translate(rod_uv(a)) circle(d = 6.2, $fn = 32);
@@ -267,10 +267,10 @@ module board() {
     // End plates, both plies
     for (s0 = [-2 * t, s_upper]) for (v = [[-34, -20], [-6, 8]]) slot_in(ax(s0), tilt, 0, 2 * t, v[0], v[1]);
     // The ramp's tab passes the board at 20 degrees
-    let(dmin = ramp_d - ((board_y + t - 0.05 - t * sin(kappa)) / cos(kappa)) * sin(kappa), dmax = ramp_d - board_y * tan(kappa) + t / cos(kappa))
+    let (dmin = ramp_d - ((board_y + t - 0.05 - t * sin(kappa)) / cos(kappa)) * sin(kappa), dmax = ramp_d - board_y * tan(kappa) + t / cos(kappa))
       slot_in(ax(44), tilt, 0, 14, -dmax, -dmin);
     // Track floors and the end walls on them
-    for (i = [0:2]) let(g = legs[i], L = leg_len(g)) for (x = [12, L / 2 - 10, L - 32])
+    for (i = [0:2]) let (g = legs[i], L = leg_len(g)) for (x = [12, L / 2 - 10, L - 32])
       slot_in(leg_origin(g), -leg_theta(g), x, x + 20, 0, t);
     for (w = [[284 - t, top1(284), 13], [19, top2(19), top1(40) + 18 - top2(19)], [288 - t, top3(288), top2(270) + 18 - top3(288)]])
       slot_in([w[0], 0, w[1]], 0, 0, t, 3, w[2] - 3);
@@ -334,10 +334,10 @@ if (output == "all" || output == "frame") {
   part("Exit rib", at = ax(s_exit - t), rotate = euler(up_axis)) exit_rib();
 }
 if (output == "all" || output == "track") {
-  for (i = [0:2]) let(g = legs[i], L = leg_len(g)) {
+  for (i = [0:2]) let (g = legs[i], L = leg_len(g)) {
     part(str("Track floor ", i + 1), at = leg_origin(g), rotate = [0, leg_theta(g), 0]) leg_floor(L);
     // Rails stop at the end walls
-    let(x0 = i == 1 ? g[0] + t : g[0], x1 = i == 1 ? g[1] : g[1] - t)
+    let (x0 = i == 1 ? g[0] + t : g[0], x1 = i == 1 ? g[1] : g[1] - t)
       part(str("Track rail ", i + 1), at = [x0, track_y + t, leg_top(i, x0)], rotate = [90, leg_theta(g), 0])
         rect([(x1 - x0) / cos(sigma), 10]);
   }
@@ -346,7 +346,7 @@ if (output == "all" || output == "track") {
   part("End wall 3", at = [288 - t, 0, 0], rotate = [90, 0, 90]) end_wall(top3(288), top2(270) + 18);
   // The exit chute runs from in front of the trough to the board; the
   // marble rolls back and drops through the hole onto the first leg
-  let(L = (board_y + 18) / cos(beta), le = (board_y + t - 0.1 + 18) / cos(beta))
+  let (L = (board_y + 18) / cos(beta), le = (board_y + t - 0.1 + 18) / cos(beta))
     part("Exit floor", at = [0, -18 - t * sin(beta), ze(-18) - t * cos(beta)], rotate = [-beta, 0, 0])
       difference() {
         chute_floor(255, 287, L, le, 262, 280);
@@ -354,7 +354,7 @@ if (output == "all" || output == "track") {
       }
   part("Exit wall", qty = 2, at = [[255, 0, 0], [287 - t, 0, 0]], rotate = [90, 0, 90]) chute_wall(function(y) ze(y), -18, 10, 6);
   part("Exit front wall", at = [0, -15, 0], rotate = [90, 0, 0]) translate([255 + t, ze(-18)]) rect([32 - 2 * t, 10]);
-  let(L = (board_y - 31 - t * sin(beta)) / cos(beta), le = (board_y + t - 0.4 - 31) / cos(beta))
+  let (L = (board_y - 31 - t * sin(beta)) / cos(beta), le = (board_y + t - 0.4 - 31) / cos(beta))
     part("Intake floor", at = [0, 31 + t * sin(beta), zi(31) - t * cos(beta)], rotate = [beta, 0, 0])
       chute_floor(63, 89, L, le, 68, 84);
   part("Intake wall", at = [89 - t, 0, 0], rotate = [90, 0, 90]) chute_wall(function(y) zi(y), 31, 12);

@@ -79,7 +79,7 @@ function polar(r, a) = [r * cos(a), r * sin(a)];
 function pins(a) = [discs[0] + polar(left_pin, 90 - a * z0 / z1), discs[1] + polar(right_pin, 90 - a * z0 / z2)];
 // The pencil, where two circles of the arm length round the pins cross,
 // on the paper side
-function pen(a) = let(p = pins(a), v = p[1] - p[0], d = norm(v), h = sqrt(L * L - d * d / 4))
+function pen(a) = let (p = pins(a), v = p[1] - p[0], d = norm(v), h = sqrt(L * L - d * d / 4))
   p[0] + v / 2 + [-v[1], v[0]] * h / d;
 // The drawing closes when the left disc has made z2 / gcd turns
 loops = z2 / gcd(z1, z2);
@@ -109,16 +109,16 @@ function gear_inv(a) = tan(a) * 180 / PI - a;
 function gear_polar(r, a) = [r * cos(a), r * sin(a)];
 // Half the angular width of a tooth at radius r
 function gear_half(z, m, r, backlash) =
-  let(rp = m * z / 2, rb = rp * cos(20), ar = acos(min(1, rb / r)))
+  let (rp = m * z / 2, rb = rp * cos(20), ar = acos(min(1, rb / r)))
   90 / z + gear_inv(20) - gear_inv(ar) - backlash / (4 * rp) * 180 / PI;
 function gear_outline(z, m, backlash, steps = 12) =
-  let(rp = m * z / 2, rb = rp * cos(20), lo = rp - 1.25 * m, hi = rp + m, start = max(lo, rb),
+  let (rp = m * z / 2, rb = rp * cos(20), lo = rp - 1.25 * m, hi = rp + m, start = max(lo, rb),
     hs = gear_half(z, m, start, backlash), ht = gear_half(z, m, hi, backlash))
   [for (k = [0:z - 1]) each concat(
     [gear_polar(lo, 360 * k / z - hs)],
-    [for (j = [(start > lo ? 0 : 1):steps]) let(r = start + (hi - start) * j / steps) gear_polar(r, 360 * k / z - gear_half(z, m, r, backlash))],
+    [for (j = [(start > lo ? 0 : 1):steps]) let (r = start + (hi - start) * j / steps) gear_polar(r, 360 * k / z - gear_half(z, m, r, backlash))],
     [for (j = [1:4]) gear_polar(hi, 360 * k / z - ht + 2 * ht * j / 4)],
-    [for (j = [steps - 1:-1:0]) let(r = start + (hi - start) * j / steps) gear_polar(r, 360 * k / z + gear_half(z, m, r, backlash))],
+    [for (j = [steps - 1:-1:0]) let (r = start + (hi - start) * j / steps) gear_polar(r, 360 * k / z + gear_half(z, m, r, backlash))],
     [if (start > lo) gear_polar(lo, 360 * k / z + hs)],
     [for (j = [1:5]) gear_polar(lo, 360 * k / z + hs + (360 / z - 2 * hs) * j / 6)]
   )];
@@ -129,7 +129,7 @@ module externalgear(z) {
 // Timing, with the crank at 0: the drive gear has a tooth on +X. Seen along
 // the line between the axles, a tooth on one side of the drive gear faces a
 // space on the disc, so each disc's teeth are turned by rho to match.
-function rho(c, z) = let(a = atan2(c[1] - drive[1], c[0] - drive[0]), f = a * z0 / 360 - floor(a * z0 / 360))
+function rho(c, z) = let (a = atan2(c[1] - drive[1], c[0] - drive[0]), f = a * z0 / 360 - floor(a * z0 / 360))
   a + 180 - (0.5 - f) * 360 / z;
 
 // n scored tally marks
@@ -221,7 +221,7 @@ pencil = pen(a);
 zg = 4 * t;
 zn = 6 * t + 3.2;
 arm_z = [zn + t, zn + 2 * t];
-function heading(p) = let(v = pencil - p) [0, 0, atan2(v[1], v[0])];
+function heading(p) = let (v = pencil - p) [0, 0, atan2(v[1], v[0])];
 function at(p, z) = concat(p, [z]);
 
 if (output == "all" || output == "base") {

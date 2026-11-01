@@ -57,7 +57,7 @@ module cross(i) {
   if (i <= 3) translate([0, 43]) ellipse(i == 2 ? [18, 14] : [16, 13]);
   else soft() both() path("M0 18 L6 18 C7 12 7 6 7 3 L6 0 L17 0 L16 3 C16 12 17 20 17 30 C17 40 10 47 0 47 Z");
 }
-module flat(i) {}
+module flat(i) { }
 
 // The engraved eye and a scored mouth
 module eyes(i) if (i == 0) {

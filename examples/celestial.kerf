@@ -64,17 +64,17 @@ function gear_inv(a) = tan(a) * 180 / PI - a;
 function gear_polar(r, a) = [r * cos(a), r * sin(a)];
 // Half the angular width of a tooth (or of a ring space) at radius r
 function gear_half(z, m, r, backlash, internal = false) =
-  let(rp = m * z / 2, rb = rp * cos(20), ar = acos(min(1, rb / r)))
+  let (rp = m * z / 2, rb = rp * cos(20), ar = acos(min(1, rb / r)))
   90 / z + gear_inv(20) - gear_inv(ar) + (internal ? 1 : -1) * backlash / (4 * rp) * 180 / PI;
 function gear_outline(z, m, backlash, internal = false, steps = 24) =
-  let(rp = m * z / 2, rb = rp * cos(20), lo = rp - (internal ? 1 : 1.25) * m,
+  let (rp = m * z / 2, rb = rp * cos(20), lo = rp - (internal ? 1 : 1.25) * m,
     hi = rp + (internal ? 1.25 : 1) * m, start = max(lo, rb),
     hs = gear_half(z, m, start, backlash, internal), ht = gear_half(z, m, hi, backlash, internal))
   [for (k = [0:z - 1]) each concat(
     [gear_polar(lo, 360 * k / z - hs)],
-    [for (j = [(start > lo ? 0 : 1):steps]) let(r = start + (hi - start) * j / steps) gear_polar(r, 360 * k / z - gear_half(z, m, r, backlash, internal))],
+    [for (j = [(start > lo ? 0 : 1):steps]) let (r = start + (hi - start) * j / steps) gear_polar(r, 360 * k / z - gear_half(z, m, r, backlash, internal))],
     [for (j = [1:8]) gear_polar(hi, 360 * k / z - ht + 2 * ht * j / 8)],
-    [for (j = [steps - 1:-1:0]) let(r = start + (hi - start) * j / steps) gear_polar(r, 360 * k / z + gear_half(z, m, r, backlash, internal))],
+    [for (j = [steps - 1:-1:0]) let (r = start + (hi - start) * j / steps) gear_polar(r, 360 * k / z + gear_half(z, m, r, backlash, internal))],
     [if (start > lo) gear_polar(lo, 360 * k / z + hs)],
     [for (j = [1:7]) gear_polar(lo, 360 * k / z + hs + (360 / z - 2 * hs) * j / 8)]
   )];
@@ -192,7 +192,7 @@ if (output == "all" || output == "frame") {
 if (output == "all" || output == "markers") {
   // Three layers on each orbit gear, 12 mm in from its pitch circle
   part("Planet", qty = 9, at = [for (i = [0:2], k = [0:2]) concat(polar(teeth[i] * m / 2 - 12, orbit_turn(i)), [level_z(i) + 2 * t + k * t])],
-      rotate = [for (i = [0:2], k = [0:2]) [0, 0, orbit_turn(i)]])
+    rotate = [for (i = [0:2], k = [0:2]) [0, 0, orbit_turn(i)]])
     marker();
   part("Sun", qty = 2, at = layers(0, 85, 2)) sun();
 }

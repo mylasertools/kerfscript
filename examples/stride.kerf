@@ -48,10 +48,10 @@ assert(contains(["all", "links", "frame", "feet", "accessories", "coupon"], outp
 
 function polar(rad, a) = [rad * cos(a), rad * sin(a)];
 // Where circles round p (radius rad) and q (radius rad2) cross; sgn picks the side
-function meet(p, rad, q, rad2, sgn) = let(v = q - p, d = norm(v), a = (rad * rad - rad2 * rad2 + d * d) / (2 * d), h = sqrt(max(0, rad * rad - a * a)))
+function meet(p, rad, q, rad2, sgn) = let (v = q - p, d = norm(v), a = (rad * rad - rad2 * rad2 + d * d) / (2 * d), h = sqrt(max(0, rad * rad - a * a)))
   p + v * a / d + [-v[1], v[0]] * h / d * sgn;
 // Joints O, Y, Z, X, W, V, U, T at crank angle theta: Jansen's lengths, scaled
-function joints(theta) = let(
+function joints(theta) = let (
   O = [0, 0],
   Y = [-38, -7.8],
   Z = polar(crank_radius, theta),
@@ -162,12 +162,12 @@ spacers = [
 P = joints(crank_angle);
 function depth(layer) = layer == "" ? 0 : 10 + search(layer, "CARDBEF") * (t + 5) + t;
 function front(j, d) = [origin.x + P[j].x, -d, origin.y + P[j].y];
-function heading(i, j) = let(v = P[j] - P[i]) atan2(v[1], v[0]);
+function heading(i, j) = let (v = P[j] - P[i]) atan2(v[1], v[0]);
 function face(a) = [90, -a, 0];
 function link_at(layer, i) = front(i, depth(layer) - t);
 // The rocker or foot, turned about joint i as it swings from J to P
-function swing(i, j) = let(v = J[j] - J[i]) heading(i, j) - atan2(v[1], v[0]);
-function pivoted(layer, i, j) = let(b = swing(i, j), w = [-J[i].x * cos(b) + J[i].y * sin(b), -J[i].x * sin(b) - J[i].y * cos(b)])
+function swing(i, j) = let (v = J[j] - J[i]) heading(i, j) - atan2(v[1], v[0]);
+function pivoted(layer, i, j) = let (b = swing(i, j), w = [-J[i].x * cos(b) + J[i].y * sin(b), -J[i].x * sin(b) - J[i].y * cos(b)])
   link_at(layer, i) + [w.x, 0, w.y];
 // Behind the board: the hex socket, two rear cranks and the handle grip
 turn = crank_angle - 70;
@@ -189,7 +189,7 @@ if (output == "all" || output == "feet")
   part("Stand foot", qty = 4, at = [for (x = [25, 155], k = [0:1]) [x * s - t + k * t, 1.5 * t - 65, 0]], rotate = [90, 0, 90]) stand_foot();
 if (output == "all" || output == "accessories") {
   // As many rings as fit each gap; make up the rest with metal shims
-  for (sp = spacers) let(n = floor(sp[1] / t))
+  for (sp = spacers) let (n = floor(sp[1] / t))
     part(str("Spacer ", sp[0]), qty = n, at = [for (k = [0:n - 1]) front(sp[2], depth(sp[3]) + k * t)], rotate = face(0)) disc(12, 6.4);
   part("Handle grip", qty = 6, at = [for (k = [1:6]) on_axle(behind - 3 * t - k * t) + [40 * cos(turn), 0, 40 * sin(turn)]], rotate = face(turn))
     disc(18, hole);

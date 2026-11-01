@@ -92,7 +92,7 @@ module capsule(a, b, d) {
 }
 // An arc slot, as a chain of straight capsules about 2 degrees long
 module arc_slot(rad, a, b, d) {
-  for (j = [0:ceil((b - a) / 2) - 1]) let(c = ceil((b - a) / 2))
+  for (j = [0:ceil((b - a) / 2) - 1]) let (c = ceil((b - a) / 2))
     capsule(polar(rad, a + (b - a) * j / c), polar(rad, a + (b - a) * (j + 1) / c), d);
 }
 
@@ -198,7 +198,7 @@ if (output == "all" || output == "frame") {
 if (output == "all" || output == "motion") {
   part("Drive ring", at = [0, 0, 0.2], rotate = [0, 0, turn]) drive_ring();
   part("Coupler", qty = n, at = [for (k = [0:n - 1]) concat(ring_pin(k), [2 * t + 1])],
-      rotate = [for (k = [0:n - 1]) let(v = polar(reach, guide(k)) - ring_pin(k)) [0, 0, atan2(v[1], v[0])]])
+    rotate = [for (k = [0:n - 1]) let (v = polar(reach, guide(k)) - ring_pin(k)) [0, 0, atan2(v[1], v[0])]])
     coupler();
   part("Petal", qty = n, at = [for (k = [0:n - 1]) concat(polar(reach, guide(k)), [3 * t + 1.5])], rotate = [for (k = [0:n - 1]) [0, 0, guide(k)]])
     petal();

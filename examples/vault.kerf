@@ -215,7 +215,7 @@ if (output == "all" || output == "enclosure") {
   // Pairs of strips in the four corners, against the inner walls
   part("Corner cleat", qty = 8, at = cleats, rotate = upright) rect([12, H - 8 * t]);
   part("Floor cleat", qty = 4, at = [[t + 12, 40, t], [W - t, 40, t], [80, 2 * t, t], [80, D - 2 * t - 12, t]],
-      rotate = [along, along, [0, 0, 0], [0, 0, 0]])
+    rotate = [along, along, [0, 0, 0], [0, 0, 0]])
     rect([100, 12]);
   part("Lid ledge", qty = 4, at = [for (x = [t + 12, W - t], k = [0:1]) [x, 50, H - 2 * t + k * t]], rotate = along) rect([100, 12]);
 }

@@ -72,8 +72,8 @@ module capsule(a, b, r) {
 // Part of an annulus between radii r1 and r2, from angle a to angle b
 module sector(a, b, r1, r2) {
   polygon(concat(
-    [for (i = [0:40]) let(q = lerp(a, b, i / 40)) [r2 * cos(q), r2 * sin(q)]],
-    [for (i = [40:-1:0]) let(q = lerp(a, b, i / 40)) [r1 * cos(q), r1 * sin(q)]]
+    [for (i = [0:40]) let (q = lerp(a, b, i / 40)) [r2 * cos(q), r2 * sin(q)]],
+    [for (i = [40:-1:0]) let (q = lerp(a, b, i / 40)) [r1 * cos(q), r1 * sin(q)]]
   ));
 }
 
@@ -231,8 +231,8 @@ if (output == "all" || output == "frame") {
   part("Loading gate", at = depth(cheek_gap / 2 + t, 0, -(R + 2 - D / 2)), rotate = facing()) gate();
   // Two behind the stand and two in front, at x = -50 and 50
   part("Gusset", qty = 4, at = [[-50 + t / 2, -cheek_gap / 2 - t, t], [50 + t / 2, -cheek_gap / 2 - t, t],
-      [-50 - t / 2, cheek_gap / 2 + t, t], [50 - t / 2, cheek_gap / 2 + t, t]],
-      rotate = [[90, 0, 270], [90, 0, 270], across, across])
+    [-50 - t / 2, cheek_gap / 2 + t, t], [50 - t / 2, cheek_gap / 2 + t, t]],
+    rotate = [[90, 0, 270], [90, 0, 270], across, across])
     gusset();
 }
 if (output == "all" || output == "chute") {

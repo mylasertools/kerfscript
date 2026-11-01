@@ -188,7 +188,7 @@ module fit_test() {
 a = driver_angle;
 turns = floor((a + 180) / 360);
 local = a - 360 * turns;
-wheel_turn = (abs(local) <= 90 - alpha ? let(p = polar(r, local)) atan2(p[1], p[0] - c) % 360 - 180 : local > 0 ? -alpha : alpha)
+wheel_turn = (abs(local) <= 90 - alpha ? let (p = polar(r, local)) atan2(p[1], p[0] - c) % 360 - 180 : local > 0 ? -alpha : alpha)
   - 360 / n * turns;
 function stack(x, z, k) = [for (i = [0:k - 1]) [x, 0, z + i * t]];
 feet = [for (x = [-r - 8, c + rim + 8], y = [-rim - 8, rim + 8]) [x, y]];

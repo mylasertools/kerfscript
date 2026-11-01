@@ -74,7 +74,7 @@ copy_centre = anchor + ([zone[1], zone[2]] - anchor) * ratio;
 // from X to the stylus) and the link (n) are two links from the anchor to
 // the stylus; their angles give the whole parallelogram.
 stylus = [zone[1], zone[2]] + ([stylus_x, stylus_y] - [0.5, 0.5]) * zone[3];
-ik = let(p = a / ratio, d = stylus - anchor, r = norm(d), phi = acos((r * r - p * p - n * n) / (2 * p * n)),
+ik = let (p = a / ratio, d = stylus - anchor, r = norm(d), phi = acos((r * r - p * p - n * n) / (2 * p * n)),
   ua = atan2(d[1], d[0]) - atan2(-n * sin(phi), p + n * cos(phi))) [ua, ua - phi];
 u = [cos(ik[0]), sin(ik[0])];
 v = [cos(ik[1]), sin(ik[1])];
@@ -124,7 +124,7 @@ module link() arm(0, n, [0, n], [], "LINK", n / 2);
 
 // L marks just outside the corners of a square of side s centred at c
 module corners(c, s) {
-  score() for (i = [-1, 1], j = [-1, 1]) let(p = c + [i, j] * (s / 2 + 2)) {
+  score() for (i = [-1, 1], j = [-1, 1]) let (p = c + [i, j] * (s / 2 + 2)) {
     line(p, p + [-8 * i, 0]);
     line(p, p + [0, -8 * j]);
   }

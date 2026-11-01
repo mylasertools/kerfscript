@@ -90,7 +90,7 @@ string = above_up + 2 * t + below;
 // right down and the weight hangs as low as that lets it; each other head
 // tips until its string is just long enough, or stays up on a slack string.
 function s_of(a) = norm(rotp(A, a) - H);
-function bisect(s, lo, hi, k = 0) = let(mid = (lo + hi) / 2)
+function bisect(s, lo, hi, k = 0) = let (mid = (lo + hi) / 2)
   k == 40 ? mid : s_of(mid) > s ? bisect(s, lo, mid, k + 1) : bisect(s, mid, hi, k + 1);
 function head_for(s) = s >= above_up ? 0 : bisect(s, -tip, 0);
 longest = below + above_up - above_down;
@@ -102,10 +102,10 @@ plate_top = -2 * t - hang;
 // A point in hen i's frame (x forward, y to her left, z up) on the paddle.
 // Her layers stand up through P's plane; a head turned h about P moves its
 // origin to rotp([0, 0], h).
-function on_hen(i, q) = let(a = hen_angle(i) + 180)
+function on_hen(i, q) = let (a = hen_angle(i) + 180)
   concat(polar(ring, hen_angle(i)), [0]) + [q.x * cos(a) - q.y * sin(a), q.x * sin(a) + q.y * cos(a), q.z];
-function turned(h, y) = let(o = rotp([0, 0], h)) [o.x, y, o.y];
-function mirrored(h, y) = let(o = rotp([0, 0], h)) [-o.x, y, o.y];
+function turned(h, y) = let (o = rotp([0, 0], h)) [o.x, y, o.y];
+function mirrored(h, y) = let (o = rotp([0, 0], h)) [-o.x, y, o.y];
 function facing(i, h = 0) = [90, -h, hen_angle(i) + 180];
 function left_facing(i, h = 0) = [90, -h, hen_angle(i)];
 
@@ -204,7 +204,7 @@ module paddle(top) {
       g = rands(0, 1, 18, i + 3);
       for (k = [0:5]) translate(polar(ring - peck_x, a) + polar(1 + 6 * g[3 * k], 360 * g[3 * k + 1])) rotate(180 * g[3 * k + 2]) ellipse([1.5, 0.8]);
     }
-    engrave() let(g = rands(0, 1, 30, 1)) for (k = [0:9]) translate(polar(3 + (ring - peck_x - 10) * g[3 * k], 360 * g[3 * k + 1])) rotate(180 * g[3 * k + 2]) ellipse([1.5, 0.8]);
+    engrave() let (g = rands(0, 1, 30, 1)) for (k = [0:9]) translate(polar(3 + (ring - peck_x - 10) * g[3 * k], 360 * g[3 * k + 1])) rotate(180 * g[3 * k + 2]) ellipse([1.5, 0.8]);
   }
 }
 
@@ -228,10 +228,10 @@ if (output == "all" || output == "hens") {
   part("Head", qty = n, at = [for (i = hen) on_hen(i, turned(heads[i], t / 2))], rotate = [for (i = hen) facing(i, heads[i])])
     head();
   part("Right tail", qty = n, at = [for (i = hen) on_hen(i, turned(heads[i], -t / 2))],
-      rotate = [for (i = hen) facing(i, heads[i])])
+    rotate = [for (i = hen) facing(i, heads[i])])
     tail_plate();
   part("Left tail", qty = n, at = [for (i = hen) on_hen(i, mirrored(-heads[i], t / 2))],
-      rotate = [for (i = hen) left_facing(i, -heads[i])])
+    rotate = [for (i = hen) left_facing(i, -heads[i])])
     mirror([1, 0]) tail_plate();
 }
 if (output == "all" || output == "weight") {

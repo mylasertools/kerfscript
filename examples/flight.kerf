@@ -51,7 +51,7 @@ assert(crank_angle >= 0 && crank_angle <= 360, "Crank angle: 0 to 360 degrees");
 assert(contains(["all", "frame", "wings", "linkage", "spacers", "coupon"], output), "Unknown output");
 
 // Right wing angle, 0 = level, with the slider pin at height y
-function wing_angle(y) = let(d = norm([roots[1][0], roots[1][1] - y]))
+function wing_angle(y) = let (d = norm([roots[1][0], roots[1][1] - y]))
   atan2(roots[1][1] - y, roots[1][0]) - acos((arm * arm + d * d - link * link) / (2 * arm * d));
 // The slider pin is highest and lowest with the crank pin straight up or down
 low = wing_angle(axle[1] + crank_radius + link);
@@ -165,7 +165,7 @@ module disc(d = 16, hole = 4.4) {
 // starts at 240 degrees, where the wings are near the top of their beat; the
 // slider rides straight up and down between the guides.
 function polar(r, a) = [r * cos(a), r * sin(a)];
-function meet(p, r1, q, r2, sgn) = let(v = q - p, d = norm(v), a = (r1 * r1 - r2 * r2 + d * d) / (2 * d), h = sqrt(max(0, r1 * r1 - a * a)))
+function meet(p, r1, q, r2, sgn) = let (v = q - p, d = norm(v), a = (r1 * r1 - r2 * r2 + d * d) / (2 * d), h = sqrt(max(0, r1 * r1 - a * a)))
   p + v * a / d + [-v[1], v[0]] * h / d * sgn;
 crank = 240 + crank_angle;
 pin = axle + polar(crank_radius, crank);

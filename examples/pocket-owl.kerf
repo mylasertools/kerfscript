@@ -66,7 +66,7 @@ module cross(i) scale(ko) {
   }
   if (i == 5) soft() both() path("M0 14 L4 14 C5 10 6 4 7 0 L15 0 C14 6 14 12 13 18 C12 26 8 34 0 34 Z");
 }
-module flat(i) {}
+module flat(i) { }
 
 // Engraved eyes on the face
 module eyes(i) if (i == 2) scale(ko) both() translate([11, 80]) {

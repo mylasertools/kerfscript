@@ -79,10 +79,10 @@ assert(contains(["all", "frame", "linkage", "legs", "accessories", "coupon"], ou
 
 function polar(rad, a) = [rad * cos(a), rad * sin(a)];
 // Where circles round p (radius rad) and q (radius rad2) cross; sgn picks the side
-function meet(p, rad, q, rad2, sgn) = let(v = q - p, d = norm(v), a = (rad * rad - rad2 * rad2 + d * d) / (2 * d), h = sqrt(max(0, rad * rad - a * a)))
+function meet(p, rad, q, rad2, sgn) = let (v = q - p, d = norm(v), a = (rad * rad - rad2 * rad2 + d * d) / (2 * d), h = sqrt(max(0, rad * rad - a * a)))
   p + v * a / d + [-v[1], v[0]] * h / d * sgn;
 // Crank pin B, rocker joint C and foot point P at crank angle a, relative to A
-function joints(a) = let(B = polar(r, a), C = meet(B, L, D - A, L, 1)) [B, C, 2 * C - B];
+function joints(a) = let (B = polar(r, a), C = meet(B, L, D - A, L, 1)) [B, C, 2 * C - B];
 path = [for (a = [0:2:358]) joints(a)[2]];
 low = min([for (p = path) p[1]]);
 flat = [for (p = path) if (p[1] - low < 0.2) p[0]];
@@ -102,7 +102,7 @@ layer = [["collar", 0.5], ["rocker", 4], ["ring D", 0.5], ["ring C", 7.5], ["ecc
 function s_of(name) = layer[search(name, [for (l = layer) l[0]])][1];
 // World y of the face a part from s to s + t hangs from (its largest y), on
 // lambda k's side
-function face(k, s) = let(l = legs[k], near = l[1] ? out_face + s : in_face - s, far = l[1] ? near + t : near - t)
+function face(k, s) = let (l = legs[k], near = l[1] ? out_face + s : in_face - s, far = l[1] ? near + t : near - t)
   l[0] > 0 ? max(near, far) : -min(near, far);
 function turn(k) = crank_angle + legs[k][2];
 function world(k) = [for (p = joints(turn(k))) A + p];
@@ -252,11 +252,11 @@ if (output == "all" || output == "frame") {
 if (output == "all" || output == "linkage") {
   // Two plies for each lambda
   part("Eccentric", qty = 8, at = [for (k = [0:3], i = [0:1]) [0, face(k, s_of("eccentric") + i * t), H]],
-       rotate = [for (k = [0:3], i = [0:1]) upright(turn(k))]) eccentric();
+    rotate = [for (k = [0:3], i = [0:1]) upright(turn(k))]) eccentric();
   part("Coupler", qty = 8, at = [for (k = [0:3], i = [0:1]) at_side(world(k)[0], face(k, s_of("eccentric") + i * t))],
-       rotate = [for (k = [0:3], i = [0:1]) let(w = world(k)) upright(heading(w[0], w[2]))]) coupler();
+    rotate = [for (k = [0:3], i = [0:1]) let (w = world(k)) upright(heading(w[0], w[2]))]) coupler();
   part("Rocker", qty = 4, at = [for (k = [0:3]) at_side(D, face(k, s_of("rocker")))],
-       rotate = [for (k = [0:3]) upright(heading(D, world(k)[1]))]) rocker();
+    rotate = [for (k = [0:3]) upright(heading(D, world(k)[1]))]) rocker();
 }
 if (output == "all" || output == "legs") part("Leg", qty = 8, at = [for (k = [0:3], i = [0:1]) at_side(world(k)[2], face(k, s_of("leg") + i * t))], rotate = upright()) leg();
 if (output == "all" || output == "accessories") {
@@ -266,7 +266,7 @@ if (output == "all" || output == "accessories") {
   }
   // At each D, C and P, between the layers
   part("Spacer ring", qty = 12, at = [for (k = [0:3], j = [0:2]) at_side([D, world(k)[1], world(k)[2]][j], face(k, s_of(["ring D", "ring C", "ring P"][j])))],
-       rotate = upright()) disc(12, bush);
+    rotate = upright()) disc(12, bush);
   // On the right end of the shaft, outside the right leg
   part("Handle", qty = 2, at = [for (i = [0:1]) [0, face(0, s_of("handle") + i * t), H]], rotate = upright(handle_turn)) handle();
   part("Handle grip", qty = 5, at = [for (i = [0:4]) at_side(grip, face(0, s_of("handle") + 2 * t + 0.5 + i * t))], rotate = upright()) disc(18, bush);

@@ -92,16 +92,16 @@ function polar(r, a) = [r * cos(a), r * sin(a)];
 function wrap(a) = ((a % 360) + 360) % 360;
 // A smooth bump of height L: rise over p[0] degrees, stay up p[1], fall
 // over p[2]; d is its slope in mm per radian
-function bump(a, L, p) = let(x = wrap(a))
+function bump(a, L, p) = let (x = wrap(a))
   x < p[0] ? L / 2 * (1 - cos(180 * x / p[0])) : x < p[0] + p[1] ? L : x < p[0] + p[1] + p[2] ? L / 2 * (1 + cos(180 * (x - p[0] - p[1]) / p[2])) : 0;
-function d_bump(a, L, p) = let(x = wrap(a))
+function d_bump(a, L, p) = let (x = wrap(a))
   x < p[0] ? L / 2 * 180 / p[0] * sin(180 * x / p[0]) : x < p[0] + p[1] ? 0 : x < p[0] + p[1] + p[2] ? -L / 2 * 180 / p[2] * sin(180 * (x - p[0] - p[1]) / p[2]) : 0;
 // Pushrod lift for cam k (0 neck, 1 wings, 2 tail) at crank angle a
 function lift(k, a) = k == 0 ? neck_lift - bump(a, neck_lift, dip) : k == 1 ? bump(a - flap_at, wing_lift, flap) : bump(a, tail_lift, dip);
 function d_lift(k, a) = k == 0 ? -d_bump(a, neck_lift, dip) : k == 1 ? d_bump(a - flap_at, wing_lift, flap) : d_bump(a, tail_lift, dip);
 // The cam is the envelope of the flat follower's face: at crank angle a the
 // face is rb + lift above the shaft, and it touches the cam d_lift to one side
-function cam_point(k, q) = let(a = 90 - q, h = rb + lift(k, a), dh = -d_lift(k, a))
+function cam_point(k, q) = let (a = 90 - q, h = rb + lift(k, a), dh = -d_lift(k, a))
   h * [cos(q), sin(q)] + dh * [-sin(q), cos(q)];
 
 module label(s, p, size = 4, a = 0) {
@@ -321,14 +321,14 @@ neck_turn = asin((s_n - neck_lift / 2) / rn) - asin(neck_lift / 2 / rn);
 wing_turn = -asin((s_w - wing_lift / 2) / rw) - asin(wing_lift / 2 / rw);
 tail_turn = -asin((s_t - tail_lift / 2) / rt) - asin(tail_lift / 2 / rt);
 cam_x = [x0 + un, x0 + uw, x0 + ut];
-ring_x = let(starts = [W0 + 2 * t, cam_x[2] + 1.5 * t, cam_x[1] + 1.5 * t, cam_x[0] + 1.5 * t])
+ring_x = let (starts = [W0 + 2 * t, cam_x[2] + 1.5 * t, cam_x[1] + 1.5 * t, cam_x[0] + 1.5 * t])
   [for (g = [0:3]) for (k = [0:floor((gaps[g] - 0.4) / t) - 1]) starts[g] + k * t];
 // Duck layers are drawn side on: facing front, back face at y, or mirrored
 // and facing back, front face at y. A piece turned b about its pivot q
 // moves its origin to q - rotate(b) q.
 function swung(q, b) = q - [q.x * cos(b) - q.y * sin(b), q.x * sin(b) + q.y * cos(b)];
-function front_at(y, q = [0, 0], b = 0) = let(o = swung(q, b)) [x0 + o.x, y, z_d + o.y];
-function back_at(y, q = [0, 0], b = 0) = let(o = swung([-q.x, q.y], -b)) [x0 - o.x, y, z_d + o.y];
+function front_at(y, q = [0, 0], b = 0) = let (o = swung(q, b)) [x0 + o.x, y, z_d + o.y];
+function back_at(y, q = [0, 0], b = 0) = let (o = swung([-q.x, q.y], -b)) [x0 - o.x, y, z_d + o.y];
 function front_turn(b = 0) = [90, -b, 0];
 function back_turn(b = 0) = [90, b, 180];
 

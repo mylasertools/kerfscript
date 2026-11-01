@@ -82,7 +82,7 @@ assert(output != "layer4" || layers >= 5, "Layer 4 needs five layers");
 
 // A twist that fades with distance from the focus, two sine shears, then a
 // main wave crossed by a weaker one and a slight left to right slope
-function field(x, y) = let(
+function field(x, y) = let (
   dx = x - fx,
   dy = y - focus_y,
   r = sqrt(dx * dx + dy * dy),
@@ -101,15 +101,15 @@ V = [for (j = [0:N]) [for (i = [0:N]) field(-R + i * h, -R + j * h)]];
 GP = [for (j = [0:N], i = [0:N]) [-R + i * h, -R + j * h]];
 function at(i, j) = j * (N + 1) + i;
 // Grid squares that reach into the circle the openings are clipped to
-function near(i, j) = let(x = -R + (i + 0.5) * h, y = -R + (j + 0.5) * h) sqrt(x * x + y * y) < R - 16 + h;
+function near(i, j) = let (x = -R + (i + 0.5) * h, y = -R + (j + 0.5) * h) sqrt(x * x + y * y) < R - 16 + h;
 
 // Where the field crosses the level between grid points p and q
-function cut(p, q, fp, fq, v) = let(s = (v - fp) / (fq - fp)) [p[0] + (q[0] - p[0]) * s, p[1] + (q[1] - p[1]) * s];
+function cut(p, q, fp, fq, v) = let (s = (v - fp) / (fq - fp)) [p[0] + (q[0] - p[0]) * s, p[1] + (q[1] - p[1]) * s];
 // The part above the level of a triangle p, q, r whose corner p is the odd
 // one out, always as four points
-function corner(p, q, r, fp, fq, fr, v) = let(m = cut(p, q, fp, fq, v), n = cut(r, p, fr, fp, v))
+function corner(p, q, r, fp, fq, fr, v) = let (m = cut(p, q, fp, fq, v), n = cut(r, p, fr, fp, v))
   fp >= v ? [p, m, n, n] : [q, r, n, m];
-function piece(a, b, c, fa, fb, fc, v) = let(A = fa >= v, B = fb >= v, C = fc >= v)
+function piece(a, b, c, fa, fb, fc, v) = let (A = fa >= v, B = fb >= v, C = fc >= v)
   A == B ? corner(c, a, b, fc, fa, fb, v)
   : A == C ? corner(b, c, a, fb, fc, fa, v)
   : corner(a, b, c, fa, fb, fc, v);
@@ -120,10 +120,10 @@ function piece(a, b, c, fa, fb, fc, v) = let(A = fa >= v, B = fb >= v, C = fc >=
 // overlapping, so even-odd polygons of them are their union.
 module raw_field(v) {
   F = [for (j = [0:N - 1], i = [0:N - 1], k = [0:1])
-    let(bi = i + 1, bj = j + k, ci = i + 1 - k, cj = j + 1)
+    let (bi = i + 1, bj = j + k, ci = i + 1 - k, cj = j + 1)
       if (near(i, j) && V[j][i] >= v && V[bj][bi] >= v && V[cj][ci] >= v) [at(i, j), at(bi, bj), at(ci, cj)]];
   X = [for (j = [0:N - 1], i = [0:N - 1], k = [0:1])
-    let(bi = i + 1, bj = j + k, ci = i + 1 - k, cj = j + 1, fa = V[j][i], fb = V[bj][bi], fc = V[cj][ci],
+    let (bi = i + 1, bj = j + k, ci = i + 1 - k, cj = j + 1, fa = V[j][i], fb = V[bj][bi], fc = V[cj][ci],
       n = (fa >= v ? 1 : 0) + (fb >= v ? 1 : 0) + (fc >= v ? 1 : 0))
       if (near(i, j) && n > 0 && n < 3) piece(GP[at(i, j)], GP[at(bi, bj)], GP[at(ci, cj)], fa, fb, fc, v)];
   union() {

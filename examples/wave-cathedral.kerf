@@ -40,9 +40,9 @@ function crest(v) = s * (100 + wave * (58 * exp(-pow((v - 0.22) / 0.18, 2)) + 36
 // How far the crown leans sideways
 function drift(v) = s * wave * 29 * sin(360 * v - 32);
 // A point on rib i at angle a: every rib has the same feet, its own crown
-function arch(i, a, inner = false) = let(v = i / 16, r = (inner ? 88 : 112) * s, h = crest(v) - (inner ? 18 * s : 0), q = max(0, sin(a)))
+function arch(i, a, inner = false) = let (v = i / 16, r = (inner ? 88 : 112) * s, h = crest(v) - (inner ? 18 * s : 0), q = max(0, sin(a)))
   [r * cos(a) + drift(v) * q * q, h * pow(q, 0.86)];
-function trace(i, a) = let(v = i / 16, q = max(0, sin(a)))
+function trace(i, a) = let (v = i / 16, q = max(0, sin(a)))
   [100 * s * cos(a) + drift(v) * q * q, (crest(v) - 9 * s) * pow(q, 0.86)];
 
 module rib(i) {
@@ -83,7 +83,7 @@ module base() {
   if (score_detail) score() {
     translate([0, 7.5 * s]) text("W A V E  C A T H E D R A L", size = 3.4 * s, halign = "center", valign = "center");
     translate([0, length - 7 * s]) text("A VAULT MADE OF TIDES / XVII", size = 2.7 * s, halign = "center", valign = "center");
-    for (side = [-1, 1]) polyline([for (j = [0:100]) let(v = j / 100) [side * (54 + 5 * sin(360 * v)) * s, (20 + 280 * v) * s]]);
+    for (side = [-1, 1]) polyline([for (j = [0:100]) let (v = j / 100) [side * (54 + 5 * sin(360 * v)) * s, (20 + 280 * v) * s]]);
     for (i = [0:16], side = [-1, 1]) {
       translate([side * 119 * s, station(i)]) text(str(i + 1), size = 2.4 * s, halign = "center", valign = "center");
       line([side * 114 * s, station(i)], [side * 116 * s, station(i)]);

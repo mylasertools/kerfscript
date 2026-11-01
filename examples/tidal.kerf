@@ -159,7 +159,7 @@ if (output == "all" || output == "frame") {
   part("End wall", qty = 6, at = [for (x = side) [x, mid, 0]], rotate = across) end_wall();
   // The two guides, each two halves face to face
   part("Guide half", qty = 4, at = [for (z = guides, k = [0:1]) k == 0 ? [3 * t, mid - 45, z] : [3 * t, mid + 45, z + t]],
-      rotate = [for (z = guides, k = [0:1]) [180 * k, 0, 0]])
+    rotate = [for (z = guides, k = [0:1]) [180 * k, 0, 0]])
     guide_half();
   part("Journal", qty = 6, at = [for (x = side) on_shaft(x)], rotate = shaft_turn(a)) difference() {
     circle(d = 18);
@@ -172,30 +172,30 @@ if (output == "all" || output == "frame") {
 }
 if (output == "all" || output == "cams") for (i = [0:fins - 1])
   part(str("Cam ", i + 1), qty = 3, at = [for (k = [0:2]) on_shaft(station(i) - camT / 2 + k * t)], rotate = shaft_turn(i * phase + a)) {
-  cam(i);
-  mark(i + 1, [lift - 7, 12]);
-  score() translate([lift, 0]) outline() circle(r = 16);
-}
+    cam(i);
+    mark(i + 1, [lift - 7, 12]);
+    score() translate([lift, 0]) outline() circle(r = 16);
+  }
 if (output == "all" || output == "followers") for (i = [0:fins - 1])
   part(str("Fin ", i + 1), qty = 2, at = [for (k = [0:1]) [station(i) - t + k * t, mid, fin_z(i)]], rotate = across) {
-  follower();
-  mark(i + 1, [-8, 145]);
-  score() translate([0, 150]) outline() circle(d = 12);
-}
+    follower();
+    mark(i + 1, [-8, 145]);
+    score() translate([0, 150]) outline() circle(d = 12);
+  }
 if (output == "all" || output == "spacers")
   part("Spacer ring", qty = 16 + (fins - 1) * (pitch_layers - 3), at = [for (x = ring_x) on_shaft(x)], rotate = across) difference() {
-  circle(d = 14);
-  circle(d = 9.2);
-}
+    circle(d = 14);
+    circle(d = 9.2);
+  }
 if (output == "all" || output == "crank") {
   part("Crank", qty = 3, at = [for (k = [0:2]) on_shaft(-5 * t + k * t)], rotate = shaft_turn(crank_turn)) crank();
   // The grips turn on the handle bolt, 30 mm out on the crank
   part("Handle", qty = 6, at = [for (k = [1:6]) on_shaft(-5 * t - k * t) + [0, -30 * sin(crank_turn), 30 * cos(crank_turn)]],
-      rotate = shaft_turn(crank_turn))
+    rotate = shaft_turn(crank_turn))
     difference() {
-    circle(d = 18);
-    circle(d = 4.5);
-  }
+      circle(d = 18);
+      circle(d = 4.5);
+    }
 }
 // The fit test and the timing card lie on the table beside the model
 if (output == "all" || output == "coupon") part("Fit test", at = [overall + 20, 0, 0]) {

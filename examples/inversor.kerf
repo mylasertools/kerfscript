@@ -63,11 +63,11 @@ assert(contains(["all", "base", "links", "spacers", "coupon"], output), "Unknown
 
 function polar(r, a) = [r * cos(a), r * sin(a)];
 // Where circles round p (radius r1) and q (radius r2) cross; sgn picks the side
-function meet(p, r1, q, r2, sgn) = let(v = q - p, d = norm(v), a = (r1 * r1 - r2 * r2 + d * d) / (2 * d), h = sqrt(max(0, r1 * r1 - a * a)))
+function meet(p, r1, q, r2, sgn) = let (v = q - p, d = norm(v), a = (r1 * r1 - r2 * r2 + d * d) / (2 * d), h = sqrt(max(0, r1 * r1 - a * a)))
   p + v * a / d + [-v[1], v[0]] * h / d * sgn;
 // Joints A, B, D, P with the input link at angle phi, relative to O. P is A
 // reflected across BD, the far corner of the rhombus.
-function joints(phi) = let(
+function joints(phi) = let (
   A = [crank, 0] + polar(crank, phi),
   B = meet([0, 0], arm, A, s, 1),
   Dj = meet([0, 0], arm, A, s, -1))
@@ -134,7 +134,7 @@ pose = joints(max(-swing, min(swing, input_angle)));
 function joint(k) = k == "O" ? O : k == "Q" ? Q : O + pose[search(k, ["A", "B", "D", "P"])];
 function lift(k, h) = concat(joint(k), [2 * t + h]);
 // A link lies from joint a towards joint b
-function heading(a, b) = let(v = joint(b) - joint(a)) [0, 0, atan2(v[1], v[0])];
+function heading(a, b) = let (v = joint(b) - joint(a)) [0, 0, atan2(v[1], v[0])];
 corners = [[14, 14], [W - 14, 14], [14, D - 14], [W - 14, D - 14]];
 handle_h = 6 * t + 3.7;
 
@@ -155,7 +155,7 @@ if (output == "all" || output == "links") {
 if (output == "all" || output == "spacers") {
   part("Post ring", qty = post_rings, at = concat([for (h = [0:6]) lift("O", h * t)], [lift("Q", 0)])) ring(16, hole);
   part("Spacer ring", qty = spacer_rings, at = [lift("A", 2 * t), lift("A", 4 * t), lift("B", 4 * t), lift("B", 6 * t),
-      lift("D", 4 * t), lift("D", 6 * t), lift("D", 7 * t), lift("D", 8 * t), lift("O", 8 * t)])
+    lift("D", 4 * t), lift("D", 6 * t), lift("D", 7 * t), lift("D", 8 * t), lift("O", 8 * t)])
     ring(12, hole);
   // The bottom glide under A, B and D holds the bolt head in its bigger hole
   part("Glide", qty = 3, at = [lift("A", 0), lift("B", 0), lift("D", 0)]) ring(14, 8.4);

@@ -101,7 +101,7 @@ function radius(v) = v <= peak ? ease(pr[0], pr[1], v / peak)
   : ease(pr[2], pr[3], (v - 0.82) / 0.18);
 function polar(r, a) = [r * cos(a), r * sin(a)];
 // The outline at height v, angle a: a superellipse with petals, stretched and turned
-function point(v, a) = let(
+function point(v, a) = let (
   r = radius(v) * (1 + depth * (1 + cos(lobes * a)) / 2) / pow(pow(abs(cos(a)), power) + pow(abs(sin(a)), power), 1 / power),
   x = elong * r * cos(a),
   y = r * sin(a),

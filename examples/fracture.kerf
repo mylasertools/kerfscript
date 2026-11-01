@@ -70,15 +70,15 @@ function polar(r, a) = [r * cos(a), r * sin(a)];
 function side(t, i) = norm(t[(i + 1) % 3] - t[(i + 2) % 3]);
 function perimeter(t) = side(t, 0) + side(t, 1) + side(t, 2);
 // Incentre and inscribed radius of a triangle
-function center(t) = let(a = side(t, 0), b = side(t, 1), c = side(t, 2)) (t[0] * a + t[1] * b + t[2] * c) / (a + b + c);
+function center(t) = let (a = side(t, 0), b = side(t, 1), c = side(t, 2)) (t[0] * a + t[1] * b + t[2] * c) / (a + b + c);
 function area(t) = abs((t[1][0] - t[0][0]) * (t[2][1] - t[0][1]) - (t[1][1] - t[0][1]) * (t[2][0] - t[0][0])) / 2;
 function radius(t) = 2 * area(t) / perimeter(t);
 // Move every side of a triangle inwards by d
-function inset(t, d) = let(c = center(t), k = 1 - d / radius(t)) [for (p = t) c + (p - c) * k];
+function inset(t, d) = let (c = center(t), k = 1 - d / radius(t)) [for (p = t) c + (p - c) * k];
 // Each point turns by its own angle, growing with the square of its radius
 function warp(p) = polar(norm(p), atan2(p[1], p[0]) + turn * pow(norm(p) / reach, 2));
 // The sides sampled, so straight edges bend into curves
-function curved(t) = [for (e = [0:2]) let(a = t[e], b = t[(e + 1) % 3]) for (i = [0:samples - 1]) let(f = i / samples) warp([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f])];
+function curved(t) = [for (e = [0:2]) let (a = t[e], b = t[(e + 1) % 3]) for (i = [0:samples - 1]) let (f = i / samples) warp([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f])];
 function hole_count(k, r, z) = k < 1 || r / 2 - web / 2 - z * terrace < min_opening / 2 ? 0 : 1 + 3 * hole_count(k - 1, r / 2, z);
 
 // Cut the middle triangle, then repeat in the three corners

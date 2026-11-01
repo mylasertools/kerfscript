@@ -106,20 +106,20 @@ tube_hole = 6 + tube_fit;
 // the tooth would come to a point.
 function gear_inv(a) = tan(a) * 180 / PI - a;
 function gear_half(z, r, x) =
-  let(rp = m * z / 2, rb = rp * cos(20), ar = acos(min(1, rb / r)))
+  let (rp = m * z / 2, rb = rp * cos(20), ar = acos(min(1, rb / r)))
   (90 + 360 * x * tan(20) / PI) / z + gear_inv(20) - gear_inv(ar) - backlash / (4 * rp) * 180 / PI;
 function gear_tip(z, x, lo, hi, k = 0) =
-  k == 20 ? lo : let(mid = (lo + hi) / 2)
+  k == 20 ? lo : let (mid = (lo + hi) / 2)
   gear_half(z, mid, x) * PI / 180 * mid > 0.3 * m ? gear_tip(z, x, mid, hi, k + 1) : gear_tip(z, x, lo, mid, k + 1);
 function gear_outline(z, x, steps) =
-  let(rp = m * z / 2, rb = rp * cos(20), lo = rp - m * (1.25 - x),
+  let (rp = m * z / 2, rb = rp * cos(20), lo = rp - m * (1.25 - x),
     hi = gear_tip(z, x, rp, rp + m * (1 + x)), start = max(lo, rb),
     hs = gear_half(z, start, x), ht = gear_half(z, hi, x))
   [for (k = [0:z - 1]) each concat(
     [polar(lo, 360 * k / z - hs)],
-    [for (j = [(start > lo ? 0 : 1):steps]) let(r = start + (hi - start) * j / steps) polar(r, 360 * k / z - gear_half(z, r, x))],
+    [for (j = [(start > lo ? 0 : 1):steps]) let (r = start + (hi - start) * j / steps) polar(r, 360 * k / z - gear_half(z, r, x))],
     [for (j = [1:3]) polar(hi, 360 * k / z - ht + 2 * ht * j / 4)],
-    [for (j = [steps:-1:0]) let(r = start + (hi - start) * j / steps) polar(r, 360 * k / z + gear_half(z, r, x))],
+    [for (j = [steps:-1:0]) let (r = start + (hi - start) * j / steps) polar(r, 360 * k / z + gear_half(z, r, x))],
     [if (start > lo) polar(lo, 360 * k / z + hs)],
     [for (j = [1:3]) polar(lo, 360 * k / z + hs + (360 / z - 2 * hs) * j / 4)]
   )];
@@ -158,7 +158,7 @@ module escape_wheel() {
   tw = 0.7 / R * 180 / PI;
   bw = 0.42 * pa;
   difference() {
-    polygon([for (k = [0:z_escape - 1]) let(a = k * pa) each concat(
+    polygon([for (k = [0:z_escape - 1]) let (a = k * pa) each concat(
       [polar(rr, a + rake), polar(R, a), polar(R, a + tw), polar(R - tooth_h * 0.6, a + tw + (rake + bw - tw) * 0.25), polar(rr, a + rake + bw)],
       [for (j = [1:3]) polar(rr, a + rake + bw + (pa - bw) * j / 4)]
     )]);
@@ -185,7 +185,7 @@ lock_ext = 10;
 ro = L0 + pallet_w / 2;
 ri = L0 - pallet_w / 2;
 // Where the tip circle crosses the circle of radius r round the pivot; side -1 left, 1 right
-function tip_at(r, side) = let(qy = (R * R - r * r - anchor_height * anchor_height) / (2 * anchor_height))
+function tip_at(r, side) = let (qy = (R * R - r * r - anchor_height * anchor_height) / (2 * anchor_height))
   atan2(qy, side * sqrt(r * r - qy * qy));
 // Pallet corners, as angles round the pivot. Entry: deeper into the wheel as
 // the anchor turns anticlockwise. Exit: deeper as it turns clockwise.
@@ -217,8 +217,8 @@ module anchor() {
 ratchet_n = 24;
 module ratchet() {
   difference() {
-    polygon([for (k = [0:ratchet_n - 1]) let(a = 90 + 360 * k / ratchet_n) each
-      [polar(22.5, a), for (j = [1:5]) polar(22.5 + 2.5 * j / 5, a + 360 / ratchet_n * j / 5 - 0.05)]]);
+    polygon([for (k = [0:ratchet_n - 1]) let (a = 90 + 360 * k / ratchet_n) each
+        [polar(22.5, a), for (j = [1:5]) polar(22.5 + 2.5 * j / 5, a + 360 / ratchet_n * j / 5 - 0.05)]]);
     circle(d = rod_hole);
   }
 }
@@ -392,7 +392,7 @@ d_wall = -(6 * t + 4);
 // from the anchor; the train follows it back to the minute arbor, which is
 // within 0.1 degree of the time shown.
 // Where the segment p to q crosses the circle of radius r round the origin
-function seg_circle(p, q, r) = let(v = q - p, a = v * v, b = 2 * (p * v), c = p * p - r * r,
+function seg_circle(p, q, r) = let (v = q - p, a = v * v, b = 2 * (p * v), c = p * p - r * r,
   s = sqrt(max(0, b * b - 4 * a * c)), u = (-b - s) / (2 * a)) p + v * (u >= 0 && u <= 1 ? u : (-b + s) / (2 * a));
 pivot = [0, anchor_height];
 // The leading corner of the engaged tooth, round the escape wheel's centre
@@ -411,7 +411,7 @@ a_stud = -a_minute * z_cannon / z_minute;
 a_hour = a_minute / 12;
 // A driven gear's turn so its teeth fall between the driver's: driver at c1
 // turned r1, driven at c2
-function mesh(c1, r1, z1, c2, z2) = let(b = atan2(c2.y - c1.y, c2.x - c1.x)) b + 180 + 180 / z2 + (b - r1) * z1 / z2;
+function mesh(c1, r1, z1, c2, z2) = let (b = atan2(c2.y - c1.y, c2.x - c1.x)) b + 180 + 180 / z2 + (b - r1) * z1 / z2;
 // Each wheel's turn when the minute arbor is at 0, its pinion at 0
 o_third = mesh(E, 0, z_leaf, T, z_third);
 o_centre = mesh(T, 0, z_leaf, M, z_centre);

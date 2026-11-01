@@ -188,7 +188,7 @@ module drive_disc() {
     // The two fixed stop pins each ride in an arc slot, which ends where the
     // trays are fully open or closed
     for (a0 = [100, 280]) for (i = [0:arc_steps - 1])
-      let(a = lerp(a0 - closed_angle, a0 - open_angle, i / arc_steps), b = lerp(a0 - closed_angle, a0 - open_angle, (i + 1) / arc_steps))
+      let (a = lerp(a0 - closed_angle, a0 - open_angle, i / arc_steps), b = lerp(a0 - closed_angle, a0 - open_angle, (i + 1) / arc_steps))
         capsule(polar(35, a), polar(35, b), 3.2);
   }
   // Grip marks round the rim

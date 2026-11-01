@@ -323,14 +323,14 @@ module coupon() {
 // y = rl sin a, z = rl cos a about the axle; pegs hang from the crown.
 theta = draw_bar_angle;
 function peg_gap(a) = min([1e9, for (i = [0:crown_pegs - 1])
-  let(ph = theta + 360 * i / crown_pegs, px = Rc * cos(ph), py = Rc * sin(ph))
-  if (px > 0 && abs(py) < rl + 9) for (j = [0:staves - 1])
-    let(b = a + 360 * j / staves, sy = rl * sin(b), sz = rl * cos(b),
-      dz = abs(min(max(sz, peg_tip - zL), zc - zL) - sz))
-    if (dz < 3) sqrt(max(0, lx_in - px, px - lx_out) ^ 2 + max(0, abs(py - sy) - sqrt(9 - dz * dz)) ^ 2) - 3]);
+  let (ph = theta + 360 * i / crown_pegs, px = Rc * cos(ph), py = Rc * sin(ph))
+    if (px > 0 && abs(py) < rl + 9) for (j = [0:staves - 1])
+      let (b = a + 360 * j / staves, sy = rl * sin(b), sz = rl * cos(b),
+        dz = abs(min(max(sz, peg_tip - zL), zc - zL) - sz))
+        if (dz < 3) sqrt(max(0, lx_in - px, px - lx_out) ^ 2 + max(0, abs(py - sy) - sqrt(9 - dz * dz)) ^ 2) - 3]);
 function first_free(a, k = 0) = peg_gap(a) >= 0 || k > 60 ? a : first_free(a + 0.5, k + 1);
-function contact(lo, hi, k = 0) = k >= 40 ? hi : let(m = (lo + hi) / 2) peg_gap(m) >= 0 ? contact(lo, m, k + 1) : contact(m, hi, k + 1);
-mesh_a = let(f = first_free(ratio * theta + 180 / staves - 10)) contact(f - 0.5, f);
+function contact(lo, hi, k = 0) = k >= 40 ? hi : let (m = (lo + hi) / 2) peg_gap(m) >= 0 ? contact(lo, m, k + 1) : contact(m, hi, k + 1);
+mesh_a = let (f = first_free(ratio * theta + 180 / staves - 10)) contact(f - 0.5, f);
 // The lantern and wheel turn this far about the axle, clockwise seen from
 // the trough end as the draw-bar goes counterclockwise
 beta = 67.5 - mesh_a;
@@ -364,7 +364,7 @@ if (output == "all" || output == "wheel") {
   part("Wheel hub", qty = 2, at = [[wx + 2 * t, 0, zL], [wx + 3 * t, 0, zL]], rotate = on_axle(beta)) annulus(30, 4.4);
   // Each pot in two layers on the wheel's outer face, turned with the wheel
   part("Pot", qty = 2 * pots,
-    at = [for (i = [0:pots - 1], k = [0, 1]) let(g = 360 * i / pots + beta) [wx + 2 * t + k * t, (Rw - 1) * cos(g), zL + (Rw - 1) * sin(g)]],
+    at = [for (i = [0:pots - 1], k = [0, 1]) let (g = 360 * i / pots + beta) [wx + 2 * t + k * t, (Rw - 1) * cos(g), zL + (Rw - 1) * sin(g)]],
     rotate = [for (i = [0:pots - 1], k = [0, 1]) on_axle(beta + 360 * i / pots - 90)]) pot();
 }
 if (output == "all" || output == "well") {
@@ -379,7 +379,7 @@ if (output == "all" || output == "well") {
   part("Trough post", qty = 2, at = [[post_x, 0, 2 * t], [post_x + t, 0, 2 * t]], rotate = across) trough_post();
 }
 if (output == "all" || output == "ox") part("Ox", qty = 2, at = [round_at(L - t, deck_z + t + 1), round_at(L, deck_z + t + 1)],
-    rotate = [90, 0, theta + 90]) ox();
+  rotate = [90, 0, theta + 90]) ox();
 // The fit test lies on the table in front of the model
 if (output == "all" || output == "coupon") part("Fit test", at = [base_x[0], -(Ro + 8) - 70, 0]) coupon();
 
