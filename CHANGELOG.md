@@ -160,7 +160,7 @@ with `"language": "0.2"` in its `kerf.json`.
   desktop app), a Docker image, a snap, and Homebrew,
   Scoop, winget and AUR manifests, all built by the release workflow with
   SHA-256, SHA-512 and GPG signatures. Nightly builds go to a rolling
-  `nightly` prerelease. See RELEASING.md.
+  `nightly` prerelease.
 - A `kerf(1)` man page and a `text/x-kerfscript` MIME type for `*.kerf` files
   in the Linux packages.
 - The command line and `kerfscript.wasm` have a font built in, Atkinson

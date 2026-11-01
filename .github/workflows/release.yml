@@ -1,4 +1,4 @@
-# Builds and publishes KerfScript. See RELEASING.md.
+# Builds and publishes KerfScript.
 #
 # A tag v1.2.3 makes a draft GitHub release with the desktop app (Windows
 # installer and MSI, macOS dmg, Linux AppImage, .deb and .rpm), standalone

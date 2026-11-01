@@ -1,8 +1,8 @@
 // Copyright (c) 2026 MyLaserTools. SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-MyLaserTools-Commercial
 
 // Writes package manager manifests for a release into release/manifests/,
-// using the files and checksums in release/. See RELEASING.md for where each
-// one goes. A channel whose files are missing is skipped.
+// using the files and checksums in release/. A channel whose files are
+// missing is skipped.
 //
 //   Command line (kerf):  Homebrew, Scoop, winget, Chocolatey, MacPorts, AUR
 //   Desktop app:          winget, Chocolatey, AUR, Flathub

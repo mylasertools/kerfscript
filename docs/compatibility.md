@@ -37,14 +37,6 @@ LightBurn, xTool Studio, xTool Creative Space, RDWorks and LaserGRBL have
 not yet been verified with the reference models. Import handling can differ
 between programs, especially for units, layer colours and fills.
 
-## Example validation
-
-The examples are checked by rendering and comparing their output with saved
-results. The assembled pictures and animations are digital previews. These
-checks do not establish that a mechanism has been built or works in a
-particular material. Physical cut-and-measure testing remains on the
-[roadmap](https://github.com/mylasertools/kerfscript/blob/main/ROADMAP.md).
-
 ## Checklist for a new program
 
 Download the calibration square and box from the

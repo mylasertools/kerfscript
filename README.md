@@ -250,7 +250,7 @@ Errors are thrown as `KerfError` with `line` and `col`.
 ## Community
 
 Bug reports, cut reports and ideas are welcome; see
-[CONTRIBUTING.md](CONTRIBUTING.md), the [roadmap](ROADMAP.md),
+[CONTRIBUTING.md](CONTRIBUTING.md),
 [SECURITY.md](SECURITY.md) and the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Licence
