@@ -1,6 +1,6 @@
 {
   "name": "@mylasertools/kerfscript-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "KerfScript tools for building parametric laser-cutting generators: documentation, examples, parameters and SVG/DXF rendering.",
   "mcpName": "com.mylasertools/kerfscript",
   "type": "module",
