@@ -11,7 +11,7 @@
 - The playground keeps a block comment coloured across all its lines.
 - [Specification](docs/specification.md): the formal grammar and the exact
   rules for values, operators, scope, calls, libraries and errors.
-- A conformance suite in `conformance/`: 83 small programs with their
+- A conformance suite in `conformance/`: 92 small programs with their
   expected output, errors, parts and layers. Every example's output is also
   stored, so a change that alters a saved design fails a test.
 - A library that uses or includes itself, directly or through others, is an

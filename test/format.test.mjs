@@ -20,6 +20,11 @@ test('spaces between tokens', () => {
     'l = [for (i = [0:3]) let (s = i * i) if (s > 1) [s, i]];\n',
   );
   assert.equal(fmt('r=[a?1:2:5];t=[x?[0:1]:y];'), 'r = [a ? 1 : 2:5]; t = [x ? [0:1] : y];\n');
+  // Empty blocks are written {}, as empty lists are []
+  assert.equal(
+    fmt('module m(){ }\nif(x){ }else{}\nl=[ ];'),
+    'module m() {}\nif (x) {} else {}\nl = [];\n',
+  );
 });
 
 test('modifiers and operators that look alike', () => {

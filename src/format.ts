@@ -287,6 +287,8 @@ function space(a: Item, b: Item): boolean {
   const y = b.text;
   if (y === ',' || y === ';' || y === ')' || y === ']') return false;
   if (x === '(' || x === '[') return false;
+  // An empty block is {}, as an empty list is []
+  if (x === '{' && y === '}') return false;
   if (x === '.' || y === '.') return false;
   if (a.role === 'unary' || a.role === 'modifier') return false;
   if (a.role === 'range' || b.role === 'range') return false;
