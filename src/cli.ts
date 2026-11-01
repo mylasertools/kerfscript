@@ -1,8 +1,9 @@
 // Copyright (c) 2026 MyLaserTools. SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-MyLaserTools-Commercial
 
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, join, resolve } from 'node:path';
 import {
+  format,
   formatError,
   parameters,
   render,
@@ -21,6 +22,9 @@ Usage:
   kerf render <file.kerf> [-o out.svg] [options]
   kerf params <file.kerf>            print customizer parameters as JSON
   kerf check <file.kerf>             run the program and print parts and warnings
+  kerf fmt <files or folders>        format .kerf files in place
+  kerf fmt --check <files>           list files that are not formatted; exit 1 if any
+  kerf fmt -                         format standard input to standard output
 
 Options:
   -o, --out <file>        output file (.svg, .dxf or .json); default <file>.svg
@@ -61,6 +65,7 @@ function main(argv: string[]) {
     return;
   }
   const cmd = argv[0];
+  if (cmd === 'fmt') return fmt(argv.slice(1));
   if (!['render', 'params', 'check'].includes(cmd))
     fail(`Unknown command "${cmd}". Run kerf --help.`);
   let file = '';
@@ -186,6 +191,59 @@ function main(argv: string[]) {
     writeFileSync(target, result.svg);
   }
   process.stderr.write(`Wrote ${target}\n`);
+}
+
+// .kerf files in the paths given, folders searched through
+function kerfFiles(paths: string[]): string[] {
+  const out: string[] = [];
+  const walk = (p: string) => {
+    if (statSync(p).isDirectory()) {
+      for (const e of readdirSync(p, { withFileTypes: true }))
+        if (e.name !== 'node_modules' && !e.name.startsWith('.')) walk(join(p, e.name));
+    } else if (p.endsWith('.kerf') || paths.includes(p)) out.push(p);
+  };
+  for (const p of paths) {
+    if (!existsSync(p)) fail(`No such file or folder: ${p}`);
+    walk(p);
+  }
+  return out;
+}
+
+function fmt(argv: string[]) {
+  const check = argv.includes('--check');
+  const paths = argv.filter((a) => a !== '--check');
+  if (!paths.length) fail('Give .kerf files or folders to format, or - for standard input.');
+  if (paths.includes('-')) {
+    const source = readFileSync(0, 'utf8');
+    try {
+      process.stdout.write(format(source));
+    } catch (e) {
+      fail(formatError(e, source, { file: '<stdin>' }));
+    }
+    return;
+  }
+  let unformatted = 0;
+  let failed = 0;
+  for (const file of kerfFiles(paths)) {
+    const source = readFileSync(file, 'utf8');
+    let out: string;
+    try {
+      out = format(source);
+    } catch (e) {
+      process.stderr.write(formatError(e, source, { file }) + '\n');
+      failed++;
+      continue;
+    }
+    // Line endings alone do not count: git and editors change those
+    if (out === source.replace(/\r\n/g, '\n')) continue;
+    unformatted++;
+    if (check) process.stdout.write(`${file}\n`);
+    else {
+      writeFileSync(file, out);
+      process.stderr.write(`Formatted ${file}\n`);
+    }
+  }
+  if (failed || (check && unformatted)) process.exit(1);
 }
 
 // The design being run, to show the lines an error is on

@@ -45,6 +45,12 @@
   given; named ones used to come last.
 - Errors in calls point at the name called, and a missing comma says what
   else could come next: `Expected "," or ")"`.
+- `kerf fmt` and `format()`: the official formatter. It sets indentation,
+  spacing, blank lines and line endings, keeps line breaks and every comment
+  where it is, and checks that its output has the same tokens as the input.
+  `kerf fmt --check` lists unformatted files for CI, and `kerf fmt -` reads
+  standard input for editors. The examples and the standard library are
+  formatted with it; their output is unchanged.
 - A VS Code extension in `editors/vscode` with a TextMate grammar, snippets
   and file icons. A test checks that it colours every example the same way
   as the highlighter.

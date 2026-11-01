@@ -11,6 +11,7 @@ export { parameters, type Parameter } from './customizer.js';
 export { parse } from './parser.js';
 export { tokenize, KerfError, type TraceFrame } from './lexer.js';
 export { formatError, type FormatOptions } from './diagnostics.js';
+export { format, type FormatOptions as FormatterOptions } from './format.js';
 export { DEFAULT_LAYERS, DEFAULT_LIMITS, type LayerDef, type Limits } from './evaluator.js';
 export type { LayerPath } from './export/svg.js';
 export type { FontSource } from './text.js';

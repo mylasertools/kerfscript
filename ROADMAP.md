@@ -74,7 +74,7 @@ protects or feeds the next.
       the tests
 - [x] Diagnostics that show the source line, underline the expression,
       list the expected arguments and trace calls and libraries
-- [ ] `kerf fmt` with a check mode, keeping comments and customizer
+- [x] `kerf fmt` with a check mode, keeping comments and customizer
       annotations
 - [ ] A language server: errors while typing, hover, parameter hints,
       completion, go to definition, find references and format on save

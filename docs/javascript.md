@@ -111,6 +111,24 @@ if (width) {
 Read the settings again after editing the source; the offsets refer to the
 string passed to `parameters()`.
 
+## format()
+
+`format(source)` returns the program with its layout set, as `kerf fmt`
+does: two-space indentation, spaces between tokens, at most one blank line in
+a row and a newline at the end. Line breaks and comments stay where they
+are. It throws a `KerfError` for a program that does not parse, and checks
+its own result: the output always has the same tokens and comments as the
+input.
+
+```js
+import { format } from '@mylasertools/kerfscript';
+
+format('x=1;module m(a,b=2){rect([a,b]);}');
+// 'x = 1; module m(a, b = 2) { rect([a, b]); }\n'
+```
+
+`format(source, { indent: 4 })` uses four spaces per level.
+
 ## Syntax colouring
 
 `@mylasertools/kerfscript/highlight` colours KerfScript code without loading

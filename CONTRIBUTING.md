@@ -68,4 +68,5 @@ npm run site:serve    # preview on http://localhost:4321
   both the AGPL and the commercial licence: permissive licences such as MIT,
   BSD, Apache-2.0, ISC and Zlib, MPL-2.0 (its files stay under the MPL), and
   the OFL for fonts.
-- Format with `npm run format`.
+- Format with `npm run format`, and `.kerf` files with
+  `node dist/cli.js fmt examples lib integrations`.

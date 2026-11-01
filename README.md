@@ -178,6 +178,7 @@ kerf render design.kerf -D width=200 -D 'label="Oak"' --font Inter.ttf
 kerf render design.kerf --sheet 400x300 --kerf 0.1 --split
 kerf params design.kerf                    # customizer parameters as JSON
 kerf check design.kerf                     # parts, sizes, cut length, warnings
+kerf fmt designs/                          # format .kerf files; --check for CI
 ```
 
 ## Library

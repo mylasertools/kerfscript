@@ -47,11 +47,23 @@ to try these commands.
 kerf render <file.kerf> [-o out.svg] [options]
 kerf params <file.kerf>
 kerf check <file.kerf>
+kerf fmt <files or folders>
+kerf fmt --check <files or folders>
+kerf fmt -
 ```
 
 `render` exports SVG, DXF or JSON, using the output file's extension to
 choose the format. `params` lists the editable settings as JSON. `check`
 reports parts, dimensions, cut lengths, sheets and warnings.
+
+`fmt` formats `.kerf` files in place, searching folders for them. It sets
+indentation (two spaces), the spaces between tokens, blank lines (at most one
+in a row) and line endings, and keeps your line breaks and every comment
+where it is, customizer comments included. It never joins or splits lines.
+`--check` changes nothing: it lists the files that are not formatted and
+exits with 1 when there are any, for CI. `kerf fmt -` formats standard input
+to standard output, for editors. A file that does not parse is reported and
+left alone.
 
 ## Options
 
