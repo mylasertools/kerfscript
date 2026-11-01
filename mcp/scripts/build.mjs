@@ -38,6 +38,7 @@ await build({
     'isolated',
     'execute',
     'replies',
+    'budget',
   ].map((name) => `src/${name}.ts`),
   outdir: 'dist',
   bundle: true,

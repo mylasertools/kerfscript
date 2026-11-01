@@ -14,6 +14,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 const env = {
   ALLOWED_ORIGINS: 'https://kerfscript.mylasertools.com',
   REQUEST_LIMIT: { limit: async () => ({ success: true }) },
+  DAILY_BUDGET: { idFromName: () => 'daily', get: () => ({ spend: async () => 'ok' }) },
 };
 const clientInfo = { name: 'kerfscript-tests', version: '1.0.0' };
 async function connected(t, server = createKerfScriptServer(async (job) => execute(job))) {

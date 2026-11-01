@@ -5,11 +5,26 @@
   // Latest date supported by the pinned local runtime.
   "compatibility_date": "2026-10-30",
   "compatibility_flags": ["nodejs_compat"],
-  "workers_dev": true,
+  // Only the custom domain is public, so WAF rules see every request before the
+  // Worker runs. workers.dev and preview URLs would bypass them.
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "mcp.mylasertools.com", "custom_domain": true }],
   "limits": { "cpu_ms": 1000 },
-  "vars": { "ALLOWED_ORIGINS": "https://kerfscript.mylasertools.com,https://www.mylasertools.com" },
+  "vars": {
+    "ALLOWED_ORIGINS": "https://kerfscript.mylasertools.com,https://www.mylasertools.com",
+    // Requests per UTC day for all public clients, for all service callers
+    // (signed-in MyLaserTools users), and for one client (an IPv4 address, an
+    // IPv6 /64 or a service caller). Every request uses at most cpu_ms of CPU,
+    // so these bound the daily bill.
+    "DAILY_REQUEST_LIMIT": 20000,
+    "SERVICE_DAILY_REQUEST_LIMIT": 20000,
+    "DAILY_CLIENT_LIMIT": 1000,
+  },
   "ratelimits": [
     { "name": "REQUEST_LIMIT", "namespace_id": "482601", "simple": { "limit": 60, "period": 60 } },
   ],
+  "durable_objects": { "bindings": [{ "name": "DAILY_BUDGET", "class_name": "DailyBudget" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DailyBudget"] }],
   "observability": { "enabled": true, "head_sampling_rate": 0.1 },
 }

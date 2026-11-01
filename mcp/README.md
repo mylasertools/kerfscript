@@ -106,10 +106,11 @@ not contain or modify the MyLaserTools server.
 
 ## Hosted deployment
 
-The Worker exposes `/mcp` using stateless Streamable HTTP with JSON responses.
-GET and DELETE return 405 because there are no long-lived streams or sessions.
-`/health` identifies the service. Each HTTP request creates and closes its own
-MCP server and transport; user data is never kept in global state.
+The Worker serves `https://mcp.mylasertools.com/mcp` using stateless Streamable
+HTTP with JSON responses. GET and DELETE return 405 because there are no
+long-lived streams or sessions. `/health` identifies the service. Each HTTP
+request creates and closes its own MCP server and transport; user data is never
+kept in global state.
 
 ```sh
 cd mcp
@@ -121,18 +122,37 @@ npx wrangler deploy
 
 Before publishing, verify the Cloudflare account, reserve a unique rate-limit
 namespace for this account, and review the origin allowlist in `wrangler.jsonc`.
-Use the deployment's reported URL with `/mcp` appended. Add a custom domain only
-after choosing its DNS name. Browser clients require their exact origin in
-`ALLOWED_ORIGINS`; native MCP clients normally send no Origin header.
+Browser clients require their exact origin in `ALLOWED_ORIGINS`; native MCP
+clients normally send no Origin header.
+
+The custom domain is the only public address: `workers.dev` and preview URLs are
+off, because requests to them bypass the zone's WAF. After the first deploy, add
+a WAF rate limiting rule for `mcp.mylasertools.com` in the Cloudflare dashboard.
+Requests it blocks never reach the Worker and are not billed. Also turn on
+billing notifications for Workers usage; Cloudflare has no hard spending cap.
+
+### Limits and cost
 
 The Worker is separate from the website and has a 1,000 ms CPU budget per request
 (requires a Workers plan supporting that limit). Platform resource termination
-can produce a platform error rather than a structured MCP error. The public
-endpoint allows approximately 60 requests per minute per connecting IP per
-Cloudflare location. Users behind one proxy share that allowance; it is abuse
-mitigation, not a strict global quota or spending cap. Rejected requests return
-429 with Retry-After. Request bodies are limited to 256,000 bytes by the SDK,
-including streamed bodies without Content-Length.
+can produce a platform error rather than a structured MCP error. Request bodies
+are limited to 256,000 bytes, including streamed bodies without Content-Length.
+JSON-RPC batches are refused with 400, so each request runs at most one tool call.
+
+Each client may send about 60 requests per minute per Cloudflare location. A
+client is an IPv4 address, an IPv6 /64 or a service caller, so one IPv6
+subscriber cannot multiply its allowance by changing addresses. Users behind one
+proxy share an allowance. Rejected requests return 429 with Retry-After.
+
+A `DailyBudget` Durable Object counts requests per UTC day across all locations.
+`DAILY_CLIENT_LIMIT` (1,000) caps one client, which then gets 429.
+`DAILY_REQUEST_LIMIT` (20,000) caps all public clients together, and
+`SERVICE_DAILY_REQUEST_LIMIT` (20,000) caps all service callers together; a pool
+that reaches its cap returns 503. The pools are counted separately, so public
+traffic cannot use up the allowance of MyLaserTools users. Refusals carry
+Retry-After until midnight UTC. Since no request uses more than 1,000 ms of CPU,
+the caps bound the daily CPU bill. If the budget cannot be reached, requests are
+refused rather than allowed. To stop a pool, deploy with its cap set to 0.
 
 Programs have at most 64,000 characters. Up to 20 virtual imports may be provided
 with a combined 64,000 characters; exact import names are resolved only in that

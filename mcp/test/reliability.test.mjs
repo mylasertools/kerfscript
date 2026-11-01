@@ -5,7 +5,8 @@ import { readFile } from 'node:fs/promises';
 import { reply, page } from '../dist/replies.js';
 import { execute } from '../dist/execute.js';
 import { createExecutorPool } from '../dist/isolated.js';
-import worker, { handleRequest } from '../dist/worker.js';
+import worker, { handleRequest, clientAddress } from '../dist/worker.js';
+import { spend, secondsToMidnight } from '../dist/budget.js';
 import { createKerfScriptServer } from '../dist/tools.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
@@ -88,6 +89,95 @@ test('service callers have separate allowances and public headers cannot select 
   );
   assert.deepEqual(keys, ['caller:user-a', 'caller:user-b', 'ip:192.0.2.1']);
   assert.equal((await handleRequest(request(), env, '')).status, 400);
+});
+
+test('IPv6 clients share an allowance per /64 and mapped IPv4 counts as IPv4', () => {
+  assert.equal(clientAddress('192.0.2.1'), '192.0.2.1');
+  assert.equal(clientAddress('2001:db8:1:2:aaaa::1'), '2001:db8:1:2::/64');
+  assert.equal(clientAddress('2001:DB8:1:2::ffff'), '2001:db8:1:2::/64');
+  assert.equal(clientAddress('2001:0db8:0001:0002:3:4:5:6'), '2001:db8:1:2::/64');
+  assert.equal(clientAddress('2001:db8::1'), '2001:db8:0:0::/64');
+  assert.equal(clientAddress('::1'), '0:0:0:0::/64');
+  assert.equal(clientAddress('::ffff:192.0.2.1'), '192.0.2.1');
+});
+
+const budgetEnv = (spent, charged = []) => ({
+  ALLOWED_ORIGINS: '',
+  REQUEST_LIMIT: { limit: async () => ({ success: true }) },
+  DAILY_BUDGET: {
+    idFromName: (name) => name,
+    get: (id) => ({
+      spend: async (pool, client) => {
+        charged.push(`${id} ${pool} ${client}`);
+        if (spent instanceof Error) throw spent;
+        return spent;
+      },
+    }),
+  },
+});
+const post = (body) =>
+  new Request('https://example.com/mcp', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json, text/event-stream',
+      'CF-Connecting-IP': '2001:db8:1:2::5',
+    },
+    body,
+  });
+const listTools = JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' });
+
+test('batches are refused before any tool runs or the budget is charged', async () => {
+  const charged = [];
+  const env = budgetEnv('ok', charged);
+  const response = await worker.fetch(post(`[${listTools},${listTools}]`), env);
+  assert.equal(response.status, 400);
+  assert.equal((await response.json()).error.code, -32600);
+  assert.deepEqual(charged, []);
+  assert.equal((await worker.fetch(post(listTools), env)).status, 200);
+  assert.deepEqual(charged, ['public public ip:2001:db8:1:2::/64']);
+});
+
+test('service callers spend a separate daily budget from public clients', async () => {
+  const charged = [];
+  const env = budgetEnv('ok', charged);
+  await worker.fetch(post(listTools), env);
+  await handleRequest(post(listTools), env, 'mylasertools:user-1');
+  assert.deepEqual(charged, [
+    'public public ip:2001:db8:1:2::/64',
+    'service service caller:mylasertools:user-1',
+  ]);
+});
+
+test('a spent or unreachable daily budget refuses requests until midnight UTC', async () => {
+  for (const [spent, status] of [
+    ['client', 429],
+    ['total', 503],
+    [new Error('overloaded'), 503],
+  ]) {
+    const response = await worker.fetch(post(listTools), budgetEnv(spent));
+    assert.equal(response.status, status);
+    const retry = Number(response.headers.get('Retry-After'));
+    assert.ok(retry > 0 && retry <= 86400);
+  }
+});
+
+test('the daily budget caps each client and the total, and resets each UTC day', async () => {
+  const data = new Map();
+  const storage = {
+    get: async (keys) => new Map(keys.filter((k) => data.has(k)).map((k) => [k, data.get(k)])),
+    put: async (entries) => Object.entries(entries).forEach(([k, v]) => data.set(k, v)),
+    deleteAll: async () => data.clear(),
+  };
+  const day = Date.UTC(2026, 10, 1, 12);
+  const results = [];
+  for (const client of ['a', 'a', 'a', 'b', 'c', 'd'])
+    results.push(await spend(storage, client, 2, 4, day));
+  assert.deepEqual(results, ['ok', 'ok', 'client', 'ok', 'ok', 'total']);
+  assert.equal(await spend(storage, 'a', 2, 4, day + 86400000), 'ok');
+  assert.equal(data.get('total'), 1);
+  assert.equal(await spend(storage, 'e', NaN, NaN, day), 'total');
+  assert.equal(secondsToMidnight(Date.UTC(2026, 10, 1, 23, 59, 59)), 1);
 });
 
 test('MCP and health versions match package metadata', async (t) => {
