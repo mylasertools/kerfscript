@@ -3,6 +3,19 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const models = JSON.parse(readFileSync(new URL('./fixtures/assemblies.json', import.meta.url)));
+// The mechanisms move; the other models are still
+const moving = new Set([
+  'jewel-tray-box',
+  'drawer-stack',
+  'slide-grid',
+  'cable-chain',
+  'cantilever-case',
+  'beam-balance',
+  'sector-stand',
+  'screw-press',
+  'wheel-calendar',
+  'slat-roll',
+]);
 function glb(slug) {
   const b = readFileSync(new URL(`../site/public/3d/${slug}.glb`, import.meta.url));
   assert.equal(b.toString('ascii', 0, 4), 'glTF');
@@ -30,7 +43,12 @@ function glb(slug) {
   };
 }
 
-for (const model of models)
+for (const model of models.filter((m) => !moving.has(m.file)))
+  test(`${model.file}: exported GLB is still`, () => {
+    assert.equal(glb(model.file).doc.animations?.length ?? 0, 0);
+  });
+
+for (const model of models.filter((m) => moving.has(m.file)))
   test(`${model.file}: exported GLB has finite, changing, looping animation tracks`, () => {
     const { doc, values } = glb(model.file);
     assert.equal(doc.animations.length, 1);

@@ -8,7 +8,7 @@ Language version 0.2, as in 0.5.0: programs run as before.
   jewellery box, drawer cabinet, workshop holders, miniature furniture,
   radial shade, sliding puzzle, game insert, cable chain, cantilever case,
   beam balance, tilting stand, screw press, wheel calendar and laced mat.
-  Each has an animated preview in the gallery.
+  Each has a 3D model in the gallery, and the mechanisms among them move.
 - `kerf import` and `importSvg()` turn an SVG drawing into a program. They
   write circles, rectangles, polygons, tabs, slots, finger joints, hanger
   holes, keyholes and hanging loops as the modules that make them, and
