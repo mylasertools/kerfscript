@@ -8,6 +8,12 @@
   beam balance, tilting stand, screw press, wheel calendar and laced mat.
   Each has animated GLB and WebP gallery assets, output snapshots
   and checks at three configurations. Physical cutting and fit validation remain to be done.
+- Lines are clipped to a part reliably. Scoring or cutting a closed
+  polyline inside a part could add lines that were not drawn, or stop with
+  an out of memory error; lines along a part's edge are now always left
+  out, where before some were kept (`topo-island` scores 34 mm less).
+- Outlines with a spike drawn out and back, or points in a straight line
+  with their neighbours, no longer make rendering run out of memory.
 
 ## 0.5.0 (2026-10-31)
 

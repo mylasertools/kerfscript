@@ -330,3 +330,56 @@ test('a hole narrower than the kerf is reported', () => {
   assert.match(render(src(0.2)).warnings.join('\n'), /1 hole is narrower than the 0.3 mm kerf/);
   assert.deepEqual(render(src(2)).warnings, []);
 });
+
+// The length of a layer's lines, from its path data
+function lineLength(result, layer) {
+  const d = result.paths.find((p) => p.name === layer)?.lines ?? '';
+  let total = 0;
+  for (const sub of d.split('M').filter(Boolean)) {
+    const pts = sub.split('L').map((s) => s.trim().split(' ').map(Number));
+    for (let i = 1; i < pts.length; i++)
+      total += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+  }
+  return total;
+}
+
+// A closed polyline whose last edge runs back over the one before it:
+// Clipper's clipping of open paths added long lines to it
+test('a closed polyline scored inside a part keeps its length', () => {
+  const loop = [
+    [2, 1],
+    [1, 0],
+    [0, 0],
+    [5, 0],
+    [2, 1],
+  ];
+  const r = render(
+    `$layout = "none"; part("p") { circle(d = 48); score() polyline(${JSON.stringify(loop)}); }`,
+  );
+  const length = lineLength(r, 'score');
+  const drawn = Math.SQRT2 + 1 + 5 + Math.sqrt(10);
+  assert.ok(Math.abs(length - drawn) < 1e-3, `score length ${length}`);
+});
+
+test('lines along a part edge are left out, lines inside it kept', () => {
+  const r = render(
+    'part("p") { rect([20, 20]); score() { line([0, 0], [20, 0]); line([0, 10], [20, 10]); line([-5, 15], [25, 15]); } }',
+  );
+  const length = lineLength(r, 'score');
+  assert.ok(Math.abs(length - 40) < 1e-6, `score length ${length}`);
+});
+
+// An outline that runs back and forth along its base: Clipper ran out of
+// memory on it
+const spike = [
+  [0, 3],
+  [1, 0],
+  [0.5, 0],
+  [0, 0],
+  [2, 0],
+];
+
+test('an outline with a spike out and back renders', () => {
+  const r = render(`engrave() polygon(${JSON.stringify(spike)});`);
+  assert.ok(r.paths.find((p) => p.name === 'engrave'));
+});

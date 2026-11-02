@@ -63,20 +63,47 @@ export function isEmpty(s: Shape): boolean {
 const to64 = (polys: Poly[]): Paths64 =>
   polys.map((p) => p.map(([x, y]) => ({ x: Math.round(x * SCALE), y: Math.round(y * SCALE) })));
 
+// A closed outline without repeated points and without points on a
+// straight line through their neighbours, such as the tip of a spike drawn
+// out and back. The region is the same, and Clipper can run out of memory
+// on some outlines that have them.
+function ring(p: Path64): Path64 {
+  const straight = (a: Path64[number], b: Path64[number], c: Path64[number]) =>
+    (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x) === 0;
+  const out: Path64 = [];
+  for (const q of p) {
+    while (out.length >= 2 && straight(out[out.length - 2], out[out.length - 1], q)) out.pop();
+    const last = out[out.length - 1];
+    if (!last || last.x !== q.x || last.y !== q.y) out.push(q);
+  }
+  // Where the outline closes, back at its start
+  for (let changed = true; changed && out.length >= 3; ) {
+    const n = out.length;
+    changed = true;
+    if (out[n - 1].x === out[0].x && out[n - 1].y === out[0].y) out.pop();
+    else if (straight(out[n - 2], out[n - 1], out[0])) out.pop();
+    else if (straight(out[n - 1], out[0], out[1])) out.shift();
+    else changed = false;
+  }
+  return out;
+}
+
+const rings = (polys: Poly[]): Paths64 => to64(polys).map(ring);
+
 const from64 = (paths: Paths64): Poly[] =>
   paths.filter((p) => p.length >= 2).map((p) => p.map((q): Pt => [q.x / SCALE, q.y / SCALE]));
 
 export function union(regions: Poly[], fill: 'nonzero' | 'evenodd' = 'nonzero'): Poly[] {
   if (!regions.length) return [];
   const rule = fill === 'evenodd' ? FillRule.EvenOdd : FillRule.NonZero;
-  return from64(clipUnion(to64(regions), rule)).filter((p) => p.length >= 3);
+  return from64(clipUnion(rings(regions), rule)).filter((p) => p.length >= 3);
 }
 
 function boolean(type: ClipType, a: Poly[], b: Poly[]): Poly[] {
   if (!a.length) return [];
   const c = new Clipper64();
-  c.addSubject(to64(a));
-  if (b.length) c.addClip(to64(b));
+  c.addSubject(rings(a));
+  if (b.length) c.addClip(rings(b));
   const out: Paths64 = [];
   c.execute(type, FillRule.NonZero, out);
   return from64(out).filter((p) => p.length >= 3);
@@ -87,21 +114,133 @@ export const difference = (a: Poly[], b: Poly[]) =>
 export const intersection = (a: Poly[], b: Poly[]) => boolean(ClipType.Intersection, a, b);
 export const xor = (a: Poly[], b: Poly[]) => boolean(ClipType.Xor, a, b);
 
+// Lines cut where they cross the edges of a region, keeping the pieces in
+// it, or out of it. Clipper's clipping of open paths can add lines that
+// were never there, or run out of memory, on some closed polylines, so the
+// lines are cut here: each piece is kept or not by whether its middle is in
+// the region. A piece along an edge is in neither: the edge is cut anyway.
 export function clipLines(lines: Poly[], region: Poly[], keep: 'inside' | 'outside'): Poly[] {
   if (!lines.length) return [];
   if (!region.length) return keep === 'outside' ? lines : [];
-  const c = new Clipper64();
-  c.addOpenSubject(to64(lines));
-  c.addClip(to64(region));
-  const closed: Paths64 = [];
-  const open: Paths64 = [];
-  c.execute(
-    keep === 'inside' ? ClipType.Intersection : ClipType.Difference,
-    FillRule.NonZero,
-    closed,
-    open,
-  );
-  return from64(open);
+  const edges: [Pt, Pt][] = [];
+  for (const r of region)
+    for (let i = 0; i < r.length; i++) {
+      const a = r[i],
+        b = r[(i + 1) % r.length];
+      if (a[0] !== b[0] || a[1] !== b[1]) edges.push([a, b]);
+    }
+  if (!edges.length) return keep === 'outside' ? lines : [];
+  const box = bounds(region)!;
+  const size =
+    Math.max(box[2] - box[0], box[3] - box[1], 1e-6) / Math.max(1, Math.sqrt(edges.length));
+  const cell = (v: number) => Math.floor(v / size);
+  // Edges by grid cell, for crossings, and by row, for the winding number
+  const cells = new Map<string, number[]>();
+  const rows = new Map<number, number[]>();
+  const add = <K>(m: Map<K, number[]>, k: K, i: number) => {
+    const l = m.get(k);
+    if (!l) m.set(k, [i]);
+    else if (l[l.length - 1] !== i) l.push(i);
+  };
+  edges.forEach(([a, b], i) => {
+    const n = Math.max(1, Math.ceil((Math.hypot(b[0] - a[0], b[1] - a[1]) / size) * 2));
+    for (let k = 0; k <= n; k++) {
+      const x = a[0] + ((b[0] - a[0]) * k) / n,
+        y = a[1] + ((b[1] - a[1]) * k) / n;
+      for (const dx of [-1, 0, 1])
+        for (const dy of [-1, 0, 1]) add(cells, `${cell(x) + dx},${cell(y) + dy}`, i);
+    }
+    for (let y = cell(Math.min(a[1], b[1])); y <= cell(Math.max(a[1], b[1])); y++) add(rows, y, i);
+  });
+  const near = (a: Pt, b: Pt): Set<number> => {
+    const out = new Set<number>();
+    const n = Math.max(1, Math.ceil((Math.hypot(b[0] - a[0], b[1] - a[1]) / size) * 2));
+    for (let k = 0; k <= n; k++) {
+      const x = a[0] + ((b[0] - a[0]) * k) / n,
+        y = a[1] + ((b[1] - a[1]) * k) / n;
+      for (const i of cells.get(`${cell(x)},${cell(y)}`) ?? []) out.add(i);
+    }
+    return out;
+  };
+  // On an edge: within half of Clipper's resolution, where outlines meet
+  const edge = 0.5 / SCALE;
+  const within = (p: Pt): boolean | undefined => {
+    for (const i of cells.get(`${cell(p[0])},${cell(p[1])}`) ?? []) {
+      const [a, b] = edges[i];
+      const dx = b[0] - a[0],
+        dy = b[1] - a[1];
+      const t = Math.max(
+        0,
+        Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy)),
+      );
+      if (Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy) <= edge) return undefined;
+    }
+    let wn = 0;
+    for (const i of rows.get(cell(p[1])) ?? []) {
+      const [a, b] = edges[i];
+      const side = (b[0] - a[0]) * (p[1] - a[1]) - (p[0] - a[0]) * (b[1] - a[1]);
+      if (a[1] <= p[1]) {
+        if (b[1] > p[1] && side > 0) wn++;
+      } else if (b[1] <= p[1] && side < 0) wn--;
+    }
+    return wn !== 0;
+  };
+  const r4 = (v: number) => Math.round(v * SCALE) / SCALE;
+  const out: Poly[] = [];
+  for (const line of lines) {
+    let cur: Poly | null = null;
+    const flush = () => {
+      if (cur && cur.length >= 2) out.push(cur);
+      cur = null;
+    };
+    for (let k = 1; k < line.length; k++) {
+      const s = line[k - 1],
+        e = line[k];
+      const dx = e[0] - s[0],
+        dy = e[1] - s[1];
+      if (!dx && !dy) continue;
+      // Where the segment meets the region's edges, as fractions along it
+      const ts = [0, 1];
+      for (const i of near(s, e)) {
+        const [a, b] = edges[i];
+        const ex = b[0] - a[0],
+          ey = b[1] - a[1];
+        const den = dx * ey - dy * ex;
+        if (Math.abs(den) > 1e-15) {
+          const t = ((a[0] - s[0]) * ey - (a[1] - s[1]) * ex) / den;
+          const u = ((a[0] - s[0]) * dy - (a[1] - s[1]) * dx) / den;
+          if (t > 0 && t < 1 && u >= 0 && u <= 1) ts.push(t);
+        } else {
+          // Along the same line: where the edge's ends fall on the segment
+          const l2 = dx * dx + dy * dy;
+          for (const q of [a, b]) {
+            const t = ((q[0] - s[0]) * dx + (q[1] - s[1]) * dy) / l2;
+            const off = Math.abs((q[0] - s[0]) * dy - (q[1] - s[1]) * dx) / Math.sqrt(l2);
+            if (t > 0 && t < 1 && off <= edge) ts.push(t);
+          }
+        }
+      }
+      ts.sort((x, y) => x - y);
+      for (let j = 1; j < ts.length; j++) {
+        if (ts[j] - ts[j - 1] < 1e-12) continue;
+        const p0: Pt = [r4(s[0] + dx * ts[j - 1]), r4(s[1] + dy * ts[j - 1])];
+        const p1: Pt = [r4(s[0] + dx * ts[j]), r4(s[1] + dy * ts[j])];
+        const tm = (ts[j - 1] + ts[j]) / 2;
+        const inside = within([s[0] + dx * tm, s[1] + dy * tm]);
+        if (inside !== undefined && inside === (keep === 'inside')) {
+          const last: Pt | undefined = cur ? cur[cur.length - 1] : undefined;
+          if (cur && last && last[0] === p0[0] && last[1] === p0[1]) {
+            if (p1[0] !== last[0] || p1[1] !== last[1]) cur.push(p1);
+          } else {
+            flush();
+            cur = [p0, p1];
+          }
+        } else flush();
+      }
+    }
+    flush();
+  }
+  return out;
 }
 
 export function offset(
@@ -115,7 +254,7 @@ export function offset(
   const jt =
     join === 'round' ? JoinType.Round : join === 'square' ? JoinType.Square : JoinType.Miter;
   const out = inflatePaths(
-    to64(union(regions)),
+    rings(union(regions)),
     delta * SCALE,
     jt,
     EndType.Polygon,
@@ -142,7 +281,7 @@ export function pieces(regions: Poly[]): Poly[][] {
   if (!regions.length) return [];
   const tree = new PolyTree64();
   const c = new Clipper64();
-  c.addSubject(to64(regions));
+  c.addSubject(rings(regions));
   c.execute(ClipType.Union, FillRule.NonZero, tree);
   const out: Poly[][] = [];
   const walk = (node: PolyTree64 | any) => {
