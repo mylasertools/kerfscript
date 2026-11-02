@@ -253,6 +253,15 @@ test('kerf import writes a .kerf file next to the drawing', () => {
   assert.match(readFileSync(join(dir, 'tag.kerf'), 'utf8'), /hanging_hole\(\[30, 32\]\)/);
   const out = run('import', file, '-o', '-');
   assert.match(out.stdout, /^\/\/ tag\.svg: imported/);
+  // A program already there may have been edited: it is replaced only by name
+  writeFileSync(join(dir, 'tag.kerf'), '// edited\n');
+  const again = run('import', file);
+  assert.notEqual(again.status, 0);
+  assert.match(again.stderr, /already exists/);
+  assert.equal(readFileSync(join(dir, 'tag.kerf'), 'utf8'), '// edited\n');
+  assert.equal(run('import', file, '-o', join(dir, 'tag.kerf')).status, 0);
+  assert.match(readFileSync(join(dir, 'tag.kerf'), 'utf8'), /hanging_hole/);
+  assert.match(run('import', file, '--kerf', '5').stderr, /less than 5/);
   assert.notEqual(run('import', join(dir, 'missing.svg')).status, 0);
   assert.notEqual(run('import', file, '--dpi', 'x').status, 0);
   // Written as UTF-16, as some programs do
@@ -322,4 +331,42 @@ test('keeps positions far from the origin exact', () => {
 <line x1="7545.236" y1="100" x2="7545.236" y2="140" stroke="red"/></svg>`,
   );
   assert.ok(source.includes('7545.236'), source);
+});
+
+test('reads broken drawings as far as browsers do', () => {
+  const box = '<rect x="10" y="10" width="40" height="30" fill="none" stroke="red"/>';
+  const imported = (body) => importSvg(drawing(box + body));
+  const ok = (r) => {
+    assert.ok(!/NaN|Infinity/.test(r.source), r.source);
+    render(r.source, font);
+  };
+  const noted = (r, re) =>
+    assert.ok(
+      r.notes.some((n) => re.test(n)),
+      r.notes.join('\n'),
+    );
+  // Bad path data: the path up to the error
+  let r = imported(
+    '<path d="M60 10 L90 10 L90 40 L60 40 Z M100 10 L x" fill="none" stroke="red"/>',
+  );
+  ok(r);
+  assert.equal(r.parts, 2);
+  noted(r, /1 path has bad data/);
+  // Numbers too large to draw
+  r = imported(
+    '<g transform="scale(1e309)"><rect width="5" height="5" stroke="red"/></g>' +
+      '<circle cx="1e400" cy="5" r="2" stroke="red"/><path d="M0 0L1e999 0" stroke="red"/>',
+  );
+  ok(r);
+  assert.equal(r.parts, 1);
+  noted(r, /3 elements were left out/);
+  // A group that uses itself is drawn once
+  r = importSvg(drawing(`<g id="a">${box}<use href="#a" x="50"/></g><use id="u" href="#u"/>`));
+  ok(r);
+  assert.equal(r.parts, 1);
+  // Groups repeated inside each other stop at a limit
+  let defs = '<g id="l0"/>';
+  for (let i = 1; i <= 8; i++) defs += `<g id="l${i}">${`<use href="#l${i - 1}"/>`.repeat(10)}</g>`;
+  r = importSvg(drawing(`<defs>${defs}</defs>${box}<use href="#l8"/>`));
+  noted(r, /more than 20,000 times/);
 });

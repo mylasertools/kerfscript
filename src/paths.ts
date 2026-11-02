@@ -71,8 +71,14 @@ export function flatten(cmds: Cmd[], tolerance = 0.02): Flattened {
   return { closed, open };
 }
 
-// `arcStep` is the largest angle, in radians, one curve stands for in an arc
-export function parseSvgPath(d: string, arcStep = Math.PI / 2): Cmd[] {
+// `arcStep` is the largest angle, in radians, one curve stands for in an arc.
+// With `onError`, bad data ends the path where it is, as browsers draw it,
+// instead of throwing.
+export function parseSvgPath(
+  d: string,
+  arcStep = Math.PI / 2,
+  onError?: (message: string) => void,
+): Cmd[] {
   const isCommand = (t: string) => /^[a-zA-Z]$/.test(t);
   const tokens = d.match(/[a-zA-Z]|[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/g) ?? [];
   const out: Cmd[] = [];
@@ -102,83 +108,92 @@ export function parseSvgPath(d: string, arcStep = Math.PI / 2): Cmd[] {
     i++;
     return Number(t);
   };
-  while (i < tokens.length) {
-    if (isCommand(tokens[i])) cmd = tokens[i++];
-    else if (!cmd) throw new Error('Path data must start with a command');
-    else if (cmd === 'Z' || cmd === 'z')
-      throw new Error(`Bad path data near "${tokens[i]}": Z takes no numbers`);
-    const rel = cmd === cmd.toLowerCase();
-    const C = cmd.toUpperCase();
-    const ox = rel ? x : 0,
-      oy = rel ? y : 0;
-    if (C === 'M') {
-      x = ox + num();
-      y = oy + num();
-      sx = x;
-      sy = y;
-      out.push({ type: 'M', x, y });
-      cmd = rel ? 'l' : 'L';
-    } else if (C === 'L') {
-      x = ox + num();
-      y = oy + num();
-      out.push({ type: 'L', x, y });
-    } else if (C === 'H') {
-      x = ox + num();
-      out.push({ type: 'L', x, y });
-    } else if (C === 'V') {
-      y = oy + num();
-      out.push({ type: 'L', x, y });
-    } else if (C === 'C' || C === 'S') {
-      let x1: number, y1: number;
-      if (C === 'C') {
-        x1 = ox + num();
-        y1 = oy + num();
-      } else {
-        const smooth = prev === 'C' || prev === 'S';
-        x1 = smooth ? 2 * x - cx : x;
-        y1 = smooth ? 2 * y - cy : y;
-      }
-      const x2 = ox + num(),
-        y2 = oy + num();
-      x = ox + num();
-      y = oy + num();
-      cx = x2;
-      cy = y2;
-      out.push({ type: 'C', x1, y1, x2, y2, x, y });
-    } else if (C === 'Q' || C === 'T') {
-      let x1: number, y1: number;
-      if (C === 'Q') {
-        x1 = ox + num();
-        y1 = oy + num();
-      } else {
-        const smooth = prev === 'Q' || prev === 'T';
-        x1 = smooth ? 2 * x - qx : x;
-        y1 = smooth ? 2 * y - qy : y;
-      }
-      x = ox + num();
-      y = oy + num();
-      qx = x1;
-      qy = y1;
-      out.push({ type: 'Q', x1, y1, x, y });
-    } else if (C === 'A') {
-      const rx = num(),
-        ry = num(),
-        rot = num(),
-        large = flag(),
-        sweep = flag();
-      const x2 = ox + num(),
-        y2 = oy + num();
-      out.push(...arcToCubics(x, y, rx, ry, rot, large, sweep, x2, y2, arcStep));
-      x = x2;
-      y = y2;
-    } else if (C === 'Z') {
-      out.push({ type: 'Z' });
-      x = sx;
-      y = sy;
-    } else throw new Error(`Unknown path command "${cmd}"`);
-    prev = C;
+  try {
+    readCommands();
+  } catch (e) {
+    if (!onError) throw e;
+    onError((e as Error).message);
   }
   return out;
+
+  function readCommands() {
+    while (i < tokens.length) {
+      if (isCommand(tokens[i])) cmd = tokens[i++];
+      else if (!cmd) throw new Error('Path data must start with a command');
+      else if (cmd === 'Z' || cmd === 'z')
+        throw new Error(`Bad path data near "${tokens[i]}": Z takes no numbers`);
+      const rel = cmd === cmd.toLowerCase();
+      const C = cmd.toUpperCase();
+      const ox = rel ? x : 0,
+        oy = rel ? y : 0;
+      if (C === 'M') {
+        x = ox + num();
+        y = oy + num();
+        sx = x;
+        sy = y;
+        out.push({ type: 'M', x, y });
+        cmd = rel ? 'l' : 'L';
+      } else if (C === 'L') {
+        x = ox + num();
+        y = oy + num();
+        out.push({ type: 'L', x, y });
+      } else if (C === 'H') {
+        x = ox + num();
+        out.push({ type: 'L', x, y });
+      } else if (C === 'V') {
+        y = oy + num();
+        out.push({ type: 'L', x, y });
+      } else if (C === 'C' || C === 'S') {
+        let x1: number, y1: number;
+        if (C === 'C') {
+          x1 = ox + num();
+          y1 = oy + num();
+        } else {
+          const smooth = prev === 'C' || prev === 'S';
+          x1 = smooth ? 2 * x - cx : x;
+          y1 = smooth ? 2 * y - cy : y;
+        }
+        const x2 = ox + num(),
+          y2 = oy + num();
+        x = ox + num();
+        y = oy + num();
+        cx = x2;
+        cy = y2;
+        out.push({ type: 'C', x1, y1, x2, y2, x, y });
+      } else if (C === 'Q' || C === 'T') {
+        let x1: number, y1: number;
+        if (C === 'Q') {
+          x1 = ox + num();
+          y1 = oy + num();
+        } else {
+          const smooth = prev === 'Q' || prev === 'T';
+          x1 = smooth ? 2 * x - qx : x;
+          y1 = smooth ? 2 * y - qy : y;
+        }
+        x = ox + num();
+        y = oy + num();
+        qx = x1;
+        qy = y1;
+        out.push({ type: 'Q', x1, y1, x, y });
+      } else if (C === 'A') {
+        const rx = num(),
+          ry = num(),
+          rot = num(),
+          large = flag(),
+          sweep = flag();
+        const x2 = ox + num(),
+          y2 = oy + num();
+        out.push(...arcToCubics(x, y, rx, ry, rot, large, sweep, x2, y2, arcStep));
+        x = x2;
+        y = y2;
+      } else if (C === 'Z') {
+        out.push({ type: 'Z' });
+        x = sx;
+        y = sy;
+      } else throw new Error(`Unknown path command "${cmd}"`);
+      prev = C;
+    }
+  }
 }
 
 function arcToCubics(

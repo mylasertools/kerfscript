@@ -5,7 +5,7 @@ same shapes. Use it to make an existing design parametric, or to continue
 a design drawn in Inkscape, Illustrator or a box generator.
 
 ```sh
-kerf import ornament.svg               # writes ornament.kerf
+kerf import ornament.svg               # writes ornament.kerf, if there is none
 kerf import ornament.svg -o tree.kerf
 kerf import ornament.svg -o -          # prints the program
 ```

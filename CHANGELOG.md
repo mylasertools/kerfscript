@@ -13,7 +13,10 @@
   repeated holes as loops. Each part is checked against the drawing and
   written as drawn when it does not match. Colours and group names become
   layers, joint depth becomes `$thickness`, and outlines offset for a kerf
-  are moved back with `$kerf` set. See [Importing SVG drawings](docs/import.md).
+  are moved back with `$kerf` set. A path with bad data is read up to the
+  error, as browsers draw it. `kerf import` does not replace a program
+  already next to the drawing unless it is named with `-o`. See
+  [Importing SVG drawings](docs/import.md).
 - The playground imports SVG drawings: choose **Import SVG** or drop a file
   on the editor.
 - Lines are clipped to a part reliably. Scoring or cutting a closed

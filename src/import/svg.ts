@@ -120,7 +120,8 @@ function color(v: string | undefined, current: string): string | undefined {
 }
 
 // Arcs as curves of 15 degrees at most, so circles keep their size closely
-const parseSvgPath = (d: string) => parsePath(d, Math.PI / 12);
+const parseSvgPath = (d: string, onError?: (message: string) => void) =>
+  parsePath(d, Math.PI / 12, onError);
 
 const numbers = (s: string) =>
   (s.match(/[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/g) ?? []).map(Number);
@@ -390,6 +391,22 @@ export function readSvg(src: string, opts: ReadOptions = {}): SvgDrawing {
   const rawTexts: RawText[] = [];
   let skippedImages = 0;
   let skippedHidden = 0;
+  let badPaths = 0;
+  let tooLarge = 0;
+  // Elements copied by <use>: a file can repeat its groups inside each
+  // other until there are billions
+  let copying = 0;
+  let copies = 0;
+  const MAX_COPIES = 20_000;
+  // The groups and <use> targets being read, so a <use> of one of them,
+  // which would repeat without end, is left out as browsers do
+  const inside: XmlElement[] = [];
+  const finite = (q: Pt) => Number.isFinite(q[0]) && Number.isFinite(q[1]);
+  const GEOMETRY = ['x', 'y', 'width', 'height', 'rx', 'ry', 'cx', 'cy', 'r'];
+  const huge = (el: XmlElement) =>
+    [...GEOMETRY, 'x1', 'y1', 'x2', 'y2', 'points'].some(
+      (k) => el.attrs[k] !== undefined && numbers(el.attrs[k]).some((n) => !Number.isFinite(n)),
+    );
   const SKIP = new Set([
     'defs',
     'clipPath',
@@ -409,11 +426,12 @@ export function readSvg(src: string, opts: ReadOptions = {}): SvgDrawing {
     'foreignObject',
   ]);
 
+  const SHAPES = new Set(['path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon']);
   const shapeCmds = (el: XmlElement): Cmd[] | undefined => {
     const a = (k: string) => parseFloat(el.attrs[k] ?? '0') || 0;
     switch (el.name) {
       case 'path':
-        return parseSvgPath(el.attrs.d ?? '');
+        return parseSvgPath(el.attrs.d ?? '', () => badPaths++);
       case 'rect': {
         const [x, y, rw, rh] = [a('x'), a('y'), a('width'), a('height')];
         if (rw <= 0 || rh <= 0) return [];
@@ -466,13 +484,17 @@ export function readSvg(src: string, opts: ReadOptions = {}): SvgDrawing {
     names: string[],
     depth: number,
   ) => {
-    if (depth > 64 || SKIP.has(el.name)) return;
+    if (depth > 64 || SKIP.has(el.name) || (copying && ++copies > MAX_COPIES)) return;
     const style = styleOf(el, parent);
     if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
-      if (el.children.length || shapeCmds(el)) skippedHidden++;
+      if (el.children.length || SHAPES.has(el.name)) skippedHidden++;
       return;
     }
     let mm = multiply(m, parseTransform(el.attrs.transform));
+    if (!mm.every(Number.isFinite)) {
+      tooLarge++;
+      return;
+    }
     const own = nameOf(el);
     const isLayer = el.attrs['inkscape:groupmode'] === 'layer';
     let here = layer;
@@ -494,16 +516,22 @@ export function readSvg(src: string, opts: ReadOptions = {}): SvgDrawing {
         mm = multiply(mm, [1, 0, 0, 1, a('x'), a('y')]);
       }
       const kids = isLayer || known || el === root || !own ? names : [own, ...names];
+      inside.push(el);
       for (const c of el.children) walk(c, mm, style, here, kids, depth + 1);
+      inside.pop();
       return;
     }
     if (el.name === 'use') {
       const ref = byId.get((el.attrs.href ?? el.attrs['xlink:href'] ?? '').replace(/^#/, ''));
-      if (!ref) return;
+      if (!ref || inside.includes(ref)) return;
       const a = (k: string) => parseFloat(el.attrs[k] ?? '0') || 0;
       const t = multiply(mm, [1, 0, 0, 1, a('x'), a('y')]);
       const target = ref.name === 'symbol' ? { ...ref, name: 'g' } : ref;
+      inside.push(ref);
+      copying++;
       walk(target, t, style, here, own ? [own, ...names] : names, depth + 1);
+      copying--;
+      inside.pop();
       return;
     }
     if (el.name === 'image') {
@@ -524,6 +552,10 @@ export function readSvg(src: string, opts: ReadOptions = {}): SvgDrawing {
       const at = apply(mm, [num('x'), num('y')]);
       const scale = Math.sqrt(Math.abs(mm[0] * mm[3] - mm[1] * mm[2]));
       const size = (length(style['font-size'], 96) ?? 16 * px) / px;
+      if (!finite(at) || !Number.isFinite(size * scale)) {
+        tooLarge++;
+        return;
+      }
       const anchor = style['text-anchor'];
       rawTexts.push({
         text,
@@ -538,12 +570,22 @@ export function readSvg(src: string, opts: ReadOptions = {}): SvgDrawing {
       });
       return;
     }
+    if (el.name !== 'path' && huge(el)) {
+      tooLarge++;
+      return;
+    }
     const cmds = shapeCmds(el);
     if (!cmds) {
       for (const c of el.children) walk(c, mm, style, here, names, depth + 1);
       return;
     }
-    const subs = cmdsToSubs(cmds, mm);
+    const all = cmdsToSubs(cmds, mm);
+    const subs = all.filter((s) =>
+      s.segs.every(
+        (g) => finite(g.a) && finite(g.b) && (g.c === 'L' || (finite(g.p1) && finite(g.p2))),
+      ),
+    );
+    if (subs.length < all.length) tooLarge++;
     if (!subs.length) return;
     raws.push({
       subs,
@@ -562,6 +604,18 @@ export function readSvg(src: string, opts: ReadOptions = {}): SvgDrawing {
   if (skippedHidden)
     notes.push(
       `${skippedHidden} hidden element${skippedHidden === 1 ? ' was' : 's were'} left out.`,
+    );
+  if (badPaths)
+    notes.push(
+      `${badPaths} path${badPaths === 1 ? ' has' : 's have'} bad data: read up to the error, as browsers draw ${badPaths === 1 ? 'it' : 'them'}.`,
+    );
+  if (tooLarge)
+    notes.push(
+      `${tooLarge} element${tooLarge === 1 ? ' was' : 's were'} left out: ${tooLarge === 1 ? 'its' : 'their'} numbers are too large to draw.`,
+    );
+  if (copies > MAX_COPIES)
+    notes.push(
+      `The drawing repeats its elements with <use> more than ${MAX_COPIES.toLocaleString('en')} times: only the first ${MAX_COPIES.toLocaleString('en')} copies were read.`,
     );
 
   // Colours to layers. Red cuts and blue scores, as in most laser software.

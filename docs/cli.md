@@ -73,7 +73,8 @@ to standard output, for editors. A file that does not parse is reported and
 left alone.
 
 `import` turns an SVG drawing into a `.kerf` program next to it, or to the
-`-o` file; `-o -` prints it. It writes the circles, rectangles, tabs, slots,
+`-o` file; `-o -` prints it. It does not replace a program already next to
+the drawing unless that file is named with `-o`. It writes the circles, rectangles, tabs, slots,
 finger joints, hanger holes and keyholes it finds as the modules that make
 them, and checks each part against the drawing: see
 [Importing SVG drawings](import.md) for what it finds and for its options.

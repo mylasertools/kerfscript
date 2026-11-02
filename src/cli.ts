@@ -253,13 +253,19 @@ function importCommand(argv: string[]) {
     else if (a === '--pack') opts.pack = true;
     else if (a === '--kerf') {
       opts.kerf = Number(next());
-      if (!(opts.kerf >= 0 && opts.kerf < 5)) fail('--kerf needs a width in mm, 0 or more');
+      if (!(opts.kerf >= 0 && opts.kerf < 5))
+        fail('--kerf needs a width in mm, from 0 to less than 5');
     } else if (a.startsWith('-')) fail(`Unknown option ${a} for kerf import`);
     else if (!file) file = a;
     else fail(`Unexpected argument ${a}`);
   }
   if (!file) fail('Give an .svg file to import.');
   if (!existsSync(file)) fail(`No such file: ${file}`);
+  // A program next to the drawing may have been edited since: it is only
+  // replaced when named with -o
+  const target = out || file.replace(/\.svg$/i, '') + '.kerf';
+  if (!out && existsSync(target))
+    fail(`${target} already exists. Give -o ${target} to replace it.`);
   let result;
   try {
     result = importSvg(readFileSync(file), { ...opts, name: basename(file) });
@@ -270,7 +276,6 @@ function importCommand(argv: string[]) {
     process.stdout.write(result.source);
     return;
   }
-  const target = out || file.replace(/\.svg$/i, '') + '.kerf';
   writeFileSync(target, result.source);
   process.stderr.write(`Wrote ${target}: ${result.summary}\n`);
 }
