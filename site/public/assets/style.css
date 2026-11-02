@@ -1099,7 +1099,8 @@ td {
   background: rgba(200, 51, 29, 0.18);
 }
 
-.editor:focus-within {
+.editor:focus-within,
+.editor.is-drop {
   border-color: var(--red);
 }
 
@@ -1129,6 +1130,10 @@ td {
 
 .pg-console .error {
   color: var(--red);
+}
+
+.pg-console .note {
+  color: var(--ink);
 }
 
 .pg-side .sheet {

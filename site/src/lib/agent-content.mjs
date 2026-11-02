@@ -140,7 +140,7 @@ export function playgroundMarkdown() {
   return page(
     '/playground/',
     `# KerfScript playground\n\n` +
-      `The [interactive playground](${html('/playground/')}) runs in your browser. Start from a model or write KerfScript, ` +
+      `The [interactive playground](${html('/playground/')}) runs in your browser. Start from a model, write KerfScript or import an SVG drawing, ` +
       `change settings and download .kerf, SVG or DXF files. No installation is needed.\n\n` +
       `- [Choose a model](${md('/models/')})\n- [Getting started](${md('/docs/getting-started/')})\n` +
       `- [Laser software notes](${md('/docs/compatibility/')})`,

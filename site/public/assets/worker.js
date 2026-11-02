@@ -1,8 +1,9 @@
 // Copyright (c) 2026 MyLaserTools. SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-MyLaserTools-Commercial
 
 // Runs KerfScript off the main thread, so a slow program never freezes the page.
+// It also turns SVG drawings into programs, in a worker of their own.
 
-import { KerfError, formatError, render } from './kerfscript.js';
+import { KerfError, formatError, importSvg, render } from './kerfscript.js';
 
 const own = (o, k) => (Object.prototype.hasOwnProperty.call(o, k) ? o[k] : undefined);
 
@@ -10,7 +11,18 @@ const font = fetch(new URL('./fonts/AtkinsonHyperlegible-Regular.ttf', import.me
   r.arrayBuffer(),
 );
 
+// An SVG file's bytes to a program
+function importDrawing({ svg, name }) {
+  try {
+    const { source, summary, notes } = importSvg(new Uint8Array(svg), { name });
+    self.postMessage({ ok: true, source, summary, notes });
+  } catch (error) {
+    self.postMessage({ ok: false, error: error.message });
+  }
+}
+
 self.onmessage = async (event) => {
+  if (event.data.svg) return importDrawing(event.data);
   const { id, source, params, files } = event.data;
   const started = performance.now();
   const resolve = files ? (p) => own(files, p) ?? own(files, p + '.kerf') : undefined;

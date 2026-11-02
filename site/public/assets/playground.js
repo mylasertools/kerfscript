@@ -29,6 +29,9 @@ const dxfButton = $('[data-download="dxf"]');
 const zipButton = $('[data-download="zip"]');
 const sheetPick = $('[data-sheet]');
 const sheetsBox = $('[data-sheets]');
+const importButton = $('[data-import]');
+const importFile = $('[data-import-file]');
+const editorBox = $('[data-editor]');
 const run = createEngine();
 // Set by the desktop app (desktop/src/desktop.js): files on disk instead of
 // downloads, and libraries next to the open file.
@@ -45,6 +48,9 @@ try {
   examplesProblem = `The examples could not be loaded (${e.message})`;
 }
 const FALLBACK = 'rect([60, 40]);\n';
+// A large drawing can take a while to import; past this it is stopped
+const IMPORT_TIMEOUT_MS = 60000;
+const MAX_SVG_BYTES = 20_000_000;
 // Desktop app only: open the cut file in LightBurn, next to the SVG and DXF buttons
 const lightburnButton = host?.lightburn
   ? Object.assign(document.createElement('button'), {
@@ -66,6 +72,10 @@ let timer = 0;
 let updates = 0;
 // Why a shared link did not open, shown until the code is edited
 let notice = null;
+// What an SVG import found, also shown until the code is edited
+let imported = [];
+// The imported drawing's name, for the files to download
+let drawingName = null;
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const fmt = (v) => String(Math.round(v * 10) / 10);
@@ -101,6 +111,7 @@ function stale(on) {
 
 function edited() {
   notice = null;
+  imported = [];
   // A link's code is now older than the editor's: reloading should keep the
   // edits (from the draft), not open the link again
   if (!host && location.hash) history.replaceState(null, '', location.pathname + location.search);
@@ -117,7 +128,7 @@ function showDesign(slug) {
   history.replaceState(null, '', picker.value ? `?model=${picker.value}` : location.pathname);
 }
 
-const baseName = () => host?.name() ?? (picker.value || 'design');
+const baseName = () => host?.name() ?? (picker.value || drawingName || 'design');
 
 function syncScroll() {
   viewPre.scrollTop = input.scrollTop;
@@ -237,7 +248,7 @@ function updateSettings() {
 }
 
 function showConsole(shown) {
-  const lines = notice ? [['error', notice], ...shown] : shown;
+  const lines = [...(notice ? [['error', notice]] : []), ...imported, ...shown];
   consoleBox.innerHTML = lines.length
     ? lines.map(([cls, text]) => `<p class="${cls}">${esc(text)}</p>`).join('')
     : '<p class="quiet">echo() output, warnings and errors show up here.</p>';
@@ -308,6 +319,7 @@ function schedule(delay = 250) {
 
 function load(text) {
   input.value = text;
+  drawingName = null;
   host?.loaded(text, Object.values(examples).includes(text));
   shown = -1;
   setReady(null);
@@ -341,9 +353,90 @@ picker.addEventListener('change', async () => {
   }
   picker.value = slug;
   notice = null;
+  imported = [];
   load(examples[picker.value]);
   showDesign(picker.value);
   saveDraft();
+});
+
+// Turns an SVG file's bytes into a program, in a worker of its own: an
+// import never holds up rendering, and one that runs too long is stopped
+function importDrawing(bytes, name) {
+  return new Promise((resolve) => {
+    const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+    const done = (reply) => {
+      clearTimeout(timer);
+      worker.terminate();
+      resolve(reply);
+    };
+    const timer = setTimeout(
+      () => done({ ok: false, error: 'it took longer than a minute' }),
+      IMPORT_TIMEOUT_MS,
+    );
+    worker.onmessage = (e) => done(e.data);
+    worker.onerror = (e) => {
+      e.preventDefault();
+      done({ ok: false, error: e.message || 'the importer could not load' });
+    };
+    worker.postMessage({ svg: bytes, name }, [bytes]);
+  });
+}
+
+async function openDrawing(file) {
+  const failed = (why) => {
+    notice = `${file.name} could not be imported: ${why}`;
+    showConsole([]);
+    status.textContent = 'Import failed';
+  };
+  if (file.size > MAX_SVG_BYTES) return failed(`it is larger than ${MAX_SVG_BYTES / 1_000_000} MB`);
+  importButton.disabled = true;
+  status.textContent = 'Importing…';
+  const reply = await importDrawing(await file.arrayBuffer(), file.name).finally(
+    () => (importButton.disabled = false),
+  );
+  if (!reply.ok) return failed(reply.error);
+  if (host && !(await host.release())) {
+    status.textContent = '';
+    return;
+  }
+  load(reply.source);
+  showDesign('');
+  notice = null;
+  drawingName = file.name.replace(/\.svg$/i, '') || null;
+  imported = [
+    ['note', `Imported ${file.name}: ${reply.summary}`],
+    ...reply.notes.map((n) => ['quiet', n]),
+  ];
+  showConsole([]);
+  saveDraft();
+}
+
+importButton.addEventListener('click', () => importFile.click());
+importFile.addEventListener('change', () => {
+  const file = importFile.files[0];
+  importFile.value = '';
+  if (file) openDrawing(file);
+});
+
+// An SVG file dropped on the editor is imported
+const dragged = (e) => [...(e.dataTransfer?.items ?? [])].some((i) => i.kind === 'file');
+editorBox.addEventListener('dragover', (e) => {
+  if (!dragged(e)) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+  editorBox.classList.add('is-drop');
+});
+editorBox.addEventListener('dragleave', () => editorBox.classList.remove('is-drop'));
+editorBox.addEventListener('drop', (e) => {
+  editorBox.classList.remove('is-drop');
+  const file = e.dataTransfer?.files[0];
+  if (!file) return;
+  e.preventDefault();
+  if (/\.svg$/i.test(file.name) || file.type === 'image/svg+xml') openDrawing(file);
+  else {
+    notice = `${file.name} is not an SVG file: drop an .svg drawing to import it`;
+    showConsole([]);
+  }
 });
 
 sheetPick.addEventListener('change', () => {

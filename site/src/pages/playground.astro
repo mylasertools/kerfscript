@@ -5,7 +5,7 @@ import { models } from '../lib/site.mjs';
 
 <Base
   title="KerfScript playground"
-  description="Write KerfScript in your browser and see the cut file as you type. Change settings, then download SVG or DXF."
+  description="Write KerfScript in your browser and see the cut file as you type. Change settings, import an SVG drawing, then download SVG or DXF."
   wide
   scripts={['/assets/playground.js']}
 >
@@ -17,6 +17,8 @@ import { models } from '../lib/site.mjs';
           {models.map((m) => <option value={m.slug}>{m.title}</option>)}
         </select></label
       >
+      <button class="button" data-import>Import SVG</button>
+      <input type="file" accept=".svg,image/svg+xml" data-import-file hidden />
       <span class="pg-status" data-status aria-live="polite"></span>
       <span class="pg-actions">
         <a class="pg-help" href="/docs/compatibility/">Laser software notes</a>

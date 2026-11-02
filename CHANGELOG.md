@@ -15,6 +15,8 @@
   written as drawn when it does not match. Colours and group names become
   layers, joint depth becomes `$thickness`, and outlines offset for a kerf
   are moved back with `$kerf` set. See [Importing SVG drawings](docs/import.md).
+- The playground imports SVG drawings: choose **Import SVG** or drop a file
+  on the editor.
 - Lines are clipped to a part reliably. Scoring or cutting a closed
   polyline inside a part could add lines that were not drawn, or stop with
   an out of memory error; lines along a part's edge are now always left

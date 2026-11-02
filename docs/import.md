@@ -10,6 +10,10 @@ kerf import ornament.svg -o tree.kerf
 kerf import ornament.svg -o -          # prints the program
 ```
 
+In the [playground](https://kerfscript.mylasertools.com/playground/),
+choose **Import SVG** or drop an SVG file on the editor: the program opens
+in the editor, and the console says what was found.
+
 The importer looks for the shapes KerfScript has modules for and writes
 those modules instead of a list of points:
 
