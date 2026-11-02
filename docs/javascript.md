@@ -129,6 +129,37 @@ format('x=1;module m(a,b=2){rect([a,b]);}');
 
 `format(source, { indent: 4 })` uses four spaces per level.
 
+## importSvg()
+
+`importSvg(svg, options)` turns an SVG drawing into a program, as
+`kerf import` does. `svg` is the text of the drawing, or the bytes of the
+file as a `Uint8Array` or `ArrayBuffer`; bytes are read as UTF-8 or UTF-16,
+which some programs write. It returns:
+
+- `source`: the program
+- `parts`: the number of parts
+- `found`: what was recognised, as counts by kind
+- `summary`: the same in words, such as `2 parts; found 3 circles.`
+- `notes`: what to know about the drawing, also written at the top of the
+  program
+
+The options are those of `kerf import`: `dpi`, `tolerance`, `kerf` and
+`pack`, and `name`, the drawing's name for the comment at the top. See
+[Importing SVG drawings](import.md).
+
+```js
+import { importSvg, render } from '@mylasertools/kerfscript';
+
+const file = input.files[0];
+const { source, summary } = importSvg(await file.arrayBuffer(), { name: file.name });
+const result = render(source, { fonts, defaultFont: 'Atkinson' });
+```
+
+A drawing with text needs a font to render, as any program with `text()`
+does. A large drawing can take some seconds to import: in a browser, call
+`importSvg()` in a web worker so the page stays responsive. It throws an
+`Error` for a file that is not SVG.
+
 ## Syntax colouring
 
 `@mylasertools/kerfscript/highlight` colours KerfScript code without loading

@@ -50,6 +50,7 @@ export const GUIDES = [
   ['editors', 'Editors'],
   ['mcp', 'AI assistants'],
   ['webassembly', 'WebAssembly'],
+  ['import', 'Importing SVG'],
   ['openscad', 'Coming from OpenSCAD'],
   ['compatibility', 'Laser software'],
   ['versions', 'Versions'],

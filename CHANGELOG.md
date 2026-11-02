@@ -8,6 +8,13 @@
   beam balance, tilting stand, screw press, wheel calendar and laced mat.
   Each has animated GLB and WebP gallery assets, output snapshots
   and checks at three configurations. Physical cutting and fit validation remain to be done.
+- `kerf import` and `importSvg()` turn an SVG drawing into a program. They
+  write circles, rectangles, polygons, tabs, slots, finger joints, hanger
+  holes, keyholes and hanging loops as the modules that make them, and
+  repeated holes as loops. Each part is checked against the drawing and
+  written as drawn when it does not match. Colours and group names become
+  layers, joint depth becomes `$thickness`, and outlines offset for a kerf
+  are moved back with `$kerf` set. See [Importing SVG drawings](docs/import.md).
 - Lines are clipped to a part reliably. Scoring or cutting a closed
   polyline inside a part could add lines that were not drawn, or stop with
   an out of memory error; lines along a part's edge are now always left

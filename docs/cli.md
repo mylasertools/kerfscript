@@ -51,6 +51,7 @@ kerf fmt <files or folders>
 kerf fmt --check <files or folders>
 kerf fmt -
 kerf lsp [--timeout <seconds>]
+kerf import <file.svg> [-o out.kerf] [--dpi <n>] [--tolerance <mm>] [--kerf <mm>] [--pack]
 kerf add <source>
 kerf remove <name>
 kerf install [--frozen | --check]
@@ -70,6 +71,12 @@ where it is, customizer comments included. It never joins or splits lines.
 exits with 1 when there are any, for CI. `kerf fmt -` formats standard input
 to standard output, for editors. A file that does not parse is reported and
 left alone.
+
+`import` turns an SVG drawing into a `.kerf` program next to it, or to the
+`-o` file; `-o -` prints it. It writes the circles, rectangles, tabs, slots,
+finger joints, hanger holes and keyholes it finds as the modules that make
+them, and checks each part against the drawing: see
+[Importing SVG drawings](import.md) for what it finds and for its options.
 
 `lsp` runs the language server on standard input and output, for editors:
 see [Editors](editors.md). It stops checking a design after `--timeout`
@@ -114,6 +121,7 @@ kerf render name-sign.kerf -D 'name="Ada"' --font Inter-Bold.ttf -o ada.svg
 kerf render box.kerf --sheet 400x300 --kerf 0.12 --split -o box.svg
 kerf render box.kerf -o box.dxf
 kerf check box.kerf
+kerf import ornament.svg -o ornament.kerf
 ```
 
 For multiple sheets, `--split` creates numbered files such as `box-1.svg`

@@ -240,6 +240,8 @@ Errors are thrown as `KerfError` with `line` and `col`.
   holes, enclosures and test pieces, with a picture and an example of each
 - [Shared libraries](docs/shared-libraries.md): use and publish `.kerf`
   libraries, pinned in `kerf.lock` so a design cuts the same everywhere
+- [Importing SVG drawings](docs/import.md): turn a drawing into a program,
+  with its circles, tabs, slots, finger joints and hanger holes found
 - [Coming from OpenSCAD](docs/openscad.md): what is the same and what is not
 - [LANGUAGE.md](LANGUAGE.md): the full language reference
 - [Versions](docs/versions.md): language and package versions, and what stays

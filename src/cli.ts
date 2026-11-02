@@ -7,6 +7,7 @@ import { isMainThread } from 'node:worker_threads';
 import {
   format,
   formatError,
+  importSvg,
   parameters,
   render,
   KerfError,
@@ -39,6 +40,16 @@ Usage:
   kerf fmt <files or folders>        format .kerf files in place
   kerf fmt --check <files>           list files that are not formatted; exit 1 if any
   kerf fmt -                         format standard input to standard output
+  kerf import <file.svg> [-o out.kerf] turn an SVG drawing into a .kerf program,
+                                     finding circles, tabs, finger joints, slots,
+                                     hanger holes and keyholes; -o - prints it
+      --dpi <n>                      px per inch for drawings measured in px
+                                     (96; 72 for Adobe Illustrator files)
+      --tolerance <mm>               how close a found shape must be (0.05)
+      --pack                         merge identical parts into a quantity and
+                                     pack them, instead of keeping the layout
+      --kerf <mm>                    the kerf the drawing's outlines were offset
+                                     for; 0 takes them as drawn (found if left out)
   kerf lsp [--timeout <s>]           run the language server for editors (stdio);
                                      stop checking a design after s seconds (10)
 
@@ -93,6 +104,7 @@ function main(argv: string[]) {
   }
   const cmd = argv[0];
   if (cmd === 'fmt') return fmt(argv.slice(1));
+  if (cmd === 'import') return importCommand(argv.slice(1));
   if (['install', 'add', 'remove', 'pack'].includes(cmd)) return libraries(cmd, argv.slice(1));
   // This file runs the server's programs too, in a worker thread
   if (cmd === 'lsp') {
@@ -221,6 +233,46 @@ function main(argv: string[]) {
     writeFileSync(target, result.svg);
   }
   process.stderr.write(`Wrote ${target}\n`);
+}
+
+function importCommand(argv: string[]) {
+  let file = '';
+  let out = '';
+  const opts: { dpi?: number; tolerance?: number; pack?: boolean; kerf?: number } = {};
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    const next = () => argv[++i] ?? fail(`${a} needs a value`);
+    const positive = (v: string) => {
+      const n = Number(v);
+      if (!(n > 0)) fail(`${a} needs a number more than 0`);
+      return n;
+    };
+    if (a === '-o' || a === '--out') out = next();
+    else if (a === '--dpi') opts.dpi = positive(next());
+    else if (a === '--tolerance') opts.tolerance = positive(next());
+    else if (a === '--pack') opts.pack = true;
+    else if (a === '--kerf') {
+      opts.kerf = Number(next());
+      if (!(opts.kerf >= 0 && opts.kerf < 5)) fail('--kerf needs a width in mm, 0 or more');
+    } else if (a.startsWith('-')) fail(`Unknown option ${a} for kerf import`);
+    else if (!file) file = a;
+    else fail(`Unexpected argument ${a}`);
+  }
+  if (!file) fail('Give an .svg file to import.');
+  if (!existsSync(file)) fail(`No such file: ${file}`);
+  let result;
+  try {
+    result = importSvg(readFileSync(file), { ...opts, name: basename(file) });
+  } catch (e) {
+    fail(`error: ${file}: ${(e as Error).message}`);
+  }
+  if (out === '-') {
+    process.stdout.write(result.source);
+    return;
+  }
+  const target = out || file.replace(/\.svg$/i, '') + '.kerf';
+  writeFileSync(target, result.source);
+  process.stderr.write(`Wrote ${target}: ${result.summary}\n`);
 }
 
 // .kerf files in the paths given, folders searched through. Installed

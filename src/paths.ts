@@ -71,7 +71,8 @@ export function flatten(cmds: Cmd[], tolerance = 0.02): Flattened {
   return { closed, open };
 }
 
-export function parseSvgPath(d: string): Cmd[] {
+// `arcStep` is the largest angle, in radians, one curve stands for in an arc
+export function parseSvgPath(d: string, arcStep = Math.PI / 2): Cmd[] {
   const isCommand = (t: string) => /^[a-zA-Z]$/.test(t);
   const tokens = d.match(/[a-zA-Z]|[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/g) ?? [];
   const out: Cmd[] = [];
@@ -167,7 +168,7 @@ export function parseSvgPath(d: string): Cmd[] {
         sweep = flag();
       const x2 = ox + num(),
         y2 = oy + num();
-      out.push(...arcToCubics(x, y, rx, ry, rot, large, sweep, x2, y2));
+      out.push(...arcToCubics(x, y, rx, ry, rot, large, sweep, x2, y2, arcStep));
       x = x2;
       y = y2;
     } else if (C === 'Z') {
@@ -190,6 +191,7 @@ function arcToCubics(
   sweep: number,
   x2: number,
   y2: number,
+  step = Math.PI / 2,
 ): Cmd[] {
   if (rx === 0 || ry === 0 || (x1 === x2 && y1 === y2)) return [{ type: 'L', x: x2, y: y2 }];
   rx = Math.abs(rx);
@@ -222,7 +224,7 @@ function arcToCubics(
   let dt = ang((x1p - cxp) / rx, (y1p - cyp) / ry, (-x1p - cxp) / rx, (-y1p - cyp) / ry);
   if (!sweep && dt > 0) dt -= 2 * Math.PI;
   if (sweep && dt < 0) dt += 2 * Math.PI;
-  const n = Math.ceil(Math.abs(dt) / (Math.PI / 2));
+  const n = Math.ceil(Math.abs(dt) / step);
   const out: Cmd[] = [];
   const pt = (t: number): Pt => [
     cxa + rx * Math.cos(t) * cos - ry * Math.sin(t) * sin,
