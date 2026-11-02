@@ -1,0 +1,37 @@
+// Stem lab: two perforated decks hold removable glass tubes above a base.
+// Tube diameter and pitch define the deck size and the side supports.
+// Assembly: glue decks into side slots. Glass tubes are separate hardware.
+// Water belongs inside the tubes; the plywood is not a watertight vase.
+
+use <kerf/tabs>
+
+/* [Tubes] */
+tubes = 4; // [1:1:8]
+tube_diameter = 18; // [10:1:30]
+pitch = 34; // [24:2:55]
+height = 115; // [70:5:170]
+depth = 50; // [40:5:90]
+
+/* [Material] */
+$thickness = 3; // [2:0.5:6]
+$kerf = 0.15; // [0:0.01:0.3]
+clearance = 0.15; // [0:0.05:0.4]
+
+/* [Hidden] */
+$material = "plywood";
+t = $thickness;
+span = (tubes - 1) * pitch + tube_diameter + 24;
+levels = [height * 0.35, height - 12];
+assert(pitch >= tube_diameter + 6, "Increase pitch to leave a web between tubes");
+part("Base", at = [-t - 8, -8, 0]) difference() {
+  rect([span + 2 * t + 16, depth + 16], r = 5);
+  for (x = [8 + t / 2, 8 + 1.5 * t + span]) translate([x, 8]) rotate(90) slots(depth, clearance = clearance);
+}
+part("Side", qty = 2, at = [[-t, 0, t], [span, 0, t]], rotate = [90, 0, 90]) difference() {
+  union() { rect([depth, height], r = 4); tabs(depth); }
+  for (z = levels) translate([0, z + t / 2]) slots(depth, clearance = clearance);
+}
+part("Tube deck", qty = 2, at = [for (z = levels) [0, 0, t + z]]) difference() {
+  tab_rect([span, depth], [false, true, false, true]);
+  for (i = [0:tubes - 1]) translate([12 + tube_diameter / 2 + i * pitch, depth / 2]) circle(d = tube_diameter + 0.6);
+}

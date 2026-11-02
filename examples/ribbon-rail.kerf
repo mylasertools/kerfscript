@@ -1,0 +1,35 @@
+// Ribbon rail: a pair of uprights hold a removable wooden dowel over a base.
+// Spool count and width set the space between uprights. Dowel not included.
+// Assembly: glue the uprights into the base; pass the dowel through both.
+
+use <kerf/tabs>
+
+/* [Spools] */
+spools = 5; // [1:1:10]
+spool_width = 28; // [15:1:55]
+spool_diameter = 75; // [40:5:120]
+dowel_diameter = 8; // [6:1:14]
+spool_gap = 3; // [2:1:8]
+
+/* [Material] */
+$thickness = 3; // [2:0.5:6]
+$kerf = 0.15; // [0:0.01:0.3]
+clearance = 0.15; // [0:0.05:0.4]
+
+/* [Hidden] */
+$material = "plywood";
+t = $thickness;
+span = spools * (spool_width + spool_gap) + spool_gap;
+depth = spool_diameter + 24;
+axle_height = spool_diameter / 2 + 12;
+height = axle_height + dowel_diameter / 2 + 14;
+part("Base", at = [-8, -8, 0]) difference() {
+  rect([span + 2*t + 16, depth + 16], r = 5);
+  for (x = [8 + t/2, 8 + span + 1.5*t]) translate([x, 8]) rotate(90) slots(depth, clearance = clearance);
+}
+part("Axle support", qty = 2, at = [[0,0,t],[span+t,0,t]], rotate = [90,0,90]) difference() {
+  union() { rect([depth,height], r = 5); tabs(depth); }
+  translate([depth/2,axle_height]) circle(d = dowel_diameter + 0.6);
+}
+// Cut a dowel to span + 2 * thickness + 20 mm. A collar at each end
+// prevents it sliding out. The 3D model contains the cut sheet parts only.

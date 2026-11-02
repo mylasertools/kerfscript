@@ -1,0 +1,37 @@
+// Perforated deck: a raised shelf locates bottles or display eggs over a foot.
+// Hole pitch, diameter and the grid count determine the footprint. An egg
+// display is a parameter preset of this construction, not another model.
+// Assembly: glue the two side supports into the foot, then add the deck.
+
+use <kerf/tabs>
+
+/* [Hole grid] */
+columns = 6; // [2:1:10]
+rows = 3; // [1:1:5]
+diameter = 26; // [16:1:42]
+pitch = 35; // [24:1:55]
+deck_height = 32; // [20:2:70]
+
+/* [Material] */
+$thickness = 3; // [2:0.5:6]
+$kerf = 0.15; // [0:0.01:0.3]
+clearance = 0.15; // [0:0.05:0.4]
+
+/* [Hidden] */
+$material = "plywood";
+t = $thickness;
+span = (columns - 1) * pitch + diameter + 18;
+depth = (rows - 1) * pitch + diameter + 18;
+assert(pitch >= diameter + 5, "Increase pitch to leave 5 mm between holes");
+part("Foot", at = [-t - 6, -6, 0]) difference() {
+  rect([span + 2 * t + 12, depth + 12], r = 4);
+  for (x = [6 + t / 2, 6 + 1.5 * t + span]) translate([x, 6]) rotate(90) slots(depth, clearance = clearance);
+}
+part("Side", qty = 2, at = [[-t, 0, t], [span, 0, t]], rotate = [90, 0, 90]) difference() {
+  union() { rect([depth, deck_height + t + 8], r = 2); tabs(depth); }
+  translate([0, deck_height + t / 2]) slots(depth, clearance = clearance);
+}
+part("Bottle deck", at = [0, 0, t + deck_height]) difference() {
+  tab_rect([span, depth], [false, true, false, true]);
+  for (i = [0:columns - 1], j = [0:rows - 1]) translate([9 + diameter / 2 + i * pitch, 9 + diameter / 2 + j * pitch]) circle(d = diameter);
+}

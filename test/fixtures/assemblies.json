@@ -1,0 +1,785 @@
+[
+  {
+    "file": "tea-pavilion",
+    "variants": [
+      {
+        "packet_width": 55,
+        "packet_depth": 50,
+        "stack_height": 100,
+        "$thickness": 2
+      },
+      {
+        "packet_width": 85,
+        "packet_depth": 75,
+        "stack_height": 210,
+        "$thickness": 4
+      }
+    ]
+  },
+  {
+    "file": "jewel-tray-box",
+    "variants": [
+      {
+        "columns": 1,
+        "rows": 1
+      },
+      {
+        "width": 240,
+        "depth": 200,
+        "height": 80,
+        "columns": 5,
+        "rows": 3,
+        "$thickness": 6
+      }
+    ],
+    "poses": [
+      {
+        "lid_lift": 45.0
+      },
+      {
+        "lid_lift": 38.409902577
+      },
+      {
+        "lid_lift": 22.5
+      },
+      {
+        "lid_lift": 0.0
+      },
+      {
+        "lid_lift": 22.5
+      },
+      {
+        "lid_lift": 45.0
+      }
+    ]
+  },
+  {
+    "file": "earring-screen",
+    "variants": [
+      {
+        "width": 140,
+        "height": 160,
+        "pairs": 3,
+        "rows": 4,
+        "$thickness": 2
+      },
+      {
+        "width": 250,
+        "height": 280,
+        "pairs": 7,
+        "rows": 8,
+        "$thickness": 6
+      }
+    ]
+  },
+  {
+    "file": "napkin-bridge",
+    "variants": [
+      {
+        "width": 120,
+        "height": 65,
+        "clear_gap": 25,
+        "$thickness": 2
+      },
+      {
+        "width": 230,
+        "height": 120,
+        "clear_gap": 75,
+        "$thickness": 6
+      }
+    ]
+  },
+  {
+    "file": "post-sorter",
+    "variants": [
+      {
+        "bays": 1,
+        "width": 160,
+        "$thickness": 2
+      },
+      {
+        "bays": 5,
+        "width": 280,
+        "bay_gap": 45,
+        "$thickness": 6
+      }
+    ]
+  },
+  {
+    "file": "coaster-caddy",
+    "variants": [
+      {
+        "diameter": 70,
+        "capacity": 4,
+        "$thickness": 2
+      },
+      {
+        "diameter": 130,
+        "capacity": 10,
+        "coaster_thickness": 6,
+        "$thickness": 6
+      }
+    ]
+  },
+  {
+    "file": "tissue-cover",
+    "variants": [
+      {
+        "carton_width": 150,
+        "carton_depth": 90,
+        "carton_height": 65,
+        "opening": 70,
+        "$thickness": 2
+      },
+      {
+        "carton_width": 260,
+        "carton_depth": 150,
+        "carton_height": 130,
+        "opening": 130,
+        "$thickness": 6
+      }
+    ]
+  },
+  {
+    "file": "stem-lab",
+    "variants": [
+      {
+        "tubes": 1,
+        "tube_diameter": 12,
+        "height": 80,
+        "$thickness": 2
+      },
+      {
+        "tubes": 7,
+        "tube_diameter": 25,
+        "pitch": 42,
+        "height": 150,
+        "$thickness": 6
+      }
+    ]
+  },
+  {
+    "file": "paint-deck",
+    "variants": [
+      {
+        "columns": 3,
+        "rows": 1,
+        "diameter": 20,
+        "pitch": 28,
+        "$thickness": 2
+      },
+      {
+        "columns": 4,
+        "rows": 2,
+        "diameter": 36,
+        "pitch": 52,
+        "deck_height": 32,
+        "$thickness": 6
+      }
+    ]
+  },
+  {
+    "file": "miniature-bench",
+    "variants": [
+      {
+        "width": 100,
+        "depth": 42,
+        "seat_height": 28,
+        "back_height": 30,
+        "$thickness": 2
+      },
+      {
+        "width": 220,
+        "depth": 80,
+        "seat_height": 60,
+        "back_height": 65,
+        "$thickness": 6
+      }
+    ]
+  },
+  {
+    "file": "book-brace",
+    "variants": [
+      {
+        "height": 110,
+        "brace_height": 60,
+        "width": 90,
+        "$thickness": 2
+      },
+      {
+        "height": 210,
+        "brace_height": 95,
+        "foot_length": 170,
+        "width": 160,
+        "$thickness": 6
+      }
+    ]
+  },
+  {
+    "file": "cable-harbour",
+    "variants": [
+      {
+        "bays": 1,
+        "bay_width": 24,
+        "depth": 100,
+        "$thickness": 2
+      },
+      {
+        "bays": 5,
+        "bay_width": 36,
+        "depth": 190,
+        "$thickness": 6
+      }
+    ]
+  },
+  {
+    "file": "ribbon-rail",
+    "variants": [
+      {
+        "spools": 2,
+        "spool_width": 20,
+        "spool_diameter": 50,
+        "$thickness": 2
+      },
+      {
+        "spools": 8,
+        "spool_width": 40,
+        "spool_diameter": 105,
+        "dowel_diameter": 12,
+        "$thickness": 6
+      }
+    ]
+  },
+  {
+    "file": "bottle-tote",
+    "variants": [
+      {
+        "columns": 2,
+        "bottle_diameter": 50,
+        "wall_height": 50,
+        "handle_height": 150,
+        "$thickness": 3
+      },
+      {
+        "columns": 3,
+        "bottle_diameter": 80,
+        "wall_height": 80,
+        "handle_height": 220,
+        "$thickness": 6
+      }
+    ]
+  },
+  {
+    "file": "pocket-valet",
+    "variants": [
+      {
+        "width": 160,
+        "depth": 110,
+        "keys": 3,
+        "perch_height": 85,
+        "$thickness": 2
+      },
+      {
+        "width": 300,
+        "depth": 190,
+        "keys": 6,
+        "perch_height": 145,
+        "$thickness": 6
+      }
+    ]
+  },
+  {
+    "file": "card-pocket",
+    "variants": [
+      {
+        "card_width": 75,
+        "stack_depth": 15,
+        "$thickness": 2
+      },
+      {
+        "card_width": 140,
+        "stack_depth": 45,
+        "front_height": 30,
+        "back_height": 75,
+        "$thickness": 6
+      }
+    ]
+  },
+  {
+    "file": "plant-plinth",
+    "variants": [
+      {
+        "pot_diameter": 80,
+        "height": 60,
+        "leg_width": 16,
+        "$thickness": 3
+      },
+      {
+        "pot_diameter": 170,
+        "height": 130,
+        "leg_width": 30,
+        "$thickness": 6
+      }
+    ]
+  },
+  {
+    "file": "drawer-stack",
+    "variants": [
+      {
+        "drawers": 1,
+        "width": 130,
+        "depth": 100,
+        "drawer_height": 28,
+        "$thickness": 2
+      },
+      {
+        "drawers": 5,
+        "width": 260,
+        "depth": 210,
+        "drawer_height": 45,
+        "$thickness": 6
+      }
+    ],
+    "poses": [
+      {
+        "extension": 0.0
+      },
+      {
+        "extension": 0.087867966
+      },
+      {
+        "extension": 0.3
+      },
+      {
+        "extension": 0.6
+      },
+      {
+        "extension": 0.3
+      },
+      {
+        "extension": 0.0
+      }
+    ]
+  },
+  {
+    "file": "loom-card",
+    "variants": [
+      {
+        "warp_count": 9,
+        "pitch": 5,
+        "length": 120,
+        "$thickness": 2
+      },
+      {
+        "warp_count": 29,
+        "pitch": 8,
+        "length": 240,
+        "border": 22,
+        "$thickness": 6
+      }
+    ]
+  },
+  {
+    "file": "ribbed-lantern",
+    "variants": [
+      {
+        "diameter": 160,
+        "height": 150,
+        "ribs": 10,
+        "collar_diameter": 55,
+        "$thickness": 2
+      },
+      {
+        "diameter": 300,
+        "height": 260,
+        "ribs": 20,
+        "collar_diameter": 100,
+        "$thickness": 4
+      }
+    ]
+  },
+  {
+    "file": "slide-grid",
+    "variants": [
+      {
+        "columns": 3,
+        "rows": 3,
+        "tile_size": 28,
+        "shuffle_steps": 19,
+        "seed": 11,
+        "$thickness": 2
+      },
+      {
+        "columns": 5,
+        "rows": 4,
+        "tile_size": 35,
+        "shuffle_steps": 55,
+        "seed": 23,
+        "$thickness": 4
+      }
+    ],
+    "poses": [
+      {
+        "tile_slide": 0.0
+      },
+      {
+        "tile_slide": 0.146446609
+      },
+      {
+        "tile_slide": 0.5
+      },
+      {
+        "tile_slide": 1.0
+      },
+      {
+        "tile_slide": 0.5
+      },
+      {
+        "tile_slide": 0.0
+      }
+    ]
+  },
+  {
+    "file": "game-insert",
+    "variants": [
+      {
+        "box_width": 240,
+        "box_depth": 220,
+        "deck_count": 2,
+        "card_width": 63,
+        "card_length": 88,
+        "token_cols": 2,
+        "token_rows": 2,
+        "stack_height": 28,
+        "$thickness": 2
+      },
+      {
+        "box_width": 400,
+        "box_depth": 330,
+        "box_height": 80,
+        "deck_count": 4,
+        "card_width": 70,
+        "card_length": 100,
+        "token_cols": 4,
+        "token_rows": 3,
+        "stack_height": 45,
+        "$thickness": 4
+      }
+    ]
+  },
+  {
+    "file": "cable-chain",
+    "variants": [
+      {
+        "links": 4,
+        "channel_width": 22,
+        "link_height": 20,
+        "pitch": 34,
+        "joint_angle": 0,
+        "$thickness": 2
+      },
+      {
+        "links": 10,
+        "channel_width": 40,
+        "link_height": 32,
+        "pitch": 55,
+        "joint_angle": 10,
+        "$thickness": 4
+      }
+    ],
+    "poses": [
+      {
+        "joint_angle": 0.0
+      },
+      {
+        "joint_angle": 1.757359313
+      },
+      {
+        "joint_angle": 6.0
+      },
+      {
+        "joint_angle": 12.0
+      },
+      {
+        "joint_angle": 6.0
+      },
+      {
+        "joint_angle": 0.0
+      }
+    ]
+  },
+  {
+    "file": "cantilever-case",
+    "variants": [
+      {
+        "tray_width": 95,
+        "depth": 110,
+        "tray_height": 28,
+        "base_height": 40,
+        "levels": 1,
+        "opening": 0,
+        "$thickness": 2
+      },
+      {
+        "tray_width": 150,
+        "depth": 200,
+        "tray_height": 42,
+        "base_height": 60,
+        "levels": 3,
+        "opening": 1,
+        "lids": true,
+        "$thickness": 4
+      }
+    ],
+    "poses": [
+      {
+        "opening": 1.0
+      },
+      {
+        "opening": 0.853553391
+      },
+      {
+        "opening": 0.5
+      },
+      {
+        "opening": 0.0
+      },
+      {
+        "opening": 0.5
+      },
+      {
+        "opening": 1.0
+      }
+    ]
+  },
+  {
+    "file": "beam-balance",
+    "variants": [
+      {
+        "arm": 85,
+        "pivot_height": 135,
+        "drop": 75,
+        "pan_diameter": 55,
+        "base_depth": 85,
+        "$thickness": 2
+      },
+      {
+        "arm": 135,
+        "pivot_height": 210,
+        "drop": 120,
+        "pan_diameter": 85,
+        "base_width": 190,
+        "base_depth": 125,
+        "$thickness": 4
+      }
+    ],
+    "poses": [
+      {
+        "tilt": 0.0
+      },
+      {
+        "tilt": 7.071067812
+      },
+      {
+        "tilt": 10.0
+      },
+      {
+        "tilt": 0.0
+      },
+      {
+        "tilt": -10.0
+      },
+      {
+        "tilt": -0.0
+      }
+    ]
+  },
+  {
+    "file": "sector-stand",
+    "variants": [
+      {
+        "width": 140,
+        "depth": 115,
+        "base_depth": 170,
+        "pivot_height": 60,
+        "radius": 68,
+        "angle": 15,
+        "$thickness": 2
+      },
+      {
+        "width": 240,
+        "depth": 175,
+        "base_depth": 235,
+        "pivot_height": 85,
+        "radius": 95,
+        "angle": 60,
+        "$thickness": 4
+      }
+    ],
+    "poses": [
+      {
+        "angle": 37.5
+      },
+      {
+        "angle": 56.945436483
+      },
+      {
+        "angle": 65.0
+      },
+      {
+        "angle": 37.5
+      },
+      {
+        "angle": 10.0
+      },
+      {
+        "angle": 37.5
+      }
+    ]
+  },
+  {
+    "file": "screw-press",
+    "variants": [
+      {
+        "width": 145,
+        "depth": 115,
+        "platen_layers": 3,
+        "rod_height": 100,
+        "opening": 35,
+        "rod_diameter": 4,
+        "thread_pitch": 0.7,
+        "nut_flats": 7,
+        "nut_height": 3,
+        "$thickness": 2
+      },
+      {
+        "width": 240,
+        "depth": 190,
+        "platen_layers": 4,
+        "rod_height": 170,
+        "opening": 65,
+        "rod_diameter": 8,
+        "thread_pitch": 1.25,
+        "nut_flats": 13,
+        "nut_height": 6.5,
+        "$thickness": 4
+      }
+    ],
+    "poses": [
+      {
+        "opening": 50.0
+      },
+      {
+        "opening": 51.414213562
+      },
+      {
+        "opening": 52.0
+      },
+      {
+        "opening": 50.0
+      },
+      {
+        "opening": 48.0
+      },
+      {
+        "opening": 50.0
+      }
+    ]
+  },
+  {
+    "file": "wheel-calendar",
+    "variants": [
+      {
+        "day_radius": 65,
+        "month_radius": 42,
+        "week_radius": 35,
+        "day": 1,
+        "month": 1,
+        "weekday": 4,
+        "$thickness": 2
+      },
+      {
+        "day_radius": 90,
+        "month_radius": 58,
+        "week_radius": 48,
+        "day": 28,
+        "month": 2,
+        "weekday": 7,
+        "$thickness": 4
+      }
+    ],
+    "poses": [
+      {
+        "day": 17,
+        "month": 11,
+        "weekday": 1
+      },
+      {
+        "day": 20.875,
+        "month": 12.5,
+        "weekday": 1.875
+      },
+      {
+        "day": 24.75,
+        "month": 2.0,
+        "weekday": 2.75
+      },
+      {
+        "day": 1.5,
+        "month": 5.0,
+        "weekday": 4.5
+      },
+      {
+        "day": 9.25,
+        "month": 8.0,
+        "weekday": 6.25
+      },
+      {
+        "day": 17,
+        "month": 11,
+        "weekday": 1
+      }
+    ]
+  },
+  {
+    "file": "slat-roll",
+    "variants": [
+      {
+        "width": 180,
+        "slats": 16,
+        "slat_width": 9,
+        "gap": 1.8,
+        "curl": 0,
+        "$thickness": 2
+      },
+      {
+        "width": 300,
+        "slats": 28,
+        "slat_width": 12,
+        "gap": 2.2,
+        "curl": 1,
+        "$thickness": 4
+      }
+    ],
+    "poses": [
+      {
+        "curl": 0.0
+      },
+      {
+        "curl": 0.146446609
+      },
+      {
+        "curl": 0.5
+      },
+      {
+        "curl": 1.0
+      },
+      {
+        "curl": 0.5
+      },
+      {
+        "curl": 0.0
+      }
+    ]
+  }
+]

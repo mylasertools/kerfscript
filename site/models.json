@@ -323,5 +323,150 @@
     "file": "calibration-set",
     "title": "Calibration set",
     "tags": ["calibration", "kerf", "library", "joinery"]
+  },
+  {
+    "file": "tea-pavilion",
+    "title": "Tea pavilion dispenser",
+    "tags": ["storage", "joinery", "roof"]
+  },
+  {
+    "file": "jewel-tray-box",
+    "title": "Jewellery tray box",
+    "tags": ["storage", "dividers", "lid"]
+  },
+  {
+    "file": "earring-screen",
+    "title": "Earring screen",
+    "tags": ["display", "slots", "jewellery"]
+  },
+  {
+    "file": "napkin-bridge",
+    "title": "Napkin bridge",
+    "tags": ["home", "slots", "storage"]
+  },
+  {
+    "file": "post-sorter",
+    "title": "Post sorter",
+    "tags": ["storage", "slots", "parts"]
+  },
+  {
+    "file": "coaster-caddy",
+    "title": "Coaster caddy",
+    "tags": ["storage", "joinery", "home"]
+  },
+  {
+    "file": "tissue-cover",
+    "title": "Tissue carton cover",
+    "tags": ["home", "joinery", "enclosure"]
+  },
+  {
+    "file": "stem-lab",
+    "title": "Stem lab tube stand",
+    "tags": ["home", "slots", "plants"]
+  },
+  {
+    "file": "paint-deck",
+    "title": "Perforated display deck",
+    "tags": ["storage", "slots", "workshop"]
+  },
+  {
+    "file": "miniature-bench",
+    "title": "Miniature bench",
+    "tags": ["miniature", "slots", "furniture"]
+  },
+  {
+    "file": "book-brace",
+    "title": "Book brace pair",
+    "tags": ["home", "slots", "support"]
+  },
+  {
+    "file": "cable-harbour",
+    "title": "Cable harbour device tray",
+    "tags": ["storage", "devices", "joinery"]
+  },
+  {
+    "file": "ribbon-rail",
+    "title": "Ribbon spool rail",
+    "tags": ["storage", "workshop", "hardware"]
+  },
+  {
+    "file": "bottle-tote",
+    "title": "Bottle display tote",
+    "tags": ["storage", "handle", "dividers"]
+  },
+  {
+    "file": "pocket-valet",
+    "title": "Pocket valet tray",
+    "tags": ["storage", "slots", "home"]
+  },
+  {
+    "file": "card-pocket",
+    "title": "Business card pocket",
+    "tags": ["display", "joinery", "storage"]
+  },
+  {
+    "file": "plant-plinth",
+    "title": "Plant display plinth",
+    "tags": ["home", "half-lap", "support"]
+  },
+  {
+    "file": "drawer-stack",
+    "title": "Small-parts drawer stack",
+    "tags": ["storage", "drawers", "joinery"]
+  },
+  {
+    "file": "loom-card",
+    "title": "Weaving loom and shuttle",
+    "tags": ["craft", "patterns", "parts"]
+  },
+  {
+    "file": "ribbed-lantern",
+    "title": "Ribbed lantern shade",
+    "tags": ["home", "radial", "slots"]
+  },
+  {
+    "file": "slide-grid",
+    "title": "Captive sliding tile puzzle",
+    "tags": ["game", "sliding", "hardware"]
+  },
+  {
+    "file": "game-insert",
+    "title": "Lift-out game box insert",
+    "tags": ["storage", "game", "trays"]
+  },
+  {
+    "file": "cable-chain",
+    "title": "Articulated cable chain",
+    "tags": ["mechanism", "links", "hardware"]
+  },
+  {
+    "file": "cantilever-case",
+    "title": "Cantilever sewing and tool case",
+    "tags": ["storage", "linkage", "hardware"]
+  },
+  {
+    "file": "beam-balance",
+    "title": "Beam balance with suspended pans",
+    "tags": ["mechanism", "balance", "suspension"]
+  },
+  {
+    "file": "sector-stand",
+    "title": "Sector-lock tilting stand",
+    "tags": ["hardware", "tilting", "arc-slots"]
+  },
+  {
+    "file": "screw-press",
+    "title": "Laminated screw press",
+    "tags": ["workholding", "captive-nuts", "lamination"]
+  },
+  {
+    "file": "wheel-calendar",
+    "title": "Independent wheel calendar",
+    "tags": ["calendar", "axles", "indexing"]
+  },
+  {
+    "file": "slat-roll",
+    "title": "Cord-laced roll-up desk mat",
+    "tags": ["lacing", "flexible", "repeated-parts"]
   }
 ]

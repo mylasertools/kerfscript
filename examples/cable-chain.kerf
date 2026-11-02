@@ -1,0 +1,54 @@
+// Cable chain: alternating wide and narrow U-links pivot on bought side bolts.
+// Each link has two cheeks and one tabbed floor bridge. The channel stays open.
+// Assembly: glue each U-link square, then connect adjacent cheeks with short
+// bolts, washers and locknuts. Keep the pivots loose enough to turn freely.
+// This free-pivot prototype has no mechanical bend stops or machine rating.
+
+use <kerf/tabs>
+
+/* [Chain] */
+links = 8; // [3:1:14]
+channel_width = 28; // [18:1:60]
+link_height = 22; // [20:1:40]
+pitch = 36; // [32:1:65]
+pin_diameter = 3; // [3:0.5:5]
+
+/* [Assembled view] */
+// Angle between successive links; this does not add a physical stop.
+joint_angle = 8; // [0:1:12]
+
+/* [Material] */
+$thickness = 3; // [2:0.5:6]
+$kerf = 0.15; // [0:0.01:0.3]
+clearance = 0.15; // [0:0.05:0.4]
+pivot_clearance = 0.3; // [0.2:0.05:0.6]
+axial_gap = 0.5; // [0.3:0.1:1]
+
+/* [Hidden] */
+$material = "plywood";
+t = $thickness;
+r = link_height/2;
+bridge_length = pitch - 2*(r+2);
+floor_z = -r+3;
+assert(bridge_length >= 8, "Increase pitch or reduce link height");
+assert(link_height > 2*t+10, "Increase link height for this thickness");
+assert(pin_diameter+pivot_clearance < link_height-10, "Pivot holes leave too little material");
+assert((links-1)*joint_angle <= 150, "Reduce bend or link count to avoid curling back");
+function joint(i) = [i==0?0:sum([for(j=[0:i-1])pitch*cos(j*joint_angle)]),0,
+  r+(i==0?0:sum([for(j=[0:i-1])pitch*sin(j*joint_angle)]))];
+function direction(a) = [cos(a),0,sin(a)];
+function normal(a) = [-sin(a),0,cos(a)];
+module cheek() difference() {
+  hull() { circle(r=r); translate([pitch,0]) circle(r=r); }
+  for(x=[0,pitch]) translate([x,0]) circle(d=pin_diameter+pivot_clearance);
+  translate([pitch/2,floor_z+t/2]) rect([bridge_length/2+clearance,t+clearance],center=true);
+}
+for(i=[0:links-1]) {
+  a=i*joint_angle;
+  span=channel_width+(i%2==0?0:2*(t+axial_gap));
+  for(side=[-1,1]) part(str("Link ",i+1,side<0?" left cheek":" right cheek"),
+    at=joint(i)+[0,side*(span/2+t/2)+t/2,0],rotate=[90,-a,0]) cheek();
+  part(str("Link ",i+1," bridge"),
+    at=joint(i)+direction(a)*(pitch/2+bridge_length/2)+normal(a)*floor_z+[0,-span/2,0],rotate=[-a,0,90])
+    tab_rect([span,bridge_length],[false,true,false,true],count=1,width=bridge_length/2);
+}

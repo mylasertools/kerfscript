@@ -1,0 +1,64 @@
+// Game insert: lift-out card trays and token bins fill a measured game box.
+// Card dimensions constrain the front bank; token bins fill the remaining area.
+// Assembly: glue each bin separately. Leave all bins loose on the carrier floor.
+// No game-specific artwork or component shapes are used.
+
+/* [Game box interior] */
+box_width = 300; // [180:5:420]
+box_depth = 250; // [180:5:380]
+box_height = 65; // [40:5:100]
+box_ease = 1.5; // [1:0.5:3]
+
+/* [Cards] */
+card_width = 66; // [45:1:90]
+card_length = 92; // [65:1:130]
+deck_count = 3; // [1:1:5]
+stack_height = 35; // [20:1:65]
+card_ease = 2; // [1:0.5:4]
+
+/* [Tokens] */
+token_columns = 3; // [1:1:6]
+token_rows = 2; // [1:1:4]
+token_height = 28; // [18:1:50]
+
+/* [Material] */
+$thickness = 3; // [2:0.5:6]
+$kerf = 0.15; // [0:0.01:0.3]
+
+/* [Hidden] */
+$material = "plywood";
+t = $thickness;
+gap = 1.2;
+w = box_width - 2 * box_ease;
+d = box_depth - 2 * box_ease;
+cw = (w - (deck_count+1)*gap) / deck_count;
+cd = card_length + 2*card_ease + 2*t;
+ch = stack_height + t;
+token_zone = d - cd - 3*gap;
+tw = (w - (token_columns+1)*gap) / token_columns;
+td = (token_zone - (token_rows-1)*gap) / token_rows;
+assert(cw-2*t >= card_width+2*card_ease, "Card trays are too narrow: reduce decks or increase box width");
+assert(tw-2*t >= 25 && td-2*t >= 25, "Token bins need at least 25 mm of clear space");
+assert(t+max(ch,token_height) < box_height-1, "Trays exceed the box height");
+module bin(name,width,depth,height,at) {
+  part(str(name," floor"),at=at) finger_rect([width,depth],"out");
+  part(str(name," front"),at=at+[0,t,0],rotate=[90,0,0]) difference() {
+    finger_rect([width,height],["in","out","flat","out"]);
+    translate([width/2,height]) ellipse([min(width*0.24,22),min(height*0.3,10)]);
+  }
+  part(str(name," back"),at=at+[0,depth,0],rotate=[90,0,0])
+    finger_rect([width,height],["in","out","flat","out"]);
+  part(str(name," side"),qty=2,at=[at,at+[width-t,0,0]],rotate=[90,0,90])
+    finger_rect([depth,height],["in","in","flat","in"]);
+}
+part("Carrier floor",at=[0,0,0]) {
+  rect([w,d],r=3);
+  score() {
+    for(i=[0:deck_count-1]) translate([gap+i*(cw+gap),gap]) outline() rect([cw,cd]);
+    for(i=[0:token_columns-1],j=[0:token_rows-1])
+      translate([gap+i*(tw+gap),cd+2*gap+j*(td+gap)]) outline() rect([tw,td]);
+  }
+}
+for(i=[0:deck_count-1]) bin(str("Card tray ",i+1),cw,cd,ch,[gap+i*(cw+gap),gap,t]);
+for(i=[0:token_columns-1],j=[0:token_rows-1])
+  bin(str("Token bin ",j*token_columns+i+1),tw,td,token_height,[gap+i*(tw+gap),cd+2*gap+j*(td+gap),t]);

@@ -206,7 +206,7 @@ export const models = JSON.parse(read('site/models.json')).map((m) => {
     sheets: file.sheets.length,
     laser: file.svg,
     dxf: file.sheets.length === 1 ? file.sheets[0].dxf : null,
-    // The assembled model from Blender (site/3d), when it has been built
+    // The assembled model, when it has been built
     assembled: existsSync(join(process.cwd(), 'public/3d', `${m.file}.webp`)),
     glb: existsSync(join(process.cwd(), 'public/3d', `${m.file}.glb`)),
     // Several sheets: one SVG and DXF per sheet, the files to cut from.

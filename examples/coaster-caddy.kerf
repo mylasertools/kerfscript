@@ -1,0 +1,28 @@
+// Coaster caddy: a small finger-jointed bin with an open front scoop.
+// The interior follows the coaster diameter and stacked thickness.
+// Assembly: glue the finger joints. Coasters are not included in the file.
+
+/* [Coasters] */
+diameter = 95; // [60:5:140]
+coaster_thickness = 4; // [2:0.5:8]
+capacity = 6; // [3:1:12]
+ease = 3; // [2:0.5:6]
+
+/* [Material] */
+$thickness = 3; // [2:0.5:6]
+$kerf = 0.15; // [0:0.01:0.3]
+
+/* [Hidden] */
+$material = "plywood";
+t = $thickness;
+w = diameter + 2 * ease + 2 * t;
+d = capacity * coaster_thickness + 2 * ease + 2 * t;
+h = diameter * 0.62 + t;
+part("Bottom", at = [0, 0, 0]) finger_rect([w, d], "out");
+part("Front", at = [0, t, 0], rotate = [90, 0, 0]) difference() {
+  finger_rect([w, h], ["in", "out", "flat", "out"]);
+  translate([w / 2, h + 5]) circle(d = diameter * 0.68);
+}
+part("Back", at = [0, d, 0], rotate = [90, 0, 0]) finger_rect([w, h], ["in", "out", "flat", "out"]);
+part("End", qty = 2, at = [[0, 0, 0], [w - t, 0, 0]], rotate = [90, 0, 90])
+  finger_rect([d, h], ["in", "in", "flat", "in"]);

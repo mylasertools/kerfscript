@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Twenty-nine parametric examples, including a tea dispenser,
+  jewellery box, drawer cabinet, workshop holders, miniature furniture,
+  radial shade, sliding puzzle, game insert, cable chain, cantilever case,
+  beam balance, tilting stand, screw press, wheel calendar and laced mat.
+  Each has animated GLB and WebP gallery assets, output snapshots
+  and checks at three configurations. Physical cutting and fit validation remain to be done.
+
 ## 0.5.0 (2026-10-31)
 
 Language version 0.2. Programs for 0.1 run as before, except where noted

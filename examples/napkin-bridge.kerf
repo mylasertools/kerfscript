@@ -1,0 +1,30 @@
+// Napkin bridge: two scooped cheeks stand in a slotted rectangular foot.
+// The clear gap follows the napkin stack, rather than a fixed sheet size.
+// Assembly: glue both cheeks into the foot after checking the slot fit.
+
+use <kerf/tabs>
+
+/* [Holder] */
+width = 170; // [100:5:260]
+height = 88; // [55:5:140]
+clear_gap = 40; // [20:5:90]
+scoop = 18; // [0:1:30]
+
+/* [Material] */
+$thickness = 3; // [2:0.5:6]
+$kerf = 0.15; // [0:0.01:0.3]
+clearance = 0.15; // [0:0.05:0.4]
+
+/* [Hidden] */
+$material = "plywood";
+t = $thickness;
+depth = clear_gap + 2 * t + 24;
+centres = [12 + t / 2, 12 + 1.5 * t + clear_gap];
+part("Foot", at = [0, 0, 0]) difference() {
+  rect([width, depth], r = 5);
+  for (y = centres) translate([8, y]) slots(width - 16, clearance = clearance);
+}
+part("Cheek", qty = 2, at = [for (y = centres) [8, y + t / 2, t]], rotate = [90, 0, 0]) difference() {
+  union() { rect([width - 16, height], r = 4); tabs(width - 16); }
+  if (scoop > 0) translate([(width - 16) / 2, height]) ellipse([(width - 16) * 0.3, scoop]);
+}

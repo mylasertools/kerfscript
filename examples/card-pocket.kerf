@@ -1,0 +1,34 @@
+// Card pocket: an open-top card tray with a scooped front and a taller back.
+// Interior width and depth follow the cards and stack, with editable ease.
+// Assembly: glue the five finger-jointed panels. Cards are not supplied.
+
+/* [Cards] */
+card_width = 90; // [70:1:160]
+stack_depth = 22; // [12:1:60]
+back_height = 55; // [40:1:90]
+front_height = 24; // [18:1:38]
+ease = 2; // [1:0.5:4]
+
+/* [Material] */
+$thickness = 3; // [2:0.5:6]
+$kerf = 0.15; // [0:0.01:0.3]
+
+/* [Hidden] */
+$material = "plywood";
+t = $thickness;
+w = card_width+2*ease+2*t;
+d = stack_depth+2*ease+2*t;
+assert(back_height > front_height+8, "Back must rise above the front lip");
+assert(front_height >= 3*t, "Front lip must be at least three sheet thicknesses high");
+// Side corners only meet the common lower wall height. The back rises
+// above those joints, without fingers exposed along its upper sides.
+part("Floor",at=[0,0,0]) finger_rect([w,d],"out");
+part("Front",at=[0,t,0],rotate=[90,0,0]) difference() {
+  finger_rect([w,front_height],["in","out","flat","out"]);
+  translate([w/2,front_height+5]) ellipse([w*0.26,10]);
+}
+part("Back",at=[0,d,0],rotate=[90,0,0]) union() {
+  finger_rect([w,front_height],["in","out","flat","out"]);
+  translate([t,front_height-0.1]) rect([w-2*t,back_height-front_height+0.1],r=2);
+}
+part("Side",qty=2,at=[[0,0,0],[w-t,0,0]],rotate=[90,0,90]) finger_rect([d,front_height],["in","in","flat","in"]);

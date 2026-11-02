@@ -1,0 +1,33 @@
+// Post sorter: a row of tabbed dividers with a rising top line.
+// Bay clearance and bay count set the base depth automatically.
+// Assembly: glue each divider into the matching slots in the base.
+
+use <kerf/tabs>
+
+/* [Storage] */
+width = 220; // [150:5:340]
+bays = 3; // [1:1:6]
+bay_gap = 35; // [20:5:65]
+front_height = 65; // [45:5:100]
+rise = 22; // [0:1:30]
+
+/* [Material] */
+$thickness = 3; // [2:0.5:6]
+$kerf = 0.15; // [0:0.01:0.3]
+clearance = 0.15; // [0:0.05:0.4]
+
+/* [Hidden] */
+$material = "plywood";
+t = $thickness;
+margin = 10;
+depth = 2 * margin + (bays + 1) * t + bays * bay_gap;
+span = width - 2 * margin;
+part("Base", at = [0, 0, 0]) difference() {
+  rect([width, depth], r = 4);
+  for (i = [0:bays]) translate([margin, margin + t / 2 + i * (bay_gap + t)]) slots(span, clearance = clearance);
+}
+for (i = [0:bays])
+  part(str("Divider ", i + 1), at = [margin, margin + t + i * (bay_gap + t), t], rotate = [90, 0, 0]) difference() {
+    union() { rect([span, front_height + rise * i], r = 4); tabs(span); }
+    translate([span / 2, front_height + rise * i]) ellipse([span * 0.25, 13]);
+  }

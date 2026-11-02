@@ -1,0 +1,36 @@
+// Book brace: a bookend pair with tabbed uprights and triangular gussets.
+// The foot extends beneath the books so their weight helps stabilize it.
+// Assembly: glue each upright and gusset into its foot. Add non-slip pads.
+
+use <kerf/tabs>
+
+/* [Bookends] */
+height = 155; // [100:5:230]
+width = 110; // [80:5:180]
+foot_length = 120; // [90:5:190]
+brace_height = 80; // [50:5:100]
+
+/* [Material] */
+$thickness = 3; // [2:0.5:6]
+$kerf = 0.15; // [0:0.01:0.3]
+clearance = 0.15; // [0:0.05:0.4]
+
+/* [Hidden] */
+$material = "plywood";
+t = $thickness;
+assert(brace_height < height - 12, "Gusset must be lower than the upright");
+for (k = [0:1]) {
+  ox = k * (width + 28);
+  part(str("Foot ", k + 1), at = [ox, 0, 0]) difference() {
+    rect([width, foot_length], r = 3);
+    translate([6, 10 + t / 2]) slots(width - 12, clearance = clearance);
+    translate([width / 2, 10 + t]) rotate(90) slots(foot_length - 24, count = 2, clearance = clearance);
+  }
+  part(str("Upright ", k + 1), at = [ox + 6, 10 + t, t], rotate = [90, 0, 0])
+    union() { rect([width - 12, height], r = 4); tabs(width - 12); }
+  part(str("Gusset ", k + 1), at = [ox + width / 2 - t / 2, 10 + t, t], rotate = [90, 0, 90])
+    union() {
+      polygon([[0,0],[foot_length-24,0],[0,brace_height]]);
+      tabs(foot_length - 24, count = 2);
+    }
+}

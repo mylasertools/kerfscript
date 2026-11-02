@@ -1,0 +1,30 @@
+// Tissue cover: an open-bottom sleeve sized around a refill carton.
+// A rounded dispensing slot is cut into the finger-jointed top panel.
+// Assembly: glue the top and four walls; slide it over the carton.
+
+/* [Refill] */
+carton_width = 225; // [120:5:280]
+carton_depth = 115; // [80:5:170]
+carton_height = 90; // [50:5:150]
+ease = 2; // [1:0.5:5]
+opening = 100; // [50:5:150]
+
+/* [Material] */
+$thickness = 3; // [2:0.5:6]
+$kerf = 0.15; // [0:0.01:0.3]
+
+/* [Hidden] */
+$material = "plywood";
+t = $thickness;
+w = carton_width + 2 * ease + 2 * t;
+d = carton_depth + 2 * ease + 2 * t;
+h = carton_height + ease + t;
+assert(opening < w - 8 * t, "Opening leaves too little material at its ends");
+part("Top", at = [0, 0, h - t]) difference() {
+  finger_rect([w, d], "out");
+  translate([w / 2, d / 2]) rect([opening, 28], center = true, r = 14);
+}
+part("Long wall", qty = 2, at = [[0, t, 0], [0, d, 0]], rotate = [90, 0, 0])
+  finger_rect([w, h], ["flat", "out", "in", "out"]);
+part("End wall", qty = 2, at = [[0, 0, 0], [w - t, 0, 0]], rotate = [90, 0, 90])
+  finger_rect([d, h], ["flat", "in", "in", "in"]);

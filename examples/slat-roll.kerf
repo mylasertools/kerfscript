@@ -1,0 +1,40 @@
+// Slat roll: a flexible desk mat assembled from repeated rigid wooden slats.
+// Align the slats with the specified gap and lace two cords through their
+// paired holes. Leave the spans between slats free to hinge; knot the ends.
+// The curl control shows a bending pose, not an elastic-material simulation.
+
+/* [Mat] */
+width = 230; // [150:5:350]
+slats = 24; // [12:1:36]
+slat_width = 10; // [8:1:16]
+gap = 1.5; // [1:0.1:3]
+cord_diameter = 1.5; // [1:0.1:2]
+curl = 0.7; // [0:0.05:1]
+
+/* [Material] */
+$thickness = 3; // [2:0.5:6]
+$kerf = 0.15; // [0:0.01:0.3]
+
+/* [Hidden] */
+$material = "plywood";
+t=$thickness;
+pitch=slat_width+gap;
+arc_length=(slats-1)*pitch;
+radius=curl==0?1000000:arc_length/(curl*270*PI/180);
+assert(curl>=0 && curl<=1,"Curl must stay between the flat and maximum rolled poses");
+assert(gap>2*t*sin(135/(slats-1))+0.15,"Increase gaps or slat count for the curled thickness");
+assert(slat_width>2*cord_diameter+4,"Widen the slats for the lacing holes");
+function a(i)=curl*270*i/(slats-1);
+function centre(i)=curl==0?[0,i*pitch,0]:[0,radius*sin(a(i)),radius*(1-cos(a(i)))];
+function at_hole(i,x,v,z) = centre(i)+[x,v*cos(a(i))-z*sin(a(i)),v*sin(a(i))+z*cos(a(i))];
+part("Laced slat",qty=slats,at=[for(i=[0:slats-1])centre(i)],rotate=[for(i=[0:slats-1])[a(i),0,0]]) difference() {
+  rect([width,slat_width],center=true,r=2);
+  for(x=[-0.32*width,0.32*width],y=[-slat_width/4,slat_width/4])translate([x,y])circle(d=cord_diameter+0.8);
+}
+echo("hardware",concat(
+  [for(i=[0:slats-1],x=[-0.32*width,0.32*width])
+    [at_hole(i,x,-slat_width/4,-0.3),at_hole(i,x,slat_width/4,-0.3),cord_diameter,"cord",12]],
+  [for(i=[0:slats-2],x=[-0.32*width,0.32*width])
+    [at_hole(i,x,slat_width/4,t+0.3),at_hole(i+1,x,-slat_width/4,t+0.3),cord_diameter,"cord",12]],
+  [for(i=[0:slats-1],x=[-0.32*width,0.32*width],v=[-slat_width/4,slat_width/4])
+    [at_hole(i,x,v,-0.3),at_hole(i,x,v,t+0.3),cord_diameter,"cord",12]]));

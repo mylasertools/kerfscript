@@ -1,0 +1,43 @@
+// Jewel tray box: an open box, lift-off lid and removable compartment grid.
+// The lid locates on a glued inset plate; it is not a friction-fit hinge.
+// Assembly: glue the box joints and lid layers. Leave the grid removable.
+
+use <kerf/box>
+use <kerf/dividers>
+
+/* [Box] */
+width = 210; // [100:5:320]
+depth = 145; // [80:5:240]
+height = 55; // [35:5:100]
+columns = 4; // [1:1:7]
+rows = 2; // [1:1:5]
+lid_overhang = 4; // [2:1:8]
+lid_ease = 0.7; // [0.4:0.1:1.5]
+
+/* [Assembled view] */
+// Lift the lid to see the compartments. Cut parts keep their dimensions.
+lid_lift = 45; // [0:5:100]
+
+/* [Material] */
+$thickness = 3; // [2:0.5:6]
+$kerf = 0.15; // [0:0.01:0.3]
+clearance = 0.15; // [0:0.05:0.4]
+
+/* [Hidden] */
+$material = "plywood";
+t = $thickness;
+iw = width - 2 * t;
+id = depth - 2 * t;
+assert(iw / columns > 18 && id / rows > 18, "Compartments must be wider than 18 mm");
+assert(height > 5 * t + 8, "Increase height for the lid locator and dividers");
+box([width, depth, height]);
+grid_dividers([iw, id, height - 3 * t - 4], columns, rows, clearance = clearance, scoops = true, at = [t, t, t]);
+part("Lid", at = [-lid_overhang, -lid_overhang, height + lid_lift]) {
+  rect([width + 2 * lid_overhang, depth + 2 * lid_overhang], r = 5);
+  score() translate([lid_overhang + width / 2, lid_overhang + depth / 2]) {
+    outline() rect([width * 0.6, depth * 0.54], center = true, r = 8);
+    for (x = [-width * 0.18, 0, width * 0.18]) translate([x, 0]) outline() circle(d = 10);
+  }
+}
+part("Lid locator", at = [t + lid_ease, t + lid_ease, height - t + lid_lift])
+  rect([iw - 2 * lid_ease, id - 2 * lid_ease], r = 3);

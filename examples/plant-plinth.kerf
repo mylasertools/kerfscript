@@ -1,0 +1,32 @@
+// Plant plinth: two crossing half-lapped frames support a circular top.
+// Pot diameter sets the top and footprint; height sets the support frames.
+// Assembly: cross the frames at their half-depth slots and glue on the top.
+// Use as a small display stand after checking the material's load capacity.
+
+/* [Stand] */
+pot_diameter = 110; // [70:5:180]
+height = 85; // [50:5:150]
+rim = 12; // [8:1:20]
+leg_width = 22; // [16:1:35]
+
+/* [Material] */
+$thickness = 4; // [3:0.5:6]
+$kerf = 0.15; // [0:0.01:0.3]
+clearance = 0.15; // [0:0.05:0.4]
+
+/* [Hidden] */
+$material = "plywood";
+t = $thickness;
+diameter = pot_diameter+2*rim;
+span = diameter*0.8;
+assert(span > 3*leg_width+8, "Reduce leg width or enlarge the top");
+assert(height > leg_width+12, "Increase height to leave a clear opening");
+module frame(top_slot=false) difference() {
+  rect([span,height]);
+  window = (span-3*leg_width)/2;
+  for(x=[leg_width,2*leg_width+window]) translate([x,height*0.2]) rect([window,height*0.5],r=3);
+  translate([span/2-(t+clearance)/2,top_slot?height/2:-1]) rect([t+clearance,height/2+1]);
+}
+part("Frame A",at=[-span/2,t/2,0],rotate=[90,0,0]) frame(true);
+part("Frame B",at=[-t/2,-span/2,0],rotate=[90,0,90]) frame(false);
+part("Top",at=[0,0,height]) circle(d=diameter);

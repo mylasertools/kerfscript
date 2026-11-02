@@ -239,6 +239,112 @@
   ],
   "warnings": []
  },
+ "beam-balance.kerf": {
+  "parts": [
+   {
+    "name": "Foot",
+    "qty": 1,
+    "size": [
+     150,
+     100
+    ],
+    "pieces": 1,
+    "cut": 551,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fork upright",
+    "qty": 2,
+    "size": [
+     28,
+     177
+    ],
+    "pieces": 1,
+    "cut": 406,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Balance beam",
+    "qty": 1,
+    "size": [
+     228,
+     33
+    ],
+    "pieces": 1,
+    "cut": 534,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left pan floor",
+    "qty": 1,
+    "size": [
+     70,
+     70
+    ],
+    "pieces": 1,
+    "cut": 244,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left pan rim",
+    "qty": 1,
+    "size": [
+     70,
+     70
+    ],
+    "pieces": 1,
+    "cut": 415,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right pan floor",
+    "qty": 1,
+    "size": [
+     70,
+     70
+    ],
+    "pieces": 1,
+    "cut": 244,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right pan rim",
+    "qty": 1,
+    "size": [
+     70,
+     70
+    ],
+    "pieces": 1,
+    "cut": 415,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 37675.13,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "hardware, [[[0, -6, 165], [0, 6, 165], 3, \"steel\", 24], [[-104.2173459, -7.5, 152.2037189], [-104.2173459, 2.5, 152.2037189], 3, \"steel\", 24], [[104.2173459, -7.5, 177.7962811], [104.2173459, 2.5, 177.7962811], 3, \"steel\", 24], [[-104.2173459, -7.5, 152.2037189], [-75.21734592, -7.5, 60.20371894], 1.2, \"cord\", 12], [[-104.2173459, -7.5, 152.2037189], [-118.7173459, 17.61473671, 60.20371894], 1.2, \"cord\", 12], [[-104.2173459, -7.5, 152.2037189], [-118.7173459, -32.61473671, 60.20371894], 1.2, \"cord\", 12], [[104.2173459, -7.5, 177.7962811], [133.2173459, -7.5, 85.79628106], 1.2, \"cord\", 12], [[104.2173459, -7.5, 177.7962811], [89.71734592, 17.61473671, 85.79628106], 1.2, \"cord\", 12], [[104.2173459, -7.5, 177.7962811], [89.71734592, -32.61473671, 85.79628106], 1.2, \"cord\", 12]]"
+  ],
+  "warnings": []
+ },
  "bloom.kerf": {
   "parts": [
    {
@@ -427,6 +533,175 @@
   ],
   "warnings": []
  },
+ "book-brace.kerf": {
+  "parts": [
+   {
+    "name": "Foot 1",
+    "qty": 1,
+    "size": [
+     110,
+     120
+    ],
+    "pieces": 1,
+    "cut": 675,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Upright 1",
+    "qty": 1,
+    "size": [
+     98,
+     158
+    ],
+    "pieces": 1,
+    "cut": 511,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Gusset 1",
+    "qty": 1,
+    "size": [
+     96,
+     83
+    ],
+    "pieces": 1,
+    "cut": 313,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Foot 2",
+    "qty": 1,
+    "size": [
+     110,
+     120
+    ],
+    "pieces": 1,
+    "cut": 675,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Upright 2",
+    "qty": 1,
+    "size": [
+     98,
+     158
+    ],
+    "pieces": 1,
+    "cut": 511,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Gusset 2",
+    "qty": 1,
+    "size": [
+     96,
+     83
+    ],
+    "pieces": 1,
+    "cut": 313,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 64608.79,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "bottle-tote.kerf": {
+  "parts": [
+   {
+    "name": "Floor",
+    "qty": 1,
+    "size": [
+     158,
+     158
+    ],
+    "pieces": 1,
+    "cut": 897,
+    "thickness": 4,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Long wall",
+    "qty": 2,
+    "size": [
+     158,
+     65
+    ],
+    "pieces": 1,
+    "cut": 518,
+    "thickness": 4,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "End wall",
+    "qty": 2,
+    "size": [
+     158,
+     65
+    ],
+    "pieces": 1,
+    "cut": 502,
+    "thickness": 4,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Handle partition",
+    "qty": 1,
+    "size": [
+     150,
+     189
+    ],
+    "pieces": 1,
+    "cut": 953,
+    "thickness": 4,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Cross divider",
+    "qty": 1,
+    "size": [
+     149,
+     58
+    ],
+    "pieces": 1,
+    "cut": 470,
+    "thickness": 4,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 96667.74,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
  "box.kerf": {
   "parts": [
    {
@@ -512,6 +787,409 @@
   "layers": {
    "cut": {
     "area": 36459.57,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "cable-chain.kerf": {
+  "parts": [
+   {
+    "name": "Link 1 left cheek",
+    "qty": 1,
+    "size": [
+     58,
+     22
+    ],
+    "pieces": 1,
+    "cut": 178,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 1 right cheek",
+    "qty": 1,
+    "size": [
+     58,
+     22
+    ],
+    "pieces": 1,
+    "cut": 178,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 1 bridge",
+    "qty": 1,
+    "size": [
+     34,
+     10
+    ],
+    "pieces": 1,
+    "cut": 88,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 2 left cheek",
+    "qty": 1,
+    "size": [
+     58,
+     22
+    ],
+    "pieces": 1,
+    "cut": 178,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 2 right cheek",
+    "qty": 1,
+    "size": [
+     58,
+     22
+    ],
+    "pieces": 1,
+    "cut": 178,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 2 bridge",
+    "qty": 1,
+    "size": [
+     41,
+     10
+    ],
+    "pieces": 1,
+    "cut": 102,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 3 left cheek",
+    "qty": 1,
+    "size": [
+     58,
+     22
+    ],
+    "pieces": 1,
+    "cut": 178,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 3 right cheek",
+    "qty": 1,
+    "size": [
+     58,
+     22
+    ],
+    "pieces": 1,
+    "cut": 178,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 3 bridge",
+    "qty": 1,
+    "size": [
+     34,
+     10
+    ],
+    "pieces": 1,
+    "cut": 88,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 4 left cheek",
+    "qty": 1,
+    "size": [
+     58,
+     22
+    ],
+    "pieces": 1,
+    "cut": 178,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 4 right cheek",
+    "qty": 1,
+    "size": [
+     58,
+     22
+    ],
+    "pieces": 1,
+    "cut": 178,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 4 bridge",
+    "qty": 1,
+    "size": [
+     41,
+     10
+    ],
+    "pieces": 1,
+    "cut": 102,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 5 left cheek",
+    "qty": 1,
+    "size": [
+     58,
+     22
+    ],
+    "pieces": 1,
+    "cut": 178,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 5 right cheek",
+    "qty": 1,
+    "size": [
+     58,
+     22
+    ],
+    "pieces": 1,
+    "cut": 178,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 5 bridge",
+    "qty": 1,
+    "size": [
+     34,
+     10
+    ],
+    "pieces": 1,
+    "cut": 88,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 6 left cheek",
+    "qty": 1,
+    "size": [
+     58,
+     22
+    ],
+    "pieces": 1,
+    "cut": 178,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 6 right cheek",
+    "qty": 1,
+    "size": [
+     58,
+     22
+    ],
+    "pieces": 1,
+    "cut": 178,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 6 bridge",
+    "qty": 1,
+    "size": [
+     41,
+     10
+    ],
+    "pieces": 1,
+    "cut": 102,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 7 left cheek",
+    "qty": 1,
+    "size": [
+     58,
+     22
+    ],
+    "pieces": 1,
+    "cut": 178,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 7 right cheek",
+    "qty": 1,
+    "size": [
+     58,
+     22
+    ],
+    "pieces": 1,
+    "cut": 178,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 7 bridge",
+    "qty": 1,
+    "size": [
+     34,
+     10
+    ],
+    "pieces": 1,
+    "cut": 88,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 8 left cheek",
+    "qty": 1,
+    "size": [
+     58,
+     22
+    ],
+    "pieces": 1,
+    "cut": 178,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 8 right cheek",
+    "qty": 1,
+    "size": [
+     58,
+     22
+    ],
+    "pieces": 1,
+    "cut": 178,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Link 8 bridge",
+    "qty": 1,
+    "size": [
+     41,
+     10
+    ],
+    "pieces": 1,
+    "cut": 102,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 21250.85,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "cable-harbour.kerf": {
+  "parts": [
+   {
+    "name": "Floor",
+    "qty": 1,
+    "size": [
+     93,
+     145
+    ],
+    "pieces": 1,
+    "cut": 948,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Front",
+    "qty": 1,
+    "size": [
+     93,
+     44
+    ],
+    "pieces": 1,
+    "cut": 322,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Cable wall",
+    "qty": 1,
+    "size": [
+     93,
+     44
+    ],
+    "pieces": 1,
+    "cut": 399,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "End",
+    "qty": 2,
+    "size": [
+     145,
+     44
+    ],
+    "pieces": 1,
+    "cut": 432,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Device divider",
+    "qty": 2,
+    "size": [
+     138,
+     68
+    ],
+    "pieces": 1,
+    "cut": 417,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 50322.34,
     "length": 0
    }
   },
@@ -667,6 +1345,552 @@
    },
    "cut": {
     "area": 9720.61,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "cantilever-case.kerf": {
+  "parts": [
+   {
+    "name": "Base well floor",
+    "qty": 1,
+    "size": [
+     226,
+     140
+    ],
+    "pieces": 1,
+    "cut": 960,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Base well front",
+    "qty": 1,
+    "size": [
+     226,
+     44
+    ],
+    "pieces": 1,
+    "cut": 671,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Base well back",
+    "qty": 1,
+    "size": [
+     226,
+     44
+    ],
+    "pieces": 1,
+    "cut": 671,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Base well end",
+    "qty": 2,
+    "size": [
+     140,
+     44
+    ],
+    "pieces": 1,
+    "cut": 416,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left tray 1 floor",
+    "qty": 1,
+    "size": [
+     110,
+     140
+    ],
+    "pieces": 1,
+    "cut": 656,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left tray 1 front",
+    "qty": 1,
+    "size": [
+     110,
+     32
+    ],
+    "pieces": 1,
+    "cut": 367,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left tray 1 back",
+    "qty": 1,
+    "size": [
+     110,
+     32
+    ],
+    "pieces": 1,
+    "cut": 367,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left tray 1 end",
+    "qty": 2,
+    "size": [
+     140,
+     32
+    ],
+    "pieces": 1,
+    "cut": 380,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left link 1 front 1",
+    "qty": 1,
+    "size": [
+     70.53,
+     9
+    ],
+    "pieces": 1,
+    "cut": 172,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left link 1 front 2",
+    "qty": 1,
+    "size": [
+     70.53,
+     9
+    ],
+    "pieces": 1,
+    "cut": 172,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left link 1 back 1",
+    "qty": 1,
+    "size": [
+     70.53,
+     9
+    ],
+    "pieces": 1,
+    "cut": 172,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left link 1 back 2",
+    "qty": 1,
+    "size": [
+     70.53,
+     9
+    ],
+    "pieces": 1,
+    "cut": 172,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left tray 2 floor",
+    "qty": 1,
+    "size": [
+     110,
+     140
+    ],
+    "pieces": 1,
+    "cut": 656,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left tray 2 front",
+    "qty": 1,
+    "size": [
+     110,
+     32
+    ],
+    "pieces": 1,
+    "cut": 347,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left tray 2 back",
+    "qty": 1,
+    "size": [
+     110,
+     32
+    ],
+    "pieces": 1,
+    "cut": 347,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left tray 2 end",
+    "qty": 2,
+    "size": [
+     140,
+     32
+    ],
+    "pieces": 1,
+    "cut": 380,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left link 2 front 1",
+    "qty": 1,
+    "size": [
+     70.53,
+     9
+    ],
+    "pieces": 1,
+    "cut": 172,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left link 2 front 2",
+    "qty": 1,
+    "size": [
+     70.53,
+     9
+    ],
+    "pieces": 1,
+    "cut": 172,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left link 2 back 1",
+    "qty": 1,
+    "size": [
+     70.53,
+     9
+    ],
+    "pieces": 1,
+    "cut": 172,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left link 2 back 2",
+    "qty": 1,
+    "size": [
+     70.53,
+     9
+    ],
+    "pieces": 1,
+    "cut": 172,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right tray 1 floor",
+    "qty": 1,
+    "size": [
+     110,
+     140
+    ],
+    "pieces": 1,
+    "cut": 656,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right tray 1 front",
+    "qty": 1,
+    "size": [
+     110,
+     32
+    ],
+    "pieces": 1,
+    "cut": 367,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right tray 1 back",
+    "qty": 1,
+    "size": [
+     110,
+     32
+    ],
+    "pieces": 1,
+    "cut": 367,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right tray 1 end",
+    "qty": 2,
+    "size": [
+     140,
+     32
+    ],
+    "pieces": 1,
+    "cut": 380,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right link 1 front 1",
+    "qty": 1,
+    "size": [
+     70.53,
+     9
+    ],
+    "pieces": 1,
+    "cut": 172,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right link 1 front 2",
+    "qty": 1,
+    "size": [
+     70.53,
+     9
+    ],
+    "pieces": 1,
+    "cut": 172,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right link 1 back 1",
+    "qty": 1,
+    "size": [
+     70.53,
+     9
+    ],
+    "pieces": 1,
+    "cut": 172,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right link 1 back 2",
+    "qty": 1,
+    "size": [
+     70.53,
+     9
+    ],
+    "pieces": 1,
+    "cut": 172,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right tray 2 floor",
+    "qty": 1,
+    "size": [
+     110,
+     140
+    ],
+    "pieces": 1,
+    "cut": 656,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right tray 2 front",
+    "qty": 1,
+    "size": [
+     110,
+     32
+    ],
+    "pieces": 1,
+    "cut": 347,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right tray 2 back",
+    "qty": 1,
+    "size": [
+     110,
+     32
+    ],
+    "pieces": 1,
+    "cut": 347,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right tray 2 end",
+    "qty": 2,
+    "size": [
+     140,
+     32
+    ],
+    "pieces": 1,
+    "cut": 380,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right link 2 front 1",
+    "qty": 1,
+    "size": [
+     70.53,
+     9
+    ],
+    "pieces": 1,
+    "cut": 172,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right link 2 front 2",
+    "qty": 1,
+    "size": [
+     70.53,
+     9
+    ],
+    "pieces": 1,
+    "cut": 172,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right link 2 back 1",
+    "qty": 1,
+    "size": [
+     70.53,
+     9
+    ],
+    "pieces": 1,
+    "cut": 172,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right link 2 back 2",
+    "qty": 1,
+    "size": [
+     70.53,
+     9
+    ],
+    "pieces": 1,
+    "cut": 172,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 2,
+  "layers": {
+   "cut": {
+    "area": 189776.24,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "card-pocket.kerf": {
+  "parts": [
+   {
+    "name": "Floor",
+    "qty": 1,
+    "size": [
+     100,
+     32
+    ],
+    "pieces": 1,
+    "cut": 336,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Front",
+    "qty": 1,
+    "size": [
+     100,
+     24
+    ],
+    "pieces": 1,
+    "cut": 286,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Back",
+    "qty": 1,
+    "size": [
+     100,
+     55
+    ],
+    "pieces": 1,
+    "cut": 348,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Side",
+    "qty": 2,
+    "size": [
+     32,
+     24
+    ],
+    "pieces": 1,
+    "cut": 112,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 11332.7,
     "length": 0
    }
   },
@@ -1142,6 +2366,71 @@
    },
    "cut": {
     "area": 17617.63,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "coaster-caddy.kerf": {
+  "parts": [
+   {
+    "name": "Bottom",
+    "qty": 1,
+    "size": [
+     107,
+     36
+    ],
+    "pieces": 1,
+    "cut": 358,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Front",
+    "qty": 1,
+    "size": [
+     107,
+     61.9
+    ],
+    "pieces": 1,
+    "cut": 425,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Back",
+    "qty": 1,
+    "size": [
+     107,
+     61.9
+    ],
+    "pieces": 1,
+    "cut": 398,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "End",
+    "qty": 2,
+    "size": [
+     36,
+     61.9
+    ],
+    "pieces": 1,
+    "cut": 220,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 18795.28,
     "length": 0
    }
   },
@@ -1812,6 +3101,279 @@
   "layers": {
    "cut": {
     "area": 101433.29,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "drawer-stack.kerf": {
+  "parts": [
+   {
+    "name": "Carcass floor",
+    "qty": 1,
+    "size": [
+     190,
+     140
+    ],
+    "pieces": 1,
+    "cut": 804,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Carcass top",
+    "qty": 1,
+    "size": [
+     190,
+     140
+    ],
+    "pieces": 1,
+    "cut": 804,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Carcass back",
+    "qty": 1,
+    "size": [
+     190,
+     115.2
+    ],
+    "pieces": 1,
+    "cut": 790,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Carcass side",
+    "qty": 2,
+    "size": [
+     140,
+     115.2
+    ],
+    "pieces": 1,
+    "cut": 926,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Runner shelf",
+    "qty": 2,
+    "size": [
+     190,
+     137
+    ],
+    "pieces": 1,
+    "cut": 678,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drawer 1 floor",
+    "qty": 1,
+    "size": [
+     181.6,
+     133
+    ],
+    "pieces": 1,
+    "cut": 833,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drawer 1 front",
+    "qty": 1,
+    "size": [
+     181.6,
+     32
+    ],
+    "pieces": 1,
+    "cut": 506,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drawer 1 back",
+    "qty": 1,
+    "size": [
+     181.6,
+     32
+    ],
+    "pieces": 1,
+    "cut": 493,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drawer 1 side",
+    "qty": 2,
+    "size": [
+     133,
+     32
+    ],
+    "pieces": 1,
+    "cut": 366,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drawer 2 floor",
+    "qty": 1,
+    "size": [
+     181.6,
+     133
+    ],
+    "pieces": 1,
+    "cut": 833,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drawer 2 front",
+    "qty": 1,
+    "size": [
+     181.6,
+     32
+    ],
+    "pieces": 1,
+    "cut": 506,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drawer 2 back",
+    "qty": 1,
+    "size": [
+     181.6,
+     32
+    ],
+    "pieces": 1,
+    "cut": 493,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drawer 2 side",
+    "qty": 2,
+    "size": [
+     133,
+     32
+    ],
+    "pieces": 1,
+    "cut": 366,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drawer 3 floor",
+    "qty": 1,
+    "size": [
+     181.6,
+     133
+    ],
+    "pieces": 1,
+    "cut": 833,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drawer 3 front",
+    "qty": 1,
+    "size": [
+     181.6,
+     32
+    ],
+    "pieces": 1,
+    "cut": 506,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drawer 3 back",
+    "qty": 1,
+    "size": [
+     181.6,
+     32
+    ],
+    "pieces": 1,
+    "cut": 493,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Drawer 3 side",
+    "qty": 2,
+    "size": [
+     133,
+     32
+    ],
+    "pieces": 1,
+    "cut": 366,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 2,
+  "layers": {
+   "cut": {
+    "area": 280819.02,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "earring-screen.kerf": {
+  "parts": [
+   {
+    "name": "Foot",
+    "qty": 1,
+    "size": [
+     200,
+     80
+    ],
+    "pieces": 1,
+    "cut": 758,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Screen",
+    "qty": 1,
+    "size": [
+     180,
+     203
+    ],
+    "pieces": 1,
+    "cut": 1246,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 51797.51,
     "length": 0
    }
   },
@@ -2572,6 +4134,504 @@
    "Layer, 3, openings, 78",
    "Layer, 4, openings, 78"
   ],
+  "warnings": []
+ },
+ "game-insert.kerf": {
+  "parts": [
+   {
+    "name": "Carrier floor",
+    "qty": 1,
+    "size": [
+     297,
+     247
+    ],
+    "pieces": 1,
+    "cut": 1083,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Card tray 1 floor",
+    "qty": 1,
+    "size": [
+     97.4,
+     102
+    ],
+    "pieces": 1,
+    "cut": 519,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Card tray 1 front",
+    "qty": 1,
+    "size": [
+     97.4,
+     38
+    ],
+    "pieces": 1,
+    "cut": 327,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Card tray 1 back",
+    "qty": 1,
+    "size": [
+     97.4,
+     38
+    ],
+    "pieces": 1,
+    "cut": 319,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Card tray 1 side",
+    "qty": 2,
+    "size": [
+     102,
+     38
+    ],
+    "pieces": 1,
+    "cut": 316,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Card tray 2 floor",
+    "qty": 1,
+    "size": [
+     97.4,
+     102
+    ],
+    "pieces": 1,
+    "cut": 519,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Card tray 2 front",
+    "qty": 1,
+    "size": [
+     97.4,
+     38
+    ],
+    "pieces": 1,
+    "cut": 327,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Card tray 2 back",
+    "qty": 1,
+    "size": [
+     97.4,
+     38
+    ],
+    "pieces": 1,
+    "cut": 319,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Card tray 2 side",
+    "qty": 2,
+    "size": [
+     102,
+     38
+    ],
+    "pieces": 1,
+    "cut": 316,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Card tray 3 floor",
+    "qty": 1,
+    "size": [
+     97.4,
+     102
+    ],
+    "pieces": 1,
+    "cut": 519,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Card tray 3 front",
+    "qty": 1,
+    "size": [
+     97.4,
+     38
+    ],
+    "pieces": 1,
+    "cut": 327,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Card tray 3 back",
+    "qty": 1,
+    "size": [
+     97.4,
+     38
+    ],
+    "pieces": 1,
+    "cut": 319,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Card tray 3 side",
+    "qty": 2,
+    "size": [
+     102,
+     38
+    ],
+    "pieces": 1,
+    "cut": 316,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 1 floor",
+    "qty": 1,
+    "size": [
+     97.4,
+     70.1
+    ],
+    "pieces": 1,
+    "cut": 431,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 1 front",
+    "qty": 1,
+    "size": [
+     97.4,
+     28
+    ],
+    "pieces": 1,
+    "cut": 293,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 1 back",
+    "qty": 1,
+    "size": [
+     97.4,
+     28
+    ],
+    "pieces": 1,
+    "cut": 287,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 1 side",
+    "qty": 2,
+    "size": [
+     70.1,
+     28
+    ],
+    "pieces": 1,
+    "cut": 208,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 4 floor",
+    "qty": 1,
+    "size": [
+     97.4,
+     70.1
+    ],
+    "pieces": 1,
+    "cut": 431,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 4 front",
+    "qty": 1,
+    "size": [
+     97.4,
+     28
+    ],
+    "pieces": 1,
+    "cut": 293,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 4 back",
+    "qty": 1,
+    "size": [
+     97.4,
+     28
+    ],
+    "pieces": 1,
+    "cut": 287,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 4 side",
+    "qty": 2,
+    "size": [
+     70.1,
+     28
+    ],
+    "pieces": 1,
+    "cut": 208,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 2 floor",
+    "qty": 1,
+    "size": [
+     97.4,
+     70.1
+    ],
+    "pieces": 1,
+    "cut": 431,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 2 front",
+    "qty": 1,
+    "size": [
+     97.4,
+     28
+    ],
+    "pieces": 1,
+    "cut": 293,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 2 back",
+    "qty": 1,
+    "size": [
+     97.4,
+     28
+    ],
+    "pieces": 1,
+    "cut": 287,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 2 side",
+    "qty": 2,
+    "size": [
+     70.1,
+     28
+    ],
+    "pieces": 1,
+    "cut": 208,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 5 floor",
+    "qty": 1,
+    "size": [
+     97.4,
+     70.1
+    ],
+    "pieces": 1,
+    "cut": 431,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 5 front",
+    "qty": 1,
+    "size": [
+     97.4,
+     28
+    ],
+    "pieces": 1,
+    "cut": 293,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 5 back",
+    "qty": 1,
+    "size": [
+     97.4,
+     28
+    ],
+    "pieces": 1,
+    "cut": 287,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 5 side",
+    "qty": 2,
+    "size": [
+     70.1,
+     28
+    ],
+    "pieces": 1,
+    "cut": 208,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 3 floor",
+    "qty": 1,
+    "size": [
+     97.4,
+     70.1
+    ],
+    "pieces": 1,
+    "cut": 431,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 3 front",
+    "qty": 1,
+    "size": [
+     97.4,
+     28
+    ],
+    "pieces": 1,
+    "cut": 293,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 3 back",
+    "qty": 1,
+    "size": [
+     97.4,
+     28
+    ],
+    "pieces": 1,
+    "cut": 287,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 3 side",
+    "qty": 2,
+    "size": [
+     70.1,
+     28
+    ],
+    "pieces": 1,
+    "cut": 208,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 6 floor",
+    "qty": 1,
+    "size": [
+     97.4,
+     70.1
+    ],
+    "pieces": 1,
+    "cut": 431,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 6 front",
+    "qty": 1,
+    "size": [
+     97.4,
+     28
+    ],
+    "pieces": 1,
+    "cut": 293,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 6 back",
+    "qty": 1,
+    "size": [
+     97.4,
+     28
+    ],
+    "pieces": 1,
+    "cut": 287,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Token bin 6 side",
+    "qty": 2,
+    "size": [
+     70.1,
+     28
+    ],
+    "pieces": 1,
+    "cut": 208,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 2,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 3206.4
+   },
+   "cut": {
+    "area": 231535.2,
+    "length": 0
+   }
+  },
+  "echoes": [],
   "warnings": []
  },
  "gears.kerf": {
@@ -4160,6 +6220,140 @@
   ],
   "warnings": []
  },
+ "jewel-tray-box.kerf": {
+  "parts": [
+   {
+    "name": "bottom",
+    "qty": 1,
+    "size": [
+     210,
+     145
+    ],
+    "pieces": 1,
+    "cut": 938,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "front",
+    "qty": 1,
+    "size": [
+     210,
+     55
+    ],
+    "pieces": 1,
+    "cut": 626,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "back",
+    "qty": 1,
+    "size": [
+     210,
+     55
+    ],
+    "pieces": 1,
+    "cut": 626,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "left",
+    "qty": 1,
+    "size": [
+     145,
+     55
+    ],
+    "pieces": 1,
+    "cut": 466,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "right",
+    "qty": 1,
+    "size": [
+     145,
+     55
+    ],
+    "pieces": 1,
+    "cut": 466,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "long divider",
+    "qty": 1,
+    "size": [
+     203,
+     42
+    ],
+    "pieces": 1,
+    "cut": 680,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "cross divider",
+    "qty": 3,
+    "size": [
+     138,
+     42
+    ],
+    "pieces": 1,
+    "cut": 429,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Lid",
+    "qty": 1,
+    "size": [
+     218,
+     153
+    ],
+    "pieces": 1,
+    "cut": 733,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Lid locator",
+    "qty": 1,
+    "size": [
+     202.6,
+     137.6
+    ],
+    "pieces": 1,
+    "cut": 675,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 2,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 489.1
+   },
+   "cut": {
+    "area": 149682.15,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
  "jigsaw.kerf": {
   "parts": [
    {
@@ -4415,6 +6609,97 @@
   "echoes": [
    "Lambda: feet move 67 mm level to 0.2 mm for 214 degrees of each turn and lift 13.5 mm; square shaft 159 mm, body 173 mm long"
   ],
+  "warnings": []
+ },
+ "loom-card.kerf": {
+  "parts": [
+   {
+    "name": "Loom",
+    "qty": 1,
+    "size": [
+     132,
+     180
+    ],
+    "pieces": 1,
+    "cut": 1464,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Shuttle",
+    "qty": 1,
+    "size": [
+     22,
+     159.75
+    ],
+    "pieces": 1,
+    "cut": 398,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 12938.31,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "miniature-bench.kerf": {
+  "parts": [
+   {
+    "name": "Side support",
+    "qty": 2,
+    "size": [
+     58,
+     97
+    ],
+    "pieces": 1,
+    "cut": 467,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Seat",
+    "qty": 1,
+    "size": [
+     150,
+     58
+    ],
+    "pieces": 1,
+    "cut": 416,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Back",
+    "qty": 1,
+    "size": [
+     150,
+     47
+    ],
+    "pieces": 1,
+    "cut": 897,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 20754.19,
+    "length": 0
+   }
+  },
+  "echoes": [],
   "warnings": []
  },
  "morph.kerf": {
@@ -4938,6 +7223,45 @@
   "echoes": [],
   "warnings": []
  },
+ "napkin-bridge.kerf": {
+  "parts": [
+   {
+    "name": "Foot",
+    "qty": 1,
+    "size": [
+     170,
+     70
+    ],
+    "pieces": 1,
+    "cut": 819,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Cheek",
+    "qty": 2,
+    "size": [
+     154,
+     91
+    ],
+    "pieces": 1,
+    "cut": 508,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 36454.65,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
  "orbit.kerf": {
   "parts": [
    {
@@ -5137,6 +7461,58 @@
   "echoes": [
    "Orbit: 24 / 24 / 72 teeth, 4 crank turns per carrier turn, 260 mm across"
   ],
+  "warnings": []
+ },
+ "paint-deck.kerf": {
+  "parts": [
+   {
+    "name": "Foot",
+    "qty": 1,
+    "size": [
+     237,
+     126
+    ],
+    "pieces": 1,
+    "cut": 974,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Side",
+    "qty": 2,
+    "size": [
+     114,
+     46
+    ],
+    "pieces": 1,
+    "cut": 450,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Bottle deck",
+    "qty": 1,
+    "size": [
+     225,
+     114
+    ],
+    "pieces": 1,
+    "cut": 2160,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 55320.66,
+    "length": 0
+   }
+  },
+  "echoes": [],
   "warnings": []
  },
  "peck.kerf": {
@@ -5361,6 +7737,58 @@
   "echoes": [],
   "warnings": []
  },
+ "plant-plinth.kerf": {
+  "parts": [
+   {
+    "name": "Frame A",
+    "qty": 1,
+    "size": [
+     107.2,
+     85
+    ],
+    "pieces": 1,
+    "cut": 711,
+    "thickness": 4,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Frame B",
+    "qty": 1,
+    "size": [
+     107.2,
+     85
+    ],
+    "pieces": 1,
+    "cut": 711,
+    "thickness": 4,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Top",
+    "qty": 1,
+    "size": [
+     134,
+     134
+    ],
+    "pieces": 1,
+    "cut": 421,
+    "thickness": 4,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 28638.22,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
  "pocket-dinosaur.kerf": {
   "parts": [
    {
@@ -5463,6 +7891,162 @@
   "echoes": [],
   "warnings": []
  },
+ "pocket-valet.kerf": {
+  "parts": [
+   {
+    "name": "Floor",
+    "qty": 1,
+    "size": [
+     220,
+     140
+    ],
+    "pieces": 1,
+    "cut": 1170,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Long wall",
+    "qty": 2,
+    "size": [
+     220,
+     28
+    ],
+    "pieces": 1,
+    "cut": 574,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "End wall",
+    "qty": 2,
+    "size": [
+     140,
+     28
+    ],
+    "pieces": 1,
+    "cut": 372,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Perch upright",
+    "qty": 1,
+    "size": [
+     196,
+     123
+    ],
+    "pieces": 1,
+    "cut": 873,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Key perch",
+    "qty": 1,
+    "size": [
+     196,
+     31
+    ],
+    "pieces": 1,
+    "cut": 537,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 77629.06,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "post-sorter.kerf": {
+  "parts": [
+   {
+    "name": "Base",
+    "qty": 1,
+    "size": [
+     220,
+     137
+    ],
+    "pieces": 1,
+    "cut": 1613,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Divider 1",
+    "qty": 1,
+    "size": [
+     200,
+     68
+    ],
+    "pieces": 1,
+    "cut": 555,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Divider 2",
+    "qty": 1,
+    "size": [
+     200,
+     90
+    ],
+    "pieces": 1,
+    "cut": 599,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Divider 3",
+    "qty": 1,
+    "size": [
+     200,
+     112
+    ],
+    "pieces": 1,
+    "cut": 643,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Divider 4",
+    "qty": 1,
+    "size": [
+     200,
+     134
+    ],
+    "pieces": 1,
+    "cut": 687,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 104627.29,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
  "project-enclosure.kerf": {
   "parts": [
    {
@@ -5554,6 +8138,84 @@
   "echoes": [],
   "warnings": []
  },
+ "ribbed-lantern.kerf": {
+  "parts": [
+   {
+    "name": "Radial fin",
+    "qty": 16,
+    "size": [
+     75,
+     200
+    ],
+    "pieces": 1,
+    "cut": 572,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Collar ring",
+    "qty": 2,
+    "size": [
+     105.92,
+     105.92
+    ],
+    "pieces": 1,
+    "cut": 971,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 3,
+  "layers": {
+   "cut": {
+    "area": 182516.79,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "ribbon-rail.kerf": {
+  "parts": [
+   {
+    "name": "Base",
+    "qty": 1,
+    "size": [
+     180,
+     115
+    ],
+    "pieces": 1,
+    "cut": 806,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Axle support",
+    "qty": 2,
+    "size": [
+     99,
+     70.5
+    ],
+    "pieces": 1,
+    "cut": 363,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 33982.55,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
  "round-badge.kerf": {
   "parts": [
    {
@@ -5616,6 +8278,536 @@
    },
    "cut": {
     "area": 4900.6,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "screw-press.kerf": {
+  "parts": [
+   {
+    "name": "Lower platen lamination",
+    "qty": 3,
+    "size": [
+     180,
+     140
+    ],
+    "pieces": 1,
+    "cut": 711,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Upper platen lamination",
+    "qty": 3,
+    "size": [
+     180,
+     140
+    ],
+    "pieces": 1,
+    "cut": 711,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Knob 1 cover",
+    "qty": 2,
+    "size": [
+     28,
+     25.32
+    ],
+    "pieces": 1,
+    "cut": 113,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Knob 1 nut pocket",
+    "qty": 2,
+    "size": [
+     28,
+     25.32
+    ],
+    "pieces": 1,
+    "cut": 128,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Knob 2 cover",
+    "qty": 2,
+    "size": [
+     28,
+     25.32
+    ],
+    "pieces": 1,
+    "cut": 113,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Knob 2 nut pocket",
+    "qty": 2,
+    "size": [
+     28,
+     25.32
+    ],
+    "pieces": 1,
+    "cut": 128,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Knob 3 cover",
+    "qty": 2,
+    "size": [
+     28,
+     25.32
+    ],
+    "pieces": 1,
+    "cut": 113,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Knob 3 nut pocket",
+    "qty": 2,
+    "size": [
+     28,
+     25.32
+    ],
+    "pieces": 1,
+    "cut": 128,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Knob 4 cover",
+    "qty": 2,
+    "size": [
+     28,
+     25.32
+    ],
+    "pieces": 1,
+    "cut": 113,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Knob 4 nut pocket",
+    "qty": 2,
+    "size": [
+     28,
+     25.32
+    ],
+    "pieces": 1,
+    "cut": 128,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 157505.37,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "hardware, [[[20, 20, -5], [20, 20, 120], 6, \"steel\", 24], [[20, 120, -5], [20, 120, 120], 6, \"steel\", 24], [[160, 20, -5], [160, 20, 120], 6, \"steel\", 24], [[160, 120, -5], [160, 120, 120], 6, \"steel\", 24], [[20, 20, -5], [20, 20, 0], 11.54700538, \"steel\", 6], [[20, 20, 9], [20, 20, 14], 11.54700538, \"steel\", 6], [[20, 120, -5], [20, 120, 0], 11.54700538, \"steel\", 6], [[20, 120, 9], [20, 120, 14], 11.54700538, \"steel\", 6], [[160, 20, -5], [160, 20, 0], 11.54700538, \"steel\", 6], [[160, 20, 9], [160, 20, 14], 11.54700538, \"steel\", 6], [[160, 120, -5], [160, 120, 0], 11.54700538, \"steel\", 6], [[160, 120, 9], [160, 120, 14], 11.54700538, \"steel\", 6]]"
+  ],
+  "warnings": []
+ },
+ "sector-stand.kerf": {
+  "parts": [
+   {
+    "name": "Foot",
+    "qty": 1,
+    "size": [
+     204,
+     190
+    ],
+    "pieces": 1,
+    "cut": 966,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left fixed sector",
+    "qty": 1,
+    "size": [
+     190,
+     152.93
+    ],
+    "pieces": 1,
+    "cut": 750,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Left moving flange",
+    "qty": 1,
+    "size": [
+     140,
+     23
+    ],
+    "pieces": 1,
+    "cut": 350,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right fixed sector",
+    "qty": 1,
+    "size": [
+     190,
+     152.93
+    ],
+    "pieces": 1,
+    "cut": 750,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Right moving flange",
+    "qty": 1,
+    "size": [
+     140,
+     23
+    ],
+    "pieces": 1,
+    "cut": 350,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tilting deck",
+    "qty": 1,
+    "size": [
+     180,
+     130
+    ],
+    "pieces": 1,
+    "cut": 796,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Front lip",
+    "qty": 1,
+    "size": [
+     180,
+     18
+    ],
+    "pieces": 1,
+    "cut": 444,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 103736.22,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "hardware, [[[-94.6, 25, 65], [-82, 25, 65], 4, \"steel\", 24], [[-94.6, 88.89385945, 109.738962], [-82, 88.89385945, 109.738962], 4, \"steel\", 24], [[82, 25, 65], [94.6, 25, 65], 4, \"steel\", 24], [[82, 88.89385945, 109.738962], [94.6, 88.89385945, 109.738962], 4, \"steel\", 24]]"
+  ],
+  "warnings": []
+ },
+ "slat-roll.kerf": {
+  "parts": [
+   {
+    "name": "Laced slat",
+    "qty": 24,
+    "size": [
+     230,
+     10
+    ],
+    "pieces": 1,
+    "cut": 505,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 55628.73,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "hardware, [[[-73.6, -2.5, -0.3], [-73.6, 2.5, -0.3], 1.5, \"cord\", 12], [[73.6, -2.5, -0.3], [73.6, 2.5, -0.3], 1.5, \"cord\", 12], [[-73.6, 9.029162326, 0.1690121936], [-73.6, 13.97782679, 0.8836589905], 1.5, \"cord\", 12], [[73.6, 9.029162326, 0.1690121936], [73.6, 13.97782679, 0.8836589905], 1.5, \"cord\", 12], [[-73.6, 20.37291789, 2.281064774], [-73.6, 25.16862987, 3.695683656], 1.5, \"cord\", 12], [[73.6, 20.37291789, 2.281064774], [73.6, 25.16862987, 3.695683656], 1.5, \"cord\", 12], [[-73.6, 31.29833157, 5.992788399], [-73.6, 35.84261489, 8.078331278], 1.5, \"cord\", 12], [[73.6, 31.29833157, 5.992788399], [73.6, 35.84261489, 8.078331278], 1.5, \"cord\", 12], [[-73.6, 41.58105857, 11.22796574], [-73.6, 45.78059994, 13.94160763], 1.5, \"cord\", 12], [[73.6, 41.58105857, 11.22796574], [73.6, 45.78059994, 13.94160763], 1.5, \"cord\", 12], [[-73.6, 51.00995117, 17.87909653], [-73.6, 54.7785163, 21.16511492], 1.5, \"cord\", 12], [[73.6, 51.00995117, 17.87909653], [73.6, 54.7785163, 21.16511492], 1.5, \"cord\", 12], [[-73.6, 59.39139445, 25.80960502], [-73.6, 62.6515988, 29.60052411], 1.5, \"cord\", 12], [[73.6, 59.39139445, 25.80960502], [73.6, 62.6515988, 29.60052411], 1.5, \"cord\", 12], [[-73.6, 66.55328204, 34.85664445], [-73.6, 69.2381799, 39.07462068], 1.5, \"cord\", 12], [[73.6, 66.55328204, 34.85664445], [73.6, 69.2381799, 39.07462068], 1.5, \"cord\", 12], [[-73.6, 72.34855022, 44.83444095], [-73.6, 74.4030093, 49.3928615], 1.5, \"cord\", 12], [[73.6, 72.34855022, 44.83444095], [73.6, 74.4030093, 49.3928615], 1.5, \"cord\", 12], [[-73.6, 76.6581977, 55.53810832], [-73.6, 78.04003129, 60.34336959], 1.5, \"cord\", 12], [[73.6, 76.6581977, 55.53810832], [73.6, 78.04003129, 60.34336959], 1.5, \"cord\", 12], [[-73.6, 79.39372923, 66.74785513], [-73.6, 80.07456248, 71.70128486], 1.5, \"cord\", 12], [[73.6, 79.39372923, 66.74785513], [73.6, 80.07456248, 71.70128486], 1.5, \"cord\", 12], [[-73.6, 80.49897285, 78.23349803], [-73.6, 80.46482537, 83.23338143], 1.5, \"cord\", 12], [[73.6, 80.49897285, 78.23349803], [73.6, 80.46482537, 83.23338143], 1.5, \"cord\", 12], [[-73.6, 79.95123322, 89.75918837], [-73.6, 79.20280621, 94.70285674], 1.5, \"cord\", 12], [[73.6, 79.95123322, 89.75918837], [73.6, 79.20280621, 94.70285674], 1.5, \"cord\", 12], [[-73.6, 77.76175776, 101.0882551], [-73.6, 76.31441957, 105.8741941], 1.5, \"cord\", 12], [[73.6, 77.76175776, 101.0882551], [73.6, 76.31441957, 105.8741941], 1.5, \"cord\", 12], [[-73.6, 73.97550563, 111.9880648], [-73.6, 71.85897622, 116.5179989], 1.5, \"cord\", 12], [[73.6, 73.97550563, 111.9880648], [73.6, 71.85897622, 116.5179989], 1.5, \"cord\", 12], [[-73.6, 68.67022454, 122.2347984], [-73.6, 65.92796518, 126.415709], 1.5, \"cord\", 12], [[73.6, 68.67022454, 122.2347984], [73.6, 65.92796518, 126.415709], 1.5, \"cord\", 12], [[-73.6, 61.95485427, 131.6180472], [-73.6, 58.64317511, 135.3640826], 1.5, \"cord\", 12], [[73.6, 61.95485427, 131.6180472], [73.6, 58.64317511, 135.3640826], 1.5, \"cord\", 12], [[-73.6, 53.9672897, 139.9451336], [-73.6, 50.15419346, 143.1793719], 1.5, \"cord\", 12], [[73.6, 53.9672897, 139.9451336], [73.6, 50.15419346, 143.1793719], 1.5, \"cord\", 12], [[-73.6, 44.87154917, 147.0450675], [-73.6, 40.63533481, 149.7010961], 1.5, \"cord\", 12], [[73.6, 44.87154917, 147.0450675], [73.6, 40.63533481, 149.7010961], 1.5, \"cord\", 12], [[-73.6, 34.8544066, 152.7720572], [-73.6, 30.28206144, 154.7953366], 1.5, \"cord\", 12], [[73.6, 34.8544066, 152.7720572], [73.6, 30.28206144, 154.7953366], 1.5, \"cord\", 12], [[-73.6, 24.12155614, 157.0085035], [-73.6, 19.3069697, 158.3574874], 1.5, \"cord\", 12], [[73.6, 24.12155614, 157.0085035], [73.6, 19.3069697, 158.3574874], 1.5, \"cord\", 12], [[-73.6, 12.89338845, 159.6674143], [-73.6, 7.935424493, 160.3144023], 1.5, \"cord\", 12], [[73.6, 12.89338845, 159.6674143], [73.6, 7.935424493, 160.3144023], 1.5, \"cord\", 12], [[-73.6, 1.400465149, 160.694191], [-73.6, -3.599068431, 160.6258976], 1.5, \"cord\", 12], [[73.6, 1.400465149, 160.694191], [73.6, -3.599068431, 160.6258976], 1.5, \"cord\", 12], [[-73.6, -10.12121561, 160.0677495], [-73.6, -15.05965731, 159.2855772], 1.5, \"cord\", 12], [[73.6, -10.12121561, 160.0677495], [73.6, -15.05965731, 159.2855772], 1.5, \"cord\", 12], [[-73.6, 2.5, 3.3], [-73.6, 8.514616632, 3.732050606], 1.5, \"cord\", 12], [[73.6, 2.5, 3.3], [73.6, 8.514616632, 3.732050606], 1.5, \"cord\", 12], [[-73.6, 13.46328109, 4.446697403], [-73.6, 19.35439229, 5.733977401], 1.5, \"cord\", 12], [[73.6, 13.46328109, 4.446697403], [73.6, 19.35439229, 5.733977401], 1.5, \"cord\", 12], [[-73.6, 24.15010428, 7.148596284], [-73.6, 29.7967407, 9.264672389], 1.5, \"cord\", 12], [[73.6, 24.15010428, 7.148596284], [73.6, 29.7967407, 9.264672389], 1.5, \"cord\", 12], [[-73.6, 34.34102402, 11.35021527], [-73.6, 39.62723641, 14.25163552], 1.5, \"cord\", 12], [[73.6, 34.34102402, 11.35021527], [73.6, 39.62723641, 14.25163552], 1.5, \"cord\", 12], [[-73.6, 43.82677778, 16.96527741], [-73.6, 48.64401793, 20.59246342], 1.5, \"cord\", 12], [[73.6, 43.82677778, 16.96527741], [73.6, 48.64401793, 20.59246342], 1.5, \"cord\", 12], [[-73.6, 52.41258305, 23.87848181], [-73.6, 56.6619327, 28.15695216], 1.5, \"cord\", 12], [[73.6, 52.41258305, 23.87848181], [73.6, 56.6619327, 28.15695216], 1.5, \"cord\", 12], [[-73.6, 59.92213706, 31.94787125], [-73.6, 63.51633916, 36.7897709], 1.5, \"cord\", 12], [[73.6, 59.92213706, 31.94787125], [73.6, 63.51633916, 36.7897709], 1.5, \"cord\", 12], [[-73.6, 66.20123701, 41.00774714], [-73.6, 69.06648743, 46.31365149], 1.5, \"cord\", 12], [[73.6, 66.20123701, 41.00774714], [73.6, 69.06648743, 46.31365149], 1.5, \"cord\", 12], [[-73.6, 71.1209465, 50.87207204], [-73.6, 73.19840958, 56.53302851], 1.5, \"cord\", 12], [[73.6, 71.1209465, 50.87207204], [73.6, 73.19840958, 56.53302851], 1.5, \"cord\", 12], [[-73.6, 74.58024317, 61.33828978], [-73.6, 75.82725983, 67.23805507], 1.5, \"cord\", 12], [[73.6, 74.58024317, 61.33828978], [73.6, 75.82725983, 67.23805507], 1.5, \"cord\", 12], [[-73.6, 76.50809307, 72.1914848], [-73.6, 76.8990568, 78.20891185], 1.5, \"cord\", 12], [[73.6, 76.50809307, 72.1914848], [73.6, 76.8990568, 78.20891185], 1.5, \"cord\", 12], [[-73.6, 76.86490932, 83.20879524], [-73.6, 76.39179199, 89.22032092], 1.5, \"cord\", 12], [[73.6, 76.86490932, 83.20879524], [73.6, 76.39179199, 89.22032092], 1.5, \"cord\", 12], [[-73.6, 75.64336498, 94.16398929], [-73.6, 74.31588168, 100.0461716], 1.5, \"cord\", 12], [[73.6, 75.64336498, 94.16398929], [73.6, 74.31588168, 100.0461716], 1.5, \"cord\", 12], [[-73.6, 72.86854349, 104.8321106], [-73.6, 70.71395305, 110.4641636], 1.5, \"cord\", 12], [[73.6, 72.86854349, 104.8321106], [73.6, 70.71395305, 110.4641636], 1.5, \"cord\", 12], [[-73.6, 68.59742364, 114.9940978], [-73.6, 65.65996889, 120.2603716], 1.5, \"cord\", 12], [[73.6, 68.59742364, 114.9940978], [73.6, 65.65996889, 120.2603716], 1.5, \"cord\", 12], [[-73.6, 62.91770953, 124.4412823], [-73.6, 59.25770879, 129.2336382], 1.5, \"cord\", 12], [[73.6, 62.91770953, 124.4412823], [73.6, 59.25770879, 129.2336382], 1.5, \"cord\", 12], [[-73.6, 55.94602963, 132.9796736], [-73.6, 51.63863815, 137.1997044], 1.5, \"cord\", 12], [[73.6, 55.94602963, 132.9796736], [73.6, 51.63863815, 137.1997044], 1.5, \"cord\", 12], [[-73.6, 47.82554192, 140.4339426], [-73.6, 42.95920859, 143.9949932], 1.5, \"cord\", 12], [[73.6, 47.82554192, 140.4339426], [73.6, 42.95920859, 143.9949932], 1.5, \"cord\", 12], [[-73.6, 38.72299423, 146.6510217], [-73.6, 33.3976454, 149.4799687], 1.5, \"cord\", 12], [[73.6, 38.72299423, 146.6510217], [73.6, 33.3976454, 149.4799687], 1.5, \"cord\", 12], [[-73.6, 28.82530024, 151.5032481], [-73.6, 23.15028776, 153.5420013], 1.5, \"cord\", 12], [[73.6, 28.82530024, 151.5032481], [73.6, 23.15028776, 153.5420013], 1.5, \"cord\", 12], [[-73.6, 18.33570133, 154.8909851], [-73.6, 12.42755713, 156.0976803], 1.5, \"cord\", 12], [[73.6, 18.33570133, 154.8909851], [73.6, 12.42755713, 156.0976803], 1.5, \"cord\", 12], [[-73.6, 7.469593177, 156.7446682], [-73.6, 1.449636374, 157.0945268], 1.5, \"cord\", 12], [[73.6, 7.469593177, 156.7446682], [73.6, 1.449636374, 157.0945268], 1.5, \"cord\", 12], [[-73.6, -3.549897205, 157.0262335], [-73.6, -9.558051532, 156.5120715], 1.5, \"cord\", 12], [[73.6, -3.549897205, 157.0262335], [73.6, -9.558051532, 156.5120715], 1.5, \"cord\", 12], [[-73.6, -2.5, -0.3], [-73.6, -2.5, 3.3], 1.5, \"cord\", 12], [[-73.6, 2.5, -0.3], [-73.6, 2.5, 3.3], 1.5, \"cord\", 12], [[73.6, -2.5, -0.3], [73.6, -2.5, 3.3], 1.5, \"cord\", 12], [[73.6, 2.5, -0.3], [73.6, 2.5, 3.3], 1.5, \"cord\", 12], [[-73.6, 9.029162326, 0.1690121936], [-73.6, 8.514616632, 3.732050606], 1.5, \"cord\", 12], [[-73.6, 13.97782679, 0.8836589905], [-73.6, 13.46328109, 4.446697403], 1.5, \"cord\", 12], [[73.6, 9.029162326, 0.1690121936], [73.6, 8.514616632, 3.732050606], 1.5, \"cord\", 12], [[73.6, 13.97782679, 0.8836589905], [73.6, 13.46328109, 4.446697403], 1.5, \"cord\", 12], [[-73.6, 20.37291789, 2.281064774], [-73.6, 19.35439229, 5.733977401], 1.5, \"cord\", 12], [[-73.6, 25.16862987, 3.695683656], [-73.6, 24.15010428, 7.148596284], 1.5, \"cord\", 12], [[73.6, 20.37291789, 2.281064774], [73.6, 19.35439229, 5.733977401], 1.5, \"cord\", 12], [[73.6, 25.16862987, 3.695683656], [73.6, 24.15010428, 7.148596284], 1.5, \"cord\", 12], [[-73.6, 31.29833157, 5.992788399], [-73.6, 29.7967407, 9.264672389], 1.5, \"cord\", 12], [[-73.6, 35.84261489, 8.078331278], [-73.6, 34.34102402, 11.35021527], 1.5, \"cord\", 12], [[73.6, 31.29833157, 5.992788399], [73.6, 29.7967407, 9.264672389], 1.5, \"cord\", 12], [[73.6, 35.84261489, 8.078331278], [73.6, 34.34102402, 11.35021527], 1.5, \"cord\", 12], [[-73.6, 41.58105857, 11.22796574], [-73.6, 39.62723641, 14.25163552], 1.5, \"cord\", 12], [[-73.6, 45.78059994, 13.94160763], [-73.6, 43.82677778, 16.96527741], 1.5, \"cord\", 12], [[73.6, 41.58105857, 11.22796574], [73.6, 39.62723641, 14.25163552], 1.5, \"cord\", 12], [[73.6, 45.78059994, 13.94160763], [73.6, 43.82677778, 16.96527741], 1.5, \"cord\", 12], [[-73.6, 51.00995117, 17.87909653], [-73.6, 48.64401793, 20.59246342], 1.5, \"cord\", 12], [[-73.6, 54.7785163, 21.16511492], [-73.6, 52.41258305, 23.87848181], 1.5, \"cord\", 12], [[73.6, 51.00995117, 17.87909653], [73.6, 48.64401793, 20.59246342], 1.5, \"cord\", 12], [[73.6, 54.7785163, 21.16511492], [73.6, 52.41258305, 23.87848181], 1.5, \"cord\", 12], [[-73.6, 59.39139445, 25.80960502], [-73.6, 56.6619327, 28.15695216], 1.5, \"cord\", 12], [[-73.6, 62.6515988, 29.60052411], [-73.6, 59.92213706, 31.94787125], 1.5, \"cord\", 12], [[73.6, 59.39139445, 25.80960502], [73.6, 56.6619327, 28.15695216], 1.5, \"cord\", 12], [[73.6, 62.6515988, 29.60052411], [73.6, 59.92213706, 31.94787125], 1.5, \"cord\", 12], [[-73.6, 66.55328204, 34.85664445], [-73.6, 63.51633916, 36.7897709], 1.5, \"cord\", 12], [[-73.6, 69.2381799, 39.07462068], [-73.6, 66.20123701, 41.00774714], 1.5, \"cord\", 12], [[73.6, 66.55328204, 34.85664445], [73.6, 63.51633916, 36.7897709], 1.5, \"cord\", 12], [[73.6, 69.2381799, 39.07462068], [73.6, 66.20123701, 41.00774714], 1.5, \"cord\", 12], [[-73.6, 72.34855022, 44.83444095], [-73.6, 69.06648743, 46.31365149], 1.5, \"cord\", 12], [[-73.6, 74.4030093, 49.3928615], [-73.6, 71.1209465, 50.87207204], 1.5, \"cord\", 12], [[73.6, 72.34855022, 44.83444095], [73.6, 69.06648743, 46.31365149], 1.5, \"cord\", 12], [[73.6, 74.4030093, 49.3928615], [73.6, 71.1209465, 50.87207204], 1.5, \"cord\", 12], [[-73.6, 76.6581977, 55.53810832], [-73.6, 73.19840958, 56.53302851], 1.5, \"cord\", 12], [[-73.6, 78.04003129, 60.34336959], [-73.6, 74.58024317, 61.33828978], 1.5, \"cord\", 12], [[73.6, 76.6581977, 55.53810832], [73.6, 73.19840958, 56.53302851], 1.5, \"cord\", 12], [[73.6, 78.04003129, 60.34336959], [73.6, 74.58024317, 61.33828978], 1.5, \"cord\", 12], [[-73.6, 79.39372923, 66.74785513], [-73.6, 75.82725983, 67.23805507], 1.5, \"cord\", 12], [[-73.6, 80.07456248, 71.70128486], [-73.6, 76.50809307, 72.1914848], 1.5, \"cord\", 12], [[73.6, 79.39372923, 66.74785513], [73.6, 75.82725983, 67.23805507], 1.5, \"cord\", 12], [[73.6, 80.07456248, 71.70128486], [73.6, 76.50809307, 72.1914848], 1.5, \"cord\", 12], [[-73.6, 80.49897285, 78.23349803], [-73.6, 76.8990568, 78.20891185], 1.5, \"cord\", 12], [[-73.6, 80.46482537, 83.23338143], [-73.6, 76.86490932, 83.20879524], 1.5, \"cord\", 12], [[73.6, 80.49897285, 78.23349803], [73.6, 76.8990568, 78.20891185], 1.5, \"cord\", 12], [[73.6, 80.46482537, 83.23338143], [73.6, 76.86490932, 83.20879524], 1.5, \"cord\", 12], [[-73.6, 79.95123322, 89.75918837], [-73.6, 76.39179199, 89.22032092], 1.5, \"cord\", 12], [[-73.6, 79.20280621, 94.70285674], [-73.6, 75.64336498, 94.16398929], 1.5, \"cord\", 12], [[73.6, 79.95123322, 89.75918837], [73.6, 76.39179199, 89.22032092], 1.5, \"cord\", 12], [[73.6, 79.20280621, 94.70285674], [73.6, 75.64336498, 94.16398929], 1.5, \"cord\", 12], [[-73.6, 77.76175776, 101.0882551], [-73.6, 74.31588168, 100.0461716], 1.5, \"cord\", 12], [[-73.6, 76.31441957, 105.8741941], [-73.6, 72.86854349, 104.8321106], 1.5, \"cord\", 12], [[73.6, 77.76175776, 101.0882551], [73.6, 74.31588168, 100.0461716], 1.5, \"cord\", 12], [[73.6, 76.31441957, 105.8741941], [73.6, 72.86854349, 104.8321106], 1.5, \"cord\", 12], [[-73.6, 73.97550563, 111.9880648], [-73.6, 70.71395305, 110.4641636], 1.5, \"cord\", 12], [[-73.6, 71.85897622, 116.5179989], [-73.6, 68.59742364, 114.9940978], 1.5, \"cord\", 12], [[73.6, 73.97550563, 111.9880648], [73.6, 70.71395305, 110.4641636], 1.5, \"cord\", 12], [[73.6, 71.85897622, 116.5179989], [73.6, 68.59742364, 114.9940978], 1.5, \"cord\", 12], [[-73.6, 68.67022454, 122.2347984], [-73.6, 65.65996889, 120.2603716], 1.5, \"cord\", 12], [[-73.6, 65.92796518, 126.415709], [-73.6, 62.91770953, 124.4412823], 1.5, \"cord\", 12], [[73.6, 68.67022454, 122.2347984], [73.6, 65.65996889, 120.2603716], 1.5, \"cord\", 12], [[73.6, 65.92796518, 126.415709], [73.6, 62.91770953, 124.4412823], 1.5, \"cord\", 12], [[-73.6, 61.95485427, 131.6180472], [-73.6, 59.25770879, 129.2336382], 1.5, \"cord\", 12], [[-73.6, 58.64317511, 135.3640826], [-73.6, 55.94602963, 132.9796736], 1.5, \"cord\", 12], [[73.6, 61.95485427, 131.6180472], [73.6, 59.25770879, 129.2336382], 1.5, \"cord\", 12], [[73.6, 58.64317511, 135.3640826], [73.6, 55.94602963, 132.9796736], 1.5, \"cord\", 12], [[-73.6, 53.9672897, 139.9451336], [-73.6, 51.63863815, 137.1997044], 1.5, \"cord\", 12], [[-73.6, 50.15419346, 143.1793719], [-73.6, 47.82554192, 140.4339426], 1.5, \"cord\", 12], [[73.6, 53.9672897, 139.9451336], [73.6, 51.63863815, 137.1997044], 1.5, \"cord\", 12], [[73.6, 50.15419346, 143.1793719], [73.6, 47.82554192, 140.4339426], 1.5, \"cord\", 12], [[-73.6, 44.87154917, 147.0450675], [-73.6, 42.95920859, 143.9949932], 1.5, \"cord\", 12], [[-73.6, 40.63533481, 149.7010961], [-73.6, 38.72299423, 146.6510217], 1.5, \"cord\", 12], [[73.6, 44.87154917, 147.0450675], [73.6, 42.95920859, 143.9949932], 1.5, \"cord\", 12], [[73.6, 40.63533481, 149.7010961], [73.6, 38.72299423, 146.6510217], 1.5, \"cord\", 12], [[-73.6, 34.8544066, 152.7720572], [-73.6, 33.3976454, 149.4799687], 1.5, \"cord\", 12], [[-73.6, 30.28206144, 154.7953366], [-73.6, 28.82530024, 151.5032481], 1.5, \"cord\", 12], [[73.6, 34.8544066, 152.7720572], [73.6, 33.3976454, 149.4799687], 1.5, \"cord\", 12], [[73.6, 30.28206144, 154.7953366], [73.6, 28.82530024, 151.5032481], 1.5, \"cord\", 12], [[-73.6, 24.12155614, 157.0085035], [-73.6, 23.15028776, 153.5420013], 1.5, \"cord\", 12], [[-73.6, 19.3069697, 158.3574874], [-73.6, 18.33570133, 154.8909851], 1.5, \"cord\", 12], [[73.6, 24.12155614, 157.0085035], [73.6, 23.15028776, 153.5420013], 1.5, \"cord\", 12], [[73.6, 19.3069697, 158.3574874], [73.6, 18.33570133, 154.8909851], 1.5, \"cord\", 12], [[-73.6, 12.89338845, 159.6674143], [-73.6, 12.42755713, 156.0976803], 1.5, \"cord\", 12], [[-73.6, 7.935424493, 160.3144023], [-73.6, 7.469593177, 156.7446682], 1.5, \"cord\", 12], [[73.6, 12.89338845, 159.6674143], [73.6, 12.42755713, 156.0976803], 1.5, \"cord\", 12], [[73.6, 7.935424493, 160.3144023], [73.6, 7.469593177, 156.7446682], 1.5, \"cord\", 12], [[-73.6, 1.400465149, 160.694191], [-73.6, 1.449636374, 157.0945268], 1.5, \"cord\", 12], [[-73.6, -3.599068431, 160.6258976], [-73.6, -3.549897205, 157.0262335], 1.5, \"cord\", 12], [[73.6, 1.400465149, 160.694191], [73.6, 1.449636374, 157.0945268], 1.5, \"cord\", 12], [[73.6, -3.599068431, 160.6258976], [73.6, -3.549897205, 157.0262335], 1.5, \"cord\", 12], [[-73.6, -10.12121561, 160.0677495], [-73.6, -9.558051532, 156.5120715], 1.5, \"cord\", 12], [[-73.6, -15.05965731, 159.2855772], [-73.6, -14.49649323, 155.7298992], 1.5, \"cord\", 12], [[73.6, -10.12121561, 160.0677495], [73.6, -9.558051532, 156.5120715], 1.5, \"cord\", 12], [[73.6, -15.05965731, 159.2855772], [73.6, -14.49649323, 155.7298992], 1.5, \"cord\", 12]]"
+  ],
+  "warnings": []
+ },
+ "slide-grid.kerf": {
+  "parts": [
+   {
+    "name": "Floor",
+    "qty": 1,
+    "size": [
+     146,
+     146
+    ],
+    "pieces": 1,
+    "cut": 619,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Cavity spacer",
+    "qty": 1,
+    "size": [
+     146,
+     146
+    ],
+    "pieces": 1,
+    "cut": 1105,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 1",
+    "qty": 1,
+    "size": [
+     30,
+     30
+    ],
+    "pieces": 1,
+    "cut": 118,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 2",
+    "qty": 1,
+    "size": [
+     30,
+     30
+    ],
+    "pieces": 1,
+    "cut": 118,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 3",
+    "qty": 1,
+    "size": [
+     30,
+     30
+    ],
+    "pieces": 1,
+    "cut": 118,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 5",
+    "qty": 1,
+    "size": [
+     30,
+     30
+    ],
+    "pieces": 1,
+    "cut": 118,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 6",
+    "qty": 1,
+    "size": [
+     30,
+     30
+    ],
+    "pieces": 1,
+    "cut": 118,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 7",
+    "qty": 1,
+    "size": [
+     30,
+     30
+    ],
+    "pieces": 1,
+    "cut": 118,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 4",
+    "qty": 1,
+    "size": [
+     30,
+     30
+    ],
+    "pieces": 1,
+    "cut": 118,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 9",
+    "qty": 1,
+    "size": [
+     30,
+     30
+    ],
+    "pieces": 1,
+    "cut": 118,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 10",
+    "qty": 1,
+    "size": [
+     30,
+     30
+    ],
+    "pieces": 1,
+    "cut": 118,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 11",
+    "qty": 1,
+    "size": [
+     30,
+     30
+    ],
+    "pieces": 1,
+    "cut": 118,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 8",
+    "qty": 1,
+    "size": [
+     30,
+     30
+    ],
+    "pieces": 1,
+    "cut": 118,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 13",
+    "qty": 1,
+    "size": [
+     30,
+     30
+    ],
+    "pieces": 1,
+    "cut": 118,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 14",
+    "qty": 1,
+    "size": [
+     30,
+     30
+    ],
+    "pieces": 1,
+    "cut": 118,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 15",
+    "qty": 1,
+    "size": [
+     30,
+     30
+    ],
+    "pieces": 1,
+    "cut": 118,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tile 12",
+    "qty": 1,
+    "size": [
+     30,
+     30
+    ],
+    "pieces": 1,
+    "cut": 118,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Clear retainer",
+    "qty": 1,
+    "size": [
+     146,
+     146
+    ],
+    "pieces": 1,
+    "cut": 1584,
+    "thickness": 2,
+    "kerf": 0.15,
+    "material": "clear acrylic"
+   }
+  ],
+  "sheets": 2,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 410
+   },
+   "cut": {
+    "area": 58157.41,
     "length": 0
    }
   },
@@ -5840,6 +9032,58 @@
   "layers": {
    "cut": {
     "area": 137804.51,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "stem-lab.kerf": {
+  "parts": [
+   {
+    "name": "Base",
+    "qty": 1,
+    "size": [
+     166,
+     66
+    ],
+    "pieces": 1,
+    "cut": 569,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Side",
+    "qty": 2,
+    "size": [
+     50,
+     118
+    ],
+    "pieces": 1,
+    "cut": 442,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Tube deck",
+    "qty": 2,
+    "size": [
+     150,
+     50
+    ],
+    "pieces": 1,
+    "cut": 634,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 34812.21,
     "length": 0
    }
   },
@@ -6646,6 +9890,101 @@
   ],
   "warnings": []
  },
+ "tea-pavilion.kerf": {
+  "parts": [
+   {
+    "name": "Floor",
+    "qty": 1,
+    "size": [
+     79,
+     74
+    ],
+    "pieces": 1,
+    "cut": 402,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Dispensing end",
+    "qty": 1,
+    "size": [
+     79,
+     197
+    ],
+    "pieces": 1,
+    "cut": 782,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Rear end",
+    "qty": 1,
+    "size": [
+     79,
+     197
+    ],
+    "pieces": 1,
+    "cut": 635,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Side",
+    "qty": 2,
+    "size": [
+     74,
+     163
+    ],
+    "pieces": 1,
+    "cut": 588,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fixed roof",
+    "qty": 1,
+    "size": [
+     62.67,
+     90
+    ],
+    "pieces": 1,
+    "cut": 305,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Lift-off roof",
+    "qty": 1,
+    "size": [
+     62.67,
+     90
+    ],
+    "pieces": 1,
+    "cut": 305,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 366.01
+   },
+   "cut": {
+    "area": 65847.7,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
  "tempo.kerf": {
   "parts": [
    {
@@ -7384,6 +10723,58 @@
    },
    "cut": {
     "area": 70347.63,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "tissue-cover.kerf": {
+  "parts": [
+   {
+    "name": "Top",
+    "qty": 1,
+    "size": [
+     235,
+     125
+    ],
+    "pieces": 1,
+    "cut": 1180,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Long wall",
+    "qty": 2,
+    "size": [
+     235,
+     95
+    ],
+    "pieces": 1,
+    "cut": 792,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "End wall",
+    "qty": 2,
+    "size": [
+     125,
+     95
+    ],
+    "pieces": 1,
+    "cut": 518,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "cut": {
+    "area": 92164.03,
     "length": 0
    }
   },
@@ -8921,6 +12312,90 @@
   },
   "echoes": [
    "Wellspring: 24 pegs to 8 staves, so the wheel turns 3 times for each round of the ox; pitch radii 68.75 and 22.92 mm at 18 mm pitch; axle 100 mm up; base 454.01 x 345.51 mm"
+  ],
+  "warnings": []
+ },
+ "wheel-calendar.kerf": {
+  "parts": [
+   {
+    "name": "Foot",
+    "qty": 1,
+    "size": [
+     410,
+     80
+    ],
+    "pieces": 1,
+    "cut": 1158,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Backboard",
+    "qty": 1,
+    "size": [
+     398,
+     185
+    ],
+    "pieces": 1,
+    "cut": 1215,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "DAY wheel",
+    "qty": 1,
+    "size": [
+     150,
+     150
+    ],
+    "pieces": 1,
+    "cut": 482,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "MONTH wheel",
+    "qty": 1,
+    "size": [
+     96,
+     96
+    ],
+    "pieces": 1,
+    "cut": 312,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "WEEK wheel",
+    "qty": 1,
+    "size": [
+     80,
+     80
+    ],
+    "pieces": 1,
+    "cut": 262,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "score": {
+    "area": 0,
+    "length": 1418.44
+   },
+   "cut": {
+    "area": 135336.6,
+    "length": 0
+   }
+  },
+  "echoes": [
+   "hardware, [[[87, -5.6, 90], [87, 5, 90], 3, \"steel\", 24], [[234, -5.6, 63], [234, 5, 63], 3, \"steel\", 24], [[346, -5.6, 55], [346, 5, 55], 3, \"steel\", 24]]"
   ],
   "warnings": []
  },

@@ -1,0 +1,46 @@
+// Ribbed lantern shade: curved radial fins locate in two notched rings.
+// Ring tabs are cut into each fin, so changes to thickness update both joints.
+// Assembly: glue the fins into both rings. The shade stands on the fin ends.
+// Shade only: place a separate cool battery LED inside, with no flame.
+
+/* [Shade] */
+diameter = 220; // [140:5:340]
+height = 200; // [140:5:300]
+ribs = 16; // [8:1:24]
+collar_diameter = 70; // [50:5:110]
+belly = 1; // [0.6:0.1:1.8]
+
+/* [Material] */
+$thickness = 3; // [2:0.5:6]
+$kerf = 0.15; // [0:0.01:0.3]
+clearance = 0.15; // [0:0.05:0.4]
+
+/* [Hidden] */
+$material = "plywood";
+$fn = 128;
+t = $thickness;
+ri = collar_diameter / 2;
+bulge = diameter / 2 - ri - 18;
+levels = [20, height - 20];
+tab_start = ri + 4;
+tab_end = ri + 14;
+assert(bulge >= 10, "Increase diameter or reduce the collar");
+assert(2 * (ri + 4) * sin(180 / ribs) > t + clearance + 4, "Reduce ribs or increase the collar diameter");
+function outer(z) = ri + 18 + bulge * pow(sin(180 * z / height), belly);
+module fin() difference() {
+  polygon(concat([[ri,0]], [for (i=[0:60]) [outer(height*i/60),height*i/60]], [[ri,height]]));
+  for (z=levels) {
+    translate([ri-1,z-clearance/2]) rect([tab_start-ri+1,t+clearance]);
+    translate([tab_end,z-clearance/2]) rect([diameter,t+clearance]);
+  }
+}
+part("Radial fin",qty=ribs,
+  at=[for(i=[0:ribs-1])[-t/2*sin(360*i/ribs),t/2*cos(360*i/ribs),0]],
+  rotate=[for(i=[0:ribs-1])[90,0,360*i/ribs]]) fin();
+part("Collar ring",qty=2,at=[for(z=levels)[0,0,z]]) difference() {
+  circle(r=ri+18);
+  circle(r=ri-5);
+  // Open each slot through the outside rim so fins can slide in radially.
+  for(i=[0:ribs-1]) rotate(360*i/ribs) translate([tab_start-clearance/2,-(t+clearance)/2])
+    rect([ri+19-tab_start+clearance,t+clearance]);
+}

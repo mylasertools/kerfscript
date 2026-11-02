@@ -1,0 +1,62 @@
+// Screw press: laminated platens and hand knobs with captive hex nuts.
+// Clamp the lower platen onto four threaded rods using washers and nuts.
+// Glue the knob laminations around measured hex nuts without gluing the
+// threads. Put washers beneath the knobs and turn them evenly to press.
+// A small craft press for paper and light glue-ups; load capacity is untested.
+
+/* [Platens] */
+width = 180; // [140:5:260]
+depth = 140; // [110:5:200]
+platen_layers = 3; // [2:1:5]
+margin = 20; // [17:1:28]
+rod_height = 120; // [90:5:180]
+opening = 50; // [15:1:90]
+
+/* [Measured hardware] */
+rod_diameter = 6; // [4:1:8]
+thread_pitch = 1; // [0.7:0.05:1.5]
+nut_flats = 10; // [7:0.5:14]
+nut_height = 5; // [3:0.5:7]
+nut_clearance = 0.25; // [0.1:0.05:0.5]
+washer_height = 1; // [0.5:0.5:2]
+
+/* [Material] */
+$thickness = 3; // [2:0.5:6]
+$kerf = 0.15; // [0:0.01:0.3]
+
+/* [Hidden] */
+$material = "plywood";
+t=$thickness;
+ph=platen_layers*t;
+middle=ceil(nut_height/t);
+kh=(middle+2)*t;
+top=ph+opening;
+turn=-360*opening/thread_pitch;
+corners=[for(x=[margin,width-margin],y=[margin,depth-margin])[x,y]];
+assert(opening>=15 && thread_pitch>0,"Use a positive thread pitch and leave room above the base nuts");
+assert(2*ph+opening+washer_height+kh+3<rod_height,"Use longer rods or reduce the opening");
+assert(margin>15,"Keep knobs inside the platen edge");
+assert(nut_flats>rod_diameter+2 && nut_flats<18,"Measure a suitable hex nut");
+assert(width-2*margin>40 && depth-2*margin>35,"Leave a useful pressing area between rods");
+module platen() difference() {
+  rect([width,depth],r=7);
+  for(p=corners)translate(p)circle(d=rod_diameter+0.6);
+}
+module knob() union() {
+  circle(r=11);
+  for(a=[0:60:300])translate([10*cos(a),10*sin(a)])circle(r=4);
+}
+part("Lower platen lamination",qty=platen_layers,at=[for(i=[0:platen_layers-1])[0,0,i*t]])platen();
+part("Upper platen lamination",qty=platen_layers,at=[for(i=[0:platen_layers-1])[0,0,top+i*t]])platen();
+for(k=[0:3]) {
+  p=corners[k];
+  z=top+ph+washer_height;
+  part(str("Knob ",k+1," cover"),qty=2,at=[[p[0],p[1],z],[p[0],p[1],z+(middle+1)*t]],rotate=[0,0,turn]) difference() {
+    knob();circle(d=rod_diameter+0.6);
+  }
+  part(str("Knob ",k+1," nut pocket"),qty=middle,at=[for(i=[0:middle-1])[p[0],p[1],z+(i+1)*t]],rotate=[0,0,turn]) difference() {
+    knob();circle(d=(nut_flats+nut_clearance)/cos(30),$fn=6);
+  }
+}
+echo("hardware",concat([for(p=corners)[[p[0],p[1],-nut_height],[p[0],p[1],rod_height],rod_diameter,"steel",24]],
+  [for(p=corners,z=[-nut_height,ph])[[p[0],p[1],z],[p[0],p[1],z+nut_height],nut_flats/cos(30),"steel",6]]));
