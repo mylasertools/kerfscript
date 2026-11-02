@@ -22,7 +22,7 @@ span = width - 2 * t;
 back_at = depth - 1.5 * t;
 total = seat_height + t + back_height + 7;
 part("Side support", qty = 2, at = [[0, 0, 0], [width - t, 0, 0]], rotate = [90, 0, 90]) difference() {
-  polygon([[0,0],[depth,0],[depth,total],[depth-12,total],[depth-12,seat_height+14],[0,seat_height+14]]);
+  polygon([[0, 0], [depth, 0], [depth, total], [depth - 12, total], [depth - 12, seat_height + 14], [0, seat_height + 14]]);
   translate([0, seat_height + t / 2]) slots(depth, clearance = clearance);
   translate([back_at, seat_height + t]) rotate(90) slots(back_height, clearance = clearance);
   translate([depth / 2, 8]) rect([depth - 24, 16], center = true, r = 3);

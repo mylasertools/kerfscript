@@ -24,32 +24,32 @@ clearance = 0.15; // [0:0.05:0.4]
 /* [Hidden] */
 $material = "plywood";
 t = $thickness;
-step = drawer_height+2*slide_ease+t;
-height = drawers*step+t;
-span = width-2*t;
-reach = depth-t;
-dw = span-2*slide_ease;
-dd = reach-4;
-assert(extension>=0 && extension<=0.6,"Keep at least 40 percent of the drawer supported");
-assert(drawer_height > 3*t+8, "Drawer is too shallow for this sheet thickness");
-part("Carcass floor",at=[0,0,0]) finger_rect([width,depth],["flat","out","out","out"]);
-part("Carcass top",at=[0,0,height-t]) finger_rect([width,depth],["flat","out","out","out"]);
-part("Carcass back",at=[0,depth,0],rotate=[90,0,0]) finger_rect([width,height],["in","out","in","out"]);
-part("Carcass side",qty=2,at=[[0,0,0],[width-t,0,0]],rotate=[90,0,90]) difference() {
-  finger_rect([depth,height],["in","in","in","flat"]);
-  if(drawers>1) for(i=[1:drawers-1]) translate([0,i*step+t/2]) slots(reach,clearance=clearance);
+step = drawer_height + 2 * slide_ease + t;
+height = drawers * step + t;
+span = width - 2 * t;
+reach = depth - t;
+dw = span - 2 * slide_ease;
+dd = reach - 4;
+assert(extension >= 0 && extension <= 0.6, "Keep at least 40 percent of the drawer supported");
+assert(drawer_height > 3 * t + 8, "Drawer is too shallow for this sheet thickness");
+part("Carcass floor", at = [0, 0, 0]) finger_rect([width, depth], ["flat", "out", "out", "out"]);
+part("Carcass top", at = [0, 0, height - t]) finger_rect([width, depth], ["flat", "out", "out", "out"]);
+part("Carcass back", at = [0, depth, 0], rotate = [90, 0, 0]) finger_rect([width, height], ["in", "out", "in", "out"]);
+part("Carcass side", qty = 2, at = [[0, 0, 0], [width - t, 0, 0]], rotate = [90, 0, 90]) difference() {
+  finger_rect([depth, height], ["in", "in", "in", "flat"]);
+  if (drawers > 1) for (i = [1:drawers - 1]) translate([0, i * step + t / 2]) slots(reach, clearance = clearance);
 }
-if(drawers>1) part("Runner shelf",qty=drawers-1,at=[for(i=[1:drawers-1])[t,0,i*step]])
-  tab_rect([span,reach],[false,true,false,true]);
-for(i=[0:drawers-1]) {
-  x=t+slide_ease;
-  y=2-extension*dd;
-  z=t+slide_ease+i*step;
-  part(str("Drawer ",i+1," floor"),at=[x,y,z]) finger_rect([dw,dd],"out");
-  part(str("Drawer ",i+1," front"),at=[x,y+t,z],rotate=[90,0,0]) difference() {
-    finger_rect([dw,drawer_height],["in","out","flat","out"]);
-    translate([dw/2,drawer_height]) circle(d=min(24,drawer_height-2*t-4));
+if (drawers > 1) part("Runner shelf", qty = drawers - 1, at = [for (i = [1:drawers - 1]) [t, 0, i * step]])
+  tab_rect([span, reach], [false, true, false, true]);
+for (i = [0:drawers - 1]) {
+  x = t + slide_ease;
+  y = 2 - extension * dd;
+  z = t + slide_ease + i * step;
+  part(str("Drawer ", i + 1, " floor"), at = [x, y, z]) finger_rect([dw, dd], "out");
+  part(str("Drawer ", i + 1, " front"), at = [x, y + t, z], rotate = [90, 0, 0]) difference() {
+    finger_rect([dw, drawer_height], ["in", "out", "flat", "out"]);
+    translate([dw / 2, drawer_height]) circle(d = min(24, drawer_height - 2 * t - 4));
   }
-  part(str("Drawer ",i+1," back"),at=[x,y+dd,z],rotate=[90,0,0]) finger_rect([dw,drawer_height],["in","out","flat","out"]);
-  part(str("Drawer ",i+1," side"),qty=2,at=[[x,y,z],[x+dw-t,y,z]],rotate=[90,0,90]) finger_rect([dd,drawer_height],["in","in","flat","in"]);
+  part(str("Drawer ", i + 1, " back"), at = [x, y + dd, z], rotate = [90, 0, 0]) finger_rect([dw, drawer_height], ["in", "out", "flat", "out"]);
+  part(str("Drawer ", i + 1, " side"), qty = 2, at = [[x, y, z], [x + dw - t, y, z]], rotate = [90, 0, 90]) finger_rect([dd, drawer_height], ["in", "in", "flat", "in"]);
 }

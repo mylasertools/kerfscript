@@ -6,8 +6,7 @@
   jewellery box, drawer cabinet, workshop holders, miniature furniture,
   radial shade, sliding puzzle, game insert, cable chain, cantilever case,
   beam balance, tilting stand, screw press, wheel calendar and laced mat.
-  Each has animated GLB and WebP gallery assets, output snapshots
-  and checks at three configurations. Physical cutting and fit validation remain to be done.
+  Each has an animated preview in the gallery.
 - `kerf import` and `importSvg()` turn an SVG drawing into a program. They
   write circles, rectangles, polygons, tabs, slots, finger joints, hanger
   holes, keyholes and hanging loops as the modules that make them, and

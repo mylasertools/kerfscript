@@ -33,7 +33,7 @@ module end(front = false) {
   difference() {
     union() {
       finger_rect([w, h], ["in", "out", "flat", "out"]);
-      polygon([[0,h-0.1],[w,h-0.1],[w/2,h+roof_rise]]);
+      polygon([[0, h - 0.1], [w, h - 0.1], [w / 2, h + roof_rise]]);
     }
     if (front) translate([w * 0.16, t + 6]) rect([w * 0.68, opening_height], r = 5);
   }

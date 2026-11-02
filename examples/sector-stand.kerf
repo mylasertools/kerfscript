@@ -23,51 +23,51 @@ washer_gap = 0.6; // [0.3:0.1:1]
 
 /* [Hidden] */
 $material = "plywood";
-t=$thickness;
-py=25;
-v=10;
-assert(angle>=10 && angle<=65,"Keep the deck within the arc-slot limits");
-assert(radius<depth-20,"Keep the clamp pivot inside the flange");
-assert(base_depth>py+radius+18,"Lengthen the foot under the arc cheeks");
-assert(pivot_height>2*t+24,"Raise the deck above the foot");
-function arc(a,r=radius) = [py+r*cos(a),pivot_height-t+r*sin(a)];
-function moving(u,z=0) = [0,py+u*cos(angle)-z*sin(angle),pivot_height+u*sin(angle)+z*cos(angle)];
-function fixed_x(s) = s<0?-width/2-washer_gap-t:width/2+washer_gap;
-function flange_x(s) = s<0?-width/2+4:width/2-4-t;
-part("Foot",at=[0,0,0]) difference() {
-  translate([-(width+4*t+12)/2,0])rect([width+4*t+12,base_depth],r=5);
-  for(s=[-1,1],y=[40,base_depth-40])translate([fixed_x(s)+t/2,y])rect([t+clearance,20+clearance],center=true);
+t = $thickness;
+py = 25;
+v = 10;
+assert(angle >= 10 && angle <= 65, "Keep the deck within the arc-slot limits");
+assert(radius < depth - 20, "Keep the clamp pivot inside the flange");
+assert(base_depth > py + radius + 18, "Lengthen the foot under the arc cheeks");
+assert(pivot_height > 2 * t + 24, "Raise the deck above the foot");
+function arc(a, r = radius) = [py + r * cos(a), pivot_height - t + r * sin(a)];
+function moving(u, z = 0) = [0, py + u * cos(angle) - z * sin(angle), pivot_height + u * sin(angle) + z * cos(angle)];
+function fixed_x(s) = s < 0 ? -width / 2 - washer_gap - t : width / 2 + washer_gap;
+function flange_x(s) = s < 0 ? -width / 2 + 4 : width / 2 - 4 - t;
+part("Foot", at = [0, 0, 0]) difference() {
+  translate([-(width + 4 * t + 12) / 2, 0]) rect([width + 4 * t + 12, base_depth], r = 5);
+  for (s = [-1, 1], y = [40, base_depth - 40]) translate([fixed_x(s) + t / 2, y]) rect([t + clearance, 20 + clearance], center = true);
 }
-for(s=[-1,1]) {
-  part(str(s<0?"Left":"Right"," fixed sector"),at=[fixed_x(s),0,t],rotate=[90,0,90]) difference() {
+for (s = [-1, 1]) {
+  part(str(s < 0 ? "Left" : "Right", " fixed sector"), at = [fixed_x(s), 0, t], rotate = [90, 0, 90]) difference() {
     union() {
       hull() {
-        rect([base_depth,10]);
-        for(a=[0:5:75])translate(arc(a,radius+12))circle(r=1);
-        translate([py,pivot_height-t])circle(r=12);
+        rect([base_depth, 10]);
+        for (a = [0:5:75]) translate(arc(a, radius + 12)) circle(r = 1);
+        translate([py, pivot_height - t]) circle(r = 12);
       }
-      for(y=[40,base_depth-40])translate([y-10,-t])rect([20,t]);
+      for (y = [40, base_depth - 40]) translate([y - 10, -t]) rect([20, t]);
     }
-    translate([py,pivot_height-t])circle(d=bolt_diameter+0.3);
+    translate([py, pivot_height - t]) circle(d = bolt_diameter + 0.3);
     union() {
-      polygon(concat([for(a=[10:1:65])arc(a,radius+(bolt_diameter+0.5)/2)],
-        [for(a=[65:-1:10])arc(a,radius-(bolt_diameter+0.5)/2)]));
-      for(a=[10,65])translate(arc(a))circle(d=bolt_diameter+0.5);
+      polygon(concat([for (a = [10:1:65]) arc(a, radius + (bolt_diameter + 0.5) / 2)],
+        [for (a = [65:-1:10]) arc(a, radius - (bolt_diameter + 0.5) / 2)]));
+      for (a = [10, 65]) translate(arc(a)) circle(d = bolt_diameter + 0.5);
     }
   }
-  part(str(s<0?"Left":"Right"," moving flange"),at=[flange_x(s),py,pivot_height],rotate=[90,-angle,90]) difference() {
+  part(str(s < 0 ? "Left" : "Right", " moving flange"), at = [flange_x(s), py, pivot_height], rotate = [90, -angle, 90]) difference() {
     union() {
-      hull() {circle(r=10);translate([depth-5,0])rect([10,20],center=true);}
-      for(u=[depth/4,3*depth/4])translate([u-6,v])rect([12,t]);
+      hull() { circle(r = 10); translate([depth - 5, 0]) rect([10, 20], center = true); }
+      for (u = [depth / 4, 3 * depth / 4]) translate([u - 6, v]) rect([12, t]);
     }
-    for(u=[0,radius])translate([u,0])circle(d=bolt_diameter+0.3);
+    for (u = [0, radius]) translate([u, 0]) circle(d = bolt_diameter + 0.3);
   }
 }
-part("Tilting deck",at=moving(0,v)+[-width/2,0,0],rotate=[angle,0,0]) difference() {
-  finger_rect([width,depth],["out","flat","flat","flat"]);
-  for(s=[-1,1],u=[depth/4,3*depth/4])translate([flange_x(s)+t/2+width/2,u])rect([t+clearance,12+clearance],center=true);
+part("Tilting deck", at = moving(0, v) + [-width / 2, 0, 0], rotate = [angle, 0, 0]) difference() {
+  finger_rect([width, depth], ["out", "flat", "flat", "flat"]);
+  for (s = [-1, 1], u = [depth / 4, 3 * depth / 4]) translate([flange_x(s) + t / 2 + width / 2, u]) rect([t + clearance, 12 + clearance], center = true);
 }
-part("Front lip",at=moving(t,v)+[-width/2,0,0],rotate=[90+angle,0,0])
-  finger_rect([width,lip_height],["in","flat","flat","flat"]);
-echo("hardware",[for(s=[-1,1],u=[0,radius])let(p=moving(u),lo=min(fixed_x(s),flange_x(s))-1,
-  hi=max(fixed_x(s),flange_x(s))+t+1)[[lo,p[1],p[2]],[hi,p[1],p[2]],bolt_diameter,"steel",24]]);
+part("Front lip", at = moving(t, v) + [-width / 2, 0, 0], rotate = [90 + angle, 0, 0])
+  finger_rect([width, lip_height], ["in", "flat", "flat", "flat"]);
+echo("hardware", [for (s = [-1, 1], u = [0, radius]) let (p = moving(u), lo = min(fixed_x(s), flange_x(s)) - 1,
+  hi = max(fixed_x(s), flange_x(s)) + t + 1) [[lo, p[1], p[2]], [hi, p[1], p[2]], bolt_diameter, "steel", 24]]);

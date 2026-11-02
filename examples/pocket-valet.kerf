@@ -22,18 +22,18 @@ t = $thickness;
 span = width - 24;
 wall_at = depth - 24;
 reach = 28;
-part("Floor", at=[0,0,0]) difference() {
-  finger_rect([width,depth],"out");
-  translate([12,wall_at]) slots(span,clearance=clearance);
+part("Floor", at = [0, 0, 0]) difference() {
+  finger_rect([width, depth], "out");
+  translate([12, wall_at]) slots(span, clearance = clearance);
 }
-part("Long wall",qty=2,at=[[0,t,0],[0,depth,0]],rotate=[90,0,0]) finger_rect([width,tray_height],["in","out","flat","out"]);
-part("End wall",qty=2,at=[[0,0,0],[width-t,0,0]],rotate=[90,0,90]) finger_rect([depth,tray_height],["in","in","flat","in"]);
-part("Perch upright",at=[12,wall_at+t/2,t],rotate=[90,0,0]) difference() {
-  union() {rect([span,perch_height+10],r=3);tabs(span);}
-  translate([0,perch_height+t/2]) slots(span,clearance=clearance);
+part("Long wall", qty = 2, at = [[0, t, 0], [0, depth, 0]], rotate = [90, 0, 0]) finger_rect([width, tray_height], ["in", "out", "flat", "out"]);
+part("End wall", qty = 2, at = [[0, 0, 0], [width - t, 0, 0]], rotate = [90, 0, 90]) finger_rect([depth, tray_height], ["in", "in", "flat", "in"]);
+part("Perch upright", at = [12, wall_at + t / 2, t], rotate = [90, 0, 0]) difference() {
+  union() { rect([span, perch_height + 10], r = 3); tabs(span); }
+  translate([0, perch_height + t / 2]) slots(span, clearance = clearance);
 }
-part("Key perch",at=[12,wall_at-t/2-reach,t+perch_height]) difference() {
-  tab_rect([span,reach],[false,false,true,false]);
-  for(i=[0:keys-1]) translate([span*(i+0.5)/keys,0]) rect([5,18],center=true,r=2);
+part("Key perch", at = [12, wall_at - t / 2 - reach, t + perch_height]) difference() {
+  tab_rect([span, reach], [false, false, true, false]);
+  for (i = [0:keys - 1]) translate([span * (i + 0.5) / keys, 0]) rect([5, 18], center = true, r = 2);
 }
 // Rear-edge tabs pass through the upright into free space behind it.

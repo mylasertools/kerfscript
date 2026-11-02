@@ -21,44 +21,44 @@ washer_gap = 0.5; // [0.3:0.1:1]
 
 /* [Hidden] */
 $material = "plywood";
-t=$thickness;
-r=pan_diameter/2;
-front=-t/2-washer_gap;
-back=t/2+washer_gap+t;
-assert(abs(tilt)<=12,"Tilt must stay between -12 and 12 degrees");
-assert(pivot_height-arm*sin(12)-drop > 2*t+10,"Raise the pivot or shorten the suspension");
-assert(arm*cos(12)>r+22,"Leave room between the pans and the fork");
-assert(base_depth>pan_diameter+t+12,"Widen the foot beneath the pans");
-function end(s) = [s*arm*cos(tilt),0,pivot_height+s*arm*sin(tilt)];
-function hanger(s) = end(s)+[0,-t/2-6,0];
-function pan(s) = hanger(s)-[0,0,drop];
-function tie(s,k) = pan(s)+[(r-6)*cos(120*k),(r-6)*sin(120*k),t];
-part("Foot",at=[0,0,0]) difference() {
-  rect([base_width,base_depth],center=true,r=6);
-  for(y=[front-t/2,back-t/2]) translate([0,y]) rect([12+clearance,t+clearance],center=true);
+t = $thickness;
+r = pan_diameter / 2;
+front = -t / 2 - washer_gap;
+back = t / 2 + washer_gap + t;
+assert(abs(tilt) <= 12, "Tilt must stay between -12 and 12 degrees");
+assert(pivot_height - arm * sin(12) - drop > 2 * t + 10, "Raise the pivot or shorten the suspension");
+assert(arm * cos(12) > r + 22, "Leave room between the pans and the fork");
+assert(base_depth > pan_diameter + t + 12, "Widen the foot beneath the pans");
+function end(s) = [s * arm * cos(tilt), 0, pivot_height + s * arm * sin(tilt)];
+function hanger(s) = end(s) + [0, -t / 2 - 6, 0];
+function pan(s) = hanger(s) - [0, 0, drop];
+function tie(s, k) = pan(s) + [(r - 6) * cos(120 * k), (r - 6) * sin(120 * k), t];
+part("Foot", at = [0, 0, 0]) difference() {
+  rect([base_width, base_depth], center = true, r = 6);
+  for (y = [front - t / 2, back - t / 2]) translate([0, y]) rect([12 + clearance, t + clearance], center = true);
 }
-part("Fork upright",qty=2,at=[[0,front,t],[0,back,t]],rotate=[90,0,0]) difference() {
+part("Fork upright", qty = 2, at = [[0, front, t], [0, back, t]], rotate = [90, 0, 0]) difference() {
   union() {
-    hull() { translate([-14,0]) rect([28,8]);translate([0,pivot_height-t])circle(r=12); }
-    translate([-6,-t]) rect([12,t]);
+    hull() { translate([-14, 0]) rect([28, 8]); translate([0, pivot_height - t]) circle(r = 12); }
+    translate([-6, -t]) rect([12, t]);
   }
-  translate([0,pivot_height-t]) circle(d=pin_diameter+0.3);
+  translate([0, pivot_height - t]) circle(d = pin_diameter + 0.3);
 }
-part("Balance beam",at=[0,t/2,pivot_height],rotate=[90,-tilt,0]) difference() {
+part("Balance beam", at = [0, t / 2, pivot_height], rotate = [90, -tilt, 0]) difference() {
   union() {
-    hull() { for(x=[-arm,arm])translate([x,0])circle(r=9); }
-    hull() {circle(r=9);translate([0,-14])circle(r=10);}
+    hull() { for (x = [-arm, arm]) translate([x, 0]) circle(r = 9); }
+    hull() { circle(r = 9); translate([0, -14]) circle(r = 10); }
   }
-  circle(d=pin_diameter+0.3);
-  for(x=[-arm,arm])translate([x,0])circle(d=4);
+  circle(d = pin_diameter + 0.3);
+  for (x = [-arm, arm]) translate([x, 0]) circle(d = 4);
 }
-for(s=[-1,1]) {
-  part(str(s<0?"Left":"Right"," pan floor"),at=pan(s)) difference() {
-    circle(r=r);
-    for(k=[0:2])translate([(r-6)*cos(120*k),(r-6)*sin(120*k)])circle(d=2.6);
+for (s = [-1, 1]) {
+  part(str(s < 0 ? "Left" : "Right", " pan floor"), at = pan(s)) difference() {
+    circle(r = r);
+    for (k = [0:2]) translate([(r - 6) * cos(120 * k), (r - 6) * sin(120 * k)]) circle(d = 2.6);
   }
-  part(str(s<0?"Left":"Right"," pan rim"),at=pan(s)+[0,0,t]) difference() {circle(r=r);circle(r=r-4);}
+  part(str(s < 0 ? "Left" : "Right", " pan rim"), at = pan(s) + [0, 0, t]) difference() { circle(r = r); circle(r = r - 4); }
 }
-echo("hardware",concat([[[0,front-t-1,pivot_height],[0,back+1,pivot_height],pin_diameter,"steel",24]],
-  [for(s=[-1,1])[hanger(s),end(s)+[0,t/2+1,0],3,"steel",24]],
-  [for(s=[-1,1],k=[0:2])[hanger(s),tie(s,k),1.2,"cord",12]]));
+echo("hardware", concat([[[0, front - t - 1, pivot_height], [0, back + 1, pivot_height], pin_diameter, "steel", 24]],
+  [for (s = [-1, 1]) [hanger(s), end(s) + [0, t / 2 + 1, 0], 3, "steel", 24]],
+  [for (s = [-1, 1], k = [0:2]) [hanger(s), tie(s, k), 1.2, "cord", 12]]));

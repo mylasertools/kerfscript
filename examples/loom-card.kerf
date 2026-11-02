@@ -16,15 +16,15 @@ $kerf = 0.15; // [0:0.01:0.3]
 
 /* [Hidden] */
 $material = "plywood";
-width=(warp_count-1)*pitch+2*border;
-assert(pitch >= notch_width+2, "Leave at least 2 mm between yarn notches");
-assert(length > 2*border+35, "Increase frame length or reduce border");
-part("Loom",at=[0,0,0]) difference() {
-  rect([width,length],r=6);
-  translate([border,border]) rect([width-2*border,length-2*border],r=5);
-  for(i=[0:warp_count-1],y=[0,length]) translate([border+i*pitch,y]) rect([notch_width,12],center=true,r=notch_width/2);
+width = (warp_count - 1) * pitch + 2 * border;
+assert(pitch >= notch_width + 2, "Leave at least 2 mm between yarn notches");
+assert(length > 2 * border + 35, "Increase frame length or reduce border");
+part("Loom", at = [0, 0, 0]) difference() {
+  rect([width, length], r = 6);
+  translate([border, border]) rect([width - 2 * border, length - 2 * border], r = 5);
+  for (i = [0:warp_count - 1], y = [0, length]) translate([border + i * pitch, y]) rect([notch_width, 12], center = true, r = notch_width / 2);
 }
-part("Shuttle",at=[width+15,0,0]) difference() {
-  rect([22,min(length,160)],r=9);
-  for(y=[0,min(length,160)]) translate([11,y]) rect([7,28],center=true,r=3.5);
+part("Shuttle", at = [width + 15, 0, 0]) difference() {
+  rect([22, min(length, 160)], r = 9);
+  for (y = [0, min(length, 160)]) translate([11, y]) rect([7, 28], center = true, r = 3.5);
 }

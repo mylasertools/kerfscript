@@ -30,7 +30,7 @@ for (k = [0:1]) {
     union() { rect([width - 12, height], r = 4); tabs(width - 12); }
   part(str("Gusset ", k + 1), at = [ox + width / 2 - t / 2, 10 + t, t], rotate = [90, 0, 90])
     union() {
-      polygon([[0,0],[foot_length-24,0],[0,brace_height]]);
+      polygon([[0, 0], [foot_length - 24, 0], [0, brace_height]]);
       tabs(foot_length - 24, count = 2);
     }
 }

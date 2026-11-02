@@ -25,58 +25,58 @@ washer_gap = 0.5; // [0.3:0.1:1]
 
 /* [Hidden] */
 $material = "plywood";
-t=$thickness;
-seam=6;
-base_w=2*tray_width+seam;
-step=tray_height+3;
-offset=tray_width*0.46;
-spread=tray_width*0.24;
-margin=tray_width*0.10;
-link_length=sqrt(offset*offset+step*step);
-closed_angle=atan2(step,offset);
-angle=closed_angle+(82-closed_angle)*opening;
-dx=offset-link_length*cos(angle);
-dz=link_length*sin(angle);
-arm_width=max(9,2*t+3);
-assert(spread*sin(closed_angle)>arm_width+0.5, "Increase tray height or width, or use thinner stock, to separate the parallel links");
-assert(base_height-tray_height/2>t+pin_diameter+3, "Increase the base height to support its pivot holes");
-assert(tray_height/2>t+pin_diameter+2, "Increase tray height for this sheet and pivot size");
-assert(margin>pin_diameter/2+3, "Pivot margin is too small");
-function anchor(side,k,upper=false) = margin+k*spread+((side>0?!upper:upper)?offset:0);
-function tray_at(side,j) = [(side<0?0:tray_width+seam)+side*j*dx,0,
-  base_height-tray_height/2+j*dz-tray_height/2];
-function pivot(side,j,k,upper=false) = tray_at(side,j)+[anchor(side,k,upper),0,tray_height/2];
-module pivot_holes(side,base=false,stage=0) {
+t = $thickness;
+seam = 6;
+base_w = 2 * tray_width + seam;
+step = tray_height + 3;
+offset = tray_width * 0.46;
+spread = tray_width * 0.24;
+margin = tray_width * 0.10;
+link_length = sqrt(offset * offset + step * step);
+closed_angle = atan2(step, offset);
+angle = closed_angle + (82 - closed_angle) * opening;
+dx = offset - link_length * cos(angle);
+dz = link_length * sin(angle);
+arm_width = max(9, 2 * t + 3);
+assert(spread * sin(closed_angle) > arm_width + 0.5, "Increase tray height or width, or use thinner stock, to separate the parallel links");
+assert(base_height - tray_height / 2 > t + pin_diameter + 3, "Increase the base height to support its pivot holes");
+assert(tray_height / 2 > t + pin_diameter + 2, "Increase tray height for this sheet and pivot size");
+assert(margin > pin_diameter / 2 + 3, "Pivot margin is too small");
+function anchor(side, k, upper = false) = margin + k * spread + ((side > 0 ? !upper : upper) ? offset : 0);
+function tray_at(side, j) = [(side < 0 ? 0 : tray_width + seam) + side * j * dx, 0,
+  base_height - tray_height / 2 + j * dz - tray_height / 2];
+function pivot(side, j, k, upper = false) = tray_at(side, j) + [anchor(side, k, upper), 0, tray_height / 2];
+module pivot_holes(side, base = false, stage = 0) {
   // Base walls support outgoing links only; top trays receive incoming links.
   // Intermediate trays connect both stages.
-  for(k=[0:1],upper=base?[false]:(stage==levels?[true]:[false,true]))
-    translate([anchor(side,k,upper),base?base_height-tray_height/2:tray_height/2]) circle(d=pin_diameter+pivot_clearance);
+  for (k = [0:1], upper = base ? [false] : (stage == levels ? [true] : [false, true]))
+    translate([anchor(side, k, upper), base ? base_height - tray_height / 2 : tray_height / 2]) circle(d = pin_diameter + pivot_clearance);
 }
-module tray(name,w,h,at,side=0,stage=0) {
-  part(str(name," floor"),at=at) finger_rect([w,depth],"out");
-  for(back=[false,true]) part(str(name,back?" back":" front"),at=at+[0,back?depth:t,0],rotate=[90,0,0]) difference() {
-    finger_rect([w,h],["in","out","flat","out"]);
-    if(side==0) for(s=[-1,1]) translate([s<0?0:tray_width+seam,0]) pivot_holes(s,true);
-    else pivot_holes(side,stage=stage);
+module tray(name, w, h, at, side = 0, stage = 0) {
+  part(str(name, " floor"), at = at) finger_rect([w, depth], "out");
+  for (back = [false, true]) part(str(name, back ? " back" : " front"), at = at + [0, back ? depth : t, 0], rotate = [90, 0, 0]) difference() {
+    finger_rect([w, h], ["in", "out", "flat", "out"]);
+    if (side == 0) for (s = [-1, 1]) translate([s < 0 ? 0 : tray_width + seam, 0]) pivot_holes(s, true);
+    else pivot_holes(side, stage = stage);
   }
-  part(str(name," end"),qty=2,at=[at,at+[w-t,0,0]],rotate=[90,0,90]) finger_rect([depth,h],["in","in","flat","in"]);
+  part(str(name, " end"), qty = 2, at = [at, at + [w - t, 0, 0]], rotate = [90, 0, 90]) finger_rect([depth, h], ["in", "in", "flat", "in"]);
 }
 module link() difference() {
-  hull() {circle(d=arm_width);translate([link_length,0])circle(d=arm_width);}
-  for(x=[0,link_length]) translate([x,0]) circle(d=pin_diameter+pivot_clearance);
+  hull() { circle(d = arm_width); translate([link_length, 0]) circle(d = arm_width); }
+  for (x = [0, link_length]) translate([x, 0]) circle(d = pin_diameter + pivot_clearance);
 }
-tray("Base well",base_w,base_height,[0,0,0]);
-for(side=[-1,1],j=[1:levels]) {
-  tag=str(side<0?"Left":"Right"," tray ",j);
-  tray(tag,tray_width,tray_height,tray_at(side,j),side,j);
-  for(back=[false,true],k=[0:1]) {
-    y=back?depth+washer_gap+t+(j-1)*(t+washer_gap):-washer_gap-(j-1)*(t+washer_gap);
-    part(str(side<0?"Left":"Right"," link ",j,back?" back ":" front ",k+1),
-      at=pivot(side,j-1,k)+[0,y,0],rotate=[90,-(side<0?angle:180-angle),0]) link();
+tray("Base well", base_w, base_height, [0, 0, 0]);
+for (side = [-1, 1], j = [1:levels]) {
+  tag = str(side < 0 ? "Left" : "Right", " tray ", j);
+  tray(tag, tray_width, tray_height, tray_at(side, j), side, j);
+  for (back = [false, true], k = [0:1]) {
+    y = back ? depth + washer_gap + t + (j - 1) * (t + washer_gap) : -washer_gap - (j - 1) * (t + washer_gap);
+    part(str(side < 0 ? "Left" : "Right", " link ", j, back ? " back " : " front ", k + 1),
+      at = pivot(side, j - 1, k) + [0, y, 0], rotate = [90, -(side < 0 ? angle : 180 - angle), 0]) link();
   }
-  if(lids && j==levels) {
-    at=tray_at(side,j);
-    part(str(tag," lid"),at=at+[-2,-2,tray_height]) rect([tray_width+4,depth+4],r=3);
-    part(str(tag," lid locator"),at=at+[t+0.7,t+0.7,tray_height-t]) rect([tray_width-2*t-1.4,depth-2*t-1.4],r=2);
+  if (lids && j == levels) {
+    at = tray_at(side, j);
+    part(str(tag, " lid"), at = at + [-2, -2, tray_height]) rect([tray_width + 4, depth + 4], r = 3);
+    part(str(tag, " lid locator"), at = at + [t + 0.7, t + 0.7, tray_height - t]) rect([tray_width - 2 * t - 1.4, depth - 2 * t - 1.4], r = 2);
   }
 }

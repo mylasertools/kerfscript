@@ -23,26 +23,26 @@ t = $thickness;
 pitch = bottle_diameter + 2 * ease + t;
 w = columns * pitch + t;
 d = 2 * pitch + t;
-inner = w - 2*t;
+inner = w - 2 * t;
 slot_h = wall_height - t - 3;
 assert(handle_height > wall_height + 55, "Handle needs room above the compartments");
-part("Floor", at = [0,0,0]) difference() {
-  finger_rect([w,d], "out");
-  translate([t,d/2]) slots_for_handle();
+part("Floor", at = [0, 0, 0]) difference() {
+  finger_rect([w, d], "out");
+  translate([t, d / 2]) slots_for_handle();
 }
 // Two short tabs locate the handle in the floor, avoiding its cross slots.
 module slots_for_handle() {
-  for (x = [inner * 0.2, inner * 0.8]) translate([x,0]) rect([14+clearance,t+clearance],center=true);
+  for (x = [inner * 0.2, inner * 0.8]) translate([x, 0]) rect([14 + clearance, t + clearance], center = true);
 }
-part("Long wall", qty = 2, at = [[0,t,0],[0,d,0]], rotate = [90,0,0]) finger_rect([w,wall_height],["in","out","flat","out"]);
-part("End wall", qty = 2, at = [[0,0,0],[w-t,0,0]], rotate = [90,0,90]) finger_rect([d,wall_height],["in","in","flat","in"]);
-part("Handle partition", at = [t,d/2+t/2,t], rotate = [90,0,0]) difference() {
+part("Long wall", qty = 2, at = [[0, t, 0], [0, d, 0]], rotate = [90, 0, 0]) finger_rect([w, wall_height], ["in", "out", "flat", "out"]);
+part("End wall", qty = 2, at = [[0, 0, 0], [w - t, 0, 0]], rotate = [90, 0, 90]) finger_rect([d, wall_height], ["in", "in", "flat", "in"]);
+part("Handle partition", at = [t, d / 2 + t / 2, t], rotate = [90, 0, 0]) difference() {
   union() {
-    rect([inner, handle_height], r=8);
-    for(x=[inner*0.2,inner*0.8]) translate([x-7,-t]) rect([14,t+0.1]);
+    rect([inner, handle_height], r = 8);
+    for (x = [inner * 0.2, inner * 0.8]) translate([x - 7, -t]) rect([14, t + 0.1]);
   }
-  translate([inner/2,handle_height-25]) rect([min(95,inner-30),25],center=true,r=10);
-  for(i=[1:columns-1]) translate([i*pitch-t/2-(t+clearance)/2,-1]) rect([t+clearance,slot_h/2+1]);
+  translate([inner / 2, handle_height - 25]) rect([min(95, inner - 30), 25], center = true, r = 10);
+  for (i = [1:columns - 1]) translate([i * pitch - t / 2 - (t + clearance) / 2, -1]) rect([t + clearance, slot_h / 2 + 1]);
 }
-part("Cross divider",qty=columns-1,at=[for(i=[1:columns-1])[i*pitch,t+0.5,t]],rotate=[90,0,90])
-  slotted_divider(d-2*t-1,slot_h,[d/2-t-0.5],"top",clearance);
+part("Cross divider", qty = columns - 1, at = [for (i = [1:columns - 1]) [i * pitch, t + 0.5, t]], rotate = [90, 0, 90])
+  slotted_divider(d - 2 * t - 1, slot_h, [d / 2 - t - 0.5], "top", clearance);

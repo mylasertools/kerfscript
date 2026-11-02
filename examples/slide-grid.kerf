@@ -35,38 +35,38 @@ id = rows * pitch + slide_gap;
 w = iw + 2 * border;
 d = id + 2 * border;
 cells = columns * rows;
-assert(tile_slide>=0 && tile_slide<=1,"Tile slide must stay between neighbouring cells");
-function swapped(v,a,b) = [for(i=[0:len(v)-1]) i==a?v[b]:i==b?v[a]:v[i]];
-function shuffled(v,empty,n) = n<=0?v:let(
-  choices=[for(i=[0:cells-1]) if(abs(i%columns-empty%columns)+abs(floor(i/columns)-floor(empty/columns))==1)i],
-  pick=choices[min(len(choices)-1,floor(rands(0,len(choices),1,seed+n)[0]))])
-  shuffled(swapped(v,empty,pick),pick,n-1);
-values = shuffled(concat([for(i=[1:cells-1])i],[0]),cells-1,shuffle_steps);
-empty = [for(i=[0:cells-1])if(values[i]==0)i][0];
-moving = [for(i=[0:cells-1])if(abs(i%columns-empty%columns)+abs(floor(i/columns)-floor(empty/columns))==1)i][0];
-function location(i) = [border+slide_gap+(i%columns)*pitch,border+slide_gap+floor(i/columns)*pitch,t];
-module screw_holes() for(x=[border/2,w-border/2],y=[border/2,d-border/2]) translate([x,y]) circle(d=bolt_diameter+0.3);
-module plate() difference() { rect([w,d],r=4); screw_holes(); }
-module numeral(n,size) {
-  digits=[[0,1,2,3,4,5],[1,2],[0,1,6,4,3],[0,1,6,2,3],[5,6,1,2],[0,5,6,2,3],[0,5,4,3,2,6],[0,1,2],[0,1,2,3,4,5,6],[0,1,2,3,5,6]];
-  strokes=[[[0,2],[1,2]],[[1,2],[1,1]],[[1,1],[1,0]],[[0,0],[1,0]],[[0,1],[0,0]],[[0,2],[0,1]],[[0,1],[1,1]]];
-  scale(size/2) for(k=digits[n]) line(strokes[k][0],strokes[k][1]);
+assert(tile_slide >= 0 && tile_slide <= 1, "Tile slide must stay between neighbouring cells");
+function swapped(v, a, b) = [for (i = [0:len(v) - 1]) i == a ? v[b] : i == b ? v[a] : v[i]];
+function shuffled(v, empty, n) = n <= 0 ? v : let (
+  choices = [for (i = [0:cells - 1]) if (abs(i % columns - empty % columns) + abs(floor(i / columns) - floor(empty / columns)) == 1) i],
+  pick = choices[min(len(choices) - 1, floor(rands(0, len(choices), 1, seed + n)[0]))])
+  shuffled(swapped(v, empty, pick), pick, n - 1);
+values = shuffled(concat([for (i = [1:cells - 1]) i], [0]), cells - 1, shuffle_steps);
+empty = [for (i = [0:cells - 1]) if (values[i] == 0) i][0];
+moving = [for (i = [0:cells - 1]) if (abs(i % columns - empty % columns) + abs(floor(i / columns) - floor(empty / columns)) == 1) i][0];
+function location(i) = [border + slide_gap + (i % columns) * pitch, border + slide_gap + floor(i / columns) * pitch, t];
+module screw_holes() for (x = [border / 2, w - border / 2], y = [border / 2, d - border / 2]) translate([x, y]) circle(d = bolt_diameter + 0.3);
+module plate() difference() { rect([w, d], r = 4); screw_holes(); }
+module numeral(n, size) {
+  digits = [[0, 1, 2, 3, 4, 5], [1, 2], [0, 1, 6, 4, 3], [0, 1, 6, 2, 3], [5, 6, 1, 2], [0, 5, 6, 2, 3], [0, 5, 4, 3, 2, 6], [0, 1, 2], [0, 1, 2, 3, 4, 5, 6], [0, 1, 2, 3, 5, 6]];
+  strokes = [[[0, 2], [1, 2]], [[1, 2], [1, 1]], [[1, 1], [1, 0]], [[0, 0], [1, 0]], [[0, 1], [0, 0]], [[0, 2], [0, 1]], [[0, 1], [1, 1]]];
+  scale(size / 2) for (k = digits[n]) line(strokes[k][0], strokes[k][1]);
 }
-part("Floor",at=[0,0,0]) plate();
-part("Cavity spacer",at=[0,0,t]) difference() {
+part("Floor", at = [0, 0, 0]) plate();
+part("Cavity spacer", at = [0, 0, t]) difference() {
   plate();
-  translate([border,border]) rect([iw,id],r=1);
+  translate([border, border]) rect([iw, id], r = 1);
 }
-for(i=[0:cells-1]) if(values[i]>0) part(str("Tile ",values[i]),at=location(i)+(i==moving?(location(empty)-location(i))*tile_slide:[0,0,0])) {
-  rect([tile_size,tile_size],r=1);
-  if(numbers) score() translate([tile_size/2,tile_size/2]) {
-    if(values[i]>=10) {
-      translate([-7,-5]) numeral(floor(values[i]/10),10);
-      translate([1,-5]) numeral(values[i]%10,10);
-    } else translate([-2.5,-5]) numeral(values[i],10);
+for (i = [0:cells - 1]) if (values[i] > 0) part(str("Tile ", values[i]), at = location(i) + (i == moving ? (location(empty) - location(i)) * tile_slide : [0, 0, 0])) {
+  rect([tile_size, tile_size], r = 1);
+  if (numbers) score() translate([tile_size / 2, tile_size / 2]) {
+    if (values[i] >= 10) {
+      translate([-7, -5]) numeral(floor(values[i] / 10), 10);
+      translate([1, -5]) numeral(values[i] % 10, 10);
+    } else translate([-2.5, -5]) numeral(values[i], 10);
   }
 }
-material(thickness=cover_thickness,name="clear acrylic") part("Clear retainer",at=[0,0,2*t+vertical_play]) difference() {
+material(thickness = cover_thickness, name = "clear acrylic") part("Clear retainer", at = [0, 0, 2 * t + vertical_play]) difference() {
   plate();
-  for(i=[0:cells-1]) translate([location(i)[0]+tile_size/2,location(i)[1]+tile_size/2]) circle(d=tile_size*0.64);
+  for (i = [0:cells - 1]) translate([location(i)[0] + tile_size / 2, location(i)[1] + tile_size / 2]) circle(d = tile_size * 0.64);
 }
