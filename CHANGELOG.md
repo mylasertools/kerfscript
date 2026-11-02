@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.6.0 (2026-11-02)
+
+Language version 0.2, as in 0.5.0: programs run as before.
 
 - Twenty-nine parametric examples, including a tea dispenser,
   jewellery box, drawer cabinet, workshop holders, miniature furniture,

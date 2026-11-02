@@ -1,6 +1,6 @@
 # Versions
 
-KerfScript 0.5.0 implements language version 0.2. The package version tracks
+KerfScript 0.6.0 implements language version 0.2. The package version tracks
 the software release; the language version tracks the syntax and behavior
 of `.kerf` programs.
 
@@ -30,4 +30,4 @@ files used with a design. Applications that store designs should retain
 that information and compare the output before upgrading the interpreter.
 
 Pin the npm package to an exact version when your application needs a fixed
-renderer, for example `@mylasertools/kerfscript@0.5.0`.
+renderer, for example `@mylasertools/kerfscript@0.6.0`.

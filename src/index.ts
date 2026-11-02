@@ -24,6 +24,6 @@ export {
   type ParamInfo,
 } from './signatures.js';
 
-export const VERSION = '0.5.0';
+export const VERSION = '0.6.0';
 export const LANGUAGE_VERSION = '0.2';
 export { importSvg, type ImportOptions, type ImportResult } from './import/index.js';
