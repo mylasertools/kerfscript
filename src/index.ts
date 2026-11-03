@@ -37,3 +37,13 @@ export type { HardwareItem } from './evaluator.js';
 export const VERSION = '0.7.0';
 export const LANGUAGE_VERSION = '0.3';
 export { importSvg, type ImportOptions, type ImportResult } from './import/index.js';
+
+export {
+  verify,
+  snapshotFromRender,
+  poseAssembly,
+  verificationIsCurrent,
+  type SnapshotContext,
+} from './verify/index.js';
+export type * from './verify/types.js';
+export type { RenderAnalysis } from './analysis.js';

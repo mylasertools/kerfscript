@@ -33,6 +33,7 @@ import {
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { bendPoint, meshPieces } from './kerfscript.js';
+import { referenceKey, verificationFindings } from './verification.js';
 
 // Wood and other sheets by their material name; anything else a light wood
 const MATERIALS = [
@@ -188,11 +189,14 @@ const STYLE = `
 .kv-bar button:disabled{opacity:.35;cursor:default}
 .kv-step{flex:1 1 14rem;margin:0;font-size:.95rem;min-height:1.4em}
 .kv-empty{position:absolute;inset:0;display:grid;place-items:center;padding:1rem;text-align:center;color:#888}
+.kv-checks{display:flex;flex-direction:column;gap:.35rem;font-size:.9rem}
+.kv-checks button{font:inherit;text-align:left;border:1px solid #b88343;border-radius:5px;padding:.4rem .6rem;color:inherit;background:transparent;cursor:pointer}
+.kv-checks button[data-status=fail]{border-color:#c84b3b}
 .kv [hidden]{display:none!important}
 @media (prefers-color-scheme: dark){.kv-stage{--kv-bg:#26231f}}
 `;
 
-export function createAssemblyView(el) {
+export function createAssemblyView(el, options = {}) {
   if (!document.getElementById('kv-style'))
     document.head.append(
       Object.assign(document.createElement('style'), { id: 'kv-style', textContent: STYLE }),
@@ -205,10 +209,11 @@ export function createAssemblyView(el) {
   <p class="kv-step" aria-live="polite"></p>
   <button type="button" data-kv="all"><span>Whole model</span></button>
   <button type="button" data-kv="front" aria-pressed="false"><span>Front view</span></button>
-</div>`;
+</div><div class="kv-checks" aria-live="polite" hidden></div>`;
   const stage = el.querySelector('.kv-stage');
   const empty = el.querySelector('.kv-empty');
   const label = el.querySelector('.kv-step');
+  const checks = el.querySelector('.kv-checks');
   const btn = (k) => el.querySelector(`[data-kv="${k}"]`);
 
   let renderer;
@@ -217,7 +222,7 @@ export function createAssemblyView(el) {
   } catch {
     empty.hidden = false;
     empty.textContent = 'This browser cannot show 3D views.';
-    return { show() {}, dispose() {} };
+    return { show() {}, verification() {}, dispose() {} };
   }
   renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
   stage.prepend(renderer.domElement);
@@ -300,6 +305,8 @@ export function createAssemblyView(el) {
   }
 
   function show(result) {
+    checks.replaceChildren();
+    checks.hidden = true;
     clear();
     const parts = (result.assembly ?? []).filter((p) => p.placed !== false);
     steps = result.steps ?? [];
@@ -327,13 +334,23 @@ export function createAssemblyView(el) {
       g.matrix.copy(m);
       g.userData = { face, base: m };
       model.add(g);
-      items.push({ object: g, step: part.step ?? 0, base: m });
+      items.push({
+        object: g,
+        step: part.step ?? 0,
+        base: m,
+        ref: { part: part.name, copy: part.copy },
+      });
     }
     for (const h of result.hardware ?? []) {
       const o = hardwareObject(h);
       if (!o) continue;
       model.add(o);
-      items.push({ object: o, step: h.step ?? 0, base: o.matrix.clone() });
+      items.push({
+        object: o,
+        step: h.step ?? 0,
+        base: o.matrix.clone(),
+        ref: { hardware: h.label ?? '' },
+      });
     }
     empty.hidden = items.length > 0;
     empty.textContent = 'Give parts at or rotate to see them assembled here.';
@@ -350,6 +367,10 @@ export function createAssemblyView(el) {
     if (anim) cancelAnimationFrame(anim);
     const now = items.filter((i) => k !== 0 && i.step === k);
     for (const it of items) {
+      it.object.traverse((o) => {
+        const materials = Array.isArray(o.material) ? o.material : [o.material];
+        for (const material of materials) material?.emissive?.set('#000000');
+      });
       it.object.visible = k === 0 || it.step <= k;
       it.object.matrix.copy(it.base);
       const f = it.object.userData.face;
@@ -383,6 +404,41 @@ export function createAssemblyView(el) {
     } else draw();
   }
 
+  function verification(report, configuration) {
+    const findings = verificationFindings(
+      report,
+      configuration,
+      items.map((i) => i.ref),
+    );
+    checks.replaceChildren();
+    checks.hidden = !findings.length;
+    for (const finding of findings) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.status = finding.status;
+      button.textContent = `${finding.status === 'fail' ? 'Failed' : 'Unverified'}: ${finding.message}`;
+      button.addEventListener('click', () => {
+        setStep(0, false);
+        const selected = new Set(finding.references.map(referenceKey));
+        for (const item of items)
+          item.object.traverse((o) => {
+            const materials = Array.isArray(o.material) ? o.material : [o.material];
+            for (const material of materials)
+              material?.emissive?.set(
+                selected.has(referenceKey(item.ref))
+                  ? finding.status === 'fail'
+                    ? '#713020'
+                    : '#64501e'
+                  : '#000000',
+              );
+          });
+        options.onVerificationSelect?.(finding);
+        draw();
+      });
+      checks.append(button);
+    }
+  }
+
   btn('prev').addEventListener('click', () => setStep(Math.max(1, current - 1)));
   btn('next').addEventListener('click', () => setStep(Math.min(steps.length, current + 1)));
   btn('all').addEventListener('click', () => setStep(0));
@@ -399,6 +455,7 @@ export function createAssemblyView(el) {
 
   return {
     show,
+    verification,
     step: setStep,
     dispose() {
       observer.disconnect();

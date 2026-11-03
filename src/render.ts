@@ -15,6 +15,7 @@ import {
   type Mark,
 } from './assembly.js';
 import { slotsFor, type Solid } from './slots.js';
+import type { RenderAnalysis } from './analysis.js';
 import { Evaluator, type HardwareItem, type LayerDef, type Limits } from './evaluator.js';
 import { toDxf } from './export/dxf.js';
 import { layerPaths, toSvg, type LayerPath } from './export/svg.js';
@@ -28,6 +29,7 @@ import {
   pieces,
   transform,
   union,
+  xor,
   type Layer,
   type Matrix,
   type PartShape,
@@ -38,6 +40,8 @@ import { FontBook, type FontSource } from './text.js';
 import { checkSetting, toNumber, toText, type Value } from './values.js';
 
 export interface RenderOptions {
+  /** Capture nominal manufacturing geometry before toolpath compensation. */
+  analysis?: boolean;
   params?: Record<string, Value>;
   fonts?: Record<string, FontSource>;
   defaultFont?: string;
@@ -95,6 +99,8 @@ export interface Sheet {
 }
 
 export interface RenderResult {
+  /** Present only when requested; separate from packed, compensated cut paths. */
+  analysis?: RenderAnalysis;
   sheets: Sheet[];
   width: number;
   height: number;
@@ -179,6 +185,9 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   cutSlots(parts, mode, warnings);
 
   const infos: PartInfo[] = [];
+  const analysis: RenderAnalysis | undefined = options.analysis
+    ? { schemaVersion: 1, relations: true, parts: [] }
+    : undefined;
   const assembly: AssemblyPart[] = [];
   const riders = new Map<AssemblyPart, string>();
   const loose: AssemblyPart[] = [];
@@ -310,6 +319,19 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       ...(p.stack && { stack: p.stack }),
       ...(p.glue && { glued: p.glue.host }),
     };
+    if (analysis)
+      analysis.parts.push({
+        name: p.name,
+        kerf,
+        qty: p.qty,
+        ...(p.stack && { stack: p.stack }),
+        ...(p.glue && { glue: p.glue }),
+        ...(p.on && { on: p.on }),
+        cutRegions: material.map((r) => r.map(([x, y]): [number, number] => [x, y])),
+        cutLines: [...layers]
+          .filter(([k]) => mode(k) === 'cut')
+          .flatMap(([, l]) => l.lines.map((r) => r.map(([x, y]): [number, number] => [x, y]))),
+      });
     if (kerf > 0)
       for (const [k, l] of layers)
         if (mode(k) === 'cut') {
@@ -644,6 +666,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     layers: [...layerList, ...backList],
     warnings,
     echoes: res.echoes,
+    ...(analysis && { analysis }),
     hardware: res.hardware,
     steps: res.steps,
   };
@@ -723,8 +746,7 @@ function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: str
         }),
       ),
     );
-    const sized = each.map((r) => Math.round(r.reduce((a, q) => a + area(q), 0) * 10));
-    if (new Set(sized).size > 1)
+    if (each.slice(1).some((r) => xor(each[0], r).length > 0))
       warnings.push(
         `Copies of part "${p.name}" meet the parts in slots in different places; they all get every slot. Make them separate parts to cut each its own.`,
       );

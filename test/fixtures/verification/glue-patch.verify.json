@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "model": "Synthetic glue contact coupon",
+  "configurations": [{ "id": "default" }],
+  "materials": {
+    "host": { "thickness": [3, 3], "kerf": [0, 0] },
+    "patch": { "thickness": [2, 2], "kerf": [0, 0] }
+  },
+  "claims": [
+    {
+      "id": "patch-contact",
+      "kind": "glue-contact",
+      "a": { "part": "host" },
+      "b": { "part": "patch" },
+      "faceA": "top",
+      "faceB": "bottom",
+      "minimumArea": 110
+    },
+    { "id": "stock", "kind": "material-assignment" },
+    { "id": "clearance", "kind": "rigid-clearance", "minimumGap": 0 },
+    {
+      "id": "retained",
+      "kind": "retention",
+      "roots": [{ "part": "host" }],
+      "links": [{ "claim": "patch-contact", "fastening": "glued", "installed": true }]
+    },
+    {
+      "id": "install",
+      "kind": "assembly-access",
+      "initial": [{ "part": "host" }],
+      "steps": [
+        {
+          "id": "add patch",
+          "part": { "part": "patch" },
+          "from": [0, 0, 10],
+          "held": true,
+          "fasten": ["patch-contact"]
+        }
+      ],
+      "minimumGap": 0
+    },
+    { "id": "support", "kind": "assembly-support", "plan": "install", "retention": "retained" },
+    {
+      "id": "stable",
+      "kind": "stability",
+      "supports": [{ "part": "host" }],
+      "loads": [
+        { "body": { "part": "host" }, "mass": 10 },
+        { "body": { "part": "patch" }, "mass": 1 }
+      ],
+      "ground": 0,
+      "gravity": [0, 0, -1],
+      "minimumMargin": 1,
+      "retention": "retained"
+    },
+    {
+      "id": "rigid",
+      "kind": "joint-constraints",
+      "bodies": [{ "part": "host" }, { "part": "patch" }],
+      "roots": [{ "part": "host" }],
+      "expectedDof": 0,
+      "joints": [{ "kind": "fixed", "a": { "part": "host" }, "b": { "part": "patch" } }]
+    }
+  ]
+}

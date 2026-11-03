@@ -31,22 +31,23 @@ changing the source string.
 
 ### Options
 
-| Option         | Value                                                                  |
-| -------------- | ---------------------------------------------------------------------- |
-| `params`       | Parameter values keyed by name                                         |
-| `fonts`        | Font files keyed by name, as `ArrayBuffer` or `Uint8Array`             |
-| `defaultFont`  | Name to use when `text()` does not specify a font                      |
-| `resolve`      | `(path) => source` callback for libraries outside the standard library |
-| `kerf`         | Kerf override for every part, in millimetres                           |
-| `layout`       | `"pack"` or `"none"`                                                   |
-| `sheet`        | `[width, height]` in millimetres, over the program's `$sheet`          |
-| `defaultSheet` | `[width, height]` for programs that do not set `$sheet`: the laser bed |
-| `nest`         | Pack small parts into the holes of bigger ones, as `$nest`             |
-| `gap`          | Space between parts, in millimetres                                    |
-| `margin`       | Space at sheet edges, in millimetres; defaults to `gap`                |
-| `guides`       | Whether to include guide geometry                                      |
-| `maxSteps`     | Evaluation step limit                                                  |
-| `limits`       | Memory limits, see below; any you leave out keep their default         |
+| Option         | Value                                                                                 |
+| -------------- | ------------------------------------------------------------------------------------- |
+| `params`       | Parameter values keyed by name                                                        |
+| `fonts`        | Font files keyed by name, as `ArrayBuffer` or `Uint8Array`                            |
+| `defaultFont`  | Name to use when `text()` does not specify a font                                     |
+| `resolve`      | `(path) => source` callback for libraries outside the standard library                |
+| `kerf`         | Kerf override for every part, in millimetres                                          |
+| `layout`       | `"pack"` or `"none"`                                                                  |
+| `sheet`        | `[width, height]` in millimetres, over the program's `$sheet`                         |
+| `defaultSheet` | `[width, height]` for programs that do not set `$sheet`: the laser bed                |
+| `nest`         | Pack small parts into the holes of bigger ones, as `$nest`                            |
+| `gap`          | Space between parts, in millimetres                                                   |
+| `margin`       | Space at sheet edges, in millimetres; defaults to `gap`                               |
+| `guides`       | Whether to include guide geometry                                                     |
+| `analysis`     | Capture nominal cut geometry before compensation, for [verification](verification.md) |
+| `maxSteps`     | Evaluation step limit                                                                 |
+| `limits`       | Memory limits, see below; any you leave out keep their default                        |
 
 Supply a font for programs that use text:
 
@@ -76,6 +77,7 @@ The URL should point to a font file provided by your application.
 | `layers`          | Layer definitions in output order                                                                                                                                                                                                                                                                                                    |
 | `warnings`        | Problems that did not stop the render                                                                                                                                                                                                                                                                                                |
 | `echoes`          | Output from the program's `echo()` calls                                                                                                                                                                                                                                                                                             |
+| `analysis`        | When requested: nominal cut regions and lines per definition, with compensation kerf; see [assembly verification](verification.md)                                                                                                                                                                                                   |
 
 Each sheet with back-face marks has `back`, with its own `svg`, `dxf` and
 `paths`: the sheet turned over left to right.

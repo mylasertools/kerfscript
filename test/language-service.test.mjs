@@ -152,8 +152,17 @@ test('every name in the examples, libraries and integrations is found', () => {
       checked++;
       if (!r.def && !r.builtin && !hover(a, r.start)) unknown.push(`${file}: ${r.name}`);
     }
-    // Asking anywhere never throws
-    for (let o = 0; o <= src.length; o += 41) {
+    // Sample positions throughout the source, including every name boundary.
+    // Large generated coordinate tables otherwise make repeated prefix scans
+    // quadratic in their data size. All reference bindings above stay checked.
+    const offsets = new Set([src.length]);
+    const stride = Math.max(41, Math.ceil(src.length / 100));
+    for (let o = 0; o <= src.length; o += stride) offsets.add(o);
+    for (const r of a.references) {
+      offsets.add(r.start);
+      offsets.add(r.end);
+    }
+    for (const o of offsets) {
       complete(a, o);
       hover(a, o);
       signatureHelp(a, o);

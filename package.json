@@ -113,6 +113,7 @@
   "scripts": {
     "build": "node scripts/stdlib.mjs && tsc -p tsconfig.json && node scripts/build.mjs",
     "test": "node --test \"test/**/*.test.mjs\"",
+    "verify:fixtures": "node scripts/verify-models.mjs",
     "snapshots": "npm run build && node scripts/snapshots.mjs",
     "check": "npm run build && npm test",
     "examples": "node scripts/examples.mjs",

@@ -19,6 +19,7 @@ import { parse } from './parser.js';
 import { Evaluator } from './evaluator.js';
 import { BUILTIN_FONT, withBuiltinFont } from './font.js';
 import { startServer, workerMain } from './lsp.js';
+import { verificationCommand } from './verify/command.js';
 import {
   add,
   check as checkLibraries,
@@ -38,6 +39,9 @@ Usage:
   kerf render <file.kerf> [-o out.svg] [options]
   kerf params <file.kerf>            print customizer parameters as JSON
   kerf check <file.kerf>             run the program and print parts and warnings
+  kerf verify <file.kerf> --spec <file.json> [-o report.json]
+                                    verify assembly and motion contracts;
+                                    exit 0 pass, 1 failed, 2 unverified/invalid
   kerf fmt <files or folders>        format .kerf files in place
   kerf fmt --check <files>           list files that are not formatted; exit 1 if any
   kerf fmt -                         format standard input to standard output
@@ -112,6 +116,7 @@ function main(argv: string[]) {
     return;
   }
   const cmd = argv[0];
+  if (cmd === 'verify') return verificationCommand(argv.slice(1));
   if (cmd === 'fmt') return fmt(argv.slice(1));
   if (cmd === 'import') return importCommand(argv.slice(1));
   if (['install', 'add', 'remove', 'pack'].includes(cmd)) return libraries(cmd, argv.slice(1));

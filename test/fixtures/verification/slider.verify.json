@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "model": "Rigid slider path coupon",
+  "configurations": [
+    { "id": "retracted", "params": { "u": 0 } },
+    { "id": "extended", "params": { "u": 1 } }
+  ],
+  "materials": {
+    "plywood": { "thickness": [3, 3], "kerf": [0, 0] }
+  },
+  "claims": [
+    { "id": "stock", "kind": "material-assignment" },
+    { "id": "cuts", "kind": "cut-invariant" },
+    { "id": "clearance", "kind": "rigid-clearance", "minimumGap": 0.5 },
+    {
+      "id": "guide",
+      "kind": "joint-constraints",
+      "bodies": [{ "part": "frame" }, { "part": "slider" }],
+      "roots": [{ "part": "frame" }],
+      "expectedDof": 1,
+      "joints": [
+        {
+          "kind": "prismatic",
+          "a": { "part": "frame" },
+          "b": { "part": "slider" },
+          "axisA": [1, 0, 0],
+          "travel": [0, 10.1]
+        }
+      ]
+    },
+    {
+      "id": "slide",
+      "kind": "motion-clearance",
+      "from": "retracted",
+      "to": "extended",
+      "constraints": "guide",
+      "moving": [
+        { "body": { "part": "slider" }, "trajectory": { "kind": "translate", "by": [10, 0, 0] } }
+      ],
+      "minimumGap": 0.5
+    }
+  ]
+}

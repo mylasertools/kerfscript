@@ -238,6 +238,7 @@ Errors are thrown as `KerfError` with `line` and `col`.
   [parts and sheets](docs/parts-and-sheets.md), [settings](docs/customizer.md),
   the [desktop app](docs/desktop.md), the [command line](docs/cli.md), the
   [JavaScript API](docs/javascript.md),
+  [assembly verification](docs/verification.md),
   [WebAssembly](docs/webassembly.md) for other languages and
   [AI assistants](docs/mcp.md)
 - [Standard library](docs/library.md): joints, hinges, dividers, hanging

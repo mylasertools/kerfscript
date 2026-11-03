@@ -47,6 +47,7 @@ to try these commands.
 kerf render <file.kerf> [-o out.svg] [options]
 kerf params <file.kerf>
 kerf check <file.kerf>
+kerf verify <file.kerf> --spec <file.json> [-o report.json]
 kerf fmt <files or folders>
 kerf fmt --check <files or folders>
 kerf fmt -
@@ -61,6 +62,11 @@ kerf pack [folder] [-o file]
 `render` exports SVG, DXF or JSON, using the output file's extension to
 choose the format. `params` lists the editable settings as JSON. `check`
 reports parts, dimensions, cut lengths, sheets and warnings.
+
+`verify` checks explicit rigid fit, retention, installation and motion contracts and writes a JSON report. It
+exits with 0 for passed required claims, 1 for failures, and 2 for unverified or
+invalid inputs. See [Assembly verification](verification.md) for supported claims,
+material profiles and the limits of a pass.
 
 `fmt` formats `.kerf` files in place, searching folders for them, except
 `kerf_libraries/`, whose files `kerf.lock` pins as they are. It sets

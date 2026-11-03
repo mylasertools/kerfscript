@@ -10,6 +10,16 @@ added to old ones change the text of warnings.
 
 Assembly:
 
+- `kerf verify` and the JavaScript verification API check explicit rigid fit,
+  shaft capture, conditional retention, material adaptation, cut invariance,
+  insertion/tool access, assembly support, static stability, ideal joint mobility
+  and continuous translation/rotation clearance. Reports distinguish pass, fail
+  and unverified within their stated scope and record input fingerprints.
+  `render(..., { analysis: true })` captures nominal cuts and native connections;
+  `poseAssembly()` previews the checked paths. Viewer diagnostics highlight
+  implicated bodies. Strength, friction and contact-driven mechanics remain
+  uncovered. See `docs/verification.md`.
+
 - `place(at, rotate) { ... }` places the parts and hardware inside it, with
   their own placements inside its. `box()` takes a `name` and shapes for
   its front, so a box can be set anywhere.
