@@ -414,3 +414,28 @@ test('a part that only dips into another cuts no slot, and collides', () => {
   assert.equal(r.parts.find((p) => p.name === 'floor').cutLength, 266);
   assert.equal(r.warnings.filter((w) => /"floor" and "arm" collide/.test(w)).length, 1);
 });
+
+test('kerf check --call runs one call of a library, with -D set first', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'kerf-'));
+  writeFileSync(
+    join(dir, 'lib.kerf'),
+    'part("stray") rect(99);\nmodule tile(w) part("tile") rect([w, $thickness * 10]);\n',
+  );
+  const out = execFileSync(
+    'node',
+    [
+      'dist/cli.js',
+      'check',
+      join(dir, 'lib.kerf'),
+      '--call',
+      'tile(w)',
+      '-D',
+      'w=25',
+      '-D',
+      '$thickness=4',
+    ],
+    { encoding: 'utf8' },
+  );
+  assert.match(out, /^tile: 25 x 40 mm, 4 mm material/m);
+  assert.doesNotMatch(out, /stray/);
+});

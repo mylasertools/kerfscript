@@ -91,6 +91,9 @@ Options:
   --sweep name=a:step:b   with check: try every value, or name=a,b,c, or
                           settings that go together: w,d=100,80;200,150; repeat to
                           try every combination, and exit 1 if any warns or fails
+  --call 'roses(40, 30)'   render or check one call of a library's module
+                          instead of the file's own program; -D sets
+                          variables first, as -D '$thickness=4'
   --params-list sets.json with check: try each set of settings in a JSON list,
                           crossed with any --sweep
   -h, --help              show this help
@@ -147,6 +150,7 @@ function main(argv: string[]) {
   } = {};
   let split = false;
   let stats = false;
+  let call: string | undefined;
   const sweeps: Record<string, Value>[][] = [];
   for (let i = 1; i < argv.length; i++) {
     const a = argv[i];
@@ -183,12 +187,21 @@ function main(argv: string[]) {
     else if (a === '--nest') opts.nest = true;
     else if (a === '--sweep') sweeps.push(sweepValues(next()));
     else if (a === '--params-list') sweeps.push(paramsList(next()));
+    else if (a === '--call') call = next();
     else if (a.startsWith('-')) fail(`Unknown option ${a}`);
     else if (!file) file = a;
     else fail(`Unexpected argument ${a}`);
   }
   if (!file) fail('Give a .kerf file.');
-  const source = readFileSync(file, 'utf8');
+  // --call: a program of the settings, the library and one call of it
+  const source =
+    call === undefined
+      ? readFileSync(file, 'utf8')
+      : [
+          ...Object.entries(params).map(([k, v]) => `${k} = ${JSON.stringify(v)};`),
+          `use <${resolve(file)}>`,
+          `${call.trim().replace(/;$/, '')};`,
+        ].join('\n');
   const resolveLib = resolver(file);
   design = { source, file, resolve: resolveLib };
 
