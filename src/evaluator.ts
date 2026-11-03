@@ -1814,7 +1814,11 @@ export class Evaluator {
         // A bend shows only in the assembled view: it places the part too
         const bendArg = this.arg(c.args, 'bend', -1);
         let placements =
-          at === undefined && turn === undefined && !framed && glue === undefined && bendArg === undefined
+          at === undefined &&
+          turn === undefined &&
+          !framed &&
+          glue === undefined &&
+          bendArg === undefined
             ? undefined
             : this.placements(at, turn, qty);
         const t = this.thickness(c.env);

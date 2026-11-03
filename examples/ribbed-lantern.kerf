@@ -34,13 +34,15 @@ module fin() difference() {
     translate([tab_end, z - clearance / 2]) rect([diameter, t + clearance]);
   }
 }
-part("Radial fin", qty = ribs,
-  at = [for (i = [0:ribs - 1]) [-t / 2 * sin(360 * i / ribs), t / 2 * cos(360 * i / ribs), 0]],
-  rotate = [for (i = [0:ribs - 1]) [90, 0, 360 * i / ribs]]) fin();
-part("Collar ring", qty = 2, at = [for (z = levels) [0, 0, z]]) difference() {
-  circle(r = ri + 18);
-  circle(r = ri - 5);
-  // Open each slot through the outside rim so fins can slide in radially.
-  for (i = [0:ribs - 1]) rotate(360 * i / ribs) translate([tab_start - clearance / 2, -(t + clearance) / 2])
-    rect([ri + 19 - tab_start + clearance, t + clearance]);
-}
+step("Set the fins out in a circle, tabs facing in")
+  part("Radial fin", qty = ribs,
+    at = [for (i = [0:ribs - 1]) [-t / 2 * sin(360 * i / ribs), t / 2 * cos(360 * i / ribs), 0]],
+    rotate = [for (i = [0:ribs - 1]) [90, 0, 360 * i / ribs]]) fin();
+step("Slide the fin tabs into both collar rings and glue them")
+  part("Collar ring", qty = 2, at = [for (z = levels) [0, 0, z]]) difference() {
+    circle(r = ri + 18);
+    circle(r = ri - 5);
+    // Open each slot through the outside rim so fins can slide in radially.
+    for (i = [0:ribs - 1]) rotate(360 * i / ribs) translate([tab_start - clearance / 2, -(t + clearance) / 2])
+      rect([ri + 19 - tab_start + clearance, t + clearance]);
+  }

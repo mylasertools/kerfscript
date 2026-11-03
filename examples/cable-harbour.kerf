@@ -27,14 +27,17 @@ part("Floor", at = [0, 0, 0]) difference() {
   if (bays > 1) for (i = [1:bays - 1]) translate([i * (bay_width + t) + t / 2, t + 0.5]) rotate(90)
     slots(depth - 2 * t - 1, clearance = clearance);
 }
-part("Front", at = [0, t, 0], rotate = [90, 0, 0]) finger_rect([w, wall_height], ["in", "out", "flat", "out"]);
-part("Cable wall", at = [0, depth, 0], rotate = [90, 0, 0]) difference() {
-  finger_rect([w, wall_height], ["in", "out", "flat", "out"]);
-  for (i = [0:bays - 1]) translate([t + bay_width / 2 + i * (bay_width + t), wall_height])
-    rect([cable_diameter, wall_height * 0.66], center = true, r = cable_diameter / 2);
+step("Glue the front, the cable wall and the ends to the floor") {
+  part("Front", at = [0, t, 0], rotate = [90, 0, 0]) finger_rect([w, wall_height], ["in", "out", "flat", "out"]);
+  part("Cable wall", at = [0, depth, 0], rotate = [90, 0, 0]) difference() {
+    finger_rect([w, wall_height], ["in", "out", "flat", "out"]);
+    for (i = [0:bays - 1]) translate([t + bay_width / 2 + i * (bay_width + t), wall_height])
+      rect([cable_diameter, wall_height * 0.66], center = true, r = cable_diameter / 2);
+  }
+  part("End", qty = 2, at = [[0, 0, 0], [w - t, 0, 0]], rotate = [90, 0, 90])
+    finger_rect([depth, wall_height], ["in", "in", "flat", "in"]);
 }
-part("End", qty = 2, at = [[0, 0, 0], [w - t, 0, 0]], rotate = [90, 0, 90])
-  finger_rect([depth, wall_height], ["in", "in", "flat", "in"]);
-if (bays > 1) part("Device divider", qty = bays - 1,
-  at = [for (i = [1:bays - 1]) [i * (bay_width + t), t + 0.5, t]], rotate = [90, 0, 90])
-  union() { rect([depth - 2 * t - 1, divider_height], r = 4); tabs(depth - 2 * t - 1); }
+step("Fit the device dividers into the floor slots, without glue")
+  if (bays > 1) part("Device divider", qty = bays - 1,
+    at = [for (i = [1:bays - 1]) [i * (bay_width + t), t + 0.5, t]], rotate = [90, 0, 90])
+    union() { rect([depth - 2 * t - 1, divider_height], r = 4); tabs(depth - 2 * t - 1); }

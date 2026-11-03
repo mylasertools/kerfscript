@@ -202,7 +202,7 @@ outers = [d_out + depth + 4 * t, -d_out - depth - 5 * t];
 function plate_at(y) = [0, y > 0 ? y : y + t, ride];
 function plate_rot(y) = y > 0 ? [90, 0, 180] : [90, 0, 0];
 
-if (output == "all" || output == "frame") {
+if (output == "all" || output == "frame") step("Bolt the side plates and the outer plates on the four tie rods") {
   part("Side plate", qty = 2, at = [for (y = plates) plate_at(y)], rotate = [for (y = plates) plate_rot(y)]) {
     plate(14);
     score() translate([0, -26]) text("SIDE PLATE", size = 4, halign = "center");
@@ -214,7 +214,7 @@ if (output == "all" || output == "frame") {
     score() translate([0, -21]) text("KLANN LINKAGE", size = 3.5, halign = "center");
   }
 }
-if (output == "all" || output == "crank") {
+if (output == "all" || output == "crank") step("Build the crank on the square bar between the plates, with the end cap on the left and the handle on the right") {
   // Glued in pairs; the crank pin hole is for the M4 rod
   part("Crank disc", qty = 12, at = [for (q = discs) side_at(O, q[0])], rotate = [for (q = discs) side_rot(crank_angle + q[1])]) {
     difference() {
@@ -239,7 +239,7 @@ if (output == "all" || output == "crank") {
   part("Handle grip", qty = 6, at = [for (k = [1:6]) side_at(polar(handle, crank_angle - 90), -top - (4 + k) * t)], rotate = side_rot(crank_angle - 90)) ring(18, hole);
   part("End cap", at = side_at(O, top + t), rotate = side_rot(crank_angle)) hub(24);
 }
-if (output == "all" || output == "legs") {
+if (output == "all" || output == "legs") step("Hang the rockers, the legs and the arms beside each crank disc, with spacer rings in the gaps") {
   arms = links(iP, iE, 2, 1);
   part("Connecting arm", qty = 8, at = [for (q = arms) q[0]], rotate = [for (q = arms) q[1]]) link([cP, cE, cK], [cP, cE, cK], "ARM");
   legs = links(iK, iH, 1, 2);
@@ -251,7 +251,7 @@ if (output == "all" || output == "legs") {
   part("Lower rocker", qty = 8, at = [for (q = lowers) q[0]], rotate = [for (q = lowers) q[1]])
     link([[0, 0], [norm(mm(pE) - B), 0]], [[0, 0], [norm(mm(pE) - B), 0]], "LOW");
 }
-if (output == "all" || output == "spacers") part("Spacer ring", qty = 44, at = [for (q = rings) q[0]], rotate = [for (q = rings) q[1]]) ring(11, hole);
+if (output == "all" || output == "spacers") step("Hang the rockers, the legs and the arms beside each crank disc, with spacer rings in the gaps") part("Spacer ring", qty = 44, at = [for (q = rings) q[0]], rotate = [for (q = rings) q[1]]) ring(11, hole);
 if (output == "all" || output == "coupon") part("Fit test", at = [150, -24, 0], rotate = [0, 0, 0]) {
   difference() {
     rect([120, 48], r = 3);

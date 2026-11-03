@@ -101,7 +101,7 @@ if (output == "card") part("Owl card") {
     translate([title[0] + title[2] / 2, title[1] + title[3] * 0.16]) text("POCKET WILDLIFE", size = title[3] * 0.15, halign = "center", valign = "center");
   }
 }
-if (output == "loose") for (i = [0:len(names) - 1]) part(names[i], at = placement(i)[0], rotate = placement(i)[1]) {
+if (output == "loose") for (i = [0:len(names) - 1]) step(i == 0 ? "Stand the body on edge" : "Slide each crosspiece onto the body at its notch") part(names[i], at = placement(i)[0], rotate = placement(i)[1]) {
   shape(i);
   eyes(i);
 }

@@ -468,5 +468,30 @@
     "file": "slat-roll",
     "title": "Cord-laced roll-up desk mat",
     "tags": ["lacing", "flexible", "repeated-parts"]
+  },
+  {
+    "file": "lock-box",
+    "title": "Lock box with a key",
+    "tags": ["joinery", "mechanism", "library", "storage"]
+  },
+  {
+    "file": "ring-vase",
+    "title": "Stacked ring vase",
+    "tags": ["library", "curves", "home"]
+  },
+  {
+    "file": "world-map",
+    "title": "World map sign",
+    "tags": ["library", "engrave", "home", "text"]
+  },
+  {
+    "file": "pen-tray",
+    "title": "Bent pen tray",
+    "tags": ["flex", "library", "slots", "storage"]
+  },
+  {
+    "file": "symbol-tags",
+    "title": "Symbol name tags",
+    "tags": ["library", "engrave", "text"]
   }
 ]

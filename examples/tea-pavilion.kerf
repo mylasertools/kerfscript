@@ -43,10 +43,14 @@ module end(front = false) {
     line([0, -h * 0.11], [0, h * 0.11]);
   }
 }
-part("Floor", at = [0, 0, 0]) finger_rect([w, d], "out");
-part("Dispensing end", at = [0, t, 0], rotate = [90, 0, 0]) end(true);
-part("Rear end", at = [0, d, 0], rotate = [90, 0, 0]) end(false);
-part("Side", qty = 2, at = [[0, 0, 0], [w - t, 0, 0]], rotate = [90, 0, 90])
-  finger_rect([d, h], ["in", "in", "flat", "in"]);
-part("Fixed roof", at = [-overhang, -overhang, h - overhang * tan(angle)], rotate = [0, -angle, 0]) rect([slant + extra, d + 2 * overhang]);
-part("Lift-off roof", at = [w / 2, -overhang, h + roof_rise], rotate = [0, angle, 0]) rect([slant + extra, d + 2 * overhang]);
+step("Glue the ends and sides into the floor") {
+  part("Floor", at = [0, 0, 0]) finger_rect([w, d], "out");
+  part("Dispensing end", at = [0, t, 0], rotate = [90, 0, 0]) end(true);
+  part("Rear end", at = [0, d, 0], rotate = [90, 0, 0]) end(false);
+  part("Side", qty = 2, at = [[0, 0, 0], [w - t, 0, 0]], rotate = [90, 0, 90])
+    finger_rect([d, h], ["in", "in", "flat", "in"]);
+}
+step("Glue one roof slope in place")
+  part("Fixed roof", at = [-overhang, -overhang, h - overhang * tan(angle)], rotate = [0, -angle, 0]) rect([slant + extra, d + 2 * overhang]);
+step("Lay the other slope on top, loose for refilling")
+  part("Lift-off roof", at = [w / 2, -overhang, h + roof_rise], rotate = [0, angle, 0]) rect([slant + extra, d + 2 * overhang]);

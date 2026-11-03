@@ -59,6 +59,8 @@ part("Carrier floor", at = [0, 0, 0]) {
       translate([gap + i * (tw + gap), cd + 2 * gap + j * (td + gap)]) outline() rect([tw, td]);
   }
 }
-for (i = [0:deck_count - 1]) bin(str("Card tray ", i + 1), cw, cd, ch, [gap + i * (cw + gap), gap, t]);
-for (i = [0:token_columns - 1], j = [0:token_rows - 1])
-  bin(str("Token bin ", j * token_columns + i + 1), tw, td, token_height, [gap + i * (tw + gap), cd + 2 * gap + j * (td + gap), t]);
+step("Glue up each card tray and set it loose on the carrier floor")
+  for (i = [0:deck_count - 1]) bin(str("Card tray ", i + 1), cw, cd, ch, [gap + i * (cw + gap), gap, t]);
+step("Glue up each token bin and set it loose behind the card trays")
+  for (i = [0:token_columns - 1], j = [0:token_rows - 1])
+    bin(str("Token bin ", j * token_columns + i + 1), tw, td, token_height, [gap + i * (tw + gap), cd + 2 * gap + j * (td + gap), t]);

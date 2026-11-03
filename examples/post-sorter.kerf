@@ -22,12 +22,14 @@ t = $thickness;
 margin = 10;
 depth = 2 * margin + (bays + 1) * t + bays * bay_gap;
 span = width - 2 * margin;
-part("Base", at = [0, 0, 0]) difference() {
-  rect([width, depth], r = 4);
-  for (i = [0:bays]) translate([margin, margin + t / 2 + i * (bay_gap + t)]) slots(span, clearance = clearance);
-}
-for (i = [0:bays])
-  part(str("Divider ", i + 1), at = [margin, margin + t + i * (bay_gap + t), t], rotate = [90, 0, 0]) difference() {
-    union() { rect([span, front_height + rise * i], r = 4); tabs(span); }
-    translate([span / 2, front_height + rise * i]) ellipse([span * 0.25, 13]);
+step("Lay the base flat")
+  part("Base", at = [0, 0, 0]) difference() {
+    rect([width, depth], r = 4);
+    for (i = [0:bays]) translate([margin, margin + t / 2 + i * (bay_gap + t)]) slots(span, clearance = clearance);
   }
+step("Glue each divider into its slots in the base")
+  for (i = [0:bays])
+    part(str("Divider ", i + 1), at = [margin, margin + t + i * (bay_gap + t), t], rotate = [90, 0, 0]) difference() {
+      union() { rect([span, front_height + rise * i], r = 4); tabs(span); }
+      translate([span / 2, front_height + rise * i]) ellipse([span * 0.25, 13]);
+    }

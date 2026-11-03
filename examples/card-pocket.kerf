@@ -23,12 +23,15 @@ assert(front_height >= 3 * t, "Front lip must be at least three sheet thicknesse
 // Side corners only meet the common lower wall height. The back rises
 // above those joints, without fingers exposed along its upper sides.
 part("Floor", at = [0, 0, 0]) finger_rect([w, d], "out");
-part("Front", at = [0, t, 0], rotate = [90, 0, 0]) difference() {
-  finger_rect([w, front_height], ["in", "out", "flat", "out"]);
-  translate([w / 2, front_height + 5]) ellipse([w * 0.26, 10]);
+step("Glue the front and back to the floor") {
+  part("Front", at = [0, t, 0], rotate = [90, 0, 0]) difference() {
+    finger_rect([w, front_height], ["in", "out", "flat", "out"]);
+    translate([w / 2, front_height + 5]) ellipse([w * 0.26, 10]);
+  }
+  part("Back", at = [0, d, 0], rotate = [90, 0, 0]) union() {
+    finger_rect([w, front_height], ["in", "out", "flat", "out"]);
+    translate([t, front_height - 0.1]) rect([w - 2 * t, back_height - front_height + 0.1], r = 2);
+  }
 }
-part("Back", at = [0, d, 0], rotate = [90, 0, 0]) union() {
-  finger_rect([w, front_height], ["in", "out", "flat", "out"]);
-  translate([t, front_height - 0.1]) rect([w - 2 * t, back_height - front_height + 0.1], r = 2);
-}
-part("Side", qty = 2, at = [[0, 0, 0], [w - t, 0, 0]], rotate = [90, 0, 90]) finger_rect([d, front_height], ["in", "in", "flat", "in"]);
+step("Glue the sides in")
+  part("Side", qty = 2, at = [[0, 0, 0], [w - t, 0, 0]], rotate = [90, 0, 90]) finger_rect([d, front_height], ["in", "in", "flat", "in"]);

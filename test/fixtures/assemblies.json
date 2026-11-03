@@ -781,5 +781,83 @@
         "curl": 0.0
       }
     ]
+  },
+  {
+    "file": "lock-box",
+    "variants": [
+      {
+        "width": 120,
+        "depth": 85,
+        "height": 65,
+        "throw": 5,
+        "locked": false,
+        "$thickness": 2.5
+      },
+      {
+        "width": 260,
+        "depth": 180,
+        "height": 150,
+        "throw": 10,
+        "$thickness": 4
+      }
+    ]
+  },
+  {
+    "file": "ring-vase",
+    "variants": [
+      {
+        "height": 90,
+        "belly": 60,
+        "neck": 40,
+        "hole": 24,
+        "$thickness": 2
+      },
+      {
+        "height": 240,
+        "belly": 150,
+        "belly_at": 0.6,
+        "neck": 110,
+        "hole": 60,
+        "$thickness": 6
+      }
+    ]
+  },
+  {
+    "file": "world-map",
+    "variants": [
+      {
+        "width": 180,
+        "latitude": -33.87,
+        "longitude": 151.21,
+        "place": "SYDNEY",
+        "marker": "star",
+        "$thickness": 2
+      },
+      {
+        "width": 500,
+        "latitude": 40.71,
+        "longitude": -74.0,
+        "place": "NEW YORK",
+        "marker": "home",
+        "$thickness": 6
+      }
+    ]
+  },
+  {
+    "file": "pen-tray",
+    "variants": [
+      {
+        "length": 120,
+        "width": 40,
+        "depth": 45,
+        "$thickness": 2
+      },
+      {
+        "length": 400,
+        "width": 120,
+        "depth": 150,
+        "$thickness": 4
+      }
+    ]
   }
 ]

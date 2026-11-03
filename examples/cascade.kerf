@@ -229,25 +229,38 @@ function tilt(k) = floor(value / pow(2, k)) % 2 == 1 ? -tip : tip;
 // The return tray stands between the feet, in front of the board's foot
 tray_at = [feet_x[0] + t, -62, 0];
 
+// The assembly steps, listed first so they number in build order
+step("Glue the two board layers together");
+step("Glue the rails, the hopper and the return wall on the front, three layers each");
+step("Bolt each rocker on its pivot, with its two reset levers behind the board");
+step("Hang the reset bar on its two guide bolts");
+step("Slide the board into the feet and stand the return tray between them");
 if (output == "all" || output == "board") {
-  part("Board face", at = board_at([0, 0], -t), rotate = board_turn()) board(true);
-  part("Board back", at = board_at([0, 0], -2 * t), rotate = board_turn()) board(false);
-  part("Stand foot", qty = 4, rotate = [90, 0, 90],
-    at = [for (x = feet_x, k = [0:1]) [x - t + k * t, 0, 0]]) foot();
+  step("Glue the two board layers together") {
+    part("Board face", at = board_at([0, 0], -t), rotate = board_turn()) board(true);
+    part("Board back", at = board_at([0, 0], -2 * t), rotate = board_turn()) board(false);
+  }
+  step("Slide the board into the feet and stand the return tray between them")
+    part("Stand foot", qty = 4, rotate = [90, 0, 90],
+      at = [for (x = feet_x, k = [0:1]) [x - t + k * t, 0, 0]]) foot();
 }
 if (output == "all" || output == "rockers") {
-  // Rockers 1 mm off the board on their washers, three layers each
-  part("Rocker face", qty = n, at = [for (k = [0:n - 1]) board_at(pivot(k), 1 + 2 * t)],
-    rotate = [for (k = [0:n - 1]) board_turn(tilt(k))]) rocker(true);
-  part("Rocker", qty = 2 * n, at = [for (k = [0:n - 1], j = [0:1]) board_at(pivot(k), 1 + j * t)],
-    rotate = [for (k = [0:n - 1], j = [0:1]) board_turn(tilt(k))]) rocker(false);
-  // Levers and bar 1 mm behind the board, two layers each
-  part("Reset lever", qty = 2 * n, at = [for (k = [0:n - 1], j = [0:1]) board_at(pivot(k), -3 * t - 1 - j * t)],
-    rotate = [for (k = [0:n - 1], j = [0:1]) board_turn(tilt(k))]) lever();
-  part("Reset bar face", at = board_at([0, 0], -3 * t - 1), rotate = board_turn()) reset_bar(true);
-  part("Reset bar", at = board_at([0, 0], -4 * t - 1), rotate = board_turn()) reset_bar(false);
+  step("Bolt each rocker on its pivot, with its two reset levers behind the board") {
+    // Rockers 1 mm off the board on their washers, three layers each
+    part("Rocker face", qty = n, at = [for (k = [0:n - 1]) board_at(pivot(k), 1 + 2 * t)],
+      rotate = [for (k = [0:n - 1]) board_turn(tilt(k))]) rocker(true);
+    part("Rocker", qty = 2 * n, at = [for (k = [0:n - 1], j = [0:1]) board_at(pivot(k), 1 + j * t)],
+      rotate = [for (k = [0:n - 1], j = [0:1]) board_turn(tilt(k))]) rocker(false);
+    // Levers and bar 1 mm behind the board, two layers each
+    part("Reset lever", qty = 2 * n, at = [for (k = [0:n - 1], j = [0:1]) board_at(pivot(k), -3 * t - 1 - j * t)],
+      rotate = [for (k = [0:n - 1], j = [0:1]) board_turn(tilt(k))]) lever();
+  }
+  step("Hang the reset bar on its two guide bolts") {
+    part("Reset bar face", at = board_at([0, 0], -3 * t - 1), rotate = board_turn()) reset_bar(true);
+    part("Reset bar", at = board_at([0, 0], -4 * t - 1), rotate = board_turn()) reset_bar(false);
+  }
 }
-if (output == "all" || output == "rails") {
+if (output == "all" || output == "rails") step("Glue the rails, the hopper and the return wall on the front, three layers each") {
   // Three layers of every rail on the board's front face
   part("Chute rail", qty = 3 * n, at = [for (k = [0:n - 1], j = [0:2]) board_at(pivot(k), j * t)], rotate = board_turn()) chute_rail();
   part("Stop rail", qty = 3 * (n - 1), at = [for (k = [0:n - 2], j = [0:2]) board_at(pivot(k), j * t)], rotate = board_turn()) stop_rail();
@@ -256,7 +269,7 @@ if (output == "all" || output == "rails") {
   part("Return wall", qty = 3, at = [for (j = [0:2]) board_at([0, 0], j * t)], rotate = board_turn())
     translate([ret_x + ret_w, 0]) rect([wall, top + 30]);
 }
-if (output == "all" || output == "tray") {
+if (output == "all" || output == "tray") step("Slide the board into the feet and stand the return tray between them") {
   part("Tray floor", at = tray_at) rect([tray_w, 80]);
   part("Tray side", qty = 2, rotate = [90, 0, 90], at = [tray_at + [0, 0, t], tray_at + [tray_w - t, 0, t]]) rect([80, 25]);
   part("Tray end", qty = 2, rotate = [90, 0, 0], at = [tray_at + [t, 3, t], tray_at + [t, 80, t]]) rect([tray_w - 2 * t, 25]);

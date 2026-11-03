@@ -113,9 +113,13 @@ module relief(z) {
   echo("Layer", z, "openings", n * hole_count(depth, radius(sector), z));
 }
 
+function layer_step(z) = str("Lay layer ", z, z == 0 ? " on top" : " on", ", turned until the channels line up");
 if (output == "all") {
-  for (z = [0:layers - 1]) relief(z);
-  part("Backer", at = [0, 0, 0]) blank();
+  // Name the steps in build order first: the backer, then the deepest layer up
+  step("Lay the backer down") {}
+  for (z = [layers - 1:-1:0]) step(layer_step(z)) {}
+  for (z = [0:layers - 1]) step(layer_step(z)) relief(z);
+  step("Lay the backer down") part("Backer", at = [0, 0, 0]) blank();
 } else if (output == "backer") part("Backer") blank();
 else for (z = [0:layers - 1]) if (output == "layer" + str(z)) relief(z);
 

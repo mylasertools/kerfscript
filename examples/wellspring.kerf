@@ -341,44 +341,55 @@ function on_axle(b) = [90, -b, 90];
 // A point at radius r along the draw-bar, height z
 function round_at(r, z) = [r * cos(theta), r * sin(theta), z];
 
-if (output == "all" || output == "base") {
+if (output == "all" || output == "base") step("Glue the base layers and stand the walkway on its five posts") {
   part("Base", qty = 2, at = [[0, 0, 0], [0, 0, t]]) base();
   part("Walkway", at = [0, 0, deck_z]) deck();
   part("Walkway post", qty = 5, at = [for (a = [60:60:300]) [-t / 2 * sin(a), t / 2 * cos(a), 2 * t]],
     rotate = [for (a = [60:60:300]) [90, 0, a]]) post();
 }
 if (output == "all" || output == "gearing") {
-  part("Tower disc", qty = tower_n, at = [for (i = [0:tower_n - 1]) [0, 0, 2 * t + i * t]]) difference() {
-    circle(d = 24);
-    bush();
+  step("Build the tower and clamp the crown wheel and draw-bar on its shaft") {
+    part("Tower disc", qty = tower_n, at = [for (i = [0:tower_n - 1]) [0, 0, 2 * t + i * t]]) difference() {
+      circle(d = 24);
+      bush();
+    }
+    part("Crown wheel", qty = 2, at = [[0, 0, zc], [0, 0, zc + t]], rotate = [0, 0, theta]) crown();
+    part("Shaft collar", qty = collar_n, at = [for (i = [0:collar_n - 1]) [0, 0, zc + 2 * t + i * t]]) annulus(26, 4.4);
+    part("Draw-bar", qty = 2, at = [[0, 0, zd], [0, 0, zd + t]], rotate = [0, 0, theta]) draw_bar();
   }
-  part("Crown wheel", qty = 2, at = [[0, 0, zc], [0, 0, zc + t]], rotate = [0, 0, theta]) crown();
-  part("Shaft collar", qty = collar_n, at = [for (i = [0:collar_n - 1]) [0, 0, zc + 2 * t + i * t]]) annulus(26, 4.4);
-  part("Draw-bar", qty = 2, at = [[0, 0, zd], [0, 0, zd + t]], rotate = [0, 0, theta]) draw_bar();
-  part("Lantern plate", qty = 4, at = [for (x = [lx_in - 2 * t, lx_in - t, lx_out, lx_out + t]) [x, 0, zL]],
-    rotate = on_axle(beta)) lantern_plate();
-  part("Lantern bearing", qty = 2, at = [[lbx, 0, 2 * t], [lbx + t, 0, 2 * t]], rotate = across) lantern_bearing();
+  step("Thread the lantern, its bearing, the uprights and the water wheel onto the axle") {
+    part("Lantern plate", qty = 4, at = [for (x = [lx_in - 2 * t, lx_in - t, lx_out, lx_out + t]) [x, 0, zL]],
+      rotate = on_axle(beta)) lantern_plate();
+    part("Lantern bearing", qty = 2, at = [[lbx, 0, 2 * t], [lbx + t, 0, 2 * t]], rotate = across) lantern_bearing();
+  }
 }
 if (output == "all" || output == "wheel") {
-  part("Water wheel", qty = 2, at = [[wx, 0, zL], [wx + t, 0, zL]], rotate = on_axle(beta)) wheel();
-  part("Wheel hub", qty = 2, at = [[wx + 2 * t, 0, zL], [wx + 3 * t, 0, zL]], rotate = on_axle(beta)) annulus(30, 4.4);
+  step("Thread the lantern, its bearing, the uprights and the water wheel onto the axle") {
+    part("Water wheel", qty = 2, at = [[wx, 0, zL], [wx + t, 0, zL]], rotate = on_axle(beta)) wheel();
+    part("Wheel hub", qty = 2, at = [[wx + 2 * t, 0, zL], [wx + 3 * t, 0, zL]], rotate = on_axle(beta)) annulus(30, 4.4);
+  }
   // Each pot in two layers on the wheel's outer face, turned with the wheel
-  part("Pot", qty = 2 * pots,
-    at = [for (i = [0:pots - 1], k = [0, 1]) let (g = 360 * i / pots + beta) [wx + 2 * t + k * t, (Rw - 1) * cos(g), zL + (Rw - 1) * sin(g)]],
-    rotate = [for (i = [0:pots - 1], k = [0, 1]) on_axle(beta + 360 * i / pots - 90)]) pot();
+  step("Glue the pots on the wheel, the well walls between the uprights and the trough on top")
+    part("Pot", qty = 2 * pots,
+      at = [for (i = [0:pots - 1], k = [0, 1]) let (g = 360 * i / pots + beta) [wx + 2 * t + k * t, (Rw - 1) * cos(g), zL + (Rw - 1) * sin(g)]],
+      rotate = [for (i = [0:pots - 1], k = [0, 1]) on_axle(beta + 360 * i / pots - 90)]) pot();
 }
 if (output == "all" || output == "well") {
-  part("Inner upright", qty = 2, at = [[wix, 0, 2 * t], [wix + t, 0, 2 * t]], rotate = across) well_upright(false);
-  part("Outer upright", qty = 2, at = [[wox, 0, 2 * t], [wox + t, 0, 2 * t]], rotate = across) well_upright(true);
-  part("Well wall", qty = 2, at = [[wx - 4.2, Yw + t, 2 * t], [wx - 4.2, -Yw, 2 * t]], rotate = [90, 0, 0]) well_wall();
-  part("Trough floor", at = [trough_x, 0, trough_z]) translate([0, trough_y[0]]) rect([100, trough_y[1] - trough_y[0]]);
-  part("Trough side", qty = 2, at = [[trough_x, trough_y[1], trough_z + t], [trough_x, trough_y[0] + t, trough_z + t]],
-    rotate = [90, 0, 0]) rect([100, 14]);
-  part("Trough end", at = [trough_x, 0, trough_z + t], rotate = across)
-    translate([trough_y[0] + t, 0]) rect([trough_y[1] - trough_y[0] - 2 * t, 14]);
-  part("Trough post", qty = 2, at = [[post_x, 0, 2 * t], [post_x + t, 0, 2 * t]], rotate = across) trough_post();
+  step("Thread the lantern, its bearing, the uprights and the water wheel onto the axle") {
+    part("Inner upright", qty = 2, at = [[wix, 0, 2 * t], [wix + t, 0, 2 * t]], rotate = across) well_upright(false);
+    part("Outer upright", qty = 2, at = [[wox, 0, 2 * t], [wox + t, 0, 2 * t]], rotate = across) well_upright(true);
+  }
+  step("Glue the pots on the wheel, the well walls between the uprights and the trough on top") {
+    part("Well wall", qty = 2, at = [[wx - 4.2, Yw + t, 2 * t], [wx - 4.2, -Yw, 2 * t]], rotate = [90, 0, 0]) well_wall();
+    part("Trough floor", at = [trough_x, 0, trough_z]) translate([0, trough_y[0]]) rect([100, trough_y[1] - trough_y[0]]);
+    part("Trough side", qty = 2, at = [[trough_x, trough_y[1], trough_z + t], [trough_x, trough_y[0] + t, trough_z + t]],
+      rotate = [90, 0, 0]) rect([100, 14]);
+    part("Trough end", at = [trough_x, 0, trough_z + t], rotate = across)
+      translate([trough_y[0] + t, 0]) rect([trough_y[1] - trough_y[0] - 2 * t, 14]);
+    part("Trough post", qty = 2, at = [[post_x, 0, 2 * t], [post_x + t, 0, 2 * t]], rotate = across) trough_post();
+  }
 }
-if (output == "all" || output == "ox") part("Ox", qty = 2, at = [round_at(L - t, deck_z + t + 1), round_at(L, deck_z + t + 1)],
+if (output == "all" || output == "ox") step("Set the ox on the walkway, its post up through the draw-bar") part("Ox", qty = 2, at = [round_at(L - t, deck_z + t + 1), round_at(L, deck_z + t + 1)],
   rotate = [90, 0, theta + 90]) ox();
 // The fit test lies on the table in front of the model
 if (output == "all" || output == "coupon") part("Fit test", at = [base_x[0], -(Ro + 8) - 70, 0]) coupon();

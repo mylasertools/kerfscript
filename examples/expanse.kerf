@@ -208,26 +208,36 @@ corners = [for (sx = [-1, 1], sy = [-1, 1]) [sx * (base_w / 2 - 8), sy * (base_d
 // Right tray first, then left; in each, the front wall or side first
 trays = [for (side = [1, -1], k = [1, -1]) [side, k]];
 
+// The assembly steps in build order, named first so they number that way
+build_steps = [
+  "Glue the feet under the base and the guide rails into its slots",
+  "Bolt the drive disc on the centre axle, scored face up",
+  "Lower the followers between the rails and nut them on",
+  "Bolt the deck on its corner standoffs and glue the well walls in",
+  "Screw the tray floors on the posts and glue their walls on"
+];
+if (output == "all") for (k = build_steps) step(k) {}
+
 if (output == "all" || output == "chassis") {
-  part("Base", at = [0, 0, 0]) base();
-  part("Deck", at = [0, 0, t + 20]) deck();
-  part("Foot", qty = 12, at = [for (c = corners, k = [0:2]) concat(c, [-3 * t + k * t])]) ring(20, 10);
-  part("Guide rail", qty = 2, at = [[0, rail_y + t / 2, t], [0, -rail_y + t / 2, t]], rotate = upright) rail();
+  step(build_steps[0]) part("Base", at = [0, 0, 0]) base();
+  step(build_steps[3]) part("Deck", at = [0, 0, t + 20]) deck();
+  step(build_steps[0]) part("Foot", qty = 12, at = [for (c = corners, k = [0:2]) concat(c, [-3 * t + k * t])]) ring(20, 10);
+  step(build_steps[0]) part("Guide rail", qty = 2, at = [[0, rail_y + t / 2, t], [0, -rail_y + t / 2, t]], rotate = upright) rail();
 }
 if (output == "all" || output == "trays") {
-  part("Right follower", at = [tray_x, 0, t + 10]) follower(1);
-  part("Left follower", at = [-tray_x, 0, t + 10]) follower(-1);
-  part("Tray floor", qty = 2, at = [[tray_x, 0, tray_z], [-tray_x, 0, tray_z]]) tray_floor();
-  part("Tray side wall", qty = 4, at = [for (q = trays) [q[0] * tray_x + q[1] * (W / 2 - t / 2) - t / 2, 0, tray_z + t]], rotate = across)
+  step(build_steps[2]) part("Right follower", at = [tray_x, 0, t + 10]) follower(1);
+  step(build_steps[2]) part("Left follower", at = [-tray_x, 0, t + 10]) follower(-1);
+  step(build_steps[4]) part("Tray floor", qty = 2, at = [[tray_x, 0, tray_z], [-tray_x, 0, tray_z]]) tray_floor();
+  step(build_steps[4]) part("Tray side wall", qty = 4, at = [for (q = trays) [q[0] * tray_x + q[1] * (W / 2 - t / 2) - t / 2, 0, tray_z + t]], rotate = across)
     wall(D - 2 * t, D / 4);
-  part("Tray end wall", qty = 4, at = [for (q = trays) [q[0] * tray_x, q[1] * (D / 2 - t / 2) + t / 2, tray_z + t]], rotate = upright)
+  step(build_steps[4]) part("Tray end wall", qty = 4, at = [for (q = trays) [q[0] * tray_x, q[1] * (D / 2 - t / 2) + t / 2, tray_z + t]], rotate = upright)
     wall(W, W / 4);
 }
-if (output == "all" || output == "drive") part("Drive disc", at = [0, 0, t + 2], rotate = [0, 0, turn]) drive_disc();
+if (output == "all" || output == "drive") step(build_steps[1]) part("Drive disc", at = [0, 0, t + 2], rotate = [0, 0, turn]) drive_disc();
 if (output == "all" || output == "well") {
-  part("Well side wall", qty = 2, at = [[well_w / 2 - t / 2, 0, 2 * t + 20], [-well_w / 2 - t / 2, 0, 2 * t + 20]], rotate = across)
+  step(build_steps[3]) part("Well side wall", qty = 2, at = [[well_w / 2 - t / 2, 0, 2 * t + 20], [-well_w / 2 - t / 2, 0, 2 * t + 20]], rotate = across)
     well_wall(well_d - t, well_d / 4);
-  part("Well end wall", qty = 2, at = [[0, well_w / 2 + t / 2, 2 * t + 20], [0, -well_w / 2 + t / 2, 2 * t + 20]], rotate = upright)
+  step(build_steps[3]) part("Well end wall", qty = 2, at = [[0, well_w / 2 + t / 2, 2 * t + 20], [0, -well_w / 2 + t / 2, 2 * t + 20]], rotate = upright)
     well_wall(well_w + t, well_w / 4);
 }
 // The fit test lies on the table beside the base

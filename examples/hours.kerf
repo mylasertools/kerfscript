@@ -422,59 +422,70 @@ r_great = a_great + o_great;
 // The bob's centre, L below the anchor arbor
 bob_at = A + polar(L, swing - 90);
 
+// The assembly steps in build order, named first so they number that way
+build_steps = [
+  "Bolt the wall bar and pads behind the back plate",
+  "Set the escapement and the gear train on the back plate",
+  "Add the ratchet, click and drum to the great wheel",
+  "Close the movement with the front plate on its pillars",
+  "Fit the motion works, the dial, the hands and the winding knob in front",
+  "Hang the pendulum on the anchor arbor behind the back plate"
+];
+if (output == "all") for (k = build_steps) step(k) {}
+
 if (output == "all" || output == "frame") {
-  part("Back plate", qty = 2, at = stack(M, -2 * t, 2), rotate = up(0)) plate(false);
-  part("Front plate", qty = 2, at = stack(M, d_front, 2), rotate = up(0)) plate(true);
-  part("Wall bar", at = at_d(M, d_wall - t), rotate = up(0)) wall_bar(false);
-  part("Wall bar, nut layer", at = at_d(M, d_wall - 2 * t), rotate = up(0)) wall_bar(true);
-  part("Wall pad", qty = 2, at = [at_d(pillars[0], d_wall - t), at_d(pillars[1], d_wall - t)], rotate = up(0)) disc(10, 4.4);
-  part("Wall pad, nut layer", qty = 2, at = [at_d(pillars[0], d_wall - 2 * t), at_d(pillars[1], d_wall - 2 * t)], rotate = up(0)) disc(10, 8.4);
+  step(build_steps[0]) part("Back plate", qty = 2, at = stack(M, -2 * t, 2), rotate = up(0)) plate(false);
+  step(build_steps[3]) part("Front plate", qty = 2, at = stack(M, d_front, 2), rotate = up(0)) plate(true);
+  step(build_steps[0]) part("Wall bar", at = at_d(M, d_wall - t), rotate = up(0)) wall_bar(false);
+  step(build_steps[0]) part("Wall bar, nut layer", at = at_d(M, d_wall - 2 * t), rotate = up(0)) wall_bar(true);
+  step(build_steps[0]) part("Wall pad", qty = 2, at = [at_d(pillars[0], d_wall - t), at_d(pillars[1], d_wall - t)], rotate = up(0)) disc(10, 4.4);
+  step(build_steps[0]) part("Wall pad, nut layer", qty = 2, at = [at_d(pillars[0], d_wall - 2 * t), at_d(pillars[1], d_wall - 2 * t)], rotate = up(0)) disc(10, 8.4);
 }
 if (output == "all" || output == "train") {
-  part("Great wheel", qty = 2, at = stack(G, d_great, 2), rotate = up(r_great)) difference() {
+  step(build_steps[1]) part("Great wheel", qty = 2, at = stack(G, d_great, 2), rotate = up(r_great)) difference() {
     wheel(z_great, 4 + running_clearance, 47, 6);
     // Holes for the click's pivot and spring pins
     translate(click_pin) circle(d = rod_hole);
     translate(spring_pin) circle(d = rod_hole);
   }
-  part("Centre pinion", qty = 3, at = stack(M, d_cpinion, 3), rotate = up(a_minute)) pinion(z_leaf, rod_hole);
-  part("Centre wheel", at = at_d(M, d_centre), rotate = up(a_minute + o_centre)) wheel(z_centre, rod_hole);
-  part("Third pinion", qty = 2, at = stack(T, d_tpinion, 2), rotate = up(a_third)) pinion(z_leaf, rod_hole);
-  part("Third wheel", at = at_d(T, d_third), rotate = up(a_third + o_third)) wheel(z_third, rod_hole);
-  part("Escape pinion", qty = 2, at = stack(E, d_epinion, 2), rotate = up(a_escape)) pinion(z_leaf, rod_hole);
+  step(build_steps[1]) part("Centre pinion", qty = 3, at = stack(M, d_cpinion, 3), rotate = up(a_minute)) pinion(z_leaf, rod_hole);
+  step(build_steps[1]) part("Centre wheel", at = at_d(M, d_centre), rotate = up(a_minute + o_centre)) wheel(z_centre, rod_hole);
+  step(build_steps[1]) part("Third pinion", qty = 2, at = stack(T, d_tpinion, 2), rotate = up(a_third)) pinion(z_leaf, rod_hole);
+  step(build_steps[1]) part("Third wheel", at = at_d(T, d_third), rotate = up(a_third + o_third)) wheel(z_third, rod_hole);
+  step(build_steps[1]) part("Escape pinion", qty = 2, at = stack(E, d_epinion, 2), rotate = up(a_escape)) pinion(z_leaf, rod_hole);
 }
 if (output == "all" || output == "escapement") {
-  part("Escape wheel", qty = 2, at = stack(E, d_escape, 2), rotate = up(a_escape)) escape_wheel();
-  part("Anchor", qty = 2, at = stack(A, d_escape, 2), rotate = up(swing)) anchor();
+  step(build_steps[1]) part("Escape wheel", qty = 2, at = stack(E, d_escape, 2), rotate = up(a_escape)) escape_wheel();
+  step(build_steps[1]) part("Anchor", qty = 2, at = stack(A, d_escape, 2), rotate = up(swing)) anchor();
 }
 if (output == "all" || output == "winding") {
-  part("Drum", qty = 4, at = stack(G, d_drum, 4), rotate = up(r_great)) disc(drum_r);
-  part("Drum flange", at = at_d(G, d_flange), rotate = up(r_great)) disc(28);
-  part("Ratchet wheel", at = at_d(G, d_ratchet), rotate = up(r_great)) ratchet();
-  part("Click", at = at_d(G, d_ratchet), rotate = up(r_great)) click();
-  part("Winding knob", qty = 2, at = stack(G, d_hhand, 2), rotate = up(r_great)) knob();
+  step(build_steps[2]) part("Drum", qty = 4, at = stack(G, d_drum, 4), rotate = up(r_great)) disc(drum_r);
+  step(build_steps[2]) part("Drum flange", at = at_d(G, d_flange), rotate = up(r_great)) disc(28);
+  step(build_steps[2]) part("Ratchet wheel", at = at_d(G, d_ratchet), rotate = up(r_great)) ratchet();
+  step(build_steps[2]) part("Click", at = at_d(G, d_ratchet), rotate = up(r_great)) click();
+  step(build_steps[4]) part("Winding knob", qty = 2, at = stack(G, d_hhand, 2), rotate = up(r_great)) knob();
 }
 if (output == "all" || output == "dial") {
-  part("Cannon pinion", qty = 2, at = stack(M, d_cannon, 2), rotate = up(a_minute)) pinion(z_cannon, rod_hole);
-  part("Minute wheel", at = at_d(S, d_minute), rotate = up(a_stud + o_minute)) wheel(z_minute, 6 + running_clearance, 8, 4);
-  part("Minute pinion", qty = 2, at = stack(S, d_mpinion, 2), rotate = up(a_stud)) pinion(z_leaf, 6 + running_clearance);
-  part("Hour wheel", at = at_d(M, d_hour), rotate = up(a_hour + o_hour)) wheel(z_hour, tube_hole, 8, 4);
-  part("Dial", at = at_d(M, d_dial), rotate = up(0)) dial();
-  part("Hour hand", at = at_d(M, d_hhand), rotate = up(a_hour)) hand(48, 10, 5, tube_hole, 6.5);
-  part("Minute hand", at = at_d(M, d_mhand), rotate = up(a_minute)) hand(84, 16, 4, rod_hole, 5.5);
+  step(build_steps[4]) part("Cannon pinion", qty = 2, at = stack(M, d_cannon, 2), rotate = up(a_minute)) pinion(z_cannon, rod_hole);
+  step(build_steps[4]) part("Minute wheel", at = at_d(S, d_minute), rotate = up(a_stud + o_minute)) wheel(z_minute, 6 + running_clearance, 8, 4);
+  step(build_steps[4]) part("Minute pinion", qty = 2, at = stack(S, d_mpinion, 2), rotate = up(a_stud)) pinion(z_leaf, 6 + running_clearance);
+  step(build_steps[4]) part("Hour wheel", at = at_d(M, d_hour), rotate = up(a_hour + o_hour)) wheel(z_hour, tube_hole, 8, 4);
+  step(build_steps[4]) part("Dial", at = at_d(M, d_dial), rotate = up(0)) dial();
+  step(build_steps[4]) part("Hour hand", at = at_d(M, d_hhand), rotate = up(a_hour)) hand(48, 10, 5, tube_hole, 6.5);
+  step(build_steps[4]) part("Minute hand", at = at_d(M, d_mhand), rotate = up(a_minute)) hand(84, 16, 4, rod_hole, 5.5);
 }
 if (output == "all" || output == "pendulum") {
   // Front to back: the engraved layer, two channel layers, the back
-  part("Pendulum top", qty = 2, at = [at_d(A, d_pend + 3 * t), at_d(A, d_pend)], rotate = up(swing)) pendulum_top(false);
-  part("Pendulum top, channel", qty = 2, at = stack(A, d_pend + t, 2), rotate = up(swing)) pendulum_top(true);
-  part("Bob", at = at_d(bob_at, d_pend + 3 * t), rotate = up(swing)) {
+  step(build_steps[5]) part("Pendulum top", qty = 2, at = [at_d(A, d_pend + 3 * t), at_d(A, d_pend)], rotate = up(swing)) pendulum_top(false);
+  step(build_steps[5]) part("Pendulum top, channel", qty = 2, at = stack(A, d_pend + t, 2), rotate = up(swing)) pendulum_top(true);
+  step(build_steps[5]) part("Bob", at = at_d(bob_at, d_pend + 3 * t), rotate = up(swing)) {
     bob(false);
     engrave() translate([0, 8]) text("HOURS", size = 13, halign = "center", valign = "center");
     label(str(beat, " s BEAT"), [0, -10], 5);
     label("UP: FASTER", [0, -24], 4);
   }
-  part("Bob back", at = at_d(bob_at, d_pend), rotate = up(swing)) bob(false);
-  part("Bob, channel", qty = 2, at = stack(bob_at, d_pend + t, 2), rotate = up(swing)) bob(true);
+  step(build_steps[5]) part("Bob back", at = at_d(bob_at, d_pend), rotate = up(swing)) bob(false);
+  step(build_steps[5]) part("Bob, channel", qty = 2, at = stack(bob_at, d_pend + t, 2), rotate = up(swing)) bob(true);
 }
 if (output == "all" || output == "coupon") part("Fit test", at = [150, -80, 0]) coupon();
 

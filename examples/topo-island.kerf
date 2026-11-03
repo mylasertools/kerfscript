@@ -77,7 +77,7 @@ part("Base", at = [0, 0, 0]) {
   }
 }
 
-for (k = [1:layers]) part(str("Layer ", k), at = [0, 0, k * $thickness]) {
+for (k = [1:layers]) step(str("Glue layer ", k, " on its scored outline")) part(str("Layer ", k), at = [0, 0, k * $thickness]) {
   layer(k);
   if (k < layers) {
     score() layer(k + 1);

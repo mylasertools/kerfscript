@@ -21,14 +21,17 @@ t = $thickness;
 span = width - 2 * t;
 back_at = depth - 1.5 * t;
 total = seat_height + t + back_height + 7;
-part("Side support", qty = 2, at = [[0, 0, 0], [width - t, 0, 0]], rotate = [90, 0, 90]) difference() {
-  polygon([[0, 0], [depth, 0], [depth, total], [depth - 12, total], [depth - 12, seat_height + 14], [0, seat_height + 14]]);
-  translate([0, seat_height + t / 2]) slots(depth, clearance = clearance);
-  translate([back_at, seat_height + t]) rotate(90) slots(back_height, clearance = clearance);
-  translate([depth / 2, 8]) rect([depth - 24, 16], center = true, r = 3);
-}
-part("Seat", at = [t, 0, seat_height]) tab_rect([span, depth], [false, true, false, true]);
-part("Back", at = [t, back_at + t / 2, seat_height + t], rotate = [90, 0, 0]) difference() {
-  tab_rect([span, back_height], [false, true, false, true]);
-  for (j = [1:2]) translate([10, back_height * j / 3 - 1.5]) rect([span - 20, 3], r = 1.5);
+step("Stand the two side supports up")
+  part("Side support", qty = 2, at = [[0, 0, 0], [width - t, 0, 0]], rotate = [90, 0, 90]) difference() {
+    polygon([[0, 0], [depth, 0], [depth, total], [depth - 12, total], [depth - 12, seat_height + 14], [0, seat_height + 14]]);
+    translate([0, seat_height + t / 2]) slots(depth, clearance = clearance);
+    translate([back_at, seat_height + t]) rotate(90) slots(back_height, clearance = clearance);
+    translate([depth / 2, 8]) rect([depth - 24, 16], center = true, r = 3);
+  }
+step("Fit the seat and back between the sides and glue the joints") {
+  part("Seat", at = [t, 0, seat_height]) tab_rect([span, depth], [false, true, false, true]);
+  part("Back", at = [t, back_at + t / 2, seat_height + t], rotate = [90, 0, 0]) difference() {
+    tab_rect([span, back_height], [false, true, false, true]);
+    for (j = [1:2]) translate([10, back_height * j / 3 - 1.5]) rect([span - 20, 3], r = 1.5);
+  }
 }

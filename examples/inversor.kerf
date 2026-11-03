@@ -138,30 +138,39 @@ function heading(a, b) = let (v = joint(b) - joint(a)) [0, 0, atan2(v[1], v[0])]
 corners = [[14, 14], [W - 14, 14], [14, D - 14], [W - 14, D - 14]];
 handle_h = 6 * t + 3.7;
 
+// The assembly steps in build order, named first so they number that way
+build_steps = [
+  "Glue the two base plies together and the feet under the corners",
+  "Stand the glides and post rings on the base",
+  "Stack the links on their joints, with a spacer ring between each pair",
+  "Glue the pencil sleeves on at P and the handle grips on at A"
+];
+if (output == "all") for (k = build_steps) step(k) {}
+
 if (output == "all" || output == "base") {
-  part("Base", qty = 2, at = [[0, 0, 0], [0, 0, t]]) base();
+  step(build_steps[0]) part("Base", qty = 2, at = [[0, 0, 0], [0, 0, t]]) base();
   // Two under each corner
-  part("Foot", qty = 8, at = [for (c = corners, k = [1:2]) concat(c, [-k * t])]) circle(d = 20);
+  step(build_steps[0]) part("Foot", qty = 8, at = [for (c = corners, k = [1:2]) concat(c, [-k * t])]) circle(d = 20);
 }
 if (output == "all" || output == "links") {
-  part("Input link", at = lift("Q", t), rotate = heading("Q", "A")) link(crank, "INPUT  Q-A");
-  part("Arm", qty = 2, at = [lift("O", 7 * t), lift("O", 9 * t)], rotate = [heading("O", "B"), heading("O", "D")])
+  step(build_steps[2]) part("Input link", at = lift("Q", t), rotate = heading("Q", "A")) link(crank, "INPUT  Q-A");
+  step(build_steps[2]) part("Arm", qty = 2, at = [lift("O", 7 * t), lift("O", 9 * t)], rotate = [heading("O", "B"), heading("O", "D")])
     link(arm, "ARM  O");
-  part("Short link", qty = 2, at = [lift("A", 3 * t), lift("A", 5 * t)], rotate = [heading("A", "B"), heading("A", "D")])
+  step(build_steps[2]) part("Short link", qty = 2, at = [lift("A", 3 * t), lift("A", 5 * t)], rotate = [heading("A", "B"), heading("A", "D")])
     link(s, "A");
-  part("Pen link", qty = 2, at = [lift("D", 3 * t), lift("B", 5 * t)], rotate = [heading("D", "P"), heading("B", "P")])
+  step(build_steps[2]) part("Pen link", qty = 2, at = [lift("D", 3 * t), lift("B", 5 * t)], rotate = [heading("D", "P"), heading("B", "P")])
     link(s, "PEN", pencil);
 }
 if (output == "all" || output == "spacers") {
-  part("Post ring", qty = post_rings, at = concat([for (h = [0:6]) lift("O", h * t)], [lift("Q", 0)])) ring(16, hole);
-  part("Spacer ring", qty = spacer_rings, at = [lift("A", 2 * t), lift("A", 4 * t), lift("B", 4 * t), lift("B", 6 * t),
+  step(build_steps[1]) part("Post ring", qty = post_rings, at = concat([for (h = [0:6]) lift("O", h * t)], [lift("Q", 0)])) ring(16, hole);
+  step(build_steps[2]) part("Spacer ring", qty = spacer_rings, at = [lift("A", 2 * t), lift("A", 4 * t), lift("B", 4 * t), lift("B", 6 * t),
     lift("D", 4 * t), lift("D", 6 * t), lift("D", 7 * t), lift("D", 8 * t), lift("O", 8 * t)])
     ring(12, hole);
   // The bottom glide under A, B and D holds the bolt head in its bigger hole
-  part("Glide", qty = 3, at = [lift("A", 0), lift("B", 0), lift("D", 0)]) ring(14, 8.4);
-  part("Glide ring", qty = glide_rings, at = [lift("B", t), lift("B", 2 * t), lift("D", t), lift("D", 2 * t)]) ring(14, hole);
-  part("Pencil sleeve", qty = sleeves, at = [for (h = [0, 1, 2, 4, 6, 7, 8]) lift("P", h * t)]) ring(14, pencil);
-  part("Handle grip", qty = 4, at = [for (k = [0:3]) lift("A", handle_h + k * t)]) ring(16, hole);
+  step(build_steps[1]) part("Glide", qty = 3, at = [lift("A", 0), lift("B", 0), lift("D", 0)]) ring(14, 8.4);
+  step(build_steps[1]) part("Glide ring", qty = glide_rings, at = [lift("B", t), lift("B", 2 * t), lift("D", t), lift("D", 2 * t)]) ring(14, hole);
+  step(build_steps[3]) part("Pencil sleeve", qty = sleeves, at = [for (h = [0, 1, 2, 4, 6, 7, 8]) lift("P", h * t)]) ring(14, pencil);
+  step(build_steps[3]) part("Handle grip", qty = 4, at = [for (k = [0:3]) lift("A", handle_h + k * t)]) ring(16, hole);
 }
 // The fit test lies on the table beside the base
 if (output == "all" || output == "coupon") part("Fit test", at = [W + 20, 0, -2 * t]) {

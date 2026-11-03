@@ -306,29 +306,38 @@ function tile_at(j, ang) = [layer_x(j) + 2 * t, drum_face * cos(ang) - tile_widt
 crank_x = layer_x(-1);
 lid_x = -box_w - 3 * t;
 
+// Steps are numbered in the order they first run, so name them here in build order
+step("Glue the walls on the base and the bearing pad on the right wall") {}
+step("Glue up the drums and the crank's gear, with the tiles round each drum") {}
+step("Thread the drum shaft through the drums and the crank, and bolt on the handle") {}
+step("Fit the carry pinions on their rod, each with a tooth at the drum shaft") {}
+step("Glue the locators under the lid") {}
 if (output == "all" || output == "drums") {
-  part("Digit ring", qty = n, at = [for (j = [0:n - 1]) drum_at(j, layer_x(j) + 7 * t)],
-    rotate = [for (j = [0:n - 1]) on_shaft(drum_angle(j))]) digit_ring();
-  // Copy 1 is the crank's, then drums 0 to n - 2
-  part("Carry gear", qty = n, at = [for (j = [-1:n - 2]) drum_at(j, layer_x(j))],
-    rotate = [for (j = [-1:n - 2]) on_shaft(drum_angle(j))]) carry_gear();
-  part("Lock disc", qty = n, at = [for (j = [-1:n - 2]) drum_at(j, layer_x(j) + t)],
-    rotate = [for (j = [-1:n - 2]) on_shaft(drum_angle(j))]) lock_disc();
-  part("Drum disc", qty = drum_layers * n, at = [for (j = [0:n - 1], k = [0:drum_layers - 1]) drum_at(j, layer_x(j) + (2 + k) * t)],
-    rotate = [for (j = [0:n - 1], k = [0:drum_layers - 1]) on_shaft(drum_angle(j))]) drum_disc();
-  for (d = [0:9]) part(str("Tile ", d), qty = n, at = [for (j = [0:n - 1]) tile_at(j, drum_angle(j) + 63 - 36 * d)],
-    rotate = [for (j = [0:n - 1]) [drum_angle(j) + 63 - 36 * d - 90, 0, 0]]) tile(d);
-  part("Shaft spacer", at = drum_at(n - 1, 0), rotate = on_shaft(drum_angle(n - 1)))
-    difference() { circle(d = 16); circle(d = 6 + bearing_clearance); }
+  step("Glue up the drums and the crank's gear, with the tiles round each drum") {
+    part("Digit ring", qty = n, at = [for (j = [0:n - 1]) drum_at(j, layer_x(j) + 7 * t)],
+      rotate = [for (j = [0:n - 1]) on_shaft(drum_angle(j))]) digit_ring();
+    // Copy 1 is the crank's, then drums 0 to n - 2
+    part("Carry gear", qty = n, at = [for (j = [-1:n - 2]) drum_at(j, layer_x(j))],
+      rotate = [for (j = [-1:n - 2]) on_shaft(drum_angle(j))]) carry_gear();
+    part("Lock disc", qty = n, at = [for (j = [-1:n - 2]) drum_at(j, layer_x(j) + t)],
+      rotate = [for (j = [-1:n - 2]) on_shaft(drum_angle(j))]) lock_disc();
+    part("Drum disc", qty = drum_layers * n, at = [for (j = [0:n - 1], k = [0:drum_layers - 1]) drum_at(j, layer_x(j) + (2 + k) * t)],
+      rotate = [for (j = [0:n - 1], k = [0:drum_layers - 1]) on_shaft(drum_angle(j))]) drum_disc();
+    for (d = [0:9]) part(str("Tile ", d), qty = n, at = [for (j = [0:n - 1]) tile_at(j, drum_angle(j) + 63 - 36 * d)],
+      rotate = [for (j = [0:n - 1]) [drum_angle(j) + 63 - 36 * d - 90, 0, 0]]) tile(d);
+  }
+  step("Thread the drum shaft through the drums and the crank, and bolt on the handle")
+    part("Shaft spacer", at = drum_at(n - 1, 0), rotate = on_shaft(drum_angle(n - 1)))
+      difference() { circle(d = 16); circle(d = 6 + bearing_clearance); }
 }
-if (output == "all" || output == "carry") {
+if (output == "all" || output == "carry") step("Fit the carry pinions on their rod, each with a tooth at the drum shaft") {
   // Two gears each: one in the upper drum's ring, one in the lower drum's carry gear
   part("Pinion gear", qty = 2 * n, at = [for (j = [-1:n - 2], k = [0:1]) [layer_x(j) - t + k * t, a, shaft_at]],
     rotate = [for (j = [-1:n - 2], k = [0:1]) on_shaft(pinion_angle(j))]) pinion_gear();
   part("Pinion lock", qty = n, at = [for (j = [-1:n - 2]) [layer_x(j) + t, a, shaft_at]],
     rotate = [for (j = [-1:n - 2]) on_shaft(pinion_angle(j))]) pinion_lock();
 }
-if (output == "all" || output == "crank") {
+if (output == "all" || output == "crank") step("Thread the drum shaft through the drums and the crank, and bolt on the handle") {
   crank_turn = on_shaft(drum_angle(-1));
   handle = polar(crank_radius, 63 + drum_angle(-1));
   part("Crank hub", qty = 3, at = [for (k = [2:4]) drum_at(-1, crank_x + k * t)], rotate = crank_turn) crank_hub();
@@ -341,16 +350,20 @@ if (output == "all" || output == "crank") {
   part("Cap", qty = 2, at = [drum_at(-1, -3 * t), drum_at(-1, crank_x + 8 * t + 0.5)], rotate = crank_turn) circle(d = 16);
 }
 if (output == "all" || output == "box") {
-  part("Base", at = [-t, -box_front - t, 0]) rect([box_w + 2 * t, box_d + 2 * t], r = 1);
-  part("Left wall", at = [-t, -box_front - t, t], rotate = [90, 0, 90]) side_wall(false);
-  part("Right wall", at = [box_w, -box_front - t, t], rotate = [90, 0, 90]) side_wall(true);
-  part("Bearing pad", at = [box_w + t, 0, shaft_at], rotate = [90, 0, 90]) ring(40, 18.5);
-  part("Front", at = [-t, -box_front, t], rotate = [90, 0, 0]) front_panel();
-  part("Back", at = [-t, box_back + t, t], rotate = [90, 0, 0]) back_panel();
-  // The lid is off, lying on the table against the left wall, pulled
-  // forward 50 mm so its name shows
-  part("Lid", at = [lid_x, -box_front - t - 50, t]) lid();
-  part("Lid locator", qty = 2, at = [[lid_x + t + 10, -box_front - 50, 0], [lid_x + t + 10, box_back - 58, 0]]) rect([box_w - 20, 8]);
+  step("Glue the walls on the base and the bearing pad on the right wall") {
+    part("Base", at = [-t, -box_front - t, 0]) rect([box_w + 2 * t, box_d + 2 * t], r = 1);
+    part("Left wall", at = [-t, -box_front - t, t], rotate = [90, 0, 90]) side_wall(false);
+    part("Right wall", at = [box_w, -box_front - t, t], rotate = [90, 0, 90]) side_wall(true);
+    part("Bearing pad", at = [box_w + t, 0, shaft_at], rotate = [90, 0, 90]) ring(40, 18.5);
+    part("Front", at = [-t, -box_front, t], rotate = [90, 0, 0]) front_panel();
+    part("Back", at = [-t, box_back + t, t], rotate = [90, 0, 0]) back_panel();
+  }
+  step("Glue the locators under the lid") {
+    // The lid is off, lying on the table against the left wall, pulled
+    // forward 50 mm so its name shows
+    part("Lid", at = [lid_x, -box_front - t - 50, t]) lid();
+    part("Lid locator", qty = 2, at = [[lid_x + t + 10, -box_front - 50, 0], [lid_x + t + 10, box_back - 58, 0]]) rect([box_w - 20, 8]);
+  }
 }
 if (output == "all" || output == "coupon") part("Fit test", at = [0, -box_front - t - 70, 0]) coupon();
 

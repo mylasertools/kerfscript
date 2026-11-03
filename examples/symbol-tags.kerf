@@ -1,0 +1,38 @@
+// Symbol tags: key rings or bag tags, each with a pictogram and a name.
+// The symbols come by name from the 867 in kerf/symbols; list them with
+// symbol_names(), or one category with symbol_names("animals"). The
+// names fit their tag, and the hole has a ring round it for the key ring.
+
+/* [Tags] */
+// One tag for each name
+names = ["MILO", "LUNA", "OSCAR"];
+// The symbol on each tag, by name
+symbols = ["paw", "cat", "dog"];
+// Tag width and height
+size = [70, 30]; // [30:5:120]
+// Cut the symbols through, or engrave them
+cut_through = false;
+
+/* [Material] */
+$thickness = 3; // [2:0.5:6]
+$kerf = 0.15; // [0:0.01:0.3]
+
+/* [Hidden] */
+use <kerf/symbols>
+use <kerf/hanging>
+$fn = 48;
+$material = "plywood";
+w = size[0];
+h = size[1];
+s = h * 0.62;
+assert(len(symbols) >= len(names), "Give a symbol for every name");
+for (i = [0:len(names) - 1]) part(str("Tag ", names[i]), at = [0, -i * (h + 10), 0]) {
+  difference() {
+    hanging_loop([5, h / 2], d = 5, wall = 3) rect([w, h], r = h * 0.3);
+    if (cut_through) translate([14 + s / 2, h / 2]) symbol(symbols[i], s);
+  }
+  engrave() {
+    if (!cut_through) translate([14 + s / 2, h / 2]) symbol(symbols[i], s);
+    translate([(w + 14 + s) / 2 + 2, h / 2]) text(names[i], size = h * 0.4, fit = w - s - 22, halign = "center", valign = "center");
+  }
+}

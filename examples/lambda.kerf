@@ -227,49 +227,60 @@ module coupon() {
   for (i = [0:2]) label(str(6.05 + 0.1 * i), [105 + 17 * i, 5], 3);
 }
 
+// The assembly steps in build order, named first so they number that way
+build_steps = [
+  "Glue up the frames with their journals and slot in the end plates",
+  "Put the square shaft through, with a thrust collar on each frame face",
+  "Bolt a rocker each side of the frames at D, with the spacer rings",
+  "Slide the eccentrics on the shaft and bolt each coupler to its rocker",
+  "Hang the legs from the couplers",
+  "Fit the handle and its grip on the right end of the shaft"
+];
+if (output == "all") for (k = build_steps) step(k) {}
+
 if (output == "all" || output == "frame") {
-  part("Right frame", qty = 2, at = [[0, -in_face - t, 0], [0, -in_face, 0]], rotate = upright()) {
+  step(build_steps[0]) part("Right frame", qty = 2, at = [[0, -in_face - t, 0], [0, -in_face, 0]], rotate = upright()) {
     frame_body();
     frame_text(1);
     label("TURN ANTICLOCKWISE", [2 * r, y0 + 8], 3.5);
   }
-  part("Left frame", qty = 2, at = [[0, in_face + t, 0], [0, in_face, 0]], rotate = [90, 0, 180]) {
+  step(build_steps[0]) part("Left frame", qty = 2, at = [[0, in_face + t, 0], [0, in_face, 0]], rotate = [90, 0, 180]) {
     mirror([1, 0]) frame_body();
     frame_text(-1);
   }
-  part("Front plate", at = [front, 0, 0], rotate = [90, 0, 90]) {
+  step(build_steps[0]) part("Front plate", at = [front, 0, 0], rotate = [90, 0, 90]) {
     end_plate();
     label("LAMBDA", [0, 122], 14);
     label("CHEBYSHEV WALKER", [0, 49], 5);
   }
-  part("Rear plate", at = [rear, 0, 0], rotate = [90, 0, 90]) end_plate();
+  step(build_steps[0]) part("Rear plate", at = [rear, 0, 0], rotate = [90, 0, 90]) end_plate();
   // Two plies in each frame
-  part("Journal", qty = 4, at = [for (y = [-in_face - t, -in_face, in_face + t, out_face]) [0, y, H]], rotate = upright(crank_angle)) difference() {
+  step(build_steps[0]) part("Journal", qty = 4, at = [for (y = [-in_face - t, -in_face, in_face + t, out_face]) [0, y, H]], rotate = upright(crank_angle)) difference() {
     circle(d = 18);
     square_bore();
   }
 }
 if (output == "all" || output == "linkage") {
   // Two plies for each lambda
-  part("Eccentric", qty = 8, at = [for (k = [0:3], i = [0:1]) [0, face(k, s_of("eccentric") + i * t), H]],
+  step(build_steps[3]) part("Eccentric", qty = 8, at = [for (k = [0:3], i = [0:1]) [0, face(k, s_of("eccentric") + i * t), H]],
     rotate = [for (k = [0:3], i = [0:1]) upright(turn(k))]) eccentric();
-  part("Coupler", qty = 8, at = [for (k = [0:3], i = [0:1]) at_side(world(k)[0], face(k, s_of("eccentric") + i * t))],
+  step(build_steps[3]) part("Coupler", qty = 8, at = [for (k = [0:3], i = [0:1]) at_side(world(k)[0], face(k, s_of("eccentric") + i * t))],
     rotate = [for (k = [0:3], i = [0:1]) let (w = world(k)) upright(heading(w[0], w[2]))]) coupler();
-  part("Rocker", qty = 4, at = [for (k = [0:3]) at_side(D, face(k, s_of("rocker")))],
+  step(build_steps[2]) part("Rocker", qty = 4, at = [for (k = [0:3]) at_side(D, face(k, s_of("rocker")))],
     rotate = [for (k = [0:3]) upright(heading(D, world(k)[1]))]) rocker();
 }
-if (output == "all" || output == "legs") part("Leg", qty = 8, at = [for (k = [0:3], i = [0:1]) at_side(world(k)[2], face(k, s_of("leg") + i * t))], rotate = upright()) leg();
+if (output == "all" || output == "legs") step(build_steps[4]) part("Leg", qty = 8, at = [for (k = [0:3], i = [0:1]) at_side(world(k)[2], face(k, s_of("leg") + i * t))], rotate = upright()) leg();
 if (output == "all" || output == "accessories") {
-  part("Thrust collar", qty = 4, at = [for (k = [0:3]) [0, face(k, s_of("collar")), H]], rotate = [for (k = [0:3]) upright(turn(k))]) difference() {
+  step(build_steps[1]) part("Thrust collar", qty = 4, at = [for (k = [0:3]) [0, face(k, s_of("collar")), H]], rotate = [for (k = [0:3]) upright(turn(k))]) difference() {
     circle(d = 26);
     square_bore();
   }
   // At each D, C and P, between the layers
-  part("Spacer ring", qty = 12, at = [for (k = [0:3], j = [0:2]) at_side([D, world(k)[1], world(k)[2]][j], face(k, s_of(["ring D", "ring C", "ring P"][j])))],
+  step(build_steps[2]) part("Spacer ring", qty = 12, at = [for (k = [0:3], j = [0:2]) at_side([D, world(k)[1], world(k)[2]][j], face(k, s_of(["ring D", "ring C", "ring P"][j])))],
     rotate = upright()) disc(12, bush);
   // On the right end of the shaft, outside the right leg
-  part("Handle", qty = 2, at = [for (i = [0:1]) [0, face(0, s_of("handle") + i * t), H]], rotate = upright(handle_turn)) handle();
-  part("Handle grip", qty = 5, at = [for (i = [0:4]) at_side(grip, face(0, s_of("handle") + 2 * t + 0.5 + i * t))], rotate = upright()) disc(18, bush);
+  step(build_steps[5]) part("Handle", qty = 2, at = [for (i = [0:1]) [0, face(0, s_of("handle") + i * t), H]], rotate = upright(handle_turn)) handle();
+  step(build_steps[5]) part("Handle grip", qty = 5, at = [for (i = [0:4]) at_side(grip, face(0, s_of("handle") + 2 * t + 0.5 + i * t))], rotate = upright()) disc(18, bush);
 }
 if (output == "all" || output == "coupon") part("Fit test", at = [-50, 100, 0]) coupon();
 

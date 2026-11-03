@@ -188,27 +188,39 @@ function ring_pin(k) = polar(pivot_radius, guide(k) + turn);
 function foot_at(k, z) = concat(polar(65, guide(k + 0.5)), [z]);
 
 if (output == "all" || output == "frame") {
-  part("Base", qty = 2, at = [[0, 0, -2 * t], [0, 0, -t]]) base();
-  part("Hub", at = [0, 0, 0.4]) washer(50, 4.4);
-  part("Retainer", at = [0, 0, t + 0.4]) washer(62, 4.4);
+  step("Glue the two bases together and bolt a foot under each hole between the arms")
+    part("Base", qty = 2, at = [[0, 0, -2 * t], [0, 0, -t]]) base();
+  step("Drop the drive ring round the hub and bolt the retainer on") {
+    part("Hub", at = [0, 0, 0.4]) washer(50, 4.4);
+    part("Retainer", at = [0, 0, t + 0.4]) washer(62, 4.4);
+  }
   // A foot between each pair of petals: the cap under the base, then five rings
-  part("Foot cap", qty = n, at = [for (k = [0:n - 1]) foot_at(k, -3 * t)]) washer(18, 4.4);
-  part("Foot ring", qty = 5 * n, at = [for (k = [0:n - 1], j = [0:4]) foot_at(k, -4 * t - j * t)]) washer(18, 10);
+  step("Glue the two bases together and bolt a foot under each hole between the arms") {
+    part("Foot cap", qty = n, at = [for (k = [0:n - 1]) foot_at(k, -3 * t)]) washer(18, 4.4);
+    part("Foot ring", qty = 5 * n, at = [for (k = [0:n - 1], j = [0:4]) foot_at(k, -4 * t - j * t)]) washer(18, 10);
+  }
 }
 if (output == "all" || output == "motion") {
-  part("Drive ring", at = [0, 0, 0.2], rotate = [0, 0, turn]) drive_ring();
-  part("Coupler", qty = n, at = [for (k = [0:n - 1]) concat(ring_pin(k), [2 * t + 1])],
-    rotate = [for (k = [0:n - 1]) let (v = polar(reach, guide(k)) - ring_pin(k)) [0, 0, atan2(v[1], v[0])]])
-    coupler();
-  part("Petal", qty = n, at = [for (k = [0:n - 1]) concat(polar(reach, guide(k)), [3 * t + 1.5])], rotate = [for (k = [0:n - 1]) [0, 0, guide(k)]])
-    petal();
-  part("Grip ring", qty = 5, at = [for (j = [0:4]) concat(polar(43, 90 + turn), [t + 0.4 + j * t])]) washer(16, bush);
+  step("Drop the drive ring round the hub and bolt the retainer on")
+    part("Drive ring", at = [0, 0, 0.2], rotate = [0, 0, turn]) drive_ring();
+  step("Put a pivot spacer and a coupler on each ring pin")
+    part("Coupler", qty = n, at = [for (k = [0:n - 1]) concat(ring_pin(k), [2 * t + 1])],
+      rotate = [for (k = [0:n - 1]) let (v = polar(reach, guide(k)) - ring_pin(k)) [0, 0, atan2(v[1], v[0])]])
+      coupler();
+  step("Hang each petal on its two pins, with the spacers, through its slot")
+    part("Petal", qty = n, at = [for (k = [0:n - 1]) concat(polar(reach, guide(k)), [3 * t + 1.5])], rotate = [for (k = [0:n - 1]) [0, 0, guide(k)]])
+      petal();
+  step("Stack the grip rings on the grip sleeve")
+    part("Grip ring", qty = 5, at = [for (j = [0:4]) concat(polar(43, 90 + turn), [t + 0.4 + j * t])]) washer(16, bush);
 }
 if (output == "all" || output == "spacers") {
-  part("Ring pivot spacer", qty = n, at = [for (k = [0:n - 1]) concat(ring_pin(k), [t + 0.2])]) washer(12, bush);
-  part("Inner pin spacer", qty = 2 * n, at = [for (k = [0:n - 1], j = [0:1]) concat(polar(reach, guide(k)), [j * t])]) washer(12, bush);
-  part("Outer pin spacer", qty = 3 * n, at = [for (k = [0:n - 1], j = [0:2]) concat(polar(reach + pin_spacing, guide(k)), [j * t])])
-    washer(12, bush);
+  step("Put a pivot spacer and a coupler on each ring pin")
+    part("Ring pivot spacer", qty = n, at = [for (k = [0:n - 1]) concat(ring_pin(k), [t + 0.2])]) washer(12, bush);
+  step("Hang each petal on its two pins, with the spacers, through its slot") {
+    part("Inner pin spacer", qty = 2 * n, at = [for (k = [0:n - 1], j = [0:1]) concat(polar(reach, guide(k)), [j * t])]) washer(12, bush);
+    part("Outer pin spacer", qty = 3 * n, at = [for (k = [0:n - 1], j = [0:2]) concat(polar(reach + pin_spacing, guide(k)), [j * t])])
+      washer(12, bush);
+  }
 }
 // The fit test lies on the table beside the flower
 if (output == "all" || output == "coupon") part("Fit test", at = [110, -40, -8 * t]) fit_test();

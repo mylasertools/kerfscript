@@ -215,27 +215,41 @@ across = [90, 0, 90];
 // Hub rings: two behind the crank and two in front of it
 hub_z = [crank_z - 3 * t, crank_z - 2 * t, crank_z + t, crank_z + 2 * t];
 
+// The assembly steps, listed first so they number in build order
+step("Glue the wheel layers on the shaft");
+step("Bolt the rear cheek, the shroud rings and the front cheek round the wheel, and pivot the gate on the front");
+step("Glue the cheeks onto the base with the gussets");
+step("Glue in the chute floor and build the catch box on its pedestals");
+step("Glue the hub rings and the crank on the shaft and bolt on the grip");
 if (output == "all" || output == "wheel") {
-  part("Wheel", qty = layers, at = [for (k = [0:layers - 1]) depth(-layers * t / 2 + k * t)], rotate = facing(turn)) wheel();
-  part("Crank", qty = 2, at = [depth(crank_z - t), depth(crank_z)], rotate = facing(turn)) crank();
-  part("Hub ring", qty = 4, at = [for (z = hub_z) depth(z)], rotate = facing(turn)) ring(28, 6.5);
-  // The grip turns with the crank, 35 mm out
-  part("Grip", qty = 4, at = [for (k = [1:4]) depth(crank_z - t - 0.8 - k * t) + [35 * cos(turn), 0, 35 * sin(turn)]], rotate = facing(turn))
-    ring(18, 6.4);
+  step("Glue the wheel layers on the shaft")
+    part("Wheel", qty = layers, at = [for (k = [0:layers - 1]) depth(-layers * t / 2 + k * t)], rotate = facing(turn)) wheel();
+  step("Glue the hub rings and the crank on the shaft and bolt on the grip") {
+    part("Crank", qty = 2, at = [depth(crank_z - t), depth(crank_z)], rotate = facing(turn)) crank();
+    part("Hub ring", qty = 4, at = [for (z = hub_z) depth(z)], rotate = facing(turn)) ring(28, 6.5);
+    // The grip turns with the crank, 35 mm out
+    part("Grip", qty = 4, at = [for (k = [1:4]) depth(crank_z - t - 0.8 - k * t) + [35 * cos(turn), 0, 35 * sin(turn)]], rotate = facing(turn))
+      ring(18, 6.4);
+  }
 }
 if (output == "all" || output == "frame") {
-  part("Rear cheek", at = depth(-cheek_gap / 2 - t), rotate = facing()) cheek(false);
-  part("Front cheek", at = depth(cheek_gap / 2), rotate = facing()) cheek(true);
-  part("Shroud", qty = layers + 1, at = [for (k = [0:layers]) depth(-cheek_gap / 2 + k * t)], rotate = facing()) shroud();
-  part("Base", at = [0, 0, 0]) base();
-  part("Loading gate", at = depth(cheek_gap / 2 + t, 0, -(R + 2 - D / 2)), rotate = facing()) gate();
+  step("Bolt the rear cheek, the shroud rings and the front cheek round the wheel, and pivot the gate on the front") {
+    part("Rear cheek", at = depth(-cheek_gap / 2 - t), rotate = facing()) cheek(false);
+    part("Front cheek", at = depth(cheek_gap / 2), rotate = facing()) cheek(true);
+    part("Shroud", qty = layers + 1, at = [for (k = [0:layers]) depth(-cheek_gap / 2 + k * t)], rotate = facing()) shroud();
+  }
+  step("Glue the cheeks onto the base with the gussets")
+    part("Base", at = [0, 0, 0]) base();
+  step("Bolt the rear cheek, the shroud rings and the front cheek round the wheel, and pivot the gate on the front")
+    part("Loading gate", at = depth(cheek_gap / 2 + t, 0, -(R + 2 - D / 2)), rotate = facing()) gate();
   // Two behind the stand and two in front, at x = -50 and 50
-  part("Gusset", qty = 4, at = [[-50 + t / 2, -cheek_gap / 2 - t, t], [50 + t / 2, -cheek_gap / 2 - t, t],
-    [-50 - t / 2, cheek_gap / 2 + t, t], [50 - t / 2, cheek_gap / 2 + t, t]],
-    rotate = [[90, 0, 270], [90, 0, 270], across, across])
-    gusset();
+  step("Glue the cheeks onto the base with the gussets")
+    part("Gusset", qty = 4, at = [[-50 + t / 2, -cheek_gap / 2 - t, t], [50 + t / 2, -cheek_gap / 2 - t, t],
+      [-50 - t / 2, cheek_gap / 2 + t, t], [50 - t / 2, cheek_gap / 2 + t, t]],
+      rotate = [[90, 0, 270], [90, 0, 270], across, across])
+      gusset();
 }
-if (output == "all" || output == "chute") {
+if (output == "all" || output == "chute") step("Glue in the chute floor and build the catch box on its pedestals") {
   // Its top face on the floor line, from (65, -110) to (258, -158.25)
   part("Chute floor", at = [(65 + 258) / 2 - t * sin(slope), 0, centre - (110 + 158.25) / 2 - t * cos(slope)], rotate = [0, slope, 0])
     rect([198.94, cheek_gap], center = true);

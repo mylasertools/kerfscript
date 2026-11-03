@@ -156,11 +156,13 @@ module fit_test() {
 // Assembled: every piece stands in its slots in the base, the fins turned
 // to their yaws, the stone at the back and the holder at the origin
 function fin_at(i) = [-t / 2 * sin(yaws[i]), depths[i] + t / 2 * cos(yaws[i]), 0];
-if (output == "all" || output == "fins") for (i = [0:5]) part(str("Fin ", i + 1), at = fin_at(i), rotate = [90, 0, yaws[i]]) fin(i);
+if (output == "all" || output == "fins") step("Glue the fins into their numbered slots, arrows matching") for (i = [0:5]) part(str("Fin ", i + 1), at = fin_at(i), rotate = [90, 0, yaws[i]]) fin(i);
 if (output == "all" || output == "structure") {
   part("Base", at = [0, 0, -t]) base();
-  part("Stone", at = [0, 300 + t / 2, 0], rotate = [90, 0, 0]) stone();
-  part("Light holder", at = [0, 0, 0], rotate = [90, 0, 0]) light_holder();
+  step("Glue the stone and the light holder into their slots") {
+    part("Stone", at = [0, 300 + t / 2, 0], rotate = [90, 0, 0]) stone();
+    part("Light holder", at = [0, 0, 0], rotate = [90, 0, 0]) light_holder();
+  }
 }
 if (output == "fit") fit_test();
 

@@ -1,0 +1,50 @@
+// Pen tray: a desk tray whose round-bottomed trough is one strip of
+// plywood bent by a living hinge, between two end plates. The strip's tabs
+// go through slots in the ends, which the ends cut for themselves from
+// where the strip passes through them. Made with flex_strip() from
+// kerf/hinge.
+
+/* [Tray] */
+// Length, end to end inside
+length = 200; // [120:10:400]
+// Width of the trough inside
+width = 60; // [40:5:120]
+// Depth of the trough
+depth = 60; // [40:5:150]
+// Text on the ends; leave empty for none
+label = "PENS"; // 12
+
+/* [Material] */
+$thickness = 3; // [2:0.5:4]
+$kerf = 0.15; // [0:0.01:0.3]
+
+/* [Hidden] */
+use <kerf/hinge>
+$fn = 72;
+$material = "plywood";
+t = $thickness;
+r = width / 2;
+assert(depth - r >= 22, "Make the trough deeper, for straight sides with tabs");
+// The strip's middle line in an end plate: down one side, round the
+// bottom, up the other
+path = concat([[0, depth]], [for (a = [180:5:360]) [r, r] + r * [cos(a), sin(a)]], [[width, depth]]);
+// An end plate: round the trough with a rim, on a flat foot
+module end_plate() {
+  offset(r = 4) offset(delta = 8) polygon(concat(path, [[width, depth + 0.01], [0, depth + 0.01]]));
+  translate([-12, -12]) rect([width + 24, r + 12]);
+}
+module end_label() if (len(label) > 0)
+  engrave() translate([r, -5]) text(label, size = 7, fit = width, halign = "center", valign = "center");
+step("Push the strip's tabs into one end, bending it round the bottom") {
+  part("End A", at = [0, 0, 0], rotate = [90, 0, 0], slots = ["Trough"]) {
+    end_plate();
+    end_label();
+  }
+  place(rotate = [90, 0, 0]) flex_strip(path, length, name = "Trough");
+}
+// The far end turned round to face out, its label reading from outside
+step("Press the other end on")
+  part("End B", at = [width, length, 0], rotate = [90, 0, 180], slots = ["Trough"]) {
+    end_plate();
+    end_label();
+  }

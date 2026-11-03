@@ -164,23 +164,34 @@ function layers(p, z, n) = [for (k = [0:n - 1]) at(p, z + k * t)];
 // Standoffs and feet: a stack under each of the three mounting holes
 function stacks(z, n) = [for (j = [0:2], k = [0:n - 1]) at(polar(mount, 30 + 120 * j), z + k * t)];
 
+// Steps are numbered in the order they first run, so name them here in build order
+step("Glue up the base and stand it on its feet, with the standoffs and the pedestal") {}
+step("Bolt the ring gear on its standoffs") {}
+step("Fit the rolling gear under the carrier and mesh it with the ring") {}
+step("Add the handle stack at the carrier's short end") {}
 if (output == "all" || output == "gears") {
-  part("Ring gear", qty = 2, at = layers([0, 0], 6 * t, 2)) ring();
-  part("Rolling gear", qty = 2, at = layers(gear_at, 6 * t + 0.15, 2), rotate = [0, 0, spin]) planet();
+  step("Bolt the ring gear on its standoffs")
+    part("Ring gear", qty = 2, at = layers([0, 0], 6 * t, 2)) ring();
+  step("Fit the rolling gear under the carrier and mesh it with the ring")
+    part("Rolling gear", qty = 2, at = layers(gear_at, 6 * t + 0.15, 2), rotate = [0, 0, spin]) planet();
 }
-if (output == "all" || output == "frame") {
+if (output == "all" || output == "frame") step("Glue up the base and stand it on its feet, with the standoffs and the pedestal") {
   part("Base", qty = 2, at = layers([0, 0], 0, 2)) base();
   part("Ring standoff", qty = 12, at = stacks(2 * t, 4)) washer(16, 4.5);
   part("Pedestal", qty = 9, at = layers([0, 0], 2 * t, 9)) washer(22, 6.2);
   part("Foot", qty = 15, at = stacks(-5 * t, 5)) washer(18, 12);
 }
 if (output == "all" || output == "drive") {
-  part("Carrier", qty = 2, at = layers([0, 0], 11 * t + 0.35, 2), rotate = [0, 0, c_turn]) carrier();
-  part("Planet spacer", qty = 3, at = layers(gear_at, 8 * t + 0.35, 3)) washer(14, 6.2);
-  part("Handle", qty = 5, at = layers(polar(35, 180 + c_turn), 13 * t + 0.85, 5)) washer(18, 6 + bearing_clearance);
+  step("Fit the rolling gear under the carrier and mesh it with the ring")
+    part("Carrier", qty = 2, at = layers([0, 0], 11 * t + 0.35, 2), rotate = [0, 0, c_turn]) carrier();
+  step("Fit the rolling gear under the carrier and mesh it with the ring")
+    part("Planet spacer", qty = 3, at = layers(gear_at, 8 * t + 0.35, 3)) washer(14, 6.2);
+  step("Add the handle stack at the carrier's short end")
+    part("Handle", qty = 5, at = layers(polar(35, 180 + c_turn), 13 * t + 0.85, 5)) washer(18, 6 + bearing_clearance);
 }
 if (output == "all" || output == "holder")
-  part("Pencil sleeve", qty = 3, at = layers(pen(c_turn), 3 * t + 0.15, 3)) washer(14, 8.4);
+  step("Fit the rolling gear under the carrier and mesh it with the ring")
+    part("Pencil sleeve", qty = 3, at = layers(pen(c_turn), 3 * t + 0.15, 3)) washer(14, 8.4);
 // The fit test lies on the table beside the base
 if (output == "all" || output == "coupon") part("Fit test", at = [outer + 20, -outer, -5 * t]) {
   difference() {
