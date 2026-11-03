@@ -690,3 +690,19 @@ test('a stack glued under its host is bonded layer to layer', () => {
   };
   assert.equal(result(spec([claim]), [snap(src)], 'j')[0].status, 'pass');
 });
+test('references a specification can check before rendering are input errors', () => {
+  const typo = { ...gluePlan, steps: [{ ...gluePlan.steps[0], fasten: ['contcat'] }] };
+  assert.equal(verify(spec([contact, typo, retained, support]), []).kind, 'invalid-spec');
+  const hold = { ...support, holds: [{ step: 'nope', bodies: [{ part: 'patch' }] }] };
+  assert.equal(verify(spec([contact, gluePlan, retained, hold]), []).kind, 'invalid-spec');
+  const twice = {
+    ...move,
+    moving: [
+      { body: { part: 'arm' }, trajectory: { kind: 'translate', by: [1, 0, 0] } },
+      { body: { part: 'arm', copy: 1 }, trajectory: { kind: 'translate', by: [2, 0, 0] } },
+    ],
+  };
+  assert.equal(verify(spec([twice], cases), []).kind, 'invalid-spec');
+  const invariant = { id: 'same', kind: 'cut-invariant' };
+  assert.equal(verify(spec([invariant]), []).kind, 'invalid-spec');
+});

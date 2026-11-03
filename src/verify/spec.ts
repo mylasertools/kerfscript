@@ -477,6 +477,53 @@ export function validateSpec(input: unknown): VerificationIssue[] {
           `claims.${String(c.id)}`,
           'Support requires declared assembly-access and retention claims.',
         );
+      // References that can be checked before rendering are input errors,
+      // not failures of the design
+      if (c.kind === 'assembly-support') {
+        const plan = list.find((d) => d.id === c.plan && d.kind === 'assembly-access');
+        const retention = list.find((d) => d.id === c.retention && d.kind === 'retention');
+        const steps = new Set(
+          (Array.isArray(plan?.steps) ? plan.steps : []).filter(record).map((x) => x.id),
+        );
+        const links = new Set(
+          (Array.isArray(retention?.links) ? retention.links : [])
+            .filter(record)
+            .map((l) => l.claim),
+        );
+        if (Array.isArray(c.holds))
+          for (const h of c.holds)
+            if (record(h) && !steps.has(h.step))
+              bad(`claims.${String(c.id)}.holds`, `Step ${String(h.step)} is not in the plan.`);
+        if (plan && retention && Array.isArray(plan.steps))
+          for (const st of plan.steps)
+            if (record(st) && Array.isArray(st.fasten))
+              for (const f of st.fasten)
+                if (!links.has(f))
+                  bad(
+                    `claims.${String(plan.id)}.steps`,
+                    `Step ${String(st.id)} fastens ${String(f)}, which is not a link of ${String(retention.id)}.`,
+                  );
+      }
+      if (c.kind === 'cut-invariant') {
+        const n = Array.isArray(c.configurations)
+          ? c.configurations.length
+          : Array.isArray(input.configurations)
+            ? input.configurations.length
+            : 0;
+        if (n < 2)
+          bad(`claims.${String(c.id)}`, 'cut-invariant needs at least two configurations.');
+      }
+      if (c.kind === 'motion-clearance' && Array.isArray(c.moving)) {
+        const seen = new Set<string>();
+        for (const m of c.moving)
+          if (record(m)) {
+            const b = record(m.body) ? m.body : {};
+            const k = JSON.stringify([b.part ?? null, b.hardware ?? null, b.copy ?? 1]);
+            if (seen.has(k))
+              bad(`claims.${String(c.id)}.moving`, 'A body is given two trajectories.');
+            seen.add(k);
+          }
+      }
       if (c.kind === 'stability' && c.retention !== undefined && !named(c.retention, 'retention'))
         bad(`claims.${String(c.id)}.retention`, 'Reference a declared retention claim.');
       if (c.kind === 'retention' && Array.isArray(c.links))
