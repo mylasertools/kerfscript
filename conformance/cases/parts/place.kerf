@@ -1,0 +1,5 @@
+// place() moves the parts inside: these two walls collide only once both
+// are placed
+// => warning: Parts "a" and "b" collide in the assembly, around [5, 1.5, 5]. Check their edges and where they are placed.
+place(at = [0, 0, 0]) part("a", rotate = [90, 0, 0], at = [0, 3, 0]) rect([10, 10]);
+place(at = [0, 3, 0]) part("b", rotate = [90, 0, 0]) rect([10, 10]);

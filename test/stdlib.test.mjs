@@ -355,3 +355,91 @@ test('the library examples assemble without collisions or warnings', () => {
     assert.deepEqual(r.warnings, [], name);
   }
 });
+
+// kerf/gears, kerf/lock, kerf/rings, kerf/sizes, kerf/symbols, kerf/geo
+
+test('gears in mesh do not collide, and gear_turn runs the other way', () => {
+  const r = render(`use <kerf/gears>
+    $fn = 48;
+    part("a", at = [0, 0, 0]) spur_gear(24, 2);
+    part("b", at = [gear_distance(24, 12, 2), 0, 0], rotate = [0, 0, gear_phase(12)]) spur_gear(12, 2);
+    echo(gear_radius(24, 2), gear_turn(24, 12, 30));`);
+  assert.deepEqual(r.echoes, ['24, -60']);
+  assert.deepEqual(r.warnings, []);
+  assert.ok(Math.abs(size(r, 'a')[0] - 52) < 0.1, 'the tips reach the addendum circle');
+});
+
+test('a rack is as long as its teeth', () => {
+  const r = render('use <kerf/gears>\npart("r") rack(10, 2);');
+  assert.equal(size(r, 'r')[0], Math.round(10 * Math.PI * 2 * 100) / 100);
+});
+
+test('the lock fits together locked and open', () => {
+  for (const locked of [true, false]) {
+    const r = render(`use <kerf/lock>\n$fn = 48;\ncam_lock(7, locked = ${locked});`);
+    assert.deepEqual(r.warnings, [], `locked = ${locked}`);
+    assert.equal(r.parts.length, 7);
+  }
+});
+
+test('ring_stack makes one part for each size of ring, and a base can slot its feet', () => {
+  const r = render(`use <kerf/rings>
+    $fn = 48;
+    ring_stack([60, 60, 70, 60], 30, name = "v");
+    part("base", at = [0, 0, -$thickness], slots = ["v core A", "v core B"]) circle(d = 90);`);
+  assert.deepEqual(r.warnings, []);
+  assert.deepEqual(
+    r.parts.map((p) => [p.name, p.qty]),
+    [
+      ['v 60', 3],
+      ['v 70', 1],
+      ['v core A', 1],
+      ['v core B', 1],
+      ['base', 1],
+    ],
+  );
+  assert.ok(r.parts.at(-1).cutLength > Math.PI * 90 + 30, 'the base has slots');
+});
+
+test('flex_strip bends round its path and the plates cut its slots', () => {
+  const r = render(`use <kerf/hinge>
+    $fn = 32;
+    path = concat([[0, 60], [0, 40]], [for (a = [180:5:270]) [40, 40] + 40 * [cos(a), sin(a)]], [[100, 0]]);
+    part("a", rotate = [90, 0, 0], slots = ["s"]) offset(delta = 10) polygon(concat(path, [[100, 70], [0, 70]]));
+    part("b", at = [0, 53, 0], rotate = [90, 0, 0], slots = ["s"]) offset(delta = 10) polygon(concat(path, [[100, 70], [0, 70]]));
+    place(rotate = [90, 0, 0]) flex_strip(path, 50, name = "s");`);
+  assert.deepEqual(r.warnings, []);
+  const s = r.assembly.find((p) => p.name === 's');
+  assert.equal(s.bends.length, 1);
+  assert.ok(Math.abs(s.bends[0].angle - 90) < 1e-6);
+  assert.ok(
+    r.parts.find((p) => p.name === 'a').cutLength > r.parts.find((p) => p.name === 'a').width * 2,
+  );
+});
+
+test('paper, card and photo sizes by name', () => {
+  const r = render(
+    'use <kerf/sizes>\necho(paper_size("a5"), card_size("business"), landscape(photo_size("instax mini")));',
+  );
+  assert.deepEqual(r.echoes, ['[148, 210], [85, 55], [86, 54]']);
+  assert.throws(
+    () => render('use <kerf/sizes>\necho(paper_size("A11"));'),
+    /Unknown paper size "A11"/,
+  );
+});
+
+test('symbols draw at their size and name their source', () => {
+  const r = render(
+    'use <kerf/symbols>\npart("s") symbol("heart", 20);\necho(symbol_source("heart")[1], len(symbol_names()) > 800);',
+  );
+  assert.equal(Math.max(...size(r, 's')), 20);
+  assert.deepEqual(r.echoes, ['Apache-2.0, true']);
+});
+
+test('the map knows land from sea', () => {
+  const r = render(
+    'use <kerf/geo>\necho(is_land(48.8, 2.3), is_land(0, -140), is_land(-23.7, 133.9));\npart("m") world_map(360);',
+  );
+  assert.deepEqual(r.echoes, ['true, false, true']);
+  assert.ok(size(r, 'm')[0] > 350);
+});

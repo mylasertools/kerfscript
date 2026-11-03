@@ -316,7 +316,7 @@ test('install refuses what it cannot trust or use', async () => {
   await assert.rejects(tryWith({ 'feet.kerf': '' }), /has no kerf.json at its top/);
   await assert.rejects(
     tryWith({ ...FEET, 'kerf.json': { name: 'feet', language: '9.0' } }),
-    /feet needs KerfScript language 9.0 or later, and this kerf has 0.2. Update kerf./,
+    /feet needs KerfScript language 9.0 or later, and this kerf has 0.3. Update kerf./,
   );
   await assert.rejects(
     tryWith({ ...FEET, 'kerf.json': { name: 'paws' } }),

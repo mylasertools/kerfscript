@@ -1811,8 +1811,10 @@ export class Evaluator {
         // A glued part is placed on its host's face when the parts are
         // rendered, its at and rotate measured on that face
         const framed = this.frame !== IDENTITY4 && glue === undefined;
+        // A bend shows only in the assembled view: it places the part too
+        const bendArg = this.arg(c.args, 'bend', -1);
         let placements =
-          at === undefined && turn === undefined && !framed && glue === undefined
+          at === undefined && turn === undefined && !framed && glue === undefined && bendArg === undefined
             ? undefined
             : this.placements(at, turn, qty);
         const t = this.thickness(c.env);
@@ -1829,7 +1831,7 @@ export class Evaluator {
         if (mirrored) c.env.vars.set('$mirrored', true);
         let s = c.children();
         if (mirrored) s = transform(s, [-1, 0, 0, 1, 0, 0]);
-        const bends = this.bends(this.arg(c.args, 'bend', -1));
+        const bends = this.bends(bendArg);
         const on = this.arg(c.args, 'on', -1);
         const slotsArg = this.arg(c.args, 'slots', -1);
         const slots =

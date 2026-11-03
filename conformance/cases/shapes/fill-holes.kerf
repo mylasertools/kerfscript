@@ -1,0 +1,8 @@
+// fill_holes() fills holes smaller than min_area, or all
+// => layer: "cut" area=1167
+difference() {
+  rect([40, 30]);
+  translate([5, 5]) rect([2, 2]);
+  translate([20, 5]) rect([2, 2]);
+  fill_holes(10) translate([30, 20]) difference() { rect([5, 5]); translate([1, 1]) rect(2); }
+}

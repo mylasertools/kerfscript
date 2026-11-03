@@ -1,0 +1,2 @@
+use <helper>
+function near() = helper() + 1;

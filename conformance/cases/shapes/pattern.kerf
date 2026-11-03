@@ -1,0 +1,7 @@
+// pattern() repeats its first child over the area of the others: copies
+// inside whole, copies across the edge clipped
+// => layer: "cut" area=25
+pattern(10) {
+  rect([2, 2]);
+  translate([-1, -1]) rect([22, 22]);
+}

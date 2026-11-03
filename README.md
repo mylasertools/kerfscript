@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/@mylasertools/kerfscript"><img src="https://img.shields.io/npm/v/@mylasertools/kerfscript?color=d8361f&label=npm" alt="npm version"></a>
   <a href="COMMERCIAL-LICENSE.md"><img src="https://img.shields.io/badge/licence-AGPL--3.0%20or%20free%20commercial-1f1a17" alt="Licence: AGPL-3.0 or free commercial"></a>
-  <a href="LANGUAGE.md"><img src="https://img.shields.io/badge/language-0.2-e3c69a" alt="Language version 0.2"></a>
+  <a href="LANGUAGE.md"><img src="https://img.shields.io/badge/language-0.3-e3c69a" alt="Language version 0.3"></a>
   <a href="https://kerfscript.mylasertools.com/playground/"><img src="https://img.shields.io/badge/try%20it-playground-5a3519" alt="Try it in the playground"></a>
 </p>
 

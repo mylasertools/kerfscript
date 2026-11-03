@@ -1,6 +1,6 @@
 # Specification
 
-Language version 0.2. Copyright (c) 2026 MyLaserTools. This document is
+Language version 0.3. Copyright (c) 2026 MyLaserTools. This document is
 licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 This document defines KerfScript programs precisely: what text is a
@@ -11,7 +11,7 @@ differ, this document is the one to fix.
 
 The [conformance suite](../conformance/README.md) turns these rules into
 small programs with expected results. Each section below names the cases
-that test it. An implementation conforms to language version 0.2 when it
+that test it. An implementation conforms to language version 0.3 when it
 passes every case.
 
 ## Notation
@@ -41,8 +41,9 @@ ignored.
 LINE_COMMENT  = "//" { any character except "\n" } ;
 BLOCK_COMMENT = "/*" { any character } "*/" ;   (* ends at the first "*/" *)
 
-NUMBER   = DIGITS [ "." { DIGIT } ] [ EXPONENT ]
-         | "." DIGITS [ EXPONENT ] ;
+NUMBER   = ( DIGITS [ "." { DIGIT } ] [ EXPONENT ]
+           | "." DIGITS [ EXPONENT ] ) [ UNIT ] ;
+UNIT     = "mm" | "cm" | "m" | "in" | "ft" ;   (* not followed by a LETTER, DIGIT or "_" *)
 EXPONENT = ( "e" | "E" ) [ "+" | "-" ] DIGITS ;
 DIGITS   = DIGIT { DIGIT } ;
 
@@ -419,8 +420,15 @@ These start with a value:
 | `$sheet`     | `[600, 400]` |
 | `$gap`       | 3            |
 | `$layout`    | `"pack"`     |
+| `$scale`     | 1            |
 
 `PI` is an ordinary variable set to π in the outermost scope.
+
+A number with a unit (language version 0.3) is a length in the real world:
+its value times 1 for `mm`, 10 for `cm`, 1000 for `m`, 25.4 for `in` and
+304.8 for `ft`, divided by `$scale` where it is evaluated. A `$scale` that
+is not a number more than 0 is the error `$scale must be a number more than
+0`. Cases: `values/units*`.
 
 ## Libraries
 
@@ -435,6 +443,10 @@ above the design's with a `kerf.json`: `<name/...>` is a file of the
 project when `name` is the project's own name, or of the installed library
 in `kerf_libraries/name/`; any other path is a file in the design's folder.
 Each tries `path`, then `path.kerf` ([Shared libraries](shared-libraries.md)).
+From language version 0.3, a `use` or `include` inside a library whose
+path has a folder, as `lib/props`, first asks for the path beside it,
+`lib/` joined with the path (`..` going up a folder), and only when that
+names nothing for the path as written.
 A path that names nothing is the error `Library <path> not found`. Each path is read and parsed once per render.
 
 `use <path>` makes the library's modules and functions available in the
@@ -522,6 +534,13 @@ placed on another), grouped into parts. The [language
 reference](../LANGUAGE.md#layers) describes layers, parts, materials, kerf
 compensation and sheet packing, and lists the built-in modules that make
 shapes. Shapes outside every `part()` form one part named `part`.
+
+Parts placed in 3D compose with every enclosing `place()`, outermost first,
+then the part's own `at` and `rotate`, then for `stack = n` a move of k
+thicknesses along the part's z for its k-th layer. A part with `glue` is
+placed on its host's face instead, after every part has run. `step()`
+numbers steps from 1 in the order they first run; a part or hardware
+outside every step has step 0. Cases: `parts/*`.
 
 ## Known differences
 

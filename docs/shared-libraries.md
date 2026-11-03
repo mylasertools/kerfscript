@@ -139,6 +139,10 @@ project's choice wins:
 }
 ```
 
+A library's own `use <...>` looks next to it first: `lib/props.kerf`
+saying `use <finish.kerf>` finds `lib/finish.kerf`, wherever the design
+that uses `lib/props.kerf` is.
+
 ## Publish a library
 
 A library's top folder holds its `kerf.json`:

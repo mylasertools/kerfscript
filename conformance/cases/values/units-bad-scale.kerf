@@ -1,0 +1,4 @@
+// $scale must be a number more than 0
+// => error: $scale must be a number more than 0 (line 4, column 6)
+$scale = 0;
+echo(1cm);

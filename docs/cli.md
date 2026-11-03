@@ -108,12 +108,33 @@ installed libraries by themselves.
 | `--margin <mm>`       | Set spacing at sheet edges; defaults to the gap                           |
 | `--no-pack`           | Keep the positions defined in the program                                 |
 | `--guides`            | Include the guide layer                                                   |
-| `--split`             | Export one file per sheet                                                 |
+| `--split`             | Export one file per sheet, and each sheet's back-face job                 |
+| `--nest`              | Pack small parts into the holes of bigger ones                            |
+| `--stats`             | With `check`: points in the files, by part and layer                      |
+| `--sweep name=a:s:b`  | With `check`: try every value from a to b in steps of s, or `name=a,b,c`  |
 | `-h, --help`          | Show command help                                                         |
 | `-v, --version`       | Show version numbers                                                      |
 
 `-D` accepts KerfScript values, including numbers, quoted strings, booleans
 and lists. For example: `-D width=200` or `-D 'name="Ada"'`.
+
+`kerf check` lists the parts, how many make each glued stack and what a
+part is glued to, the hardware to buy, alike pieces counted together, and
+the assembly steps. A design with marks on the parts' back faces writes a
+second file beside the first, `design-back.svg`: the sheet turned over
+left to right, for the job after the parts are turned over.
+
+`--sweep` checks a design over many settings at once. Repeat it to try
+every combination; each line says `ok` or lists what went wrong, and the
+command exits with 1 if any combination warns or fails:
+
+```sh
+kerf check tray.kerf --sweep '$thickness=3:0.5:6' --sweep size=small,large
+```
+
+The `"sheet": [600, 400]` in a project's `kerf.json` is the sheet for every
+design in the project that does not set `$sheet`: set your laser's bed
+once.
 
 ## Examples
 

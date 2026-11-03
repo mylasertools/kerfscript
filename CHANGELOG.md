@@ -1,5 +1,80 @@
 # Changelog
 
+## 0.7.0 (2026-11-03)
+
+Language version 0.3. Programs for 0.2 run as before, except that a
+variable no longer hides a function or built-in of the same name: after
+`len = 3;`, `len([1, 2])` is 2, where it was an error. Numbers followed by
+a unit, which were errors, are now lengths. New warnings and the positions
+added to old ones change the text of warnings.
+
+Assembly:
+
+- `place(at, rotate) { ... }` places the parts and hardware inside it, with
+  their own placements inside its. `box()` takes a `name` and shapes for
+  its front, so a box can be set anywhere.
+- `part()` takes `stack = n` (glued layers), `mirror = true` (the left of a
+  pair, its text still reading), `bend = [x0, x1, angle]` (a living hinge
+  shown bent), `on = "part"` (glued to a bent part and moving with it),
+  `glue = "part", face = "top"` (laid on another part's face) and `slots =
+["part", ...]`: slots cut wherever those parts pass through it in the
+  assembly, at any angle, so tabs are drawn once.
+- `step(text) { ... }` makes assembly steps, and `hardware(kind, from, to,
+size)` lists dowels, screws, magnets and paper. `render()` returns
+  `steps` and `hardware`; `kerf check` lists them.
+- `orient(x, z)`, `rotation(angles)` and `euler(matrix)` turn parts any way.
+- Collisions are checked for each flat run of a bent part, and a collision
+  warning says where in the assembly it is.
+
+A 3D view in the playground (the Assembled tab) and on every model page
+(Build it) shows the model put together from the program, bends and
+hardware included, and builds it a step at a time.
+
+Drawing:
+
+- `spline(points, width)` and `spline_points()`, `hatch(angle, pitch,
+width)`, `pattern(spacing, stagger)` that repeats a tile cheaply,
+  `paint(layers)` for painter's order, `measure()` with `$bounds`,
+  `fill_holes(min_area)`, `close(r)`, `line(a, b, width)` as an area,
+  `text(fit = width)`, and `path(d, close = true)`.
+- `intersection()` clips lines in any child, not only the first.
+- `path_length()`, `point_at()`, `heading_at()` and `path_points()` work
+  along paths.
+- Lengths in real units, as `140cm`, `2in` or `1.2m`, divided by `$scale`.
+
+Output:
+
+- `engrave(side = "back")`, `score(side = "back")` and `layer(side =
+"back")` mark the faces underneath, in a second job per sheet turned over
+  left to right (`sheet.back`, `name-back.svg`).
+- Line layers come after fill layers in the files, and `layer(order = n)`
+  sets the order. `layer(bleed = mm)` lets a printed layer run past the
+  part's edge, and `$registration = true` adds print-and-cut marks.
+- `$nest = true` (`--nest`, the `nest` option) packs small parts into the
+  holes of bigger ones.
+- A project's `kerf.json` can give `"sheet": [w, h]` for every design in
+  it that does not set `$sheet` (the `defaultSheet` option).
+- Warnings about a part in pieces, a hole narrower than the kerf and a
+  collision say where.
+- `kerf check --stats` counts points by part and layer, and `--sweep
+name=from:step:to` checks a design over every combination of settings.
+- A library's own `use` looks next to it first.
+
+New libraries:
+
+- `kerf/gears`: spur gears, racks, lantern gears and peg wheels,
+  eccentrics, snail cams and tappets.
+- `kerf/lock`: a lock with a key, three layers deep.
+- `kerf/rings`: round things of stacked rings on a crossed core.
+- `kerf/sizes`: paper, card and photo sizes by name.
+- `kerf/symbols`: 867 pictograms by name, from open icon sets (see
+  THIRD-PARTY-NOTICES.md).
+- `kerf/geo`: the world's land from Natural Earth, `world_map()` and
+  `is_land()`.
+- `kerf/hinge` adds `flex_strip()`, a strip that follows a profile with
+  hinges on its curves and tabs on its straights, `strip_bends()` and
+  `narrow_hinge()`; `flex_box()` now shows assembled.
+
 ## 0.6.0 (2026-11-02)
 
 Language version 0.2, as in 0.5.0: programs run as before.

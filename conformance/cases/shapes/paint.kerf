@@ -1,0 +1,13 @@
+// paint() takes the area of every later child from each child
+// => layer: "cut" area=400
+// => layer: "light" area=300
+// => layer: "dark" area=100
+layer("light", mode = "fill");
+layer("dark", mode = "fill");
+part("p") {
+  rect([20, 20]);
+  paint(["light", "dark"]) {
+    rect([20, 20]);
+    rect([10, 10]);
+  }
+}

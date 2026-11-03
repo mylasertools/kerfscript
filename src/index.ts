@@ -34,6 +34,6 @@ export {
 } from './assembly.js';
 export type { HardwareItem } from './evaluator.js';
 
-export const VERSION = '0.6.0';
-export const LANGUAGE_VERSION = '0.2';
+export const VERSION = '0.7.0';
+export const LANGUAGE_VERSION = '0.3';
 export { importSvg, type ImportOptions, type ImportResult } from './import/index.js';

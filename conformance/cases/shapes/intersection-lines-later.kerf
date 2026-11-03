@@ -1,0 +1,8 @@
+// intersection() clips the lines of any child to the others' area, in
+// whichever order they come
+// => layer: "cut" area=400
+// => layer: "score" length=20
+part("p") intersection() {
+  rect([20, 20]);
+  score() line([-10, 5], [30, 5]);
+}
