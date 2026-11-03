@@ -561,16 +561,20 @@ part("tag") {
 }
 ```
 
-### `symbol(name, size = 10, center = true, fill = "nonzero")`
+### `symbol(name, size = 10, center = true, fill = "nonzero", box = "drawn")`
 
 The symbol `size` mm across the longer side of what it draws, centred on
-the origin, or with its bottom left corner there.
+the origin, or with its bottom left corner there. With `box = "grid"`,
+`size` and the centre are those of the icon set's own grid (24 x 24 for
+Material Design Icons), so icons from one set keep their sizes and places
+relative to each other: paw prints in a trail, an icon swapped for another.
 
-### `symbol_names(category)`, `symbol_size(name, size = 10)`, `symbol_source(name)`, `symbol_entry(name)`
+### `symbol_names(category)`, `symbol_size(name, size = 10, box = "drawn")`, `symbol_source(name)`, `symbol_entry(name)`
 
-The names of every symbol, or of one category; a symbol's `[width,
-height]` at a size; where it comes from as `[source, licence]`; and its
-row of the table.
+The names of every symbol, or of one category; the `[width, height]` a
+symbol draws at a size; where it comes from as `[source, licence]`; and
+its row of the table, `[name, category, drawn box, source, path, grid]`,
+the boxes as `[x, y, w, h]`.
 
 ## Maps
 

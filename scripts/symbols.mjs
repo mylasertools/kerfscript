@@ -26,7 +26,17 @@ const q = (s) => JSON.stringify(s);
 const rows = kept.map((s) => {
   const path = s.path.replace(/\s+/g, ' ').trim();
   const vb = drawn(path);
-  return `  [${q(s.id)}, ${q(s.category)}, [${vb.join(', ')}], ${sources.indexOf(`${s.source}|${s.license}`)}, ${q(path)}]`;
+  // The icon's own grid: its viewBox, 24 x 24 for Material Design Icons,
+  // otherwise what it draws
+  const grid = s.viewBox
+    ? s.viewBox
+        .trim()
+        .split(/[\s,]+/)
+        .map(Number)
+    : /Material Design Icons/.test(s.source)
+      ? [0, 0, 24, 24]
+      : vb;
+  return `  [${q(s.id)}, ${q(s.category)}, [${vb.join(', ')}], ${sources.indexOf(`${s.source}|${s.license}`)}, ${q(path)}, [${grid.join(', ')}]]`;
 });
 const out = `// kerf/symbols: ${kept.length} pictograms by name, for engraving and cutting.
 // The library code: Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or
@@ -38,18 +48,23 @@ const out = `// kerf/symbols: ${kept.length} pictograms by name, for engraving a
 // A symbol \`size\` mm across the longer side of what it draws, centred on
 // the origin (or with its bottom left corner there, center = false). The names are as
 // symbol_names() lists them: "heart", "star", "paw", "tree" and the like.
-module symbol(name, size = 10, center = true, fill = "nonzero") {
+// box = "grid" sizes and places it by its icon set's grid (24 x 24 for
+// Material Design Icons) instead, so icons of one set line up as drawn.
+module symbol(name, size = 10, center = true, fill = "nonzero", box = "drawn") {
+  assert(box == "drawn" || box == "grid", "box is \\"drawn\\" or \\"grid\\"");
   s = symbol_entry(name);
-  vb = s[2];
+  vb = box == "grid" ? s[5] : s[2];
   k = size / max(vb[2], vb[3]);
   translate(center ? [0, 0] : [vb[2] * k / 2, vb[3] * k / 2])
     scale([k, -k]) translate([-vb[0] - vb[2] / 2, -vb[1] - vb[3] / 2])
       path(s[4], fill = fill, close = true);
 }
 
-// [width, height] of a symbol drawn \`size\` across its longer side
-function symbol_size(name, size = 10) = let (vb = symbol_entry(name)[2], k = size / max(vb[2], vb[3]))
-  [vb[2] * k, vb[3] * k];
+// [width, height] of what a symbol draws when it is \`size\` across its
+// longer side (box = "drawn"), or across its grid's (box = "grid")
+function symbol_size(name, size = 10, box = "drawn") = let (
+  s = symbol_entry(name), vb = s[2], g = box == "grid" ? s[5] : vb, k = size / max(g[2], g[3])
+) [vb[2] * k, vb[3] * k];
 
 // The names of all symbols, or of one category: ${[...new Set(kept.map((s) => s.category))].sort().join(', ')}
 function symbol_names(category = undef) = [for (s = SYMBOLS) if (is_undef(category) || s[1] == category) s[0]];
@@ -57,7 +72,8 @@ function symbol_names(category = undef) = [for (s = SYMBOLS) if (is_undef(catego
 // Where a symbol comes from and its licence, as [source, licence]
 function symbol_source(name) = let (s = symbol_entry(name)) split(SYMBOL_SOURCES[s[3]], "|");
 
-// A symbol's row of SYMBOLS: [name, category, [x, y, w, h], source, path]
+// A symbol's row of SYMBOLS: [name, category, [x, y, w, h] drawn, source,
+// path, [x, y, w, h] of its icon grid]
 function symbol_entry(name) = let (hit = [for (s = SYMBOLS) if (s[0] == name) s])
   len(hit) ? hit[0] : assert(false, str("No symbol named \\"", name, "\\". symbol_names() lists them."));
 

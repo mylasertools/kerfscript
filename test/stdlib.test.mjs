@@ -436,6 +436,15 @@ test('symbols draw at their size and name their source', () => {
   assert.deepEqual(r.echoes, ['Apache-2.0, true']);
 });
 
+test('symbols of one icon set line up by their grid with box = "grid"', () => {
+  // The heart fills 20 of Material Design's 24 units
+  const r = render(
+    'use <kerf/symbols>\npart("s") symbol("heart", 24, box = "grid");\necho(symbol_entry("heart")[5]);',
+  );
+  assert.deepEqual(r.echoes, ['[0, 0, 24, 24]']);
+  assert.ok(Math.abs(size(r, 's')[0] - 20) < 0.05);
+});
+
 test('the map knows land from sea', () => {
   const r = render(
     'use <kerf/geo>\necho(is_land(48.8, 2.3), is_land(0, -140), is_land(-23.7, 133.9));\npart("m") world_map(360);',
