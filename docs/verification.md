@@ -17,6 +17,12 @@ remains available for ordinary warning/parameter sweeps.
 
 ## Reading the result
 
+`--summary` also writes a triage to standard error: every claim that did not
+pass, failures first, grouped by status and diagnostic code, each with its
+configurations, the bodies involved and the first measurements. The report
+and the exit code are unchanged; `triage()` and `triageText()` give the same
+from JavaScript.
+
 The command returns `{ "kind": "report", "report": ... }`, or `invalid-spec` /
 `invalid-snapshot` with input issues. Each claim has a status, diagnostic code,
 configuration, implicated part/hardware references, measurements, assumptions and

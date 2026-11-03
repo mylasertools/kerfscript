@@ -49,4 +49,5 @@ export {
   type SnapshotContext,
 } from './verify/index.js';
 export type * from './verify/types.js';
+export { triage, triageText, type TriageGroup } from './verify/summary.js';
 export type { RenderAnalysis } from './analysis.js';

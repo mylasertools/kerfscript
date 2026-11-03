@@ -84,6 +84,8 @@ name=from:step:to` checks a design over every combination of settings.
 - A stack glued under its host (`face = "bottom"`) grows down, away from it.
 - A `step()` inside a step is a sub-step ("Add the chair: Glue the seat");
   `step(text, substeps = false)` takes inner steps into itself.
+- `kerf verify --summary` (and `triage()`) groups what did not pass by status
+  and reason, with the bodies involved and their measurements.
 - A slot is cut through the whole thickness of the part, so a shoulder that
   flares just inside its face is covered; parts that only touch still cut
   nothing.

@@ -47,7 +47,7 @@ to try these commands.
 kerf render <file.kerf> [-o out.svg] [options]
 kerf params <file.kerf>
 kerf check <file.kerf>
-kerf verify <file.kerf> --spec <file.json> [-o report.json]
+kerf verify <file.kerf> --spec <file.json> [-o report.json] [--summary]
 kerf diff <a.kerf> <b.kerf> [-D name=value] [--json]
 kerf instructions <file.kerf> [-o out.html] [options]
 kerf fmt <files or folders>

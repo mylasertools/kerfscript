@@ -124,3 +124,23 @@ test('verify CLI refuses a configuration that sets a setting the model lacks', (
   assert.equal(result.kind, 'invalid-spec');
   assert.equal(result.issues[0].code, 'unknown-parameter');
 });
+test('verify --summary groups what did not pass on stderr, the report unchanged', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'kerf-verify-'));
+  const input = JSON.parse(readFileSync(fixture('glue-patch.verify.json')));
+  const ok = run(
+    fixture('glue-patch.kerf'),
+    '--spec',
+    fixture('glue-patch.verify.json'),
+    '--summary',
+  );
+  assert.match(ok.stderr, /All \d+ claims pass/);
+  assert.equal(JSON.parse(ok.stdout).report.status, 'pass');
+  const contact = input.claims.find((c) => c.kind === 'glue-contact');
+  contact.minimumArea = 1e6;
+  const spec = join(dir, 'big.json');
+  writeFileSync(spec, JSON.stringify(input));
+  const bad = run(fixture('glue-patch.kerf'), '--spec', spec, '--summary');
+  assert.equal(bad.status, 1, bad.stderr);
+  assert.match(bad.stderr, /^fail \S+ \(1\): /m);
+  assert.match(bad.stderr, new RegExp(`^  ${contact.id}.*host`, 'm'));
+});

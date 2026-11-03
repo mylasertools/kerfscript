@@ -11,6 +11,7 @@ import { withBuiltinFont } from '../font.js';
 import { findProject, readManifest, resolver } from '../libraries.js';
 import { verify, snapshotFromRender } from './index.js';
 import { validateSpec } from './spec.js';
+import { triageText } from './summary.js';
 import type { VerificationResult, VerificationSnapshot, VerificationSpec } from './types.js';
 
 const sha = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
@@ -18,10 +19,13 @@ const sha = (value: string | Uint8Array) => createHash('sha256').update(value).d
 export function verificationCommand(args: string[]): void {
   let file = '',
     specFile = '',
-    out = '';
+    out = '',
+    summary = false;
   const fonts: Record<string, Uint8Array> = Object.create(null);
   const emit = (result: VerificationResult) => {
     const json = JSON.stringify(result, null, 2) + '\n';
+    // What did not pass, grouped, for a person to read; the report is unchanged
+    if (summary) process.stderr.write(triageText(result));
     try {
       if (out) writeFileSync(out, json);
       else process.stdout.write(json);
@@ -48,6 +52,7 @@ export function verificationCommand(args: string[]): void {
             throw new Error(`${a} needs a value`);
           })();
       if (a === '--spec') specFile = next();
+      else if (a === '--summary') summary = true;
       else if (a === '-o' || a === '--out') out = next();
       else if (a === '--font') {
         const p = next();
