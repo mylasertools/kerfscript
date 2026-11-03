@@ -4,7 +4,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -438,4 +438,45 @@ test('kerf check --call runs one call of a library, with -D set first', () => {
   );
   assert.match(out, /^tile: 25 x 40 mm, 4 mm material/m);
   assert.doesNotMatch(out, /stray/);
+});
+
+test("kerf diff lists what changed by part and layer, in the part's coordinates", () => {
+  const dir = mkdtempSync(join(tmpdir(), 'kerf-'));
+  writeFileSync(
+    join(dir, 'a.kerf'),
+    'part("a") rect(10);\npart("b") { rect(20); score() line([0, 5], [20, 5]); }\n',
+  );
+  writeFileSync(
+    join(dir, 'b.kerf'),
+    'part("a") rect(10);\npart("b") { difference() { rect(20); translate([2, 2]) rect(4); } score() line([0, 6], [20, 6]); }\npart("c") rect(5);\n',
+  );
+  const same = spawnSync(
+    'node',
+    ['dist/cli.js', 'diff', join(dir, 'a.kerf'), join(dir, 'a.kerf')],
+    {
+      encoding: 'utf8',
+    },
+  );
+  assert.equal(same.status, 0);
+  assert.match(same.stdout, /No differences/);
+  const r = spawnSync(
+    'node',
+    ['dist/cli.js', 'diff', join(dir, 'a.kerf'), join(dir, 'b.kerf'), '--json'],
+    {
+      encoding: 'utf8',
+    },
+  );
+  assert.equal(r.status, 1);
+  const d = JSON.parse(r.stdout);
+  assert.deepEqual(
+    d.map((e) => [e.part, e.layer ?? null, e.change]),
+    [
+      ['b', 'score', 'changed'],
+      ['b', 'cut', 'changed'],
+      ['c', null, 'added'],
+    ].sort(),
+  );
+  const hole = d.find((e) => e.layer === 'cut');
+  assert.equal(hole.area, 16);
+  assert.deepEqual(hole.at, [2, 2, 6, 6]);
 });

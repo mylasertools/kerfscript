@@ -20,6 +20,7 @@ import { Evaluator } from './evaluator.js';
 import { BUILTIN_FONT, withBuiltinFont } from './font.js';
 import { startServer, workerMain } from './lsp.js';
 import { verificationCommand } from './verify/command.js';
+import { diffRenders } from './diff.js';
 import {
   add,
   check as checkLibraries,
@@ -42,6 +43,8 @@ Usage:
   kerf verify <file.kerf> --spec <file.json> [-o report.json]
                                     verify assembly and motion contracts;
                                     exit 0 pass, 1 failed, 2 unverified/invalid
+  kerf diff <a.kerf> <b.kerf>        what changed, by part and layer; exit 1 if
+                                    anything did (--json for a list)
   kerf fmt <files or folders>        format .kerf files in place
   kerf fmt --check <files>           list files that are not formatted; exit 1 if any
   kerf fmt -                         format standard input to standard output
@@ -123,6 +126,7 @@ function main(argv: string[]) {
   }
   const cmd = argv[0];
   if (cmd === 'verify') return verificationCommand(argv.slice(1));
+  if (cmd === 'diff') return diffCommand(argv.slice(1));
   if (cmd === 'fmt') return fmt(argv.slice(1));
   if (cmd === 'import') return importCommand(argv.slice(1));
   if (['install', 'add', 'remove', 'pack'].includes(cmd)) return libraries(cmd, argv.slice(1));
@@ -499,6 +503,62 @@ else
     }
     throw e;
   }
+
+// kerf diff a.kerf b.kerf: what changed, part by part and layer by layer
+function diffCommand(argv: string[]) {
+  const files: string[] = [];
+  const params: Record<string, Value> = {};
+  const fonts: Record<string, Uint8Array> = {};
+  let json = false;
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    const next = () => argv[++i] ?? fail(`${a} needs a value`);
+    if (a === '--json') json = true;
+    else if (a === '-D' || a.startsWith('-D')) {
+      const kv = a === '-D' ? next() : a.slice(2);
+      const eq = kv.indexOf('=');
+      if (eq < 1) fail(`-D needs name=value, got "${kv}"`);
+      const raw = kv.slice(eq + 1);
+      let v: Value;
+      try {
+        v = parseValue(raw);
+      } catch {
+        v = raw;
+      }
+      params[kv.slice(0, eq)] = v;
+    } else if (a === '--font') {
+      const f = next();
+      fonts[basename(f, extname(f))] = readFileSync(f);
+    } else if (a.startsWith('-')) fail(`Unknown option ${a}`);
+    else files.push(a);
+  }
+  if (files.length !== 2) fail('Use kerf diff a.kerf b.kerf [-D name=value] [--json].');
+  const [a, b] = files.map((file) =>
+    render(readFileSync(file, 'utf8'), {
+      params,
+      layout: 'none',
+      fonts: withBuiltinFont(fonts),
+      resolve: resolver(file),
+    }),
+  );
+  const diff = diffRenders(a, b);
+  if (json) process.stdout.write(JSON.stringify(diff, null, 2) + '\n');
+  else if (!diff.length) process.stdout.write('No differences\n');
+  else
+    for (const d of diff) {
+      const what = `${d.part}${d.copy > 1 ? ` (copy ${d.copy})` : ''}${d.layer ? `, ${d.layer}` : ''}`;
+      const detail = [
+        d.area !== undefined && `${d.area} mm² of shapes differ`,
+        d.linesRemoved && `${d.linesRemoved} line${d.linesRemoved > 1 ? 's' : ''} removed`,
+        d.linesAdded && `${d.linesAdded} line${d.linesAdded > 1 ? 's' : ''} added`,
+        d.at && `at [${d.at.slice(0, 2).join(', ')}] to [${d.at.slice(2).join(', ')}]`,
+      ].filter(Boolean);
+      process.stdout.write(
+        `${what}: ${d.change}${detail.length ? `, ${detail.join(', ')}` : ''}\n`,
+      );
+    }
+  if (diff.length) process.exitCode = 1;
+}
 
 // --params-list sets.json: a JSON list of settings, each tried as a whole
 function paramsList(file: string): Record<string, Value>[] {

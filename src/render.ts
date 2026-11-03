@@ -88,6 +88,9 @@ export interface Placed {
   copy: number;
   layers: Map<string, Layer>;
   rotated: boolean;
+  /** With layout "none": the move from the part's coordinates, y flipped
+   * down, to the sheet's */
+  offset?: [number, number];
 }
 
 export interface Sheet {
@@ -541,7 +544,10 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       }
     const b = exportBounds(all);
     const shift: Matrix = [1, 0, 0, 1, margin - b[0], margin - b[1]];
-    for (const it of items) it.layers = moved(it.layers, shift);
+    for (const it of items) {
+      it.layers = moved(it.layers, shift);
+      it.offset = [shift[4], shift[5]];
+    }
     sheets.push(
       finishSheet(items, b[2] - b[0] + 2 * margin, b[3] - b[1] + 2 * margin, ready[0]?.info),
     );

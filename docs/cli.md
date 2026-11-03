@@ -48,6 +48,7 @@ kerf render <file.kerf> [-o out.svg] [options]
 kerf params <file.kerf>
 kerf check <file.kerf>
 kerf verify <file.kerf> --spec <file.json> [-o report.json]
+kerf diff <a.kerf> <b.kerf> [-D name=value] [--json]
 kerf fmt <files or folders>
 kerf fmt --check <files or folders>
 kerf fmt -
@@ -158,6 +159,16 @@ names in the call:
 ```sh
 kerf render lib/props.kerf --call 'roses(40, 30)' -D '$thickness=4' -o roses.svg
 kerf check lib/kerf/box.kerf --call 'box([w, 40, 30])' -D w=60
+```
+
+`kerf diff` renders two designs (or one design before and after a change)
+with the same settings and lists, part by part and layer by layer, what
+differs: the area of shapes that changed, open lines added or removed, and
+where, in the part's own coordinates. It exits 1 if anything changed, so a
+refactor can prove it changed nothing:
+
+```sh
+kerf diff old/garage.kerf garage.kerf
 ```
 
 The `"sheet": [600, 400]` in a project's `kerf.json` is the sheet for every

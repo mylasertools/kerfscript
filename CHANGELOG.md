@@ -85,6 +85,8 @@ name=from:step:to` checks a design over every combination of settings.
   somewhere warns, saying where.
 - `symbol(..., box = "grid")` sizes and places a symbol by its icon set's
   grid, so a set lines up as drawn.
+- `kerf diff a.kerf b.kerf` (and `diffRenders()`) lists what changed between
+  two renders, by part and layer, with where.
 - `kerf render lib.kerf --call 'roses(40, 30)'` renders one call of a
   library's module, with `-D` setting variables first.
 - `--sweep 'w,d=100,80;200,150'` tries settings that go together as sets,

@@ -145,6 +145,16 @@ format('x=1;module m(a,b=2){rect([a,b]);}');
 
 `format(source, { indent: 4 })` uses four spaces per level.
 
+## diffRenders()
+
+`diffRenders(a, b)` compares two results of `render(source, { layout: "none" })`
+and returns what differs, one entry per part copy and layer: `part`, `copy`,
+`layer`, `change` (`"added"`, `"removed"` or `"changed"`), `area` (mm² of
+shapes that differ), `linesAdded`, `linesRemoved` and `at`, the box of the
+difference in the part's own coordinates. With layout `"none"`, each sheet
+item's `offset` is the move from the part's coordinates (y down) to the
+sheet's.
+
 ## importSvg()
 
 `importSvg(svg, options)` turns an SVG drawing into a program, as
