@@ -69,9 +69,16 @@ unique native `hardware(..., label = "shaft")` labels. A missing or ambiguous
 reference is an input error. Array positions cannot identify hardware. Claim IDs
 starting with `$` are reserved for verifier diagnostics.
 
-Configurations may contain `params`. Claims may restrict their `configurations`
+Configurations may contain `params`; `kerf verify` refuses a name the model
+does not assign (`unknown-parameter`, exit 2), so a typo cannot verify the
+defaults instead. Claims may restrict their `configurations`
 to a subset, and may set `required: false` for informational checks. At least one
 claim must be required. Optional checks never hide a required failure.
+
+A revolute `range` may span more than half a turn: a pose gives the hinge's
+angle relative to the first configuration up to whole turns, and the check
+accepts it when some whole turn of it lies in the range. Captured-shaft stops
+pair with the bearings by their position along the shaft, in any order.
 
 ## Supported contracts
 

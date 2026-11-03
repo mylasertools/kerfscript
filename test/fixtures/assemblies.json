@@ -448,7 +448,7 @@
         "deck_count": 2,
         "card_width": 63,
         "card_length": 88,
-        "token_cols": 2,
+        "token_columns": 2,
         "token_rows": 2,
         "stack_height": 28,
         "$thickness": 2
@@ -460,7 +460,7 @@
         "deck_count": 4,
         "card_width": 70,
         "card_length": 100,
-        "token_cols": 4,
+        "token_columns": 4,
         "token_rows": 3,
         "stack_height": 45,
         "$thickness": 4

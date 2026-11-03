@@ -16,7 +16,13 @@ import {
 } from './assembly.js';
 import { slotsFor, type Solid } from './slots.js';
 import type { RenderAnalysis } from './analysis.js';
-import { Evaluator, type HardwareItem, type LayerDef, type Limits } from './evaluator.js';
+import {
+  didYouMean,
+  Evaluator,
+  type HardwareItem,
+  type LayerDef,
+  type Limits,
+} from './evaluator.js';
 import { toDxf } from './export/dxf.js';
 import { layerPaths, toSvg, type LayerPath } from './export/svg.js';
 import {
@@ -135,6 +141,11 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     }
   }
   const { program } = parse(source);
+  // A setting the program never assigns would be ignored without a word
+  const assigned = new Set(program.body.flatMap((s) => (s.kind === 'assign' ? [s.name] : [])));
+  const unknownSettings = Object.keys(options.params ?? {}).filter(
+    (n) => !n.startsWith('$') && !assigned.has(n),
+  );
   const fonts = options.fonts ? new FontBook(options.fonts, options.defaultFont) : undefined;
   const ev = new Evaluator({
     overrides: options.params,
@@ -165,6 +176,10 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   }
   const g = (name: string) => res.globals.get(name).value;
   const warnings = res.warnings;
+  for (const n of unknownSettings)
+    warnings.push(
+      `Setting "${n}" is not a variable of the program, so it is ignored.${didYouMean(n, assigned)}`,
+    );
   const defs = res.layers;
   const mode = (k: string) => defs.get(k)?.mode ?? 'line';
 
@@ -746,7 +761,10 @@ function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: str
         }),
       ),
     );
-    if (each.slice(1).some((r) => xor(each[0], r).length > 0))
+    // Compared by the area they differ in, so rounding slivers don't count
+    const differ = (a: Poly2[], b: Poly2[]) =>
+      xor(a, b).reduce((t, q) => t + Math.abs(area(q)), 0) > 1e-3;
+    if (each.slice(1).some((r) => differ(each[0], r)))
       warnings.push(
         `Copies of part "${p.name}" meet the parts in slots in different places; they all get every slot. Make them separate parts to cut each its own.`,
       );

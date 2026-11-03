@@ -14,9 +14,16 @@ export function nativeFixedPairs(s: VerificationSnapshot): FixedPair[] {
     const self: PartRef = { part: p.name, copy: p.copy },
       n = p.stack ?? 1;
     if (p.on) throw new Error('Bend-rider joints require a resolved rigid-run attachment model.');
-    if (n > 1 && (p.copy - 1) % n !== 0)
-      out.push({ a: { part: p.name, copy: p.copy - 1 }, b: self, faceA: 'top', faceB: 'bottom' });
-    else if (p.glue)
+    // A stack glued under its host grows down, each layer under the last
+    if (n > 1 && (p.copy - 1) % n !== 0) {
+      const down = p.glue && p.glueFace === 'bottom';
+      out.push({
+        a: { part: p.name, copy: p.copy - 1 },
+        b: self,
+        faceA: down ? 'bottom' : 'top',
+        faceB: down ? 'top' : 'bottom',
+      });
+    } else if (p.glue)
       out.push({
         a: p.glue,
         b: self,

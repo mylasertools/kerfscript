@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { render, snapshotFromRender, verify, poseAssembly } from '../../dist/index.js';
 const hash = 'a'.repeat(64),
   provenance = { sourceHash: hash, engineHash: hash, dependencies: {}, fonts: {} };
@@ -617,4 +618,75 @@ test('checked analytic poses drive previews without changing the cut files', () 
   assert.deepEqual(initial.assembly.find((p) => p.name === 'arm').matrix, original);
   assert.throws(() => poseAssembly(initial, controls, 2));
   assert.throws(() => poseAssembly(initial, [...controls, ...controls], 0.5));
+});
+
+const fixtureText = (name) =>
+  readFileSync(new URL(`../fixtures/verification/${name}`, import.meta.url), 'utf8');
+const shaft = () => JSON.parse(fixtureText('captured-shaft.verify.json')).claims[0];
+test('shaft stops pair with bearings by position, whatever order they are listed in', () => {
+  const s = snap(fixtureText('captured-shaft.kerf'));
+  const reversed = shaft();
+  reversed.stops.reverse();
+  assert.equal(result(spec([reversed]), [s], reversed.id).at(-1).status, 'pass');
+});
+test('a bore drawn with an odd number of sides is centred on its corners', () => {
+  const source = fixtureText('captured-shaft.kerf');
+  assert.match(source, /\$fn = 96/);
+  const s = snap(source.replace('$fn = 96', '$fn = 31'));
+  assert.equal(result(spec([shaft()]), [s], shaft().id).at(-1).status, 'pass');
+});
+test('a hinge range past half a turn is measured in whole turns', () => {
+  const src =
+    'u=0;$thickness=1;part("root",at=[0,0,0])translate([-4,-4])rect(1);part("arm",at=[0,0,0],rotate=[0,0,u])rect([3,1]);';
+  const claim = {
+    id: 'joints',
+    kind: 'joint-constraints',
+    bodies: [{ part: 'root' }, { part: 'arm' }],
+    roots: [{ part: 'root' }],
+    expectedDof: 1,
+    joints: [
+      {
+        kind: 'revolute',
+        a: { part: 'root' },
+        b: { part: 'arm' },
+        anchorA: [0, 0, 0],
+        anchorB: [0, 0, 0],
+        axisA: [0, 0, 1],
+        axisB: [0, 0, 1],
+        range: [0, 270],
+      },
+    ],
+  };
+  const configs = [
+    { id: 'closed', params: { u: 0 } },
+    { id: 'open', params: { u: 200 } },
+  ];
+  const cs = result(
+    spec([claim], configs),
+    [snap(src, { u: 0 }, 'closed'), snap(src, { u: 200 }, 'open')],
+    'joints',
+  );
+  assert.deepEqual(
+    cs.map((c) => c.status),
+    ['pass', 'pass'],
+  );
+  const past = result(
+    spec([claim], [configs[0], { id: 'past', params: { u: 300 } }]),
+    [snap(src, { u: 0 }, 'closed'), snap(src, { u: 300 }, 'past')],
+    'joints',
+  );
+  assert.equal(past.at(-1).status, 'fail');
+});
+test('a stack glued under its host is bonded layer to layer', () => {
+  const src =
+    'material(thickness = 3, kerf = 0) { part("host", at = [0, 0, 0]) rect([40, 30]); part("pad", glue = "host", face = "bottom", stack = 2, at = [5, 5, 0]) rect([10, 10]); }';
+  const claim = {
+    id: 'j',
+    kind: 'joint-constraints',
+    bodies: [{ part: 'host' }, { part: 'pad', copy: 1 }, { part: 'pad', copy: 2 }],
+    roots: [{ part: 'host' }],
+    expectedDof: 0,
+    joints: [],
+  };
+  assert.equal(result(spec([claim]), [snap(src)], 'j')[0].status, 'pass');
 });

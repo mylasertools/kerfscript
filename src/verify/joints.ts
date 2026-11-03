@@ -310,9 +310,19 @@ function bore(a: Axis, p: SnapshotPart): AxialPart | string {
   const holes = holesAt(p.regions, at);
   if (!holes.length) return 'No bore surrounds the shaft axis.';
   if (holes.length !== 1) return 'The bore selector is ambiguous.';
+  // The mean of a regular polygon's corners is its centre; its bounding
+  // box's middle is not when the corners are odd in number
   const hole = holes[0],
-    bb = bounds([hole]),
-    center: [number, number] = [(bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2];
+    corners =
+      hole.length > 1 &&
+      hole[0][0] === hole[hole.length - 1][0] &&
+      hole[0][1] === hole[hole.length - 1][1]
+        ? hole.slice(0, -1)
+        : hole,
+    center: [number, number] = [
+      corners.reduce((t, q) => t + q[0], 0) / corners.length,
+      corners.reduce((t, q) => t + q[1], 0) / corners.length,
+    ];
   if (Math.hypot(center[0] - at[0], center[1] - at[1]) > EPS)
     return 'The shaft is not centered in the bore.';
   const radii = hole.map((p) => Math.hypot(p[0] - center[0], p[1] - center[1]));
@@ -393,9 +403,15 @@ export function capturedShaft(
   const assumptions = [
     'Ideal cylindrical hardware at its declared dimensions. Hardware diameter/length variation, strength and loosening are not established.',
   ];
+  // Stops pair with the bearings by where they are along the shaft, not by
+  // the order the specification lists them in
+  const stops = c.stops
+    .map((stop) => ({ stop, h: findHardware(s, stop.body) }))
+    .map((o) => ({ ...o, at: o.h && coaxial(a, o.h) ? range(a, o.h) : undefined }));
+  if (stops.some((o) => !o.at)) return fail('A retainer is not coaxial with the shaft.');
+  stops.sort((x, y) => x.at![0] + x.at![1] - (y.at![0] + y.at![1]));
   for (let i = 0; i < 2; i++) {
-    const stop = c.stops[i],
-      h = findHardware(s, stop.body);
+    const { stop, h } = stops[i];
     if (!coaxial(a, h)) return fail('A retainer is not coaxial with the shaft.');
     const d = axis(h)!,
       r = range(a, h),

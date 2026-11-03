@@ -6,6 +6,7 @@ import { basename, dirname, extname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { render, type RenderOptions } from '../render.js';
+import { parse } from '../parser.js';
 import { withBuiltinFont } from '../font.js';
 import { findProject, readManifest, resolver } from '../libraries.js';
 import { verify, snapshotFromRender } from './index.js';
@@ -69,6 +70,23 @@ export function verificationCommand(args: string[]): void {
       throw new Error('Verification supports at most 100 configurations and 1000 claims per run.');
     const source = readFileSync(file, 'utf8'),
       resolveLib = resolver(file);
+    // A configuration must set settings the model has, or a typo would
+    // verify the defaults under the configuration's name
+    const assigned = new Set(
+      parse(source).program.body.flatMap((s) => (s.kind === 'assign' ? [s.name] : [])),
+    );
+    const unknown = spec.configurations.flatMap((c) =>
+      Object.keys(c.params ?? {})
+        .filter((k) => !k.startsWith('$') && !assigned.has(k))
+        .map((k) => ({
+          code: 'unknown-parameter',
+          message: `${c.id}: ${k} is not a setting of ${basename(file!)}.`,
+        })),
+    );
+    if (unknown.length) {
+      emit({ kind: 'invalid-spec', issues: unknown });
+      return;
+    }
     const dependencies: Record<string, string> = Object.create(null),
       cache = new Map<string, string | undefined>();
     const resolveSource = (path: string) => {

@@ -76,6 +76,8 @@ name=from:step:to` checks a design over every combination of settings.
 - A module or function defined with a built-in's name warns that it hides
   the built-in.
 - A stack glued under its host (`face = "bottom"`) grows down, away from it.
+- A setting passed to `render()` (or `-D`, `--sweep`) that the program never
+  assigns warns, with the nearest name.
 
 New libraries:
 

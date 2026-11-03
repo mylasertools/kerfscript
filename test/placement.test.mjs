@@ -329,3 +329,19 @@ test('a part touching the edge from outside leaves no notch', () => {
     part("s", at = [10, 0, -5], rotate = [90, 0, 0]) rect([10, 8]);`);
   assert.equal(r.parts.find((p) => p.name === 'c').cutLength, 160);
 });
+
+test('copies that meet their slots alike, down to rounding, do not warn', () => {
+  const r = render(
+    'material(thickness = 3, kerf = 0) {' +
+      ' part("plate", qty = 2, at = [[0, 0, 0], [100.1, 33.36666666666667, 0]], rotate = [0, 0, 30], slots = "post") rect([40, 30]);' +
+      ' part("post", qty = 2, at = [[9.820526376958965, 22.99044935803677, -5], [109.92052637695896, 56.35711602470344, -5]], rotate = [90, 0, 0]) translate([-1, 0]) rect([2, 15]); }',
+  );
+  assert.deepEqual(r.warnings, []);
+});
+
+test('a setting the program never assigns warns', () => {
+  const r = render('size = 10; rect(size);', { params: { sise: 5, $kerf: 0.1 } });
+  assert.deepEqual(r.warnings, [
+    'Setting "sise" is not a variable of the program, so it is ignored. Did you mean "size"?',
+  ]);
+});

@@ -111,3 +111,16 @@ test('stock adaptation verifies separate profiles while each cutting file stays 
   assert.equal(report.claims.find((c) => c.id === '5mm fit').status, 'pass');
   assert.equal(report.specification.configurations[0].materials.receiver.thickness[0], 3.95);
 });
+test('verify CLI refuses a configuration that sets a setting the model lacks', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'kerf-verify-'));
+  const input = JSON.parse(readFileSync(fixture('slider.verify.json')));
+  const first = input.configurations[0];
+  first.params = { ...first.params, bogus: 5 };
+  const spec = join(dir, 'typo.json');
+  writeFileSync(spec, JSON.stringify(input));
+  const r = run(fixture('slider.kerf'), '--spec', spec);
+  assert.equal(r.status, 2, r.stdout);
+  const result = JSON.parse(r.stdout);
+  assert.equal(result.kind, 'invalid-spec');
+  assert.equal(result.issues[0].code, 'unknown-parameter');
+});

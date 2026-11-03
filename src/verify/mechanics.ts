@@ -51,6 +51,17 @@ const angle = (m: number[], initial: number[], axis: Vec3) => {
   return (Math.atan2(dot(n, cross(x, y)), dot(x, y)) * 180) / Math.PI;
 };
 
+// A pose fixes a hinge's angle only up to whole turns: the turns of
+// `turn` that land in `range`, nearest its middle first
+const turnsIn = (turn: number, range: [number, number], tol: number): number[] => {
+  const out: number[] = [];
+  const lo = Math.ceil((range[0] - tol - turn) / 360),
+    hi = Math.floor((range[1] + tol - turn) / 360);
+  for (let k = lo; k <= hi && out.length < 64; k++) out.push(turn + 360 * k);
+  const mid = (range[0] + range[1]) / 2;
+  return out.sort((a, b) => Math.abs(a - mid) - Math.abs(b - mid));
+};
+
 export function retention(
   c: RetentionClaim,
   s: VerificationSnapshot,
@@ -532,7 +543,7 @@ export function jointConstraints(
         return fail('Revolute anchors or axes do not coincide.');
       if (j.range) {
         const turn = angle(rel, rel0, j.axisB);
-        if (turn < j.range[0] - EPS || turn > j.range[1] + EPS)
+        if (!turnsIn(turn, j.range, EPS).length)
           return fail('A revolute joint exceeds its declared angular travel.', { angle: turn });
       }
       xyz.forEach((n) => linear(n, sub(pa, origin(a)), sub(pb, origin(b))));
@@ -663,10 +674,15 @@ export function continuousJoints(
       if (j.range) {
         const rel = multiply(invert(ma), mb),
           rel0 = multiply(invert(bodyMatrix(reference, j.a)), bodyMatrix(reference, j.b)),
-          start = angle(rel, rel0, j.axisB),
-          end = start + b.angle * dot(unit(vector(mb, j.axisB)), rotAxis);
-        if (Math.min(start, end) < j.range[0] - EPS || Math.max(start, end) > j.range[1] + EPS)
-          return fail('The continuous hinge path exceeds its angular stops.');
+          sweep = b.angle * dot(unit(vector(mb, j.axisB)), rotAxis),
+          range = j.range;
+        // Some whole turn of the start must keep the whole path in range
+        const fits = turnsIn(angle(rel, rel0, j.axisB), range, EPS).some(
+          (start) =>
+            Math.min(start, start + sweep) >= range[0] - EPS &&
+            Math.max(start, start + sweep) <= range[1] + EPS,
+        );
+        if (!fits) return fail('The continuous hinge path exceeds its angular stops.');
       }
     } else if (j.kind === 'prismatic') {
       if (same(a, b)) continue;
