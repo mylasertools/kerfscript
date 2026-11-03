@@ -79,7 +79,7 @@ name=from:step:to` checks a design over every combination of settings.
 - A `step()` inside a step is a sub-step ("Add the chair: Glue the seat");
   `step(text, substeps = false)` takes inner steps into itself.
 - The collision check reports any overlap deeper than 0.1 mm, where it
-  needed a cubic millimetre, and slots need a part to reach half way through,
+  needed a cubic millimetre, and slots need a part to reach 1 mm in,
   so a part dipping 0.13 mm into a floor is reported, not slotted.
 - A part narrower than `$min_width` (1.5 mm unless set; 0 turns it off)
   somewhere warns, saying where.

@@ -39,8 +39,9 @@ export function crossSection(target: Solid, other: Solid): Poly[] {
     [nx * hi + tx * BIG, ny * hi + ty * BIG],
     [nx * lo + tx * BIG, ny * lo + ty * BIG],
   ];
-  // A tab reaches at least half way through; a part that only dips into
-  // the slab is misplaced, and is left for the collision check to report
+  // A tab reaches 1 mm in, or half way through a thinner part; one that only
+  // dips into the slab is misplaced, and is left for the collision check
+  // to report. A blind tab still cuts its slot through
   let zLo = Infinity,
     zHi = -Infinity;
   for (const ring of other.outline)
@@ -50,7 +51,8 @@ export function crossSection(target: Solid, other: Solid): Poly[] {
         if (z < zLo) zLo = z;
         if (z > zHi) zHi = z;
       }
-  if (Math.min(target.thickness, zHi) - Math.max(0, zLo) < target.thickness / 2) return [];
+  if (Math.min(target.thickness, zHi) - Math.max(0, zLo) < Math.min(1, target.thickness / 2))
+    return [];
   const pieces = intersection(other.outline, [ccw(band)]).filter((p) => Math.abs(area(p)) > 1e-6);
   if (!pieces.length) return [];
   const at =

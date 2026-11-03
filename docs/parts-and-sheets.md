@@ -117,8 +117,9 @@ those parts wherever their material passes through it in the assembly,
 `clearance = 0.1` wider. It works at any angle, so a back leaning 15
 degrees gets slots as long as its tabs' slanted cross-section, and a strip
 bent by a living hinge cuts slots for the tabs on its straight runs. A part
-must reach at least half way through to cut a slot: one that only dips into
-the surface is misplaced, and the collision check reports it rather than a
+must reach 1 mm into it (or half way through a thinner one) to cut a slot,
+and a blind tab's slot goes through: one that only dips into the surface is
+misplaced, and the collision check reports it rather than a
 slot hiding it.
 
 ```kerf

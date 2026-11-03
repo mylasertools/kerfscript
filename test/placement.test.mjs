@@ -405,6 +405,15 @@ test('$min_width = 0 turns the narrow-material warning off', () => {
   assert.deepEqual(render('$min_width = 0.8;\n' + bar).warnings, []);
 });
 
+test('a blind tab 1.5 mm into a 4 mm floor still cuts its slot', () => {
+  const r = render(
+    '$thickness = 4; part("floor", at = [0, 0, 0], slots = ["leg"]) rect([40, 40]);\n' +
+      'material(thickness = 1.5) part("leg", at = [10, 20, 4], rotate = [90, 0, 0]) { rect([10, 10]); translate([3, -1.5]) rect([4, 1.51]); }',
+  );
+  assert.equal(r.warnings.filter((w) => /collide/.test(w)).length, 0, r.warnings.join('\n'));
+  assert.ok(r.parts.find((p) => p.name === 'floor').cutLength > 160);
+});
+
 test('a part that only dips into another cuts no slot, and collides', () => {
   const r = render(
     'part("floor", at = [0, 0, 0], slots = "*") rect([60, 40]);\n' +
