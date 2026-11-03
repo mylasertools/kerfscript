@@ -400,6 +400,8 @@ test('ring_stack refuses a hole that leaves its core plates too thin', () => {
     'use <kerf/rings>\n$thickness = 3;\nring_stack([60, 70, 60], 23);\npart("base", at = [-40, -40, -3], slots = ["ring core A", "ring core B"]) rect([80, 80]);',
   );
   assert.deepEqual(base.warnings, []);
+  // The base stays one piece round the four foot slots
+  assert.equal(base.parts.find((p) => p.name === 'base').pieces, 1);
 });
 
 test('ring_stack makes one part for each size of ring, and a base can slot its feet', () => {

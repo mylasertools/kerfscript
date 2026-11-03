@@ -28,12 +28,15 @@ export function crossSection(target: Solid, other: Solid): Poly[] {
   if (n < 1e-9) return [];
   const w0 = 0,
     w1 = other.thickness;
-  const lo = (-R[11] - Math.max(R[10] * w0, R[10] * w1) + EPS) / n;
-  const hi = (target.thickness - R[11] - Math.min(R[10] * w0, R[10] * w1) - EPS) / n;
-  if (!(hi > lo)) return [];
+  // EPS inside each face decides whether the part goes through at all, so
+  // parts that only touch cut nothing; the slot itself is the whole
+  // thickness, so a shoulder that flares at the face is cut too
+  const at0 = (e: number) => (-R[11] - Math.max(R[10] * w0, R[10] * w1) + e) / n;
+  const at1 = (e: number) => (target.thickness - R[11] - Math.min(R[10] * w0, R[10] * w1) - e) / n;
+  if (!(at1(EPS) > at0(EPS))) return [];
   const [nx, ny] = [a / n, b / n];
   const [tx, ty] = [-ny, nx];
-  const band: Poly = [
+  const bandOf = (lo: number, hi: number): Poly => [
     [nx * lo - tx * BIG, ny * lo - ty * BIG],
     [nx * hi - tx * BIG, ny * hi - ty * BIG],
     [nx * hi + tx * BIG, ny * hi + ty * BIG],
@@ -53,7 +56,10 @@ export function crossSection(target: Solid, other: Solid): Poly[] {
       }
   if (Math.min(target.thickness, zHi) - Math.max(0, zLo) < Math.min(1, target.thickness / 2))
     return [];
-  const pieces = intersection(other.outline, [ccw(band)]).filter((p) => Math.abs(area(p)) > 1e-6);
+  const inBand = (lo: number, hi: number) =>
+    intersection(other.outline, [ccw(bandOf(lo, hi))]).filter((p) => Math.abs(area(p)) > 1e-6);
+  if (!inBand(at0(EPS), at1(EPS)).length) return [];
+  const pieces = inBand(at0(0), at1(0));
   if (!pieces.length) return [];
   const at =
     (w: number) =>

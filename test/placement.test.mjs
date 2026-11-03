@@ -579,3 +579,17 @@ test('each layer of a stack cuts only the slots that pass through it', () => {
     part("leg", at = [10, 20, 0], rotate = [90, 0, 0]) { rect([5, 30]); translate([1, 29.99]) rect([3, 6.02]); }`);
   assert.equal(same.parts.find((p) => p.name === 'top').stack, 2);
 });
+
+test('a slot covers a shoulder that flares just inside the receiving face', () => {
+  const r = render(`
+    part("stage", at = [-20, -20, 0], slots = ["limb"], clearance = 0) rect([40, 40]);
+    part("limb", at = [0, 1.5, 0.008], rotate = [90, 0, 0]) {
+      translate([-2, -10]) rect([4, 13]);
+      difference() {
+        translate([-4, -2]) rect([8, 2]);
+        for (s = [-1, 1]) translate([s * 4, -2]) circle(r = 2, $fn = 64);
+      }
+    }`);
+  // 160 round the stage, and 2 x (8 + 3) round the slot: the flare's full width
+  assert.equal(r.parts.find((p) => p.name === 'stage').cutLength, 182);
+});
