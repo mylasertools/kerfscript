@@ -31,6 +31,23 @@ export interface PartShape {
   kerf: number;
   material: string;
   placements?: Placement[];
+  // Glued layers per placement, stacked along the part's own z
+  stack?: number;
+  // Living hinge bends, along the part's x: [x0, x1, angle]
+  bends?: Bend[];
+  // The part this one is glued to, so it moves with that part's bends
+  on?: string;
+  // Parts whose tabs pass through this one: slots cut where they meet it
+  slots?: string[];
+  clearance?: number;
+  // The assembly step that adds it, 0 for none
+  step?: number;
+}
+
+export interface Bend {
+  x0: number;
+  x1: number;
+  angle: number;
 }
 
 export interface Shape {

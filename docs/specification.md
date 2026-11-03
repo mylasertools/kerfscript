@@ -277,14 +277,18 @@ give `undef`.
 
 In `f(args)`, when `f` is a name:
 
-1. If a variable named `f` is in scope, its value is called. A variable
-   hides a function definition of the same name.
+1. If a variable named `f` is in scope and holds a function, its value is
+   called.
 2. Otherwise a function definition named `f` is called.
 3. Otherwise a built-in function named `f` is called.
-4. Otherwise the error is `Unknown function f()`.
+4. Otherwise, if a variable named `f` is in scope, the error is `"f" is a
+number, not a function` (naming the variable's type).
+5. Otherwise the error is `Unknown function f()`.
 
-Calling a value that is not a function is an error: `"f" is a number, not a
-function` for a name, `Can't call a number` otherwise.
+So a variable that does not hold a function never hides a function or a
+built-in of the same name: `len = 3; echo(len([1, 2]))` writes 2. (Before
+language version 0.3 any variable hid them.) Calling a value that is not a
+function in any other way is an error: `Can't call a number`.
 
 Arguments are evaluated left to right in the caller's scope, then bound to
 parameters:

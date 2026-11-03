@@ -1,12 +1,15 @@
 // Copyright (c) 2026 MyLaserTools. SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-MyLaserTools-Commercial
 
-import type { Poly } from './geometry.js';
+import { intersection, type Bend, type Poly } from './geometry.js';
 
 export type Vec3 = [number, number, number];
 
 export interface Placement {
   at: Vec3;
   rotate: Vec3;
+  // A full 4x4 matrix, row by row, when the placement is composed with
+  // place(): it wins over at and rotate
+  matrix?: number[];
 }
 
 export interface AssemblyPart {
@@ -16,11 +19,18 @@ export interface AssemblyPart {
   matrix: number[];
   outline: Poly[];
   placed: boolean;
+  // Living hinge bends along the part's x, applied after matrix's
+  // placement: see bendPoint()
+  bends?: Bend[];
+  // The assembly step that adds it: 0 when the program has no steps
+  step?: number;
+  // Glued in a stack of this many layers
+  stack?: number;
 }
 
 const RAD = Math.PI / 180;
 
-function multiply(a: number[], b: number[]): number[] {
+export function multiply(a: number[], b: number[]): number[] {
   const out = new Array(16).fill(0);
   for (let r = 0; r < 4; r++)
     for (let c = 0; c < 4; c++)
@@ -39,6 +49,7 @@ function rotation(axis: 0 | 1 | 2, degrees: number): number[] {
 const clean = (n: number) => (Math.abs(n) < 1e-12 ? 0 : n);
 
 export function placementMatrix(p: Placement): number[] {
+  if (p.matrix) return p.matrix.map(clean);
   const [ax, ay, az] = p.rotate;
   const r = multiply(rotation(2, az), multiply(rotation(1, ay), rotation(0, ax)));
   r[3] = p.at[0];
@@ -339,4 +350,87 @@ export function collisions(
       if (hit) found.push([A, B]);
     }
   return { found, complete: true };
+}
+
+export function translation(x: number, y: number, z: number): number[] {
+  return [1, 0, 0, x, 0, 1, 0, y, 0, 0, 1, z, 0, 0, 0, 1];
+}
+
+export const IDENTITY4 = translation(0, 0, 0);
+
+export function invert(m: number[]): number[] {
+  return invertRigid(m);
+}
+
+// One bend: the part beyond x1 turns `angle` degrees about an axis along
+// y, its middle layer bending round a radius that makes the hinge's
+// length. A positive angle folds the far end up, towards the top face.
+function bendAt(b: Bend, t: number, a = b.angle, x = b.x1): number[] {
+  const L = x - b.x0;
+  if (!a || !(L > 0)) return translation(0, 0, 0);
+  const R = (b.x1 - b.x0) / ((b.angle * Math.PI) / 180);
+  const cz = t / 2 + R;
+  return multiply(
+    translation(b.x0, 0, cz),
+    multiply(rotation(1, -a), translation(-b.x0 - L, 0, -cz)),
+  );
+}
+
+export function sortedBends(bends: Bend[]): Bend[] {
+  return [...bends].sort((a, b) => a.x0 - b.x0);
+}
+
+// The matrices for the flat runs between bends, in the part's own
+// coordinates: the first is the identity, the run after bend k is the
+// product of the first k bends
+export function bendRuns(bends: Bend[], t: number): number[][] {
+  const out = [translation(0, 0, 0)];
+  for (const b of sortedBends(bends)) out.push(multiply(out[out.length - 1], bendAt(b, t)));
+  return out;
+}
+
+// Where a point of a bent part goes, in the part's own coordinates
+export function bendPoint(bends: Bend[], t: number, p: Vec3): Vec3 {
+  const list = sortedBends(bends);
+  const runs = bendRuns(list, t);
+  for (let k = list.length - 1; k >= 0; k--) {
+    const b = list[k];
+    if (p[0] >= b.x1) return apply(runs[k + 1], ...p);
+    if (p[0] > b.x0) {
+      const part = (p[0] - b.x0) / (b.x1 - b.x0);
+      const m = multiply(runs[k], bendAt(b, t, b.angle * part, p[0]));
+      return apply(m, ...p);
+    }
+  }
+  return p;
+}
+
+// Which flat run a point along x is on
+export function runOf(bends: Bend[], x: number): number {
+  return sortedBends(bends).filter((b) => (b.x0 + b.x1) / 2 < x).length;
+}
+
+// A bent part as rigid pieces, the hinges left out, to check for
+// collisions
+export function bentPieces(p: AssemblyPart): AssemblyPart[] {
+  if (!p.bends?.length) return [p];
+  const list = sortedBends(p.bends);
+  const runs = bendRuns(list, p.thickness);
+  const BIG = 1e7;
+  const out: AssemblyPart[] = [];
+  for (let k = 0; k <= list.length; k++) {
+    const from = k === 0 ? -BIG : list[k - 1].x1;
+    const to = k === list.length ? BIG : list[k].x0;
+    if (!(to > from)) continue;
+    const band: Poly = [
+      [from, -BIG],
+      [to, -BIG],
+      [to, BIG],
+      [from, BIG],
+    ];
+    const outline = intersection(p.outline, [band]);
+    if (outline.length)
+      out.push({ ...p, outline, bends: undefined, matrix: multiply(p.matrix, runs[k]) });
+  }
+  return out;
 }

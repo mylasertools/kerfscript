@@ -47,6 +47,9 @@ export interface Manifest {
   /** Library name to source: github:owner/repo@tag, an https link to a
    * .tar.gz, or a folder */
   libraries: Record<string, string>;
+  /** The project's laser bed, [width, height] in mm: the sheet for every
+   * design in the project that does not set $sheet */
+  sheet?: [number, number];
 }
 
 /** One library pinned in kerf.lock. */
@@ -134,6 +137,15 @@ function checkManifest(raw: unknown, label: string): Manifest {
     fail(`${label}: "version" must look like 1.2.0, not "${m.version}"`);
   if (m.language !== undefined && !/^\d+\.\d+$/.test(m.language as string))
     fail(`${label}: "language" must look like ${LANGUAGE_VERSION}, not "${m.language}"`);
+  if (
+    m.sheet !== undefined &&
+    !(
+      Array.isArray(m.sheet) &&
+      m.sheet.length === 2 &&
+      m.sheet.every((v) => typeof v === 'number' && Number.isFinite(v) && v > 0)
+    )
+  )
+    fail(`${label}: "sheet" must be [width, height] in mm, like [600, 400]`);
   const libs = m.libraries ?? {};
   if (!libs || typeof libs !== 'object' || Array.isArray(libs))
     fail(`${label}: "libraries" must be an object of name: source`);

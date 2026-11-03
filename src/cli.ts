@@ -27,6 +27,7 @@ import {
   install,
   LibraryError,
   pack,
+  readManifest,
   remove,
   resolver,
 } from './libraries.js';
@@ -172,8 +173,19 @@ function main(argv: string[]) {
     process.stdout.write(JSON.stringify(parameters(source), null, 2) + '\n');
     return;
   }
+  // A project's kerf.json can give the laser's sheet for all its designs
+  const project = findProject(dirname(resolve(file)));
+  let defaultSheet: [number, number] | undefined;
+  if (project) {
+    try {
+      defaultSheet = readManifest(project).sheet;
+    } catch (e) {
+      fail((e as Error).message);
+    }
+  }
   const result = render(source, {
     ...opts,
+    ...(defaultSheet && { defaultSheet }),
     params,
     fonts: withBuiltinFont(fonts),
     resolve: resolveLib,
@@ -183,8 +195,10 @@ function main(argv: string[]) {
   if (cmd === 'check') {
     for (const p of result.parts)
       process.stdout.write(
-        `${p.name}${p.qty > 1 ? ` x${p.qty}` : ''}: ${p.width} x ${p.height} mm, ${p.thickness} mm ${p.material}, cut ${p.cutLength} mm\n`,
+        `${p.name}${p.qty > 1 ? ` x${p.qty}` : ''}: ${p.width} x ${p.height} mm, ${p.thickness} mm ${p.material}, cut ${p.cutLength} mm${p.stack ? `, glued in stacks of ${p.stack}` : ''}\n`,
       );
+    for (const h of hardwareList(result.hardware)) process.stdout.write(`${h}\n`);
+    result.steps.forEach((s, i) => process.stdout.write(`step ${i + 1}: ${s}\n`));
     process.stdout.write(`${result.sheets.length} sheet${result.sheets.length === 1 ? '' : 's'}\n`);
     result.sheets.forEach((s, i) =>
       process.stdout.write(
@@ -202,6 +216,8 @@ function main(argv: string[]) {
       JSON.stringify(
         {
           parts: result.parts,
+          hardware: result.hardware,
+          steps: result.steps,
           warnings: result.warnings,
           echoes: result.echoes,
           sheets: result.sheets.map((s) => ({
@@ -216,9 +232,14 @@ function main(argv: string[]) {
       ),
     );
   } else if (split && result.sheets.length > 1) {
-    result.sheets.forEach((s, i) =>
-      writeFileSync(target.replace(/(\.[^.]+)$/, `-${i + 1}$1`), body(s)),
-    );
+    result.sheets.forEach((s, i) => {
+      writeFileSync(target.replace(/(\.[^.]+)$/, `-${i + 1}$1`), body(s));
+      if (s.back)
+        writeFileSync(
+          target.replace(/(\.[^.]+)$/, `-${i + 1}-back$1`),
+          ext === '.dxf' ? s.back.dxf : s.back.svg,
+        );
+    });
   } else if (ext === '.dxf') {
     if (result.sheets.length > 1)
       process.stderr.write(
@@ -232,7 +253,32 @@ function main(argv: string[]) {
       );
     writeFileSync(target, result.svg);
   }
+  const backs = result.sheets.filter((s) => s.back).length;
+  if (backs && !(split && result.sheets.length > 1) && ext !== '.json') {
+    const first = result.sheets.find((s) => s.back)!;
+    const backFile = target.replace(/(\.[^.]+)$/, '-back$1');
+    writeFileSync(backFile, ext === '.dxf' ? first.back!.dxf : first.back!.svg);
+    process.stderr.write(
+      `Wrote ${backFile}: marks for the back faces. Turn the sheet over left to right and run it lined up on the same corner.${backs > 1 || result.sheets.length > 1 ? " Use --split for every sheet's back." : ''}\n`,
+    );
+  }
   process.stderr.write(`Wrote ${target}\n`);
+}
+
+// Hardware as a list to buy: alike pieces counted together
+function hardwareList(
+  items: { kind: string; from: number[]; to: number[]; size: number | number[]; label?: string }[],
+): string[] {
+  const counts = new Map<string, number>();
+  for (const h of items) {
+    const length = Math.round(Math.hypot(...h.to.map((v, i) => v - h.from[i])));
+    const size = Array.isArray(h.size)
+      ? h.size.map((v) => Math.round(v * 10) / 10).join(' x ')
+      : Math.round(h.size * 10) / 10;
+    const key = `${h.label ?? h.kind}: ${size} mm, ${length} mm long`;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts].map(([k, n]) => `hardware ${n > 1 ? `${n} x ` : ''}${k}`);
 }
 
 function importCommand(argv: string[]) {

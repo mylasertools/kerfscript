@@ -118,6 +118,9 @@ Arguments can be positional or named: `rect([20, 10], r = 2)`.
 - `module` and `function` definitions are visible in their whole block, so you
   can call them before they are defined.
 - Blocks, loops and module bodies have their own scope.
+- Variables, functions and modules have separate names. A variable that
+  does not hold a function never hides a function or built-in: after
+  `len = 3;`, `len([1, 2])` is still 2.
 - **Special variables** (`$name`) are dynamically scoped: a value set by a
   caller is seen by everything it calls. Pass them as arguments too:
   `circle(5, $fn = 6)`.
@@ -154,6 +157,7 @@ module hang_hole(d = 5) {
 | `$layout`         | `"pack"`      | `"pack"` packs parts onto sheets, `"none"` keeps your placement            |
 | `$fn` `$fa` `$fs` | `0` `2` `0.2` | curve resolution: fixed segment count, or max angle and max segment length |
 | `$font`           |               | default font name for `text()`                                             |
+| `$mirrored`       | `false`       | set inside a mirrored part and on the back face: `text()` reads right      |
 
 ## Layers
 
@@ -174,7 +178,16 @@ layer("pocket", mode = "fill", color = "#00aa00") ...
 Use `layer(name, mode, color)` to define a custom layer. Its mode is
 `"cut"`, `"line"`, `"fill"` or `"guide"`.
 
-Files list layers in this order: engrave, custom layers, score, cut, guide.
+Marks can go on a part's **back face** too: `engrave(side = "back")`,
+`score(side = "back")` or `layer(name, side = "back")`. Draw them where
+they are on the part seen from the top, as everything else; text on the
+back reads the right way round on the back. Each sheet with back marks
+gets a second job (`sheet.back`, or `name-back.svg` from the command line),
+the sheet turned over left to right: cut the sheet, turn it over without
+moving the parts, line it up on the same corner and run the back job.
+
+Files list layers in this order: engrave, custom fill layers, custom line
+and cut layers, score, cut, guide, so a line is never covered by a fill.
 Set the actual operation order, power and speed in your laser software.
 See [Laser software](docs/compatibility.md) for import details.
 
@@ -206,12 +219,47 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
   rotated first, then moved, with its thickness along +Z. A part with copies
   takes one placement or a list with one per copy. `render()` returns the
   placed parts as `assembly` and warns when two of them collide.
+  `rotate = orient(x, z)` turns the part's own x and z axes onto two
+  directions; `euler(rotation(a) * rotation(b))` turns by `b`, then by `a`.
+- More about a part, all named:
+  - `stack = n`: n layers glued at each placement, one thickness apart
+    along the part's z. The parts list says how many make a stack.
+  - `mirror = true`: the part is cut mirrored left to right (x becomes
+    -x), and its text still reads the right way round. Make the left of a
+    pair by mirroring the right.
+  - `bend = [x0, x1, angle]`, or a list of them: a living hinge from x0 to
+    x1 along the part's x bends it by `angle` degrees in the assembled
+    view, folding the far end up towards its top face (down for a negative
+    angle). The hinge's middle layer keeps its length.
+  - `on = "name"`: the part is glued to that bent part, and moves with the
+    run of it under its centre.
+  - `slots = ["name", ...]`: where the named parts' material passes through
+    this part in the assembly, slots are cut through it the shape of their
+    cross-section, at any angle, `clearance = 0.1` wider. Draw tabs on one
+    part and let the parts they go into cut their own slots.
+- `place(at, rotate) { ... }` places the parts and hardware inside in the
+  assembled view, as part()'s `at` and `rotate` do; their own placements
+  are inside it. A library module wrapped in `place()` can be set anywhere.
+- `step(text) { ... }`: an assembly step. Parts and hardware inside are
+  added in it, in the order steps first run; `render()` returns the steps'
+  text as `steps` and each placed part's `step`. The 3D view shows the
+  model built up a step at a time.
+- `hardware(kind, from, to, size = 6, up, sides = 24, label)` lists
+  hardware the assembly needs, from one point to another: a dowel, a screw,
+  a magnet, paper. `size` is a diameter, or `[w, h]` for a flat section
+  whose `h` points along `up` (by default up, or along y for something
+  standing upright). `render()` returns it as `hardware`, and `kerf check`
+  lists it.
 - Shapes outside any part form one part named `part`.
 - `material(thickness, kerf, name) { ... }` sets those special variables for
   its children.
 - With `$layout = "pack"`, parts are grouped by material and thickness and
   repeated `qty` times. They are arranged in rows on sheets of `$sheet` and
   may be rotated 90° to fit. Parts larger than the sheet produce a warning.
+  A project's `kerf.json` can give `"sheet": [w, h]`, the laser's bed, for
+  every design in it that does not set `$sheet`.
+- With `$nest = true`, small parts are packed inside the holes of bigger
+  ones, as rings inside rings.
 
 See [Parts and sheets](docs/parts-and-sheets.md) for spacing, layout and
 export examples.
@@ -228,9 +276,11 @@ export examples.
 | `regular_polygon(n, r)`                                    | corner radius `r`                                                            |
 | `star(n, r, inner)`                                        |                                                                              |
 | `polygon(points, paths)`                                   | even-odd fill, `paths` lists point indexes per outline                       |
-| `path(d, fill = "evenodd")`                                | SVG path data; closed subpaths become shapes, open ones lines                |
+| `path(d, fill = "evenodd", close = false)`                 | SVG path data; closed subpaths become shapes, open ones lines unless `close` |
 | `text(text, size = 10, font, halign, valign, spacing = 1)` | `halign`: left, center, right; `valign`: baseline, top, center, bottom       |
+| `text(text, size, fit = width)`                            | no wider than `fit`: the size shrinks to fit, never above `size` if given    |
 | `line(from, to)`                                           | a line, not an area                                                          |
+| `line(from, to, width)`                                    | a strip `width` wide between the points, an area                             |
 | `polyline(points, closed = false)`                         |                                                                              |
 | `arc(r, start = 0, end = 90)`                              | arc line, angles in degrees                                                  |
 
@@ -253,15 +303,18 @@ playground, the command line and `kerfscript.wasm` have `Atkinson`
 
 ### Combining
 
-| Module                                         | Notes                                                                      |
-| ---------------------------------------------- | -------------------------------------------------------------------------- |
-| `union()` / `group()`                          | joins children                                                             |
-| `difference()`                                 | removes every later child's area from every layer of the first child       |
-| `intersection()`                               | keeps only the area common to all children, layers of the first child kept |
-| `hull()`                                       | convex hull; each named part inside gets its own hull                      |
-| `offset(r)` / `offset(delta, chamfer = false)` | grow (positive) or shrink areas; `r` rounds corners                        |
-| `stroke(width)`                                | turns lines into areas of that width, for cutting single line art          |
-| `outline()`                                    | turns areas into their outline lines                                       |
+| Module                                         | Notes                                                                       |
+| ---------------------------------------------- | --------------------------------------------------------------------------- |
+| `union()` / `group()`                          | joins children                                                              |
+| `difference()`                                 | removes every later child's area from every layer of the first child        |
+| `intersection()`                               | keeps the area common to all children; lines of any child are clipped to it |
+| `fill_holes(min_area)`                         | fills holes smaller than `min_area` mm², or all of them                     |
+| `close(r = 0.5)`                               | closes gaps and notches narrower than `2 r`, keeping the outline            |
+| `pattern(spacing, stagger = 0)`                | repeats its first child over the area of the others, clipped at the edge    |
+| `hull()`                                       | convex hull; each named part inside gets its own hull                       |
+| `offset(r)` / `offset(delta, chamfer = false)` | grow (positive) or shrink areas; `r` rounds corners                         |
+| `stroke(width)`                                | turns lines into areas of that width, for cutting single line art           |
+| `outline()`                                    | turns areas into their outline lines                                        |
 
 ### Joinery
 
@@ -304,6 +357,20 @@ arguments.
 | `norm(v)`                                      | Length of a vector                                                   |
 | `cross(a, b)`                                  | Cross product; a scalar for 2D vectors or a vector for 3D vectors    |
 
+### Paths and rotations
+
+A path is a list of `[x, y]` points.
+
+| Function                    | Result                                                               |
+| --------------------------- | -------------------------------------------------------------------- |
+| `path_length(points)`       | Length along the path                                                |
+| `point_at(points, s)`       | The point `s` along the path; past either end it carries on straight |
+| `heading_at(points, s)`     | The path's direction `s` along it, in degrees from +x                |
+| `path_points(d, tolerance)` | The points of SVG path data, a list of points for each subpath       |
+| `rotation(angles)`          | The 3 × 3 matrix of `[x, y, z]` degrees as `part()` turns; use `*`   |
+| `euler(matrix)`             | The `[x, y, z]` angles of a rotation matrix, for `rotate`            |
+| `orient(x, z = [0, 0, 1])`  | The angles that turn a part's own x and z axes onto two directions   |
+
 ### Lists and strings
 
 | Function                       | Result                                                                                       |
@@ -338,6 +405,8 @@ bounds. The same seed gives the same sequence.
 `text_width(text, size, font)` returns the advance width, including glyph
 spacing. `text_metrics(text, size, font)` returns
 `[advance, [[x0, y0], [x1, y1]], ascent, descent]`.
+
+With `fit = width` they measure the text at the size `text()` would fit it to.
 
 Both require the font to be available to the renderer, just like `text()`.
 

@@ -3,6 +3,7 @@
 import type { Arg, Assign, Expr, ListItem, Param, Program, Stmt } from './ast.js';
 import { argumentWork, bindArgs, FUNCTIONS, givenTwice } from './functions.js';
 import {
+  area,
   clipLines,
   difference,
   emptyShape,
@@ -11,6 +12,8 @@ import {
   hull,
   intersection,
   isEmpty,
+  bounds,
+  layerBounds,
   lineShape,
   merge,
   offset,
@@ -27,7 +30,14 @@ import {
   type Shape,
 } from './geometry.js';
 import { fingerCount, fingerHoles, fingerRect, livingHinge, tslot, type Edge } from './joinery.js';
-import type { Placement, Vec3 } from './assembly.js';
+import {
+  IDENTITY4,
+  multiply as mul4,
+  placementMatrix,
+  translation,
+  type Placement,
+  type Vec3,
+} from './assembly.js';
 import { KerfError, where, type Pos } from './lexer.js';
 import { parse } from './parser.js';
 import { signature } from './signatures.js';
@@ -54,6 +64,22 @@ export interface LayerDef {
   name: string;
   mode: 'cut' | 'line' | 'fill' | 'guide';
   color: string;
+  // Marks on the back face, made after turning the part over
+  side?: 'back';
+}
+
+// Hardware the assembly needs: dowels, screws, magnets, paper, as a
+// segment from `from` to `to` with a round (number) or [w, h] section
+export interface HardwareItem {
+  kind: string;
+  from: Vec3;
+  to: Vec3;
+  size: number | [number, number];
+  // The direction h of a [w, h] section points along
+  up: Vec3;
+  sides: number;
+  step: number;
+  label?: string;
 }
 
 export const DEFAULT_LAYERS: LayerDef[] = [
@@ -244,6 +270,8 @@ export interface EvalResult {
   layers: Map<string, LayerDef>;
   echoes: string[];
   warnings: string[];
+  hardware: HardwareItem[];
+  steps: string[];
 }
 
 export const STDLIB: Record<string, string> = LIBRARIES;
@@ -256,6 +284,11 @@ export class Evaluator {
   private pointCount = 0;
   private itemCount = 0;
   private copies = 0;
+  // The 3D placement place() blocks build up, and the current step
+  private frame: number[] = IDENTITY4;
+  private step = 0;
+  readonly stepNames: string[] = [];
+  readonly hardware: HardwareItem[] = [];
   readonly echoes: string[] = [];
   readonly warnings: string[] = [];
   readonly layers = new Map<string, LayerDef>(DEFAULT_LAYERS.map((l) => [l.name, l]));
@@ -291,6 +324,8 @@ export class Evaluator {
       layers: this.layers,
       echoes: this.echoes,
       warnings: this.warnings,
+      hardware: this.hardware,
+      steps: this.stepNames,
     };
   }
 
@@ -771,7 +806,10 @@ export class Evaluator {
     if (x.callee.kind === 'var') {
       const name = x.callee.name;
       const v = env.get(name);
-      if (!v.found) {
+      // A variable that does not hold a function never hides a function
+      // or built-in of the same name: calls look past it
+      const hidden = v.found && !isFn(v.value);
+      if (!v.found || (hidden && this.callable(name, env))) {
         const f = env.fn(name);
         if (f) return this.callFunction(f, this.evalArgs(x.args, env, x.pos), env, name);
         const special = this.specialFunction(name, x, env);
@@ -819,6 +857,10 @@ export class Evaluator {
     const f = this.expr(x.callee, env);
     if (!isFn(f)) throw new KerfError(`Can't call a ${typeName(f)}`, x.pos);
     return this.callFunction(f, this.evalArgs(x.args, env, x.pos), env, 'function');
+  }
+
+  private callable(name: string, env: Env): boolean {
+    return !!env.fn(name) || SPECIAL.includes(name) || !!own(FUNCTIONS, name);
   }
 
   private specialFunction(
@@ -1100,21 +1142,33 @@ export class Evaluator {
     // Laying out text takes a step for each character
     this.tick(a.at, shown.text.length);
     try {
-      return textMetrics(this.opts.fonts, shown.text, this.textOpts(a, env));
+      return textMetrics(this.opts.fonts, shown.text, this.textOpts(a, env, shown.text));
     } catch (e) {
       if (e instanceof KerfError) throw e;
       throw new KerfError((e as Error).message, a.at);
     }
   }
 
-  private textOpts(a: Args, env: Env) {
-    return {
+  private textOpts(a: Args, env: Env, shown?: string) {
+    const o = {
       size: this.num(this.arg(a, 'size', 1, 10), 'text', 'size'),
       font: toText(this.arg(a, 'font', 2, this.dyn(env, '$font') ?? '')),
       halign: toText(this.arg(a, 'halign', -1, 'left')),
       valign: toText(this.arg(a, 'valign', -1, 'baseline')),
       spacing: toNumber(this.arg(a, 'spacing', -1, 1)),
     };
+    // fit = width: no wider than that, and no bigger than size if given
+    const fit = this.arg(a, 'fit', -1);
+    if (fit !== undefined && shown !== undefined && this.opts.fonts) {
+      const w = this.num(fit, 'text', 'fit');
+      if (!(w > 0)) throw new Error('fit must be a width more than 0');
+      const one = textMetrics(this.opts.fonts, shown, { ...o, size: 1 }).advance;
+      if (one > 0) {
+        const given = this.arg(a, 'size', 1);
+        o.size = given === undefined ? w / one : Math.min(o.size, w / one);
+      }
+    }
+    return o;
   }
 
   private edges(v: Value): Edge[] {
@@ -1127,9 +1181,46 @@ export class Evaluator {
     throw new Error('edges must be one value or a list of 4: [bottom, right, top, left]');
   }
 
+  // The back-face twin of a layer, made on first use
+  private backLayer(name: string): string {
+    const back = `${name}-back`;
+    if (!this.layers.has(back)) {
+      const def = this.layers.get(name) ?? { name, mode: 'line' as const, color: '#00aa00' };
+      this.layers.set(back, { ...def, name: back, side: 'back' });
+    }
+    return back;
+  }
+
+  private bends(v: Value): { x0: number; x1: number; angle: number }[] {
+    if (v === undefined) return [];
+    const list = Array.isArray(v) && Array.isArray(v[0]) ? v : [v];
+    return list.map((b, i) => {
+      if (
+        !Array.isArray(b) ||
+        b.length !== 3 ||
+        !b.every((x) => typeof x === 'number' && Number.isFinite(x))
+      )
+        throw new Error(
+          `bend must be [x0, x1, angle] or a list of them, got ${show(b)}${list.length > 1 ? ` at ${i}` : ''}`,
+        );
+      const [x0, x1, angle] = b as number[];
+      if (!(x1 > x0)) throw new Error(`a bend's x1 must be more than its x0, got ${show(b)}`);
+      return { x0, x1, angle };
+    });
+  }
+
   private makeBuiltins(): Record<string, (c: BuiltinCtx) => Shape> {
     const tr = (c: BuiltinCtx, m: Matrix) => transform(c.children(), m);
     const layerTag = (name: string) => (c: BuiltinCtx) => retag(c.children(), name);
+    // engrave(side = "back"): marks for the part's other face
+    const sided = (name: string) => (c: BuiltinCtx) => {
+      const side = this.arg(c.args, 'side', 0, 'front');
+      if (side !== 'front' && side !== 'back')
+        throw new Error(`side must be "front" or "back", got ${show(side)}`);
+      // Text on the back reads the right way round on the back face
+      if (side === 'back') c.env.vars.set('$mirrored', !truthy(this.dyn(c.env, '$mirrored')));
+      return retag(c.children(), side === 'back' ? this.backLayer(name) : name);
+    };
     return {
       rect: (c) => {
         const [w, h] = this.vec2(this.arg(c.args, 'size', 0, 1), 'size');
@@ -1191,12 +1282,35 @@ export class Evaluator {
           throw new Error('path() needs SVG path data, like path("M0 0 L10 0 L5 8 Z")');
         const flat = flatten(parseSvgPath(d), 0.01);
         const fill = this.arg(c.args, 'fill', -1, 'evenodd') === 'nonzero' ? 'nonzero' : 'evenodd';
+        // close = true: every open subpath is closed back to its start
+        if (truthy(this.arg(c.args, 'close', -1, false)))
+          return regionShape(
+            union([...flat.closed, ...flat.open.filter((p) => p.length > 2)], fill),
+          );
         return merge([regionShape(union(flat.closed, fill)), lineShape(flat.open)]);
       },
       line: (c) => {
         const a = this.vec2(this.arg(c.args, 'from', 0, [0, 0]), 'from', false);
         const b = this.vec2(this.arg(c.args, 'to', 1, [10, 0]), 'to', false);
-        return lineShape([[a, b]]);
+        const width = this.arg(c.args, 'width', 2);
+        if (width === undefined) return lineShape([[a, b]]);
+        // With a width, an area: a strip between the points, square ends
+        const w = this.num(width, 'line', 'width');
+        if (!(w > 0)) throw new Error('width must be more than 0');
+        const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+        if (!l) return emptyShape();
+        const nx = (-(b[1] - a[1]) / l) * (w / 2),
+          ny = ((b[0] - a[0]) / l) * (w / 2);
+        return regionShape(
+          union([
+            [
+              [a[0] + nx, a[1] + ny],
+              [a[0] - nx, a[1] - ny],
+              [b[0] - nx, b[1] - ny],
+              [b[0] + nx, b[1] + ny],
+            ],
+          ]),
+        );
       },
       polyline: (c) => {
         const pts = this.points(this.arg(c.args, 'points', 0), 'points');
@@ -1231,7 +1345,21 @@ export class Evaluator {
             `the text is more than ${this.limits.maxTextLength} characters, the limit for one text()`,
           );
         this.tick(c.args.at, shown.text.length);
-        return regionShape(textRegions(this.opts.fonts, shown.text, this.textOpts(c.args, c.env)));
+        const glyphs = textRegions(
+          this.opts.fonts,
+          shown.text,
+          this.textOpts(c.args, c.env, shown.text),
+        );
+        // In a mirrored part the text is drawn mirrored, to read the right
+        // way round once the part is
+        // Flipped within its own width, so it stays where it was put
+        if (truthy(this.dyn(c.env, '$mirrored'))) {
+          let [lo, hi] = [Infinity, -Infinity];
+          for (const p of glyphs)
+            for (const [x] of p) [lo, hi] = [Math.min(lo, x), Math.max(hi, x)];
+          return regionShape(union(glyphs.map((p) => p.map(([x, y]): Pt => [lo + hi - x, y]))));
+        }
+        return regionShape(glyphs);
       },
       translate: (c) => {
         const [x, y] = this.vec2(this.arg(c.args, 'v', 0, [0, 0]), 'v', false);
@@ -1281,15 +1409,38 @@ export class Evaluator {
         }));
       },
       intersection: (c) => {
-        const [first, ...rest] = c.childList();
-        if (!first) return emptyShape();
-        let out = first;
-        for (const r of rest) {
-          const keep = union(flat([r], 'intersection').regions);
-          out = mapLayers(out, (l) => ({
-            regions: intersection(l.regions, keep),
-            lines: clipLines(l.lines, keep, 'inside'),
-          }));
+        const kids = c.childList();
+        if (!kids.length) return emptyShape();
+        // Children that only draw lines don't limit the area: their lines
+        // are clipped to the others, in whichever order they come
+        const area = (s: Shape) => [...s.layers.values()].some((l) => l.regions.length);
+        const keepOf = (skip: Shape) => {
+          let keep: Poly[] | undefined;
+          for (const r of kids) {
+            if (r === skip || !area(r)) continue;
+            const u = union(flat([r], 'intersection').regions);
+            keep = keep ? intersection(keep, u) : u;
+          }
+          return keep;
+        };
+        const first = kids.find(area) ?? kids[0];
+        const keep = keepOf(first);
+        let out = keep
+          ? mapLayers(first, (l) => ({
+              regions: intersection(l.regions, keep),
+              lines: clipLines(l.lines, keep, 'inside'),
+            }))
+          : first;
+        for (const r of kids) {
+          if (r === first) continue;
+          if (r.parts.length)
+            throw new Error('part() can only be the first child of intersection()');
+          const k = keepOf(r) ?? [];
+          const lines = new Map<string, Layer>();
+          for (const [name, l] of r.layers)
+            if (l.lines.length)
+              lines.set(name, { regions: [], lines: clipLines(l.lines, k, 'inside') });
+          if (lines.size) out = merge([out, { layers: lines, parts: [] }]);
         }
         return out;
       },
@@ -1327,6 +1478,99 @@ export class Evaluator {
           lines: l.lines,
         }));
       },
+      // Repeats the first child over the area of the others, `spacing`
+      // apart, every other row shifted by stagger of a step. Copies wholly
+      // inside are kept as they are, those across the edge are clipped.
+      pattern: (c) => {
+        const [dx, dy] = this.vec2(this.arg(c.args, 'spacing', 0, 10), 'spacing');
+        const stagger = this.num(this.arg(c.args, 'stagger', 1, 0), 'pattern', 'stagger');
+        if (!(dx > 0 && dy > 0)) throw new Error('spacing must be more than 0');
+        const [tile, ...rest] = c.childList();
+        if (!tile || !rest.length)
+          throw new Error(
+            'pattern() needs a tile and then the area to fill: pattern(10) { tile(); area(); }',
+          );
+        if (tile.parts.length) throw new Error('part() cannot be the tile of pattern()');
+        const keep = union(flat(rest, 'pattern').regions);
+        const tb = layerBounds(tile.layers);
+        const ab = bounds(keep);
+        if (!tb || !ab) return emptyShape();
+        const j0 = Math.floor((ab[1] - tb[3]) / dy),
+          j1 = Math.ceil((ab[3] - tb[1]) / dy);
+        const i0 = Math.floor((ab[0] - tb[2]) / dx) - 1,
+          i1 = Math.ceil((ab[2] - tb[0]) / dx) + 1;
+        const count = (j1 - j0 + 1) * (i1 - i0 + 1);
+        if (!(count <= this.limits.maxParts * 10))
+          throw new Error(
+            `the pattern would have ${count} copies, more than the limit of ${this.limits.maxParts * 10}`,
+          );
+        this.tick(c.args.at, count);
+        const inside = (x: number, y: number) => {
+          let w = 0;
+          for (const p of keep)
+            for (let i = 0, j = p.length - 1; i < p.length; j = i++) {
+              const [ax, ay] = p[j],
+                [bx, by] = p[i];
+              if (ay <= y) {
+                if (by > y && (bx - ax) * (y - ay) - (x - ax) * (by - ay) > 0) w++;
+              } else if (by <= y && (bx - ax) * (y - ay) - (x - ax) * (by - ay) < 0) w--;
+            }
+          return w !== 0;
+        };
+        const out = new Map<string, Layer>();
+        const add = (k: string, l: Layer) => {
+          const t = out.get(k) ?? { regions: [], lines: [] };
+          for (const p of l.regions) t.regions.push(p);
+          for (const p of l.lines) t.lines.push(p);
+          out.set(k, t);
+        };
+        for (let j = j0; j <= j1; j++)
+          for (let i = i0; i <= i1; i++) {
+            const ox = i * dx + (j % 2 ? stagger * dx : 0),
+              oy = j * dy;
+            const b = [tb[0] + ox, tb[1] + oy, tb[2] + ox, tb[3] + oy];
+            if (b[2] < ab[0] || b[0] > ab[2] || b[3] < ab[1] || b[1] > ab[3]) continue;
+            const corners = [
+              inside(b[0], b[1]),
+              inside(b[2], b[1]),
+              inside(b[2], b[3]),
+              inside(b[0], b[3]),
+            ];
+            const edge = keep.some((p) =>
+              p.some(([x, y]) => x > b[0] && x < b[2] && y > b[1] && y < b[3]),
+            );
+            const whole = corners.every(Boolean) && !edge;
+            const m: Matrix = [1, 0, 0, 1, ox, oy];
+            for (const [k, l] of transform({ layers: tile.layers, parts: [] }, m).layers)
+              add(
+                k,
+                whole
+                  ? l
+                  : {
+                      regions: intersection(l.regions, keep),
+                      lines: clipLines(l.lines, keep, 'inside'),
+                    },
+              );
+          }
+        return { layers: out, parts: [] };
+      },
+      // Fills holes smaller than min_area (all holes without it)
+      fill_holes: (c) => {
+        const min = this.arg(c.args, 'min_area', 0);
+        const limit = min === undefined ? Infinity : this.num(min, 'fill_holes', 'min_area');
+        return mapLayers(c.children(), (l) => ({
+          regions: union(l.regions).filter((p) => !(area(p) < 0 && -area(p) < limit)),
+          lines: l.lines,
+        }));
+      },
+      // Closes gaps and notches narrower than 2 r, keeping the outline
+      close: (c) => {
+        const r = this.num(this.arg(c.args, 'r', 0, 0.5), 'close', 'r');
+        return mapLayers(c.children(), (l) => ({
+          regions: offset(offset(l.regions, r, 'round'), -r, 'round'),
+          lines: l.lines,
+        }));
+      },
       stroke: (c) => {
         const w = this.num(this.arg(c.args, 'width', 0, 1), 'stroke', 'width');
         return mapLayers(c.children(), (l) => ({
@@ -1340,8 +1584,8 @@ export class Evaluator {
           lines: [...l.lines, ...union(l.regions).map((p) => [...p, p[0]])],
         })),
       cut: layerTag('cut'),
-      score: layerTag('score'),
-      engrave: layerTag('engrave'),
+      score: sided('score'),
+      engrave: sided('engrave'),
       guide: layerTag('guide'),
       layer: (c) => {
         const name = this.arg(c.args, 'name', 0);
@@ -1357,34 +1601,147 @@ export class Evaluator {
           if (!/^#[0-9a-fA-F]{6}$/.test(col)) throw new Error('color must look like "#00aa00"');
           this.layers.set(name, { name, mode: m, color: col });
         }
-        return retag(c.children(), name);
+        const side = this.arg(c.args, 'side', -1, 'front');
+        if (side !== 'front' && side !== 'back')
+          throw new Error(`side must be "front" or "back", got ${show(side)}`);
+        if (side === 'back' && this.layers.get(name)?.mode === 'cut')
+          throw new Error('a cut layer has no back: only marks go on the back face');
+        if (side === 'back') c.env.vars.set('$mirrored', !truthy(this.dyn(c.env, '$mirrored')));
+        return retag(c.children(), side === 'back' ? this.backLayer(name) : name);
       },
       part: (c) => {
         const name = toText(this.arg(c.args, 'name', 0, 'part'));
         const qty = Math.max(1, Math.floor(toNumber(this.arg(c.args, 'qty', 1, 1)) || 1));
-        this.copies += qty;
+        const stackArg = this.arg(c.args, 'stack', -1);
+        const stack = stackArg === undefined ? 1 : Math.floor(this.num(stackArg, 'part', 'stack'));
+        if (!(stack >= 1)) throw new Error('stack must be 1 or more');
+        this.copies += qty * stack;
         if (!(this.copies <= this.limits.maxParts))
           throw new Error(`more than ${this.limits.maxParts} part copies in total, the limit`);
         const at = this.arg(c.args, 'at', -1);
         const turn = this.arg(c.args, 'rotate', -1);
-        const placements =
-          at === undefined && turn === undefined ? undefined : this.placements(at, turn, qty);
-        const s = c.children();
+        const framed = this.frame !== IDENTITY4;
+        let placements =
+          at === undefined && turn === undefined && !framed
+            ? undefined
+            : this.placements(at, turn, qty);
+        const t = this.thickness(c.env);
+        if (placements && (framed || stack > 1))
+          placements = placements.flatMap((pl) => {
+            const m = mul4(this.frame, placementMatrix(pl));
+            return Array.from({ length: stack }, (_, k) => ({
+              ...pl,
+              matrix: mul4(m, translation(0, 0, k * t)),
+            }));
+          });
+        const mirrored = truthy(this.arg(c.args, 'mirror', -1, false));
+        if (mirrored) c.env.vars.set('$mirrored', true);
+        let s = c.children();
+        if (mirrored) s = transform(s, [-1, 0, 0, 1, 0, 0]);
+        const bends = this.bends(this.arg(c.args, 'bend', -1));
+        const on = this.arg(c.args, 'on', -1);
+        const slotsArg = this.arg(c.args, 'slots', -1);
+        const slots =
+          slotsArg === undefined
+            ? undefined
+            : (Array.isArray(slotsArg) ? slotsArg : [slotsArg]).map((v) => {
+                if (typeof v !== 'string') throw new Error('slots must be part names');
+                return v;
+              });
+        const clearance = this.num(this.arg(c.args, 'clearance', -1, 0.1), 'part', 'clearance');
         return {
           layers: new Map(),
           parts: [
             ...s.parts,
             {
               name,
-              qty,
+              qty: qty * stack,
               layers: s.layers,
-              thickness: this.thickness(c.env),
+              thickness: t,
               kerf: toNumber(this.dyn(c.env, '$kerf')) || 0,
               material: toText(this.dyn(c.env, '$material') ?? 'material'),
               ...(placements ? { placements } : {}),
+              ...(stack > 1 ? { stack } : {}),
+              ...(bends.length ? { bends } : {}),
+              ...(on !== undefined ? { on: toText(on) } : {}),
+              ...(slots ? { slots, clearance } : {}),
+              ...(this.step ? { step: this.step } : {}),
             },
           ],
         };
+      },
+      // Places the parts inside in 3D, as part()'s at and rotate do: their
+      // own placements are inside this one
+      place: (c) => {
+        const at = this.vec3(this.arg(c.args, 'at', 0, [0, 0, 0]), 'at');
+        const rotate = this.vec3(this.arg(c.args, 'rotate', 1, [0, 0, 0]), 'rotate');
+        const outer = this.frame;
+        this.frame = mul4(outer, placementMatrix({ at, rotate }));
+        try {
+          return c.children();
+        } finally {
+          this.frame = outer;
+        }
+      },
+      // An assembly step: the parts and hardware inside are added in it
+      step: (c) => {
+        const text = toText(this.arg(c.args, 'text', 0, ''));
+        let n = this.stepNames.indexOf(text) + 1;
+        if (!n) {
+          this.stepNames.push(text);
+          n = this.stepNames.length;
+        }
+        const outer = this.step;
+        this.step = n;
+        try {
+          return c.children();
+        } finally {
+          this.step = outer;
+        }
+      },
+      hardware: (c) => {
+        const kind = toText(this.arg(c.args, 'kind', 0, 'dowel'));
+        const from = this.vec3(this.arg(c.args, 'from', 1), 'from');
+        const to = this.vec3(this.arg(c.args, 'to', 2), 'to');
+        const sz = this.arg(c.args, 'size', 3, 6);
+        const size: number | [number, number] =
+          typeof sz === 'number' ? sz : this.vec2(sz, 'size', false);
+        const dir = [to[0] - from[0], to[1] - from[1], to[2] - from[2]];
+        const vertical = Math.abs(dir[2]) > 0.9 * Math.hypot(...dir);
+        const upArg = this.arg(c.args, 'up', -1);
+        const up =
+          upArg === undefined
+            ? ((vertical ? [0, 1, 0] : [0, 0, 1]) as Vec3)
+            : this.vec3(upArg, 'up');
+        const sides = Math.max(
+          3,
+          Math.floor(this.num(this.arg(c.args, 'sides', -1, 24), 'hardware', 'sides')),
+        );
+        const label = this.arg(c.args, 'label', -1);
+        const f = this.frame;
+        const pt = (p: Vec3): Vec3 => [
+          f[0] * p[0] + f[1] * p[1] + f[2] * p[2] + f[3],
+          f[4] * p[0] + f[5] * p[1] + f[6] * p[2] + f[7],
+          f[8] * p[0] + f[9] * p[1] + f[10] * p[2] + f[11],
+        ];
+        const vec = (p: Vec3): Vec3 => [
+          f[0] * p[0] + f[1] * p[1] + f[2] * p[2],
+          f[4] * p[0] + f[5] * p[1] + f[6] * p[2],
+          f[8] * p[0] + f[9] * p[1] + f[10] * p[2],
+        ];
+        if (this.hardware.length >= this.limits.maxParts)
+          throw new Error(`more than ${this.limits.maxParts} pieces of hardware, the limit`);
+        this.hardware.push({
+          kind,
+          from: pt(from),
+          to: pt(to),
+          size,
+          up: vec(up),
+          sides,
+          step: this.step,
+          ...(label !== undefined ? { label: toText(label) } : {}),
+        });
+        return c.children();
       },
       material: (c) => {
         const t = this.arg(c.args, 'thickness', 0);

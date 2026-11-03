@@ -1,5 +1,7 @@
-// A variable with the same name as a function hides it, also in calls
-// => error: "f" is a number, not a function (line 5, column 6)
+// A variable that does not hold a function does not hide a function of the
+// same name: calls look past it, from language version 0.3
+// => echo: 10, 3, 2
 function f(x) = 10;
 f = 3;
-echo(f(1));
+len = 7;
+echo(f(1), f, len([1, 2]));
