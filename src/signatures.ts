@@ -486,10 +486,13 @@ export const SIGNATURES: Signature[] = [
   {
     name: 'step',
     kind: 'module',
-    params: [p('text', 'What to do in this step', '""')],
+    params: [
+      p('text', 'What to do in this step', '""'),
+      p('substeps', 'Steps inside it become its sub-steps; false adds them to this one', 'true'),
+    ],
     children: true,
     section: 'Parts and sheets',
-    doc: 'An assembly step: the parts and hardware inside are added in it, in order',
+    doc: 'An assembly step: the parts and hardware inside are added in it, in order. A step inside a step is a sub-step, named "outer: inner"',
   },
   {
     name: 'hardware',

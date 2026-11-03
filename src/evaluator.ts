@@ -313,6 +313,8 @@ export class Evaluator {
   private frame: number[] = IDENTITY4;
   private step = 0;
   readonly stepNames: string[] = [];
+  // Inside step(substeps = false): inner steps add to it
+  private stepFolded = false;
   readonly hardware: HardwareItem[] = [];
   readonly echoes: string[] = [];
   readonly warnings: string[] = [];
@@ -1924,17 +1926,24 @@ export class Evaluator {
       // An assembly step: the parts and hardware inside are added in it
       step: (c) => {
         const text = toText(this.arg(c.args, 'text', 0, ''));
-        let n = this.stepNames.indexOf(text) + 1;
+        const substeps = truthy(this.arg(c.args, 'substeps', 1, true));
+        // Inside a step that takes in its inner steps, this is part of it
+        if (this.stepFolded) return c.children();
+        // A step inside a step is a sub-step, named after both
+        const outer = this.step;
+        const name = outer && text ? `${this.stepNames[outer - 1]}: ${text}` : text;
+        let n = this.stepNames.indexOf(name) + 1;
         if (!n) {
-          this.stepNames.push(text);
+          this.stepNames.push(name);
           n = this.stepNames.length;
         }
-        const outer = this.step;
         this.step = n;
+        this.stepFolded = !substeps;
         try {
           return c.children();
         } finally {
           this.step = outer;
+          this.stepFolded = false;
         }
       },
       hardware: (c) => {

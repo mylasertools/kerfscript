@@ -276,7 +276,8 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
 - `step(text) { ... }`: an assembly step. Parts and hardware inside are
   added in it, in the order steps first run; `render()` returns the steps'
   text as `steps` and each placed part's `step`. The 3D view shows the
-  model built up a step at a time.
+  model built up a step at a time. A step inside a step is a sub-step,
+  `"outer: inner"`; `step(text, substeps = false)` takes inner steps in.
 - `hardware(kind, from, to, size = 6, up, sides = 24, label)` lists
   hardware the assembly needs, from one point to another: a dowel, a screw,
   a magnet, paper. `size` is a diameter, or `[w, h]` for a flat section

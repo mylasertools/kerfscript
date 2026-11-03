@@ -546,7 +546,10 @@ then the part's own `at` and `rotate`, then for `stack = n` a move of k
 thicknesses along the part's z for its k-th layer. A part with `glue` is
 placed on its host's face instead, after every part has run. `step()`
 numbers steps from 1 in the order they first run; a part or hardware
-outside every step has step 0. Cases: `parts/*`.
+outside every step has step 0. A `step(text)` run inside another step is
+the step named `outer: text`, where `outer` is the enclosing step's name;
+inside `step(..., substeps = false)` an inner `step()` only runs its
+children, in the outer step. Cases: `parts/*`.
 
 ## Known differences
 

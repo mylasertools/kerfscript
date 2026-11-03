@@ -76,6 +76,8 @@ name=from:step:to` checks a design over every combination of settings.
 - A module or function defined with a built-in's name warns that it hides
   the built-in.
 - A stack glued under its host (`face = "bottom"`) grows down, away from it.
+- A `step()` inside a step is a sub-step ("Add the chair: Glue the seat");
+  `step(text, substeps = false)` takes inner steps into itself.
 - The collision check reports any overlap deeper than 0.1 mm, where it
   needed a cubic millimetre, and slots need a part to reach half way through,
   so a part dipping 0.13 mm into a floor is reported, not slotted.

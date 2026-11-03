@@ -178,6 +178,19 @@ test('steps number in the order they first run, and tag parts and hardware', () 
   assert.equal(r.hardware[0].step, 2);
 });
 
+test('a step inside a step is a sub-step, unless the outer one takes them in', () => {
+  const chair = () =>
+    `module chair(z) { step("Seat") part(str("seat ", z), at = [0, 0, z]) rect(10); step("Back") part(str("back ", z), at = [0, 20, z]) rect(10); }`;
+  const r = render(`${chair()}
+    step("Chair") chair(0);
+    step("Stool", substeps = false) chair(50);
+    chair(100);`);
+  assert.deepEqual(r.steps, ['Chair', 'Chair: Seat', 'Chair: Back', 'Stool', 'Seat', 'Back']);
+  assert.equal(part(r, 'seat 0').step, 2);
+  assert.equal(part(r, 'back 50').step, 4);
+  assert.equal(part(r, 'seat 100').step, 5);
+});
+
 test("back-face marks go into each sheet's back job, mirrored", () => {
   const r = render(
     'part("p") { rect([50, 20]); engrave(side = "back") translate([5, 5]) rect([10, 10]); }',

@@ -161,6 +161,12 @@ view in the playground and on the model pages builds the model a step at
 a time, each step's parts coming down into place. Parts outside any step
 are there from the start.
 
+A step inside a step is a sub-step, named after both: a chair module with
+its own `step("Glue the seat")`, placed inside `step("Add the chair")`,
+adds the step "Add the chair: Glue the seat". So a piece of furniture
+builds step by step on its own and inside a room. `step("Add the chair",
+substeps = false)` takes everything inside into the one step instead.
+
 `hardware(kind, from, to, size)` lists what else the model needs: a dowel
 from one point to another, a screw, a magnet, a strip of paper. `size` is
 a diameter, or `[w, h]` for a flat piece. `kerf check` lists the hardware
