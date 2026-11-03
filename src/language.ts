@@ -141,6 +141,10 @@ const SPECIAL: Record<string, { value?: string; doc: string }> = {
   $scale: { value: '1', doc: "The model's scale: `140cm` is 1400 mm divided by `$scale`" },
   $nest: { value: 'false', doc: 'Pack small parts into the holes of bigger ones' },
   $registration: { value: 'false', doc: 'Print-and-cut marks in three corners of every sheet' },
+  $label_parts: {
+    value: 'false',
+    doc: "Engrave each part's number on its back face, the same number as in the parts list and the steps",
+  },
   $min_width: {
     value: '1.5',
     doc: "Warn where a part's material is narrower than this; `0` turns it off",

@@ -246,10 +246,21 @@ function main(argv: string[]) {
     if (stats) printStats(result);
     for (const p of result.parts)
       process.stdout.write(
-        `${p.name}${p.qty > 1 ? ` x${p.qty}` : ''}: ${p.width} x ${p.height} mm, ${p.thickness} mm ${p.material}, cut ${p.cutLength} mm${p.stack ? `, glued in stacks of ${p.stack}` : ''}\n`,
+        `${p.label !== undefined ? `${p.label}. ` : ''}${p.name}${p.qty > 1 ? ` x${p.qty}` : ''}: ${p.width} x ${p.height} mm, ${p.thickness} mm ${p.material}, cut ${p.cutLength} mm${p.stack ? `, glued in stacks of ${p.stack}` : ''}\n`,
       );
     for (const h of hardwareList(result.hardware)) process.stdout.write(`${h}\n`);
-    result.steps.forEach((s, i) => process.stdout.write(`step ${i + 1}: ${s}\n`));
+    // With numbered parts, each step says which numbers it adds
+    const numberOf = new Map(result.parts.map((p) => [p.name, p.label]));
+    result.steps.forEach((s, i) => {
+      const nums = [
+        ...new Set(
+          result.assembly.filter((a) => a.step === i + 1).map((a) => numberOf.get(a.name)),
+        ),
+      ].filter((n): n is number => n !== undefined);
+      process.stdout.write(
+        `step ${i + 1}: ${s}${nums.length ? ` (part${nums.length > 1 ? 's' : ''} ${nums.sort((a, b) => a - b).join(', ')})` : ''}\n`,
+      );
+    });
     process.stdout.write(`${result.sheets.length} sheet${result.sheets.length === 1 ? '' : 's'}\n`);
     result.sheets.forEach((s, i) =>
       process.stdout.write(

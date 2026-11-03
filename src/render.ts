@@ -42,7 +42,7 @@ import {
 } from './geometry.js';
 import { KerfError } from './lexer.js';
 import { parse } from './parser.js';
-import { FontBook, type FontSource } from './text.js';
+import { FontBook, textRegions, type FontSource } from './text.js';
 import { checkSetting, toNumber, toText, type Value } from './values.js';
 
 export interface RenderOptions {
@@ -81,6 +81,8 @@ export interface PartInfo {
   stack?: number;
   // The part it is glued onto
   glued?: string;
+  // Its number with $label_parts, engraved on its back face
+  label?: number;
 }
 
 export interface Placed {
@@ -237,10 +239,38 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   const ready: { info: PartInfo; layers: Map<string, Layer> }[] = [];
   const minWidthSet = g('$min_width');
   const minWidth = minWidthSet === undefined ? 1.5 : toNumber(minWidthSet);
+  // $label_parts: each part's number engraved on its back face, the same
+  // number as in the parts list and the steps
+  const labelParts = g('$label_parts') === true;
+  let label = 0;
+  if (labelParts && !fonts)
+    warnings.push('$label_parts needs a font for the numbers. Pass fonts to render().');
+  if (labelParts && fonts) {
+    const engrave = defs.get('engrave');
+    if (!defs.has('engrave-back'))
+      defs.set('engrave-back', {
+        name: 'engrave-back',
+        mode: 'fill',
+        color: engrave?.color ?? '#000000',
+        side: 'back',
+      });
+  }
   for (const p of parts) {
     const material = union(
       [...p.layers].filter(([k]) => mode(k) === 'cut').flatMap(([, l]) => l.regions),
     );
+    let number: number | undefined;
+    if (labelParts && fonts && material.length) {
+      number = ++label;
+      const mark = partLabel(material, String(number), fonts, toText(g('$font') ?? ''));
+      if (mark.length) {
+        const back = p.layers.get('engrave-back') ?? { regions: [], lines: [] };
+        p.layers = new Map(p.layers).set('engrave-back', {
+          regions: [...back.regions, ...mark],
+          lines: back.lines,
+        });
+      } else warnings.push(`Part "${p.name}" is too small to take its number ${number}.`);
+    }
     // Material narrower than $min_width breaks or burns away: what an
     // opening by that width removes, in pieces bigger than a corner's tip
     if (minWidth > 0 && material.length) {
@@ -379,6 +409,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       material: p.material,
       ...(p.stack && { stack: p.stack }),
       ...(p.glue && { glued: p.glue.host }),
+      ...(number !== undefined && { label: number }),
     };
     if (analysis)
       analysis.parts.push({
@@ -1016,6 +1047,40 @@ function glueOn(parts: PartShape[], warnings: string[]) {
     done.add(p);
   };
   for (const p of parts) visit(p, []);
+}
+
+// A part's number where it has the most room, its glyphs turned so they
+// read when the part is turned over
+function partLabel(material: Poly2[], text: string, fonts: FontBook, font: string): Poly2[] {
+  // The largest circle inside: shrink until one more step leaves nothing
+  let lo = 0,
+    hi = 50;
+  for (let k = 0; k < 14; k++) {
+    const r = (lo + hi) / 2;
+    if (offset(material, -r, 'round').length) lo = r;
+    else hi = r;
+  }
+  if (lo < 1) return [];
+  const core = offset(material, -lo * 0.98, 'round');
+  const b = layerBounds(new Map([['cut', { regions: core, lines: [] }]]));
+  if (!b) return [];
+  // The middle of what is left, or for a ring round a hole a point on it
+  let [cx, cy] = [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2];
+  const inside = (x: number, y: number) =>
+    core.reduce((n, r) => n + (inPoly(r, x, y) ? (area(r) > 0 ? 1 : -1) : 0), 0) > 0;
+  if (!inside(cx, cy)) [cx, cy] = core.reduce((a, r) => (area(r) > area(a) ? r : a))[0];
+  const size = Math.min(6, Math.max(2, lo * 0.9));
+  const glyphs = textRegions(fonts, text, {
+    size,
+    font,
+    halign: 'center',
+    valign: 'center',
+    spacing: 1,
+  });
+  // Too wide for the room: smaller
+  const g = layerBounds(new Map([['t', { regions: glyphs, lines: [] }]]));
+  const k = g ? Math.min(1, (1.6 * lo) / Math.max(g[2] - g[0], 1e-9)) : 1;
+  return glyphs.map((r) => r.map(([x, y]): [number, number] => [cx - x * k, cy + y * k]).reverse());
 }
 
 function inPoly(p: [number, number][], x: number, y: number): boolean {

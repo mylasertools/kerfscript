@@ -174,22 +174,23 @@ module hang_hole(d = 5) {
 
 ## Special variables
 
-| Name              | Default       | Meaning                                                                    |
-| ----------------- | ------------- | -------------------------------------------------------------------------- |
-| `$thickness`      | `3`           | material thickness, used by joinery and stored on parts                    |
-| `$kerf`           | `0`           | beam width; cut outlines are offset by half of it                          |
-| `$material`       | `"material"`  | material name; parts are packed per material and thickness                 |
-| `$sheet`          | `[600, 400]`  | sheet size for packing                                                     |
-| `$gap`            | `3`           | space between packed parts and around the sheet edge                       |
-| `$layout`         | `"pack"`      | `"pack"` packs parts onto sheets, `"none"` keeps your placement            |
-| `$fn` `$fa` `$fs` | `0` `2` `0.2` | curve resolution: fixed segment count, or max angle and max segment length |
-| `$font`           |               | default font name for `text()`                                             |
-| `$mirrored`       | `false`       | set inside a mirrored part and on the back face: `text()` reads right      |
-| `$scale`          | `1`           | the model's scale: `140cm` is 1400 mm divided by `$scale`                  |
-| `$nest`           | `false`       | pack small parts into the holes of bigger ones                             |
-| `$registration`   | `false`       | print-and-cut marks in three corners of every sheet                        |
-| `$min_width`      | `1.5`         | warn where a part's material is narrower than this; `0` turns it off       |
-| `$bounds`         |               | set by `measure()` for the children after the one it measures              |
+| Name              | Default       | Meaning                                                                     |
+| ----------------- | ------------- | --------------------------------------------------------------------------- |
+| `$thickness`      | `3`           | material thickness, used by joinery and stored on parts                     |
+| `$kerf`           | `0`           | beam width; cut outlines are offset by half of it                           |
+| `$material`       | `"material"`  | material name; parts are packed per material and thickness                  |
+| `$sheet`          | `[600, 400]`  | sheet size for packing                                                      |
+| `$gap`            | `3`           | space between packed parts and around the sheet edge                        |
+| `$layout`         | `"pack"`      | `"pack"` packs parts onto sheets, `"none"` keeps your placement             |
+| `$fn` `$fa` `$fs` | `0` `2` `0.2` | curve resolution: fixed segment count, or max angle and max segment length  |
+| `$font`           |               | default font name for `text()`                                              |
+| `$mirrored`       | `false`       | set inside a mirrored part and on the back face: `text()` reads right       |
+| `$scale`          | `1`           | the model's scale: `140cm` is 1400 mm divided by `$scale`                   |
+| `$nest`           | `false`       | pack small parts into the holes of bigger ones                              |
+| `$registration`   | `false`       | print-and-cut marks in three corners of every sheet                         |
+| `$label_parts`    | `false`       | engrave each part's number on its back face, as in the parts list and steps |
+| `$min_width`      | `1.5`         | warn where a part's material is narrower than this; `0` turns it off        |
+| `$bounds`         |               | set by `measure()` for the children after the one it measures               |
 
 ## Layers
 

@@ -154,6 +154,16 @@ part("cover", bend = [[100, 100 + bend_length(10, 90), 90], [130, 130 + bend_len
 
 The collision check takes each flat run of a bent part on its own.
 
+### Numbered parts
+
+`$label_parts = true;` numbers the parts 1, 2, 3 in the order they are
+made and engraves each number small on the part's back face, where it has
+the most room, so a buyer can tell alike pieces apart once they are out of
+the sheet. The numbers come in the back job (`design-back.svg`), and
+`kerf check` puts them in the parts list and after each step: `step 2:
+Glue the lock on the front (parts 6, 7, 8)`. JavaScript gets each part's
+`label`. A part with no room for its number warns.
+
 ### Steps and hardware
 
 `step("Glue the sides to the bottom") { ... }` makes an assembly step of

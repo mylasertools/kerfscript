@@ -489,3 +489,38 @@ test("kerf diff lists what changed by part and layer, in the part's coordinates"
   assert.equal(hole.area, 16);
   assert.deepEqual(hole.at, [2, 2, 6, 6]);
 });
+
+test('$label_parts numbers each part on its back face, inside its material', () => {
+  const r = render(
+    '$label_parts = true;\npart("a") rect([40, 20]);\npart("b") difference() { rect(30); translate([5, 5]) rect(20); }\npart("tiny") rect(1.5);',
+    font,
+  );
+  assert.deepEqual(
+    r.parts.map((p) => [p.name, p.label]),
+    [
+      ['a', 1],
+      ['b', 2],
+      ['tiny', 3],
+    ],
+  );
+  assert.ok(r.warnings.some((w) => /"tiny" is too small to take its number 3/.test(w)));
+  const back = r.sheets[0].back;
+  assert.ok(back && back.paths.some((p) => p.name === 'engrave-back'));
+  // The frame's number sits on its 5 mm rim, not in the hole
+  const items = r.sheets[0].items.find((i) => i.part === 'b');
+  const marks = items.layers.get('engrave-back').regions.flat();
+  const xs = marks.map((q) => q[0]),
+    ys = marks.map((q) => q[1]);
+  const [x0, y0] = [Math.min(...xs), Math.min(...ys)];
+  const [x1, y1] = [Math.max(...xs), Math.max(...ys)];
+  const box = layerBox(items.layers.get('cut'));
+  const inHole = x0 > box[0] + 5 && x1 < box[2] - 5 && y0 > box[1] + 5 && y1 < box[3] - 5;
+  assert.ok(!inHole, 'not in the hole');
+});
+
+function layerBox(l) {
+  const pts = [...l.regions, ...l.lines].flat();
+  const xs = pts.map((q) => q[0]),
+    ys = pts.map((q) => q[1]);
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+}
