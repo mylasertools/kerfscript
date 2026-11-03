@@ -391,3 +391,13 @@ test('$min_width = 0 turns the narrow-material warning off', () => {
   assert.deepEqual(render('$min_width = 0;\n' + bar).warnings, []);
   assert.deepEqual(render('$min_width = 0.8;\n' + bar).warnings, []);
 });
+
+test('a part that only dips into another cuts no slot, and collides', () => {
+  const r = render(
+    'part("floor", at = [0, 0, 0], slots = "*") rect([60, 40]);\n' +
+      'part("arm", at = [10, 20, 2.87], rotate = [90, 0, 0]) rect([30, 10]);\n' +
+      'part("leg", at = [10, 30, -3], rotate = [90, 0, 0]) rect([30, 10]);',
+  );
+  assert.equal(r.parts.find((p) => p.name === 'floor').cutLength, 266);
+  assert.equal(r.warnings.filter((w) => /"floor" and "arm" collide/.test(w)).length, 1);
+});

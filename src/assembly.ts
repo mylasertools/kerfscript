@@ -267,13 +267,40 @@ function crossing(
   const tilt = dot(nB, side);
   const oA = origin(A.matrix);
   const bLevel = dot(nB, origin(B.matrix));
-  const depths = steps(0, A.thickness, eps, pitch);
+  // Only through the depth of A that B reaches, so a shallow intrusion
+  // is sampled as finely as a deep one
+  let lo = Infinity,
+    hi = -Infinity;
+  for (const ring of B.outline)
+    for (const [x, y] of ring)
+      for (const w of [0, B.thickness]) {
+        const p = apply(B.matrix, x, y, w);
+        const d = dot(nA, [p[0] - oA[0], p[1] - oA[1], p[2] - oA[2]]);
+        if (d < lo) lo = d;
+        if (d > hi) hi = d;
+      }
+  const depths = steps(Math.max(0, lo), Math.min(A.thickness, hi), eps, pitch);
+  // And only across the part of B's slab that A's outline reaches
+  let aLo = Infinity,
+    aHi = -Infinity;
+  for (const ring of A.outline)
+    for (const [x, y] of ring) {
+      const p = apply(A.matrix, x, y, 0);
+      const d = dot(side, [p[0] - oA[0], p[1] - oA[1], p[2] - oA[2]]);
+      if (d < aLo) aLo = d;
+      if (d > aHi) aHi = d;
+    }
   let total = 0;
   for (const depth of depths.at) {
     const base = add(oA, nA, depth);
     const b0 = (bLevel - dot(nB, base)) / tilt;
     const b1 = (bLevel + B.thickness - dot(nB, base)) / tilt;
-    const alongs = steps(Math.min(b0, b1), Math.max(b0, b1), eps, pitch);
+    const alongs = steps(
+      Math.max(aLo, Math.min(b0, b1)),
+      Math.min(aHi, Math.max(b0, b1)),
+      eps,
+      pitch,
+    );
     for (const along of alongs.at) {
       const at = add(base, side, along);
       const [fromA, dirA] = localLine(invA, at, line);
@@ -340,7 +367,7 @@ export function collisions(
   maxPairs = Infinity,
   eps = 0.05,
   pitch = 0.25,
-  volume = 1,
+  volume = 0.1,
 ): { found: [AssemblyPart, AssemblyPart][]; complete: boolean } {
   const boxes = parts.map(worldBox);
   const inverses = parts.map((p) => invertRigid(p.matrix));

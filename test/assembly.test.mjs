@@ -70,9 +70,21 @@ test('a small tab on a big part is checked along its whole edge', () => {
   for (const dx of [-1, -0.5, 0.5, 1]) assert.equal(clash(lantern(dx)).length, 1, `moved ${dx} mm`);
 });
 
-test('a nick smaller than a cubic millimetre is not a collision', () => {
-  assert.deepEqual(clash(lantern(0, 'translate([10, 2.7]) rect([0.3, 0.3]);')), []);
+test('an overlap deeper than 0.1 mm collides, however small; a touch does not', () => {
+  assert.deepEqual(clash(lantern(0, 'translate([10, 2.92]) rect([0.3, 0.08]);')), []);
+  assert.equal(clash(lantern(0, 'translate([10, 2.7]) rect([0.3, 0.3]);')).length, 1);
   assert.equal(clash(lantern(0, 'translate([10, 2.5]) rect([2, 0.5]);')).length, 1);
+});
+
+test('a part dipping 0.13 mm into another collides, whichever comes first', () => {
+  const floor = 'part("floor", at = [0, 0, 0]) rect([60, 40]);';
+  const arm = (d) => `part("arm", at = [10, 20, ${3 - d}], rotate = [90, 0, 0]) rect([30, 10]);`;
+  for (const d of [0.13, 0.2]) {
+    assert.equal(clash(render(floor + arm(d))).length, 1, `${d} mm`);
+    assert.equal(clash(render(arm(d) + floor)).length, 1, `${d} mm, arm first`);
+  }
+  assert.deepEqual(clash(render(floor + arm(0.08))), []);
+  assert.deepEqual(clash(render(floor + arm(0))), []);
 });
 
 test('stacked parallel parts collide only when they share depth', () => {
