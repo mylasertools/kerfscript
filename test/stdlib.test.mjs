@@ -387,7 +387,19 @@ test('ring_stack refuses a hole that leaves its core plates too thin', () => {
     () => render('use <kerf/rings>\n$thickness = 3;\nring_stack([30, 40, 30], 5.5);'),
     /make it at least 7.1 mm/,
   );
-  assert.ok(render('use <kerf/rings>\n$thickness = 3;\nring_stack([30, 40, 30], 7.1);').parts.length);
+  assert.ok(
+    render('use <kerf/rings>\n$thickness = 3;\nring_stack([30, 40, 30], 7.1, feet = false);').parts
+      .length,
+  );
+  // The feet need room clear of the other plate's slot in the base
+  assert.throws(
+    () => render('use <kerf/rings>\n$thickness = 3;\nring_stack([30, 40, 30], 10);'),
+    /no room for the core's feet .* make it at least 11.9 mm/,
+  );
+  const base = render(
+    'use <kerf/rings>\n$thickness = 3;\nring_stack([60, 70, 60], 23);\npart("base", at = [-40, -40, -3], slots = ["ring core A", "ring core B"]) rect([80, 80]);',
+  );
+  assert.deepEqual(base.warnings, []);
 });
 
 test('ring_stack makes one part for each size of ring, and a base can slot its feet', () => {

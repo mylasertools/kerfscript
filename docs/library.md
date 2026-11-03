@@ -512,7 +512,10 @@ part("base", at = [0, 0, -$thickness], slots = ["vase core A", "vase core B"]) c
 Rings with outsides `diameters`, bottom up, on z = 0 and the z axis, all
 with a round `hole`; or `count` alike rings of one diameter. The core
 plates, `name core A` and `name core B`, are half-lapped, with two tabs
-each below z = 0 for a base: give the base `slots` naming them.
+each below z = 0 for a base: give the base `slots` naming them. The plates
+keep `$min_width` beside their halving slot and the feet keep it between
+their slots in the base, so a hole too small for either stops with the
+smallest hole that works (about 7 mm, and 12 mm with feet, in 3 mm ply).
 
 ### `ring_core_width(hole, clearance = 0.1)`
 

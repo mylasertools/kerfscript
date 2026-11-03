@@ -33,9 +33,17 @@ module ring_stack(diameters, hole, name = "ring", count = undef, feet = true, cl
       circle(d = d);
       circle(d = hole + clearance);
     }
+  // The feet keep $min_width of base between their slots and the other
+  // plate's, narrower than 6 mm when the plates are small
+  inner = t / 2 + clearance + m;
+  fw = min(6, w / 2 - inner - 0.5);
+  assert(!feet || fw >= 2,
+    str("A hole of ", hole, " mm leaves no room for the core's feet in ", t, " mm material; make it at least ",
+      ceil(sqrt(pow(2 * (inner + 2.5) + 2 * clearance, 2) + pow(t + clearance, 2)) * 10) / 10, " mm or use feet = false"));
+  fx = max(w / 4, inner + fw / 2);
   module plate() union() {
     translate([-w / 2, 0]) rect([w, h]);
-    if (feet) for (s = [-1, 1]) translate([s * w / 4 - 3, -t]) rect([6, t + 0.01]);
+    if (feet) for (s = [-1, 1]) translate([s * fx - fw / 2, -t]) rect([fw, t + 0.01]);
   }
   part(str(name, " core A"), at = [0, t / 2, 0], rotate = [90, 0, 0]) difference() {
     plate();
