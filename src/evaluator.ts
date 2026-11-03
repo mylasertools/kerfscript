@@ -64,6 +64,9 @@ import {
   type Value,
 } from './values.js';
 
+// The most sides a piece of round hardware has in the 3D view
+export const MAX_HARDWARE_SIDES = 128;
+
 export interface LayerDef {
   name: string;
   mode: 'cut' | 'line' | 'fill' | 'guide';
@@ -442,6 +445,18 @@ export class Evaluator {
     };
     walk(env, 0);
     const vars = [...seen].sort(([a], [b]) => (a < b ? -1 : 1));
+    // A function's text is only its parameters, so two different ones
+    // would look alike: don't reuse when any special variable holds one
+    const visited = new Set<object>();
+    const stack: Value[] = vars.map(([, v]) => v);
+    while (stack.length) {
+      const v = stack.pop();
+      if (typeof v !== 'object' || v === null || visited.has(v)) continue;
+      visited.add(v);
+      if (isFn(v)) return '';
+      if (Array.isArray(v)) for (const x of v) stack.push(x);
+      else if (isRec(v)) for (const x of v.fields.values()) stack.push(x);
+    }
     const text = write(vars as unknown as Value, 20000, true);
     // Too much to compare cheaply: don't reuse
     if (!text.whole) return '';
@@ -1896,6 +1911,11 @@ export class Evaluator {
           bleed !== undefined ||
           !known
         ) {
+          // Setting it again would make the back's marks front ones
+          if (known?.side === 'back')
+            throw new Error(
+              `the layer "${name}" is the back of layer "${name.slice(0, -5)}"; set its mode and colour on that layer, or give this one another name`,
+            );
           const m = (mode ?? known?.mode ?? 'line') as LayerDef['mode'];
           if (!['cut', 'line', 'fill', 'guide'].includes(m))
             throw new Error('mode must be "cut", "line", "fill" or "guide"');
@@ -2053,10 +2073,15 @@ export class Evaluator {
           upArg === undefined
             ? ((vertical ? [0, 1, 0] : [0, 0, 1]) as Vec3)
             : this.vec3(upArg, 'up');
-        const sides = Math.max(
-          3,
-          Math.floor(this.num(this.arg(c.args, 'sides', -1, 24), 'hardware', 'sides')),
-        );
+        const sides = Math.floor(this.num(this.arg(c.args, 'sides', -1, 24), 'hardware', 'sides'));
+        // The 3D view builds every side, so they count as points of work
+        if (!(sides >= 3 && sides <= MAX_HARDWARE_SIDES))
+          throw new Error(`sides must be from 3 to ${MAX_HARDWARE_SIDES}, got ${show(sides)}`);
+        this.pointCount += sides * 2;
+        if (this.pointCount > this.limits.maxPoints * 10)
+          throw new Error(
+            `making the shapes and hardware took more than ${this.limits.maxPoints * 10} points of work, the limit`,
+          );
         const label = this.arg(c.args, 'label', -1);
         const f = this.frame;
         const pt = (p: Vec3): Vec3 => [

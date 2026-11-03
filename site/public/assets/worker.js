@@ -38,10 +38,17 @@ self.onmessage = async (event) => {
       ok: true,
       ms: performance.now() - started,
       result: {
-        sheets: result.sheets.map(({ width, height, material, thickness, items, svg, dxf }) =>
-          result.sheets.length > 1
-            ? { width, height, material, thickness, items, svg, dxf }
-            : { width, height, material, thickness, items },
+        sheets: result.sheets.map(
+          ({ width, height, material, thickness, items, svg, dxf, back }) => ({
+            width,
+            height,
+            material,
+            thickness,
+            items,
+            ...(result.sheets.length > 1 && { svg, dxf }),
+            // The marks for the back faces, a job of their own
+            ...(back && { back: { svg: back.svg, dxf: back.dxf } }),
+          }),
         ),
         layers: result.layers,
         parts: result.parts,

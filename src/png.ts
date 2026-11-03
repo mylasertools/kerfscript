@@ -18,12 +18,12 @@ const rgb = (hex: string): RGB => {
 };
 
 class Canvas {
-  readonly data: Float32Array;
+  readonly data: Uint8ClampedArray;
   constructor(
     readonly w: number,
     readonly h: number,
   ) {
-    this.data = new Float32Array(w * h * 3).fill(255);
+    this.data = new Uint8ClampedArray(w * h * 3).fill(255);
   }
   blend(i: number, c: RGB, a: number) {
     const d = this.data;
@@ -118,8 +118,7 @@ function encode(cv: Canvas): Uint8Array {
   const raw = Buffer.alloc((cv.w * 3 + 1) * cv.h);
   for (let y = 0; y < cv.h; y++) {
     raw[y * (cv.w * 3 + 1)] = 0;
-    for (let x = 0; x < cv.w * 3; x++)
-      raw[y * (cv.w * 3 + 1) + 1 + x] = Math.round(cv.data[y * cv.w * 3 + x]);
+    raw.set(cv.data.subarray(y * cv.w * 3, (y + 1) * cv.w * 3), y * (cv.w * 3 + 1) + 1);
   }
   const chunk = (type: string, body: Uint8Array) => {
     const head = Buffer.alloc(8);
@@ -142,11 +141,26 @@ function encode(cv: Canvas): Uint8Array {
   ]);
 }
 
-/** A sheet as a PNG `width` pixels wide: fills in their layer colours,
+/** The most pixels a picture of a sheet has, and on each side */
+export const MAX_PIXELS = 16_000_000;
+export const MAX_SIDE = 16_384;
+
+/** A sheet as a PNG `width` pixels wide (narrower when that would pass
+ * MAX_PIXELS or MAX_SIDE): fills in their layer colours,
  * then line and cut layers on top. `side` "back" draws the back job. */
 export function sheetPng(sheet: Sheet, layers: LayerDef[], width = 1200): Uint8Array {
-  const k = width / Math.max(sheet.width, 1e-9);
-  const cv = new Canvas(Math.max(1, Math.round(width)), Math.max(1, Math.round(sheet.height * k)));
+  const sw = Math.max(sheet.width, 1e-9),
+    sh = Math.max(sheet.height, 0);
+  let k = Math.max(1, Math.round(width)) / sw;
+  // A long thin sheet would take a tall picture: keep it to MAX_PIXELS,
+  // and to MAX_SIDE pixels each way, drawing it smaller
+  k = Math.min(
+    k,
+    Math.sqrt(MAX_PIXELS / Math.max(sw * sh, 1e-9)),
+    MAX_SIDE / sw,
+    MAX_SIDE / Math.max(sh, 1e-9),
+  );
+  const cv = new Canvas(Math.max(1, Math.round(sw * k)), Math.max(1, Math.round(sh * k)));
   const scale = (p: Poly): Poly => p.map(([x, y]) => [x * k, y * k]);
   const defs = new Map(layers.map((l) => [l.name, l]));
   // Fills first, in the files' order; then lines; then cuts

@@ -127,6 +127,18 @@ name=from:step:to` checks a design over every combination of settings.
   (`HARDWARE_KINDS`), which adds `steel`, `felt`, `wire` and `led`.
 - A setting passed to `render()` (or `-D`, `--sweep`) that the program never
   assigns warns, with the nearest name.
+- `hardware(sides = ...)` takes 3 to 128 sides, counted as work toward the
+  point limit, and the 3D view never builds more. `kerf render -o x.png`
+  keeps a picture to 16 million pixels, 16384 a side, drawing a long thin
+  sheet smaller. Redefining a layer that is already another layer's back
+  (`layer("score-back", ...)` after `layer("score", side = "back")`) is an
+  error rather than quietly moving its marks to the front.
+- The playground's downloads include the back-face jobs: a sheet with back
+  marks lists back SVG and DXF files, and one such sheet downloads as a ZIP
+  of its front and back.
+- `kerf verify`: a stability claim over several loads needs its retention
+  links to join them into one assembly; loads held to separate roots are
+  unverified rather than standing together.
 
 New libraries:
 

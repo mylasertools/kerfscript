@@ -215,3 +215,51 @@ test('settings from outside the program are values a program could have', () => 
     '[1, "a", true]',
   ]);
 });
+
+test('the children cache tells apart special variables holding different functions', () => {
+  const r = render(
+    'module twice() { $f = function(x) x; children(); translate([40, 0]) { $f = function(x) x * 2; children(); } }\ntwice() square($f(10));',
+  );
+  // A 10 mm square, then a 20 mm one
+  const sizes = layers(r)[0]
+    .get('cut')
+    .regions.map((p) =>
+      Math.round(Math.max(...p.map((q) => q[0])) - Math.min(...p.map((q) => q[0]))),
+    );
+  assert.deepEqual(
+    sizes.sort((a, b) => a - b),
+    [10, 20],
+  );
+});
+
+test('writing a record is bounded however deeply records nest', () => {
+  // Each level holds the one below twice: 2^40 fields when written out
+  let src = 'r0 = {v = 1};\n';
+  for (let i = 1; i <= 40; i++) src += `r${i} = {a = r${i - 1}, b = r${i - 1}};\n`;
+  src += 'echo(str(r40));';
+  const started = Date.now();
+  assert.throws(() => render(src), /long|limit/i);
+  assert.ok(Date.now() - started < 2000);
+  const short = render('r = {a = {b = [1, "x"]}, c = 2};\necho(r);');
+  assert.deepEqual(short.echoes, ['{a = {b = [1, "x"]}, c = 2}']);
+});
+
+test('a layer that is already the back of another cannot be redefined as a front layer', () => {
+  assert.throws(
+    () =>
+      render(
+        'layer("score", side = "back") square(3);\nlayer("score-back", "line", "#0000ff") square(5);\nsquare(20);',
+      ),
+    /is the back of layer "score"/,
+  );
+});
+
+test('hardware sides are bounded', () => {
+  assert.throws(
+    () =>
+      render(
+        '$thickness = 3;\npart("p") square(10);\nhardware("dowel", [0, 0, 0], [0, 0, 10], 6, sides = 1e9);',
+      ),
+    /sides must be from 3 to 128/,
+  );
+});

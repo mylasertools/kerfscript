@@ -120,10 +120,7 @@ function scalar(v: Value): string {
   if (typeof v === 'number') return fmt(v);
   if (isRange(v)) return `[${fmt(v.start)}:${fmt(v.step)}:${fmt(v.end)}]`;
   if (isFn(v)) return `function(${v.params.map((p) => p.name).join(', ')})`;
-  if (isRec(v))
-    return v.fields.size
-      ? `{${[...v.fields].map(([k, x]) => `${k} = ${write(x, 1000, true).text}`).join(', ')}}`
-      : '{}';
+  if (isRec(v)) return '{}';
   return String(v);
 }
 
@@ -139,23 +136,34 @@ export function write(v: Value, max: number, quote = false): { text: string; who
     out.push(s);
     n += s.length;
   };
-  const open: [Value[], number][] = [];
+  // Lists and records being written, each with its items, the next one's
+  // index and, for a record, the field names
+  const open: { items: Value[]; i: number; keys?: string[]; close: string }[] = [];
   let next: Value = v;
   for (;;) {
     if (Array.isArray(next)) {
       put('[');
-      open.push([next, 0]);
+      open.push({ items: next, i: 0, close: ']' });
+    } else if (isRec(next) && next.fields.size) {
+      put('{');
+      open.push({
+        items: [...next.fields.values()],
+        keys: [...next.fields.keys()],
+        i: 0,
+        close: '}',
+      });
     } else put(scalar(next));
     let more = false;
-    while (open.length && !more) {
+    while (open.length && !more && n <= max) {
       const top = open[open.length - 1];
-      if (top[1] < top[0].length) {
-        if (top[1]) put(', ');
-        next = top[0][top[1]++];
+      if (top.i < top.items.length) {
+        if (top.i) put(', ');
+        if (top.keys) put(`${top.keys[top.i]} = `);
+        next = top.items[top.i++];
         more = true;
       } else {
         open.pop();
-        put(']');
+        put(top.close);
       }
     }
     if (!more || n > max) break;

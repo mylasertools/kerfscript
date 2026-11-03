@@ -121,6 +121,9 @@ function markObjects(part) {
   return out;
 }
 
+// However a result came to be, never build more sides than a render allows
+const sides = (n) => Math.min(128, Math.max(3, Math.floor(n) || 24));
+
 function hardwareObject(h) {
   const a = new Vector3(...h.from);
   const b = new Vector3(...h.to);
@@ -130,7 +133,7 @@ function hardwareObject(h) {
   const color = HARDWARE_COLORS[h.kind] ?? look?.color ?? '#c8c8c8';
   const geo = Array.isArray(h.size)
     ? new BoxGeometry(h.size[0], length, h.size[1])
-    : new CylinderGeometry(h.size / 2, h.size / 2, length, h.sides ?? 24);
+    : new CylinderGeometry(h.size / 2, h.size / 2, length, sides(h.sides));
   const mesh = new Mesh(
     geo,
     new MeshStandardMaterial({

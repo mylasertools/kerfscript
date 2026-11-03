@@ -26,6 +26,7 @@ import type {
   Trajectory,
   VerificationSnapshot,
   VerificationSpec,
+  VerificationClaim,
 } from './types.js';
 
 type Check = Partial<ClaimResult>;
@@ -62,6 +63,27 @@ const turnsIn = (turn: number, range: [number, number], tol: number): number[] =
   return out.sort((a, b) => Math.abs(a - mid) - Math.abs(b - mid));
 };
 
+// The bodies a fastening holds together, or undefined when the claim it
+// names does not prove that kind of fastening
+function fastened(
+  claim: VerificationClaim | undefined,
+  fastening: RetentionClaim['links'][number]['fastening'],
+): BodyRef[] | undefined {
+  if (claim?.kind === 'glue-contact' && fastening === 'glued') return [claim.a, claim.b];
+  if (claim?.kind === 'captured-shaft' && fastening === 'captured') {
+    const refs: BodyRef[] = [
+      claim.shaft,
+      ...claim.bearings,
+      ...claim.stack,
+      ...claim.stops.map((x) => x.body),
+    ];
+    for (const stop of claim.stops)
+      if (stop.attachment.kind === 'threaded') refs.push(stop.attachment.thread);
+    return refs;
+  }
+  return undefined;
+}
+
 export function retention(
   c: RetentionClaim,
   s: VerificationSnapshot,
@@ -95,25 +117,15 @@ export function retention(
       return fail(`Attachment ${l.claim} fails its geometric contract.`);
     if (result.status !== 'pass') return unknown(`Attachment ${l.claim} has not been verified.`);
     if (!l.installed) return fail(`The fastening for ${l.claim} is explicitly not installed.`);
-    if (claim.kind === 'glue-contact' && l.fastening === 'glued') {
-      link([claim.a, claim.b]);
-      assumptions.push(
-        `A cured fixed adhesive bond is assumed at ${l.claim}; only its contact geometry was measured.`,
-      );
-    } else if (claim.kind === 'captured-shaft' && l.fastening === 'captured') {
-      const bodies: BodyRef[] = [
-        claim.shaft,
-        ...claim.bearings,
-        ...claim.stack,
-        ...claim.stops.map((x) => x.body),
-      ];
-      claim.stops.forEach((stop) => {
-        if (stop.attachment.kind === 'threaded') bodies.push(stop.attachment.thread);
-      });
-      link(bodies);
-    } else
+    const bodies = fastened(claim, l.fastening);
+    if (!bodies)
       return unknown(
         `Fit or kinematic claim ${l.claim} does not prove the specified positive fastening.`,
+      );
+    link(bodies);
+    if (claim.kind === 'glue-contact')
+      assumptions.push(
+        `A cured fixed adhesive bond is assumed at ${l.claim}; only its contact geometry was measured.`,
       );
   }
   const reached = new Set(c.roots.map(key)),
@@ -198,6 +210,36 @@ function hull(points: [number, number][]): [number, number][] {
     upper = chain([...sorted].reverse());
   return [...lower.slice(0, -1), ...upper.slice(0, -1)];
 }
+// Whether a retention contract's fastenings join every body into one group
+function joined(c: RetentionClaim, spec: VerificationSpec, bodies: BodyRef[]): boolean {
+  const graph = new Map<string, Set<string>>();
+  const link = (refs: BodyRef[]) => {
+    for (const a of refs)
+      for (const b of refs) {
+        const g = graph.get(key(a)) ?? new Set<string>();
+        g.add(key(b));
+        graph.set(key(a), g);
+      }
+  };
+  for (const l of c.links) {
+    const refs = fastened(
+      spec.claims.find((q) => q.id === l.claim),
+      l.fastening,
+    );
+    if (refs) link(refs);
+  }
+  if (!bodies.length) return true;
+  const reached = new Set([key(bodies[0])]),
+    queue = [...reached];
+  while (queue.length)
+    for (const next of graph.get(queue.pop()!) ?? [])
+      if (!reached.has(next)) {
+        reached.add(next);
+        queue.push(next);
+      }
+  return bodies.every((b) => reached.has(key(b)));
+}
+
 export function stability(
   c: StabilityClaim,
   s: VerificationSnapshot,
@@ -226,6 +268,12 @@ export function stability(
     )
       return unknown(
         'Combined-load stability needs verified retention of every load; removable-contact support is not established.',
+      );
+    // Retention may hold each load to a root of its own; the loads stand
+    // as one only when its links join them all
+    if (!joined(contract, spec!, inventory))
+      return unknown(
+        'The loads are retained to separate roots, not joined into one rigid assembly; check each one’s stability on its own.',
       );
   }
   let mass = 0,

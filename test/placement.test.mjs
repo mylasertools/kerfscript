@@ -593,3 +593,16 @@ test('a slot covers a shoulder that flares just inside the receiving face', () =
   // 160 round the stage, and 2 x (8 + 3) round the slot: the flare's full width
   assert.equal(r.parts.find((p) => p.name === 'stage').cutLength, 182);
 });
+
+test('a picture of a long thin sheet stays within the pixel limit', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'kerf-'));
+  writeFileSync(join(dir, 'p.kerf'), 'part("strip") rect([1, 600]);');
+  execFileSync('node', ['dist/cli.js', 'render', join(dir, 'p.kerf'), '-o', join(dir, 'p.png')], {
+    stdio: 'pipe',
+  });
+  const png = readFileSync(join(dir, 'p.png'));
+  const w = png.readUInt32BE(16),
+    h = png.readUInt32BE(20);
+  assert.ok(w * h <= 16_000_000 && h <= 16_384, `${w} x ${h}`);
+  assert.ok(h > w * 50);
+});

@@ -706,3 +706,22 @@ test('references a specification can check before rendering are input errors', (
   const invariant = { id: 'same', kind: 'cut-invariant' };
   assert.equal(verify(spec([invariant]), []).kind, 'invalid-spec');
 });
+test('separately retained loads are not stable as one assembly', () => {
+  // Two narrow plates far apart: neither stands with a 1.5 margin, but
+  // their contacts together span a wide polygon
+  const source = '$thickness=2;part("a",at=[0,0,0])rect([2,10]);part("b",at=[20,0,0])rect([2,10]);';
+  const roots = { id: 'held', kind: 'retention', roots: [{ part: 'a' }, { part: 'b' }], links: [] };
+  const c = {
+    ...stable,
+    minimumMargin: 1.5,
+    supports: [{ part: 'a' }, { part: 'b' }],
+    loads: [
+      { body: { part: 'a' }, mass: 1 },
+      { body: { part: 'b' }, mass: 1 },
+    ],
+    retention: 'held',
+  };
+  const checked = result(spec([roots, c]), [snap(source)], 'stable')[0];
+  assert.equal(checked.status, 'unverified', JSON.stringify(checked));
+  assert.match(checked.message, /separate roots/);
+});

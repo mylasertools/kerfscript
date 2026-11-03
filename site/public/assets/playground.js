@@ -201,7 +201,11 @@ function showSheets() {
   sheetPick.parentElement.hidden = !many;
   svgButton.hidden = many;
   dxfButton.hidden = many;
-  zipButton.hidden = !many;
+  // A back-face job comes as a file of its own, so one sheet with back
+  // marks downloads as a ZIP too
+  const backs = last.sheets.some((s) => s.back);
+  zipButton.hidden = !many && !backs;
+  zipButton.textContent = many ? 'All sheets (ZIP)' : 'Front and back (ZIP)';
   if (lightburnButton) lightburnButton.hidden = many;
   if (!many) {
     sheetsBox.replaceChildren();
@@ -214,7 +218,7 @@ function showSheets() {
   sheetPick.value = String(shown);
   const rows = last.sheets.map(
     (s, i) =>
-      `<tr><td>${esc(sheetLabel(s, i))}, ${partsText(s.items.length)}</td><td>${fmt(s.width)} × ${fmt(s.height)} mm</td><td><button class="link" data-file="svg" data-index="${i}">SVG</button> · <button class="link" data-file="dxf" data-index="${i}">DXF</button>${lightburnButton ? ` · <button class="link" data-file="lightburn" data-index="${i}">LightBurn</button>` : ''}</td></tr>`,
+      `<tr><td>${esc(sheetLabel(s, i))}, ${partsText(s.items.length)}</td><td>${fmt(s.width)} × ${fmt(s.height)} mm</td><td><button class="link" data-file="svg" data-index="${i}">SVG</button> · <button class="link" data-file="dxf" data-index="${i}">DXF</button>${s.back ? ` · back: <button class="link" data-file="back-svg" data-index="${i}">SVG</button> · <button class="link" data-file="back-dxf" data-index="${i}">DXF</button>` : ''}${lightburnButton ? ` · <button class="link" data-file="lightburn" data-index="${i}">LightBurn</button>` : ''}</td></tr>`,
   );
   sheetsBox.innerHTML = `<h3>Cut files</h3><table class="parts sheet-files"><thead><tr><th>Sheet</th><th>Size</th><th>Download</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
 }
@@ -503,10 +507,20 @@ lightburnButton?.addEventListener('click', () => {
 zipButton.addEventListener('click', () => {
   const result = current();
   if (!result) return;
-  const files = result.sheets.flatMap((s, i) => [
-    { name: `${sheetFile(s, i)}.svg`, text: s.svg },
-    { name: `${sheetFile(s, i)}.dxf`, text: s.dxf },
-  ]);
+  const one = result.sheets.length === 1;
+  const files = result.sheets.flatMap((s, i) => {
+    const name = one ? baseName() : sheetFile(s, i);
+    return [
+      { name: `${name}.svg`, text: one ? result.svg : s.svg },
+      ...(one && !result.dxf ? [] : [{ name: `${name}.dxf`, text: one ? result.dxf : s.dxf }]),
+      ...(s.back
+        ? [
+            { name: `${name}-back.svg`, text: s.back.svg },
+            { name: `${name}-back.dxf`, text: s.back.dxf },
+          ]
+        : []),
+    ];
+  });
   download(`${baseName()}-sheets.zip`, zip(files));
 });
 sheetsBox.addEventListener('click', (e) => {
@@ -516,6 +530,10 @@ sheetsBox.addEventListener('click', (e) => {
   const i = Number(button.dataset.index);
   const s = result.sheets[i];
   if (button.dataset.file === 'lightburn') host.lightburn(`${sheetFile(s, i)}.svg`, s.svg, button);
+  else if (button.dataset.file === 'back-svg')
+    download(`${sheetFile(s, i)}-back.svg`, s.back.svg, 'image/svg+xml');
+  else if (button.dataset.file === 'back-dxf')
+    download(`${sheetFile(s, i)}-back.dxf`, s.back.dxf, 'application/dxf');
   else if (button.dataset.file === 'svg')
     download(`${sheetFile(s, i)}.svg`, s.svg, 'image/svg+xml');
   else download(`${sheetFile(s, i)}.dxf`, s.dxf, 'application/dxf');
