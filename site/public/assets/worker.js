@@ -45,6 +45,10 @@ self.onmessage = async (event) => {
         ),
         layers: result.layers,
         parts: result.parts,
+        // For the 3D view
+        assembly: result.assembly,
+        steps: result.steps,
+        hardware: result.hardware,
         warnings: result.warnings,
         echoes: result.echoes,
         width: result.width,

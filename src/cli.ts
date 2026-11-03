@@ -54,6 +54,9 @@ Usage:
   kerf lsp [--timeout <s>]           run the language server for editors (stdio);
                                      stop checking a design after s seconds (10)
 
+A project's kerf.json can set "sheet": [W, H], the laser bed every design
+in it uses unless it sets $sheet.
+
 Shared libraries (kerf.json, kerf.lock and kerf_libraries/ in the project):
   kerf add <source>                  add a library and install it; the source is
                                      github:owner/repo@tag, an https:// link to a
@@ -77,7 +80,12 @@ Options:
   --margin <mm>           space between the parts and the sheet edge (default: gap)
   --no-pack               keep parts where the program placed them
   --guides                include guide layer geometry
-  --split                 write one file per sheet (out-1.svg, out-2.svg, ...)
+  --split                 write one file per sheet (out-1.svg, out-2.svg, ...);
+                          a sheet with back-face marks also gets out-1-back.svg
+  --nest                  pack small parts into the holes of bigger ones
+  --stats                 with check: points in the files by part and layer
+  --sweep name=a:step:b   with check: try every value, or name=a,b,c; repeat to
+                          try every combination, and exit 1 if any warns or fails
   -h, --help              show this help
   -v, --version           show the version
 `;
@@ -127,8 +135,11 @@ function main(argv: string[]) {
     margin?: number;
     layout?: 'pack' | 'none';
     guides?: boolean;
+    nest?: boolean;
   } = {};
   let split = false;
+  let stats = false;
+  const sweeps: [string, Value[]][] = [];
   for (let i = 1; i < argv.length; i++) {
     const a = argv[i];
     const next = () => argv[++i] ?? fail(`${a} needs a value`);
@@ -160,6 +171,9 @@ function main(argv: string[]) {
     else if (a === '--no-pack') opts.layout = 'none';
     else if (a === '--guides') opts.guides = true;
     else if (a === '--split') split = true;
+    else if (a === '--stats') stats = true;
+    else if (a === '--nest') opts.nest = true;
+    else if (a === '--sweep') sweeps.push(sweepValues(next()));
     else if (a.startsWith('-')) fail(`Unknown option ${a}`);
     else if (!file) file = a;
     else fail(`Unexpected argument ${a}`);
@@ -183,6 +197,16 @@ function main(argv: string[]) {
       fail((e as Error).message);
     }
   }
+  if (sweeps.length) {
+    if (cmd !== 'check') fail('--sweep goes with kerf check');
+    return sweep(source, sweeps, {
+      ...opts,
+      ...(defaultSheet && { defaultSheet }),
+      params,
+      fonts: withBuiltinFont(fonts),
+      resolve: resolveLib,
+    });
+  }
   const result = render(source, {
     ...opts,
     ...(defaultSheet && { defaultSheet }),
@@ -193,6 +217,7 @@ function main(argv: string[]) {
   for (const e of result.echoes) process.stderr.write(`ECHO: ${e}\n`);
   for (const w of result.warnings) process.stderr.write(`WARNING: ${w}\n`);
   if (cmd === 'check') {
+    if (stats) printStats(result);
     for (const p of result.parts)
       process.stdout.write(
         `${p.name}${p.qty > 1 ? ` x${p.qty}` : ''}: ${p.width} x ${p.height} mm, ${p.thickness} mm ${p.material}, cut ${p.cutLength} mm${p.stack ? `, glued in stacks of ${p.stack}` : ''}\n`,
@@ -452,3 +477,90 @@ else
     }
     throw e;
   }
+
+// --sweep name=1:0.5:3 or name=a,b,c: the values to try
+function sweepValues(spec: string): [string, Value[]] {
+  const eq = spec.indexOf('=');
+  if (eq < 1) fail(`--sweep needs name=from:step:to or name=a,b,c, got "${spec}"`);
+  const name = spec.slice(0, eq);
+  const raw = spec.slice(eq + 1);
+  const range = /^(-?[\d.]+):(-?[\d.]+):(-?[\d.]+)$/.exec(raw);
+  if (range) {
+    const [from, step, to] = range.slice(1).map(Number);
+    if (!(step > 0) || to < from)
+      fail(`--sweep ${name}: the range must go up by a step more than 0`);
+    const n = Math.floor((to - from) / step + 1e-9) + 1;
+    if (n > 1000) fail(`--sweep ${name}: more than 1000 values`);
+    return [name, Array.from({ length: n }, (_, i) => Math.round((from + i * step) * 1e9) / 1e9)];
+  }
+  return [
+    name,
+    raw.split(',').map((v) => {
+      try {
+        return parseValue(v.trim());
+      } catch {
+        return v.trim();
+      }
+    }),
+  ];
+}
+
+// Renders every combination of the swept values and says which build
+// clean; exits 1 when any warns or fails
+function sweep(
+  source: string,
+  sweeps: [string, Value[]][],
+  opts: Parameters<typeof render>[1] & {},
+) {
+  let combos: Record<string, Value>[] = [{}];
+  for (const [name, values] of sweeps)
+    combos = combos.flatMap((c) => values.map((v) => ({ ...c, [name]: v })));
+  if (combos.length > 5000) fail(`--sweep makes ${combos.length} combinations, more than 5000`);
+  let bad = 0;
+  for (const c of combos) {
+    const label = Object.entries(c)
+      .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
+      .join(' ');
+    try {
+      const r = render(source, { ...opts, params: { ...opts.params, ...c } });
+      if (r.warnings.length) {
+        bad++;
+        process.stdout.write(
+          `${label}: ${r.warnings.length} warning${r.warnings.length > 1 ? 's' : ''}\n`,
+        );
+        for (const w of r.warnings) process.stdout.write(`  ${w}\n`);
+      } else process.stdout.write(`${label}: ok\n`);
+    } catch (e) {
+      bad++;
+      process.stdout.write(`${label}: error: ${(e as Error).message}\n`);
+    }
+  }
+  process.stdout.write(`${combos.length - bad} of ${combos.length} clean\n`);
+  if (bad) process.exitCode = 1;
+}
+
+// Points in the files, by part and layer, every copy counted
+function printStats(result: ReturnType<typeof render>) {
+  const by = new Map<string, Map<string, number>>();
+  for (const s of result.sheets)
+    for (const it of s.items) {
+      const m = by.get(it.part) ?? new Map<string, number>();
+      for (const [k, l] of it.layers) {
+        let n = 0;
+        for (const p of [...l.regions, ...l.lines]) n += p.length;
+        m.set(k, (m.get(k) ?? 0) + n);
+      }
+      by.set(it.part, m);
+    }
+  const total = (m: Map<string, number>) => [...m.values()].reduce((a, b) => a + b, 0);
+  const rows = [...by].sort((a, b) => total(b[1]) - total(a[1]));
+  const all = rows.reduce((a, [, m]) => a + total(m), 0);
+  process.stdout.write(`points in the files: ${all}\n`);
+  for (const [part, m] of rows)
+    process.stdout.write(
+      `  ${part}: ${total(m)} (${[...m]
+        .sort((a, b) => b[1] - a[1])
+        .map(([k, n]) => `${k} ${n}`)
+        .join(', ')})\n`,
+    );
+}

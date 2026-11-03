@@ -9,6 +9,7 @@
 import type { Arg, Assign, Expr, ListItem, Param, Stmt } from './ast.js';
 import { parameters, type Parameter } from './customizer.js';
 import { markLength } from './diagnostics.js';
+import { besideFile } from './evaluator.js';
 import { KerfError, tokenize, type Comment, type Pos, type Token } from './lexer.js';
 import { parse } from './parser.js';
 import { render, type RenderOptions } from './render.js';
@@ -595,10 +596,15 @@ function unclosed(text: string): string {
 const STDLIB_EXPORTS = new Map<string, Exports>();
 
 function loader(resolve: AnalyzeOptions['resolve'], loading: string[]) {
-  return (path: string): Exports | undefined => {
+  return (asked: string): Exports | undefined => {
+    // As render() does: next to the library that asks first
+    const near = besideFile(loading[loading.length - 1], asked);
+    const nearSrc =
+      near !== undefined && own(LIBRARIES, asked) === undefined ? resolve?.(near) : undefined;
+    const path = typeof nearSrc === 'string' ? near! : asked;
     if (loading.includes(path)) return undefined;
     const std = own(LIBRARIES, path);
-    const src = std ?? resolve?.(path);
+    const src = std ?? (typeof nearSrc === 'string' ? nearSrc : resolve?.(path));
     if (typeof src !== 'string') return undefined;
     const hit = std !== undefined ? STDLIB_EXPORTS.get(path) : undefined;
     if (hit) return hit;

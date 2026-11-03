@@ -32,6 +32,16 @@ const sheetsBox = $('[data-sheets]');
 const importButton = $('[data-import]');
 const importFile = $('[data-import-file]');
 const editorBox = $('[data-editor]');
+const assemblyBox = $('[data-assembly]');
+// The 3D view loads with three.js the first time it is shown
+let assemblyView = null;
+async function showAssembly() {
+  if (!assemblyView) {
+    const { createAssemblyView } = await import('./assembly.js');
+    assemblyView ??= createAssemblyView(assemblyBox);
+  }
+  if (last && mode === '3d') assemblyView.show(last);
+}
 const run = createEngine();
 // Set by the desktop app (desktop/src/desktop.js): files on disk instead of
 // downloads, and libraries next to the open file.
@@ -149,6 +159,21 @@ const sheetFile = (s, i) =>
   `${baseName()}-sheet-${i + 1}-${s.material.toLowerCase().replace(/[^a-z0-9]+/g, '-')}${s.thickness ? `-${fmt(s.thickness)}mm` : ''}`;
 
 function showFigure() {
+  const three = mode === '3d';
+  figure.hidden = three;
+  assemblyBox.hidden = !three;
+  if (three) {
+    showAssembly().catch((e) => {
+      assemblyBox.textContent = `The 3D view could not load: ${e.message}`;
+    });
+    if (last) {
+      const n = last.assembly?.filter((p) => p.placed !== false).length ?? 0;
+      sizeNote.textContent = n
+        ? `${partsText(n)} assembled${last.steps?.length ? `, in ${last.steps.length} steps` : ''}. Drag to turn it, scroll to zoom.`
+        : 'No part has at or rotate, so there is nothing to assemble.';
+    }
+    return;
+  }
   if (!last) {
     figure.replaceChildren();
     return;

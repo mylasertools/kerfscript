@@ -1,0 +1,109 @@
+// kerf/lock: a lock with a key, for boxes, diaries, chests and money boxes.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+//
+// A flat key turns an eccentric cam, which slides a bolt: half a turn
+// throws its nose out past the lock's top edge, into a notch or a slot in
+// whatever it locks, and half a turn back pulls it in. Pulling on what is
+// locked only presses the bolt against its slot. The lock is three layers
+// of the current material: a base with the cam's hub, a frame with the
+// cam and the bolt, and a plate with the keyhole.
+//
+// It is drawn lying flat, the base's underside at z = 0 and the key's axis
+// on the z axis, the bolt moving along y. Wrap it in place() to set it on
+// a box front or a cover.
+
+// The lock's sizes for a bolt that moves `throw` mm, as
+// [x0, y0, x1, y1] round the key's axis
+function lock_bounds(throw = 7) = let (d = lock_dims(throw))
+  [-d[6] / 2, d[8], d[6] / 2, d[7]];
+
+// Where the bolt's nose is: [width, y of its tip when locked]. Cut a notch
+// a little wider than this where it goes.
+function lock_nose(throw = 7) = let (d = lock_dims(throw)) [d[4], d[7] + d[5]];
+
+// [e, rd, rh, window w, nose w, nose out, outline w, top, bottom, body w, body h]
+function lock_dims(throw) = let (
+  e = throw / 2,
+  rd = e + 5,
+  rh = rd - 3,
+  win = [2 * (rd + e) + 0.8, 2 * rd + 0.3],
+  body = win + [5, 5],
+  bw = 8,
+  wall = 3,
+  top = e + body[1] / 2 + wall,
+  bot = -e - body[1] / 2 - 3
+)
+  [e, rd, rh, win[0], bw, throw - 2, body[0] + 6, top, bot, body[0], body[1]];
+
+// The lock's parts, named `name` and what each is. `locked` turns the cam
+// to throw the bolt. With key = false there is no key part.
+module cam_lock(throw = 7, locked = true, name = "Lock", key = true, ring = true) {
+  t = $thickness;
+  d = lock_dims(throw);
+  e = d[0];
+  rd = d[1];
+  rh = d[2];
+  win = [d[3], 2 * rd + 0.3];
+  bw = d[4];
+  dn = d[5];
+  body = [d[9], d[10]];
+  wall = 3;
+  ws = 5;
+  kh = sqrt(ws * ws + t * t) + 0.5;
+  assert(dn >= 2, "throw must be at least 4 mm");
+  module outline() translate([-d[6] / 2, d[8]]) rect([d[6], d[7] - d[8]], r = 4);
+  module key_slot() rect([ws + 0.3, t + 0.3], center = true);
+  part(str(name, " base"), at = [0, 0, 0]) difference() {
+    outline();
+    circle(r = rh + 0.2);
+  }
+  part(str(name, " frame"), at = [0, 0, t]) difference() {
+    outline();
+    // The bolt's slot, long enough for its travel, and the nose's way out
+    translate([-body[0] / 2 - 0.15, -e - body[1] / 2 - 0.15]) rect([body[0] + 0.3, 2 * e + body[1] + 0.3]);
+    translate([-bw / 2 - 0.15, e + body[1] / 2 - 1]) rect([bw + 0.3, wall + 2]);
+  }
+  part(str(name, " plate"), at = [0, 0, 2 * t]) {
+    difference() {
+      outline();
+      circle(d = kh);
+    }
+    if (ring) engrave() difference() {
+      circle(r = kh / 2 + 3.2);
+      circle(r = kh / 2 + 1.6);
+    }
+    score() outline() offset(r = -1.8) outline();
+  }
+  phi = locked ? 90 : -90;
+  part(str(name, " cam hub"), at = [0, 0, 0]) difference() {
+    circle(r = rh);
+    key_slot();
+  }
+  part(str(name, " cam"), at = [0, 0, t]) difference() {
+    translate(e * [cos(phi), sin(phi)]) circle(r = rd);
+    key_slot();
+  }
+  part(str(name, " bolt"), at = [0, e * sin(phi), t]) difference() {
+    union() {
+      rect(body, center = true, r = 2);
+      translate([-bw / 2, body[1] / 2 - 1]) rect([bw, 1 + wall + dn], r = 1);
+    }
+    rect(win, center = true, r = 1);
+  }
+  if (key) part(str(name, " key"), at = [0, t / 2, 0], rotate = [90, 0, 0]) lock_key(t);
+}
+
+// The key: a flat shaft three layers long that turns in the round hole, a
+// collar that stops it on the plate, and a bow with a hole for a ribbon.
+// Drawn standing on y = 0, its shaft up the y axis.
+module lock_key(t = $thickness, ws = 5) {
+  difference() {
+    union() {
+      translate([-ws / 2, 0]) rect([ws, 3 * t + 0.01]);
+      translate([-(ws + 5) / 2, 3 * t]) rect([ws + 5, 2.5], r = 0.8);
+      translate([-2, 3 * t + 2]) rect([4, 4]);
+      translate([0, 3 * t + 13]) for (a = [0:90:270]) rotate(a) translate([5, 0]) circle(r = 5.2);
+    }
+    translate([0, 3 * t + 13]) circle(r = 3);
+  }
+}

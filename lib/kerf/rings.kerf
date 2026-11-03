@@ -1,0 +1,42 @@
+// kerf/rings: round things built from stacked rings threaded on a core,
+// as drums, barrels, vases, towers and turned table legs.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+
+// The width of a core plate that fits a round hole of diameter `hole`:
+// two crossed plates, their corners just clear of the hole's edge
+function ring_core_width(hole, clearance = 0.1) = sqrt(hole * hole - pow($thickness + clearance, 2)) - 2 * clearance;
+
+// A stack of rings on a core of two crossed plates, standing on z = 0 and
+// centred on the z axis. `diameters` gives each ring's outside, bottom up
+// (a number for that many alike rings needs `count`), `hole` the round hole
+// through them all. The core plates are half-lapped; with `feet` they have
+// two tabs each below z = 0, for a base to cut slots for: give the base
+// slots = [str(name, " core A"), str(name, " core B")]. Rings of the same
+// size are one part with several copies.
+module ring_stack(diameters, hole, name = "ring", count = undef, feet = true, clearance = 0.1) {
+  t = $thickness;
+  ds = [for (d = is_list(diameters) ? diameters : [for (i = [0:count - 1]) diameters]) round(d * 100) / 100];
+  n = len(ds);
+  assert(n > 0, "ring_stack needs at least one ring");
+  assert(min(ds) > hole + 4, "every ring must be at least 4 mm wider than the hole");
+  h = n * t;
+  w = ring_core_width(hole, clearance);
+  sizes = [for (i = [0:n - 1]) if (len([for (k = [0:n - 1]) if (k < i && ds[k] == ds[i]) k]) == 0) ds[i]];
+  for (d = sizes) let (at = [for (k = [0:n - 1]) if (ds[k] == d) [0, 0, k * t]])
+    part(len(sizes) == 1 ? name : str(name, " ", round(d * 10) / 10), qty = len(at), at = at) difference() {
+      circle(d = d);
+      circle(d = hole + clearance);
+    }
+  module plate() union() {
+    translate([-w / 2, 0]) rect([w, h]);
+    if (feet) for (s = [-1, 1]) translate([s * w / 4 - 3, -t]) rect([6, t + 0.01]);
+  }
+  part(str(name, " core A"), at = [0, t / 2, 0], rotate = [90, 0, 0]) difference() {
+    plate();
+    translate([-(t + clearance) / 2, h / 2]) rect([t + clearance, h / 2 + 1]);
+  }
+  part(str(name, " core B"), at = [-t / 2, 0, 0], rotate = [90, 0, 90]) difference() {
+    plate();
+    translate([-(t + clearance) / 2, -t - 1]) rect([t + clearance, h / 2 + t + 1]);
+  }
+}

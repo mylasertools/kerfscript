@@ -316,6 +316,14 @@ class Parser {
     const t = this.peek();
     if (t.type === 'num') {
       this.next();
+      const u = /(mm|cm|m|in|ft)$/.exec(t.value);
+      if (u)
+        return {
+          kind: 'num',
+          value: Number(t.value.slice(0, -u[1].length)),
+          unit: u[1] as 'mm' | 'cm' | 'm' | 'in' | 'ft',
+          pos: t.pos,
+        };
       return { kind: 'num', value: Number(t.value), pos: t.pos };
     }
     if (t.type === 'str') {

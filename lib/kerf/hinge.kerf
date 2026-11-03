@@ -38,16 +38,18 @@ module flex_box(size, r = 15, lid = true, clearance = 0.1, spacing = 1.5, bridge
   // anticlockwise seen from above: where each run starts, and its length
   runs = [[-sw / 2, sw], [sw / 2 + b, sd], [sw / 2 + 2 * b + sd, sw], [1.5 * sw + 3 * b + sd, sd]];
   bends = [sw / 2 + b / 2, sw / 2 + 1.5 * b + sd, 1.5 * sw + 2.5 * b + sd, 1.5 * sw + 3.5 * b + 2 * sd];
-  part("side") difference() {
+  // The strip stands round the bottom, its outer face out, bending in at
+  // each corner; it starts in the middle of the front
+  part("side", at = [w / 2, t, 0], rotate = orient([1, 0, 0], [0, -1, 0]), bend = [for (c = bends) [c - b / 2, c + b / 2, -90]]) difference() {
     flex_rect([L, h], bends, width = b, spacing = spacing, bridge = bridge);
     // The front run crosses the ends: its slots are cut at both
     for (run = runs, o = [0, L])
       if (run[1] > 0) translate([run[0] + o, 1.5 * t]) slots(run[1], clearance = clearance);
   }
-  part("bottom") flex_panel([w - 2 * t, d - 2 * t], r - t, sw, sd);
+  part("bottom", at = [t, t, t]) flex_panel([w - 2 * t, d - 2 * t], r - t, sw, sd);
   if (lid) {
-    part("lid") rect([w, d], r = r);
-    part("lid insert")
+    part("lid", at = [0, 0, h]) rect([w, d], r = r);
+    part("lid insert", at = [t, t, h - t])
       offset(delta = -clearance) rect([w - 2 * t, d - 2 * t], r = r - t);
   }
 }
@@ -63,5 +65,75 @@ module flex_panel(size, r, sw, sd) {
   if (sd > 0) {
     translate([size[0], r]) rotate(90) tabs(sd);
     translate([0, r + sd]) rotate(270) tabs(sd);
+  }
+}
+
+// A hinge for a narrow strap or band: cuts from alternate edges, `spacing`
+// apart, each stopping `bridge` short of the far edge, so the strip
+// zigzags and bends evenly however narrow it is. Lines, across [w, h].
+module narrow_hinge(size, spacing = 1.5, bridge = 1.5) {
+  w = size[0];
+  h = size[1];
+  n = max(1, floor(w / spacing));
+  for (i = [0:n]) let (x = i * w / n)
+    if (i % 2 == 0) line([x, -1], [x, h - bridge]); else line([x, bridge], [x, h + 1]);
+}
+
+// The bends of a strip that follows `path`, a list of [x, y] points along
+// its middle: [s0, s1, angle] for each curve, measured along the path,
+// turning left positive. Segments shorter than `straight` are curve, the
+// rest straight; a sharp corner bends round radius `r`.
+function strip_bends(path, straight = 10, r = undef) =
+  let (
+    rr = is_undef(r) ? 2 * $thickness : r,
+    n = len(path),
+    segs = [for (i = [0:n - 2]) norm(path[i + 1] - path[i])],
+    at = [for (i = [0:n - 1]) i == 0 ? 0 : sum([for (k = [0:i - 1]) segs[k]])],
+    head = [for (i = [0:n - 2]) atan2(path[i + 1][1] - path[i][1], path[i + 1][0] - path[i][0])],
+    turn = [for (i = [1:n - 2]) let (d = head[i] - head[i - 1]) d > 180 ? d - 360 : d < -180 ? d + 360 : d],
+    // Each corner as [s0, s1, angle]: a short segment's turn spreads over
+    // it, a sharp corner's over a bend of radius rr
+    corners = [for (i = [1:n - 2]) if (abs(turn[i - 1]) > 0.01)
+      let (short_in = segs[i - 1] < straight, short_out = segs[i] < straight,
+        half = PI * (rr + $thickness / 2) * abs(turn[i - 1]) / 360,
+        s0 = short_in ? at[i] - segs[i - 1] / 2 : at[i] - half,
+        s1 = short_out ? at[i] + segs[i] / 2 : at[i] + half)
+        [s0, s1, turn[i - 1]]]
+  )
+  strip_merge(corners);
+
+// Joins bends that touch or overlap into one
+function strip_merge(list, i = 0, cur = undef, out = []) =
+  i == len(list) ? (is_undef(cur) ? out : concat(out, [cur]))
+  : is_undef(cur) ? strip_merge(list, i + 1, list[i], out)
+  : list[i][0] <= cur[1] + 0.01 ? strip_merge(list, i + 1, [cur[0], max(cur[1], list[i][1]), cur[2] + list[i][2]], out)
+  : strip_merge(list, i + 1, list[i], concat(out, [cur]));
+
+// A strip of the current material that follows `path` in a plate's plane,
+// `width` wide, with living hinges where it curves and tabs along both
+// edges where it runs straight, as a part placed in the plate's own
+// coordinates: its edge at z = 0 and its width running down to z =
+// -width. Put it in place() with the plate's at and rotate, set the other
+// plate `width` below, and give both plates slots = [name]: they cut their
+// own slots for the tabs. The 3D view shows the strip bent.
+module flex_strip(path, width, name = "strip", tabs = true, straight = 10, r = undef, spacing = 1.5, bridge = 3, narrow = false) {
+  t = $thickness;
+  L = path_length(path);
+  bends = strip_bends(path, straight, r);
+  h0 = heading_at(path, 0);
+  p0 = path[0] - t / 2 * [-sin(h0), cos(h0)];
+  runs = [for (k = [0:len(bends)]) [k == 0 ? 0 : bends[k - 1][1], k == len(bends) ? L : bends[k][0]]];
+  part(name, at = [p0[0], p0[1], 0], rotate = orient([cos(h0), sin(h0), 0], [-sin(h0), cos(h0), 0]), bend = [for (b = bends) [b[0], b[1], b[2]]]) {
+    rect([L, width]);
+    for (b = bends) translate([b[0], 0])
+      if (narrow) narrow_hinge([b[1] - b[0], width], spacing, bridge);
+    else living_hinge([b[1] - b[0], width], spacing = spacing, bridge = bridge);
+    if (tabs)
+      for (run = runs) if (run[1] - run[0] > 16)
+        let (len_ = run[1] - run[0] - 6, w = min(20, len_ / 3), n = max(1, round(len_ / 50)))
+          for (x = tab_positions(len_, n)) {
+            translate([run[0] + 3 + x - w / 2, -t]) rect([w, t + 0.01]);
+            translate([run[0] + 3 + x - w / 2, width - 0.01]) rect([w, t + 0.01]);
+          }
   }
 }

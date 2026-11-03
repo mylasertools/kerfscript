@@ -180,7 +180,10 @@ export function tokenize(src: string, file?: string): { tokens: Token[]; comment
     }
     const p = pos();
     if (/[0-9]/.test(c) || (c === '.' && /[0-9]/.test(src[i + 1] ?? ''))) {
-      const m = /^(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/.exec(src.slice(i))!;
+      // A length in real units, as 140cm, carries its unit
+      const m = /^(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?(?:(?:mm|cm|m|in|ft)(?![A-Za-z0-9_]))?/.exec(
+        src.slice(i),
+      )!;
       tokens.push({ type: 'num', value: m[0], pos: p, end: i + m[0].length });
       advance(m[0].length);
       continue;

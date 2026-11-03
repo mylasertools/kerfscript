@@ -312,6 +312,16 @@ export const FUNCTIONS: Record<string, Builtin> = {
     c.step(all.reduce((n, p) => n + p.length, 0));
     return all.map((p) => p.map(([x, y]) => [x, y]));
   }),
+  // A smooth curve through points (Catmull-Rom), `steps` points a span
+  spline_points: def('points, steps, closed', (a, c) => {
+    const p = pts(a[0], 'spline_points', c);
+    const n = a[1] === undefined ? 8 : Math.floor(num(a[1], 'spline_points'));
+    if (!(n >= 1)) throw new Error('spline_points(): steps must be 1 or more');
+    if (p.length * n > c.maxLength)
+      throw new Error('spline_points(): the result would be too long');
+    c.step(p.length * n);
+    return catmullRom(p, n, a[2] === true);
+  }),
   // Rotations in 3D, as part()'s rotate: the matrix for [x, y, z] degrees,
   // the angles of a matrix, and the angles that turn x and z onto vectors
   rotation: def('angles', (a) => {
@@ -439,4 +449,41 @@ function eulerOf(M: M3): number[] {
     clean(Math.asin(sy) / RAD),
     clean(Math.atan2(M[1][0], M[0][0]) / RAD),
   ];
+}
+
+// A Catmull-Rom curve through the points, `n` points for each span; the
+// ends are held straight
+export function catmullRom(p: [number, number][], n: number, closed = false): [number, number][] {
+  if (p.length < 3) return p.map(([x, y]) => [x, y]);
+  const at = (i: number): [number, number] => {
+    if (closed) return p[((i % p.length) + p.length) % p.length];
+    if (i < 0) return [2 * p[0][0] - p[1][0], 2 * p[0][1] - p[1][1]];
+    if (i >= p.length) {
+      const [a, b] = [p[p.length - 1], p[p.length - 2]];
+      return [2 * a[0] - b[0], 2 * a[1] - b[1]];
+    }
+    return p[i];
+  };
+  const out: [number, number][] = [];
+  const spans = closed ? p.length : p.length - 1;
+  for (let i = 0; i < spans; i++) {
+    const [p0, p1, p2, p3] = [at(i - 1), at(i), at(i + 1), at(i + 2)];
+    for (let k = 0; k < n; k++) {
+      const t = k / n,
+        t2 = t * t,
+        t3 = t2 * t;
+      out.push(
+        [0, 1].map(
+          (j) =>
+            0.5 *
+            (2 * p1[j] +
+              (-p0[j] + p2[j]) * t +
+              (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2 +
+              (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t3),
+        ) as [number, number],
+      );
+    }
+  }
+  out.push(closed ? out[0] : [p[p.length - 1][0], p[p.length - 1][1]]);
+  return out;
 }

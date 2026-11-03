@@ -9,7 +9,10 @@ import {
   multiply,
   placementMatrix,
   runOf,
+  translation,
+  worldBox,
   type AssemblyPart,
+  type Mark,
 } from './assembly.js';
 import { slotsFor, type Solid } from './slots.js';
 import { Evaluator, type HardwareItem, type LayerDef, type Limits } from './evaluator.js';
@@ -66,6 +69,8 @@ export interface PartInfo {
   material: string;
   // Glued in stacks of this many layers
   stack?: number;
+  // The part it is glued onto
+  glued?: string;
 }
 
 export interface Placed {
@@ -170,6 +175,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     });
   if (!parts.length) warnings.push('Nothing to cut: the program made no shapes.');
 
+  glueOn(parts, warnings);
   cutSlots(parts, mode, warnings);
 
   const infos: PartInfo[] = [];
@@ -192,13 +198,47 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
         regions = [];
       }
       if (material.length && mode(k) !== 'guide') {
-        if (mode(k) !== 'cut') regions = intersection(regions, material);
-        lines = clipLines(lines, material, 'inside');
+        // A layer with bleed may run past the edge, for printing
+        const bleed = defs.get(k)?.bleed ?? 0;
+        const area = bleed > 0 ? offset(material, bleed, 'round') : material;
+        if (mode(k) !== 'cut') regions = intersection(regions, area);
+        lines = clipLines(lines, area, 'inside');
       }
       if (regions.length || lines.length) layers.set(k, { regions, lines });
     }
     if (material.length) {
-      const flat = { name: p.name, thickness: p.thickness, outline: material };
+      // Engraving and scoring, for 3D views
+      const marks: Mark[] = [];
+      for (const [k, l] of layers) {
+        const def = defs.get(k);
+        // Cuts inside the part, as a living hinge's, show on both faces
+        if (def?.mode === 'cut' && l.lines.length)
+          for (const side of ['front', 'back'] as const)
+            marks.push({
+              layer: k,
+              mode: 'line',
+              color: '#000000',
+              side,
+              regions: [],
+              lines: l.lines,
+            });
+        if (!def || (def.mode !== 'fill' && def.mode !== 'line')) continue;
+        marks.push({
+          layer: k,
+          mode: def.mode,
+          color: def.color,
+          side: def.side ?? 'front',
+          regions: l.regions,
+          lines: l.lines,
+        });
+      }
+      const flat = {
+        name: p.name,
+        thickness: p.thickness,
+        material: p.material,
+        outline: material,
+        ...(marks.length && { marks }),
+      };
       if (p.placements) {
         const seen = new Set<string>();
         p.placements.forEach((placement, i) => {
@@ -231,11 +271,22 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
             ...(p.step && { step: p.step }),
           });
     }
-    const n = pieces(material).length;
-    if (n > 1)
+    const split = pieces(material);
+    const n = split.length;
+    if (n > 1) {
+      // Say where the smaller pieces are, the biggest being the part
+      const size = (g: ReturnType<typeof pieces>[number]) => g.reduce((a, r) => a + area(r), 0);
+      const stray = [...split].sort((a, b) => size(b) - size(a)).slice(1, 4);
+      const where = stray
+        .map((g) => {
+          const [x0, y0, x1, y1] = layerBounds(new Map([['cut', { regions: g, lines: [] }]]))!;
+          return `[${round2(x0)}, ${round2(y0)}] to [${round2(x1)}, ${round2(y1)}]`;
+        })
+        .join(', ');
       warnings.push(
-        `Part "${p.name}" cuts into ${n} separate pieces. Join them, or make them separate parts.`,
+        `Part "${p.name}" cuts into ${n} separate pieces. Join them, or make them separate parts. The smaller ${n === 2 ? 'one is' : 'ones are'} at ${where}${n > 4 ? ' and more' : ''}, in the part's coordinates.`,
       );
+    }
     let cutLength = 0;
     for (const [k, l] of layers)
       if (mode(k) === 'cut') {
@@ -257,17 +308,32 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       kerf,
       material: p.material,
       ...(p.stack && { stack: p.stack }),
+      ...(p.glue && { glued: p.glue.host }),
     };
     if (kerf > 0)
       for (const [k, l] of layers)
         if (mode(k) === 'cut') {
-          const holes = l.regions.filter((r) => area(r) < 0).length;
+          const before = l.regions.filter((r) => area(r) < 0);
           l.regions = offset(l.regions, kerf / 2, 'round', Math.min(0.01, kerf / 20));
-          const closed = holes - l.regions.filter((r) => area(r) < 0).length;
-          if (closed > 0)
+          const after = l.regions.filter((r) => area(r) < 0);
+          const closed = before.length - after.length;
+          if (closed > 0) {
+            // The holes whose middle no hole is round any more
+            const mid = (r: [number, number][]) => {
+              const [x0, y0, x1, y1] = layerBounds(
+                new Map([['cut', { regions: [r], lines: [] }]]),
+              )!;
+              return [(x0 + x1) / 2, (y0 + y1) / 2] as [number, number];
+            };
+            const lost = before
+              .map(mid)
+              .filter(([x, y]) => !after.some((h) => inPoly(h, x, y)))
+              .slice(0, 3)
+              .map(([x, y]) => `[${round2(x)}, ${round2(y)}]`);
             warnings.push(
-              `Part "${p.name}": ${closed} hole${closed === 1 ? ' is' : 's are'} narrower than the ${kerf} mm kerf and will not be cut.`,
+              `Part "${p.name}": ${closed} hole${closed === 1 ? ' is' : 's are'} narrower than the ${kerf} mm kerf and will not be cut${lost.length ? `, at ${lost.join(', ')}${closed > lost.length ? ' and more' : ''} in the part's coordinates` : ''}.`,
             );
+          }
         }
     infos.push(info);
     ready.push({ info, layers });
@@ -292,10 +358,15 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     warnings.push(
       `The assembly has more than ${limits.maxCollisionPairs} pairs of touching parts, the limit, so only those were checked for collisions.`,
     );
-  for (const [a, b] of clashes.slice(0, 5))
+  for (const [a, b] of clashes.slice(0, 5)) {
+    // Where: the middle of the space both parts' boxes take up
+    const [la, ha] = worldBox(a),
+      [lb, hb] = worldBox(b);
+    const at = [0, 1, 2].map((k) => round2((Math.max(la[k], lb[k]) + Math.min(ha[k], hb[k])) / 2));
     warnings.push(
-      `Parts "${a.name}"${a.copy > 1 ? ` (copy ${a.copy})` : ''} and "${b.name}"${b.copy > 1 ? ` (copy ${b.copy})` : ''} collide in the assembly. Check their edges and where they are placed.`,
+      `Parts "${a.name}"${a.copy > 1 ? ` (copy ${a.copy})` : ''} and "${b.name}"${b.copy > 1 ? ` (copy ${b.copy})` : ''} collide in the assembly, around [${at.join(', ')}]. Check their edges and where they are placed.`,
     );
+  }
   if (clashes.length > 5)
     warnings.push(`${clashes.length - 5} more pairs of parts collide in the assembly.`);
   if (assembly.length && loose.length) {
@@ -336,14 +407,20 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   if (!(Number.isFinite(gap) && gap >= 0)) throw new KerfError('$gap must be a number, 0 or more');
   if (!(Number.isFinite(margin) && margin >= 0))
     throw new KerfError('margin must be a number, 0 or more');
+  const nest = options.nest ?? g('$nest') === true;
   const layoutMode = options.layout ?? (g('$layout') === 'none' ? 'none' : 'pack');
   // Fills first and lines over them, whatever order the layers were first
   // used in, so a line layer is never covered by a later fill
   const custom = [...defs.keys()].filter((k) => !['engrave', 'score', 'cut', 'guide'].includes(k));
+  // A layer's order puts it among the others; at the same order fills go
+  // under lines
+  const rank = (k: string) => (defs.get(k)?.order ?? 0) * 2 + (mode(k) === 'fill' ? 0 : 1);
   const order = [
     'engrave',
-    ...custom.filter((k) => mode(k) === 'fill'),
-    ...custom.filter((k) => mode(k) !== 'fill'),
+    ...custom
+      .map((k, i) => [k, i] as const)
+      .sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1])
+      .map(([k]) => k),
     'score',
     'cut',
     'guide',
@@ -352,6 +429,11 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   const allLayers = order.map((k) => defs.get(k)!).filter(Boolean);
   const layerList = allLayers.filter((l) => l.side !== 'back');
   const backList = [...allLayers.filter((l) => l.side === 'back')];
+  const registration = g('$registration') === true;
+  if (registration && !defs.has('registration'))
+    defs.set('registration', { name: 'registration', mode: 'fill', color: '#000000' });
+  if (registration && !layerList.some((l) => l.name === 'registration'))
+    layerList.push(defs.get('registration')!);
 
   const sheets: Sheet[] = [];
   const flipY: Matrix = [1, 0, 0, -1, 0, 0];
@@ -398,6 +480,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
         h: number;
         copy: number;
         rotated: boolean;
+        inner?: Nested[];
       }[] = [];
       for (const r of group) {
         let layers = moved(r.layers, flipY);
@@ -425,6 +508,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
           queue.push({ info: r.info, layers, w, h, copy: c + 1, rotated });
       }
       queue.sort((a, b) => b.h - a.h || b.w - a.w);
+      const packed = nest ? nestInHoles(queue, gap, (k) => mode(k) === 'cut') : queue;
       let items: Placed[] = [];
       let x = margin,
         y = margin,
@@ -452,7 +536,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
         usedW = 0;
         usedH = 0;
       };
-      for (const q of queue) {
+      for (const q of packed) {
         if (x > margin && x + q.w > W - margin) {
           x = margin;
           y += shelf + gap;
@@ -465,6 +549,13 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
           layers: moved(q.layers, [1, 0, 0, 1, x, y]),
           rotated: q.rotated,
         });
+        for (const n of q.inner ?? [])
+          items.push({
+            part: n.item.info.name,
+            copy: n.item.copy,
+            layers: moved(n.item.layers, [1, 0, 0, 1, x + n.dx, y + n.dy]),
+            rotated: n.item.rotated,
+          });
         usedW = Math.max(usedW, x + q.w);
         usedH = Math.max(usedH, y + q.h);
         x += q.w + gap;
@@ -477,6 +568,33 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   function finishSheet(items: Placed[], width: number, height: number, info?: PartInfo): Sheet {
     const w = round2(width),
       h = round2(height);
+    // Print and cut: three squares in the corners for the cutter to find
+    if (registration) {
+      const m = Math.min(5, margin - 1);
+      if (!(m >= 2)) warnings.push('Registration marks need $gap of 3 or more round the sheet.');
+      else {
+        const sq = (x: number, y: number): [number, number][] => [
+          [x, y],
+          [x + m, y],
+          [x + m, y + m],
+          [x, y + m],
+        ];
+        items = [
+          ...items,
+          {
+            part: 'registration',
+            copy: 1,
+            layers: new Map([
+              [
+                'registration',
+                { regions: [sq(0.5, 0.5), sq(w - 0.5 - m, 0.5), sq(0.5, h - 0.5 - m)], lines: [] },
+              ],
+            ]),
+            rotated: false,
+          },
+        ];
+      }
+    }
     const hasBack = items.some((it) => backList.some((l) => it.layers.has(l.name)));
     // The back job: the sheet turned over left to right
     const turned = hasBack
@@ -544,12 +662,19 @@ function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: str
     }
     return m;
   };
+  // A bent part's straight runs, each a solid of its own
   const solids = (p: PartShape): Solid[] =>
-    (p.placements ?? []).map((pl) => ({
-      matrix: placementMatrix(pl),
-      thickness: p.thickness,
-      outline: cutOf(p),
-    }));
+    (p.placements ?? []).flatMap((pl) =>
+      bentPieces({
+        name: p.name,
+        copy: 0,
+        placed: true,
+        matrix: placementMatrix(pl),
+        thickness: p.thickness,
+        outline: cutOf(p),
+        ...(p.bends && { bends: p.bends }),
+      }).map((q) => ({ matrix: q.matrix, thickness: q.thickness, outline: q.outline })),
+    );
   const cuts = new Map<PartShape, ReturnType<typeof union>>();
   for (const p of parts) {
     if (!p.slots) continue;
@@ -563,7 +688,23 @@ function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: str
       if (!found.length) warnings.push(`Part "${p.name}": no part "${name}" to cut slots for.`);
       for (const q of found) others.push(...solids(q));
     }
-    const each = solids(p).map((me) => slotsFor(me, others, p.clearance ?? 0.1));
+    // Per copy; a bent part's runs each cut the slots on their own stretch
+    const each = (p.placements ?? []).map((pl) =>
+      union(
+        bentPieces({
+          name: p.name,
+          copy: 0,
+          placed: true,
+          matrix: placementMatrix(pl),
+          thickness: p.thickness,
+          outline: cutOf(p),
+          ...(p.bends && { bends: p.bends }),
+        }).flatMap((me) => {
+          const cut = slotsFor(me, others, p.clearance ?? 0.1);
+          return p.bends ? intersection(cut, offset(me.outline, 1, 'miter')) : cut;
+        }),
+      ),
+    );
     const sized = each.map((r) => Math.round(r.reduce((a, q) => a + area(q), 0) * 10));
     if (new Set(sized).size > 1)
       warnings.push(
@@ -621,4 +762,155 @@ function rideOn(assembly: AssemblyPart[], riders: Map<AssemblyPart, string>, war
     const run = bendRuns(h.bends, h.thickness)[runOf(h.bends, lx)];
     r.matrix = multiply(h.matrix, multiply(run, multiply(inv, r.matrix)));
   }
+}
+
+interface Nested {
+  item: {
+    info: PartInfo;
+    layers: Map<string, Layer>;
+    w: number;
+    h: number;
+    copy: number;
+    rotated: boolean;
+  };
+  dx: number;
+  dy: number;
+}
+
+// Packs smaller parts into the holes of bigger ones, biggest first, and a
+// part nested in a hole offers its own holes in turn: rings in rings. The
+// queue comes biggest first; the parts left outside are returned, each
+// with the ones nested in it.
+function nestInHoles<
+  T extends { layers: Map<string, Layer>; w: number; h: number; inner?: Nested[] },
+>(queue: T[], gap: number, isCut: (k: string) => boolean): T[] {
+  type Free = { host: T; ox: number; oy: number; region: Poly2[] };
+  const free: Free[] = [];
+  const holesOf = (q: T): Poly2[] => {
+    const holes: Poly2[] = [];
+    for (const [k, l] of q.layers)
+      if (isCut(k)) for (const r of l.regions) if (area(r) < 0) holes.push([...r].reverse());
+    return holes.length ? offset(union(holes), -gap, 'miter') : [];
+  };
+  const inside = (region: Poly2[], x: number, y: number) => {
+    let w = 0;
+    for (const p of region)
+      for (let i = 0, j = p.length - 1; i < p.length; j = i++) {
+        const [ax, ay] = p[j],
+          [bx, by] = p[i];
+        if (ay <= y) {
+          if (by > y && (bx - ax) * (y - ay) - (x - ax) * (by - ay) > 0) w++;
+        } else if (by <= y && (bx - ax) * (y - ay) - (x - ax) * (by - ay) < 0) w--;
+      }
+    return w !== 0;
+  };
+  // A part's outside: its cut outlines with the holes filled
+  const outsideOf = (q: T): Poly2[] => {
+    const outer: Poly2[] = [];
+    for (const [k, l] of q.layers)
+      if (isCut(k)) for (const r of l.regions) if (area(r) > 0) outer.push(r);
+    return union(outer);
+  };
+  const fit = (region: Poly2[], q: T): [number, number] | undefined => {
+    const { w, h } = q;
+    const shape = outsideOf(q);
+    // A few of its points, to rule out places quickly
+    const probes: Poly2 = [];
+    for (const p of shape)
+      for (let i = 0; i < p.length; i += Math.max(1, Math.floor(p.length / 12))) probes.push(p[i]);
+    for (const piece of region) {
+      if (area(piece) <= 0) continue;
+      let [x0, y0, x1, y1] = [Infinity, Infinity, -Infinity, -Infinity];
+      for (const [x, y] of piece) {
+        x0 = Math.min(x0, x);
+        y0 = Math.min(y0, y);
+        x1 = Math.max(x1, x);
+        y1 = Math.max(y1, y);
+      }
+      if (x1 - x0 < w || y1 - y0 < h) continue;
+      const step = Math.max(0.5, Math.min(w, h, x1 - x0 - w + 1, y1 - y0 - h + 1) / 4);
+      for (let y = y0; y <= y1 - h + 1e-9; y += step)
+        for (let x = x0; x <= x1 - w + 1e-9; x += step) {
+          if (!probes.every(([px, py]) => inside(region, px + x, py + y))) continue;
+          const there = shape.map((p) => p.map(([px, py]): [number, number] => [px + x, py + y]));
+          if (difference(there, region).reduce((a, p) => a + Math.abs(area(p)), 0) < 0.01)
+            return [x, y];
+        }
+    }
+    return undefined;
+  };
+  const out: T[] = [];
+  for (const q of queue) {
+    let placed = false;
+    for (const f of free) {
+      const at = fit(f.region, q);
+      if (!at) continue;
+      const [px, py] = at;
+      (f.host.inner ??= []).push({
+        item: q as unknown as Nested['item'],
+        dx: f.ox + px,
+        dy: f.oy + py,
+      });
+      f.region = difference(
+        f.region,
+        offset(
+          outsideOf(q).map((p) => p.map(([a, b]): [number, number] => [a + px, b + py])),
+          gap,
+          'miter',
+        ),
+      );
+      const own = holesOf(q);
+      if (own.length) free.push({ host: f.host, ox: f.ox + px, oy: f.oy + py, region: own });
+      placed = true;
+      break;
+    }
+    if (placed) continue;
+    out.push(q);
+    const own = holesOf(q);
+    if (own.length) free.push({ host: q, ox: 0, oy: 0, region: own });
+  }
+  return out;
+}
+
+type Poly2 = [number, number][];
+
+// Parts given glue = "host" are placed on the host's top or bottom face:
+// their own placement is measured on that face. A glued part with as many
+// copies as its host goes one on each; otherwise all go on the first.
+function glueOn(parts: PartShape[], warnings: string[]) {
+  const done = new Set<PartShape>();
+  const visit = (p: PartShape, path: PartShape[]): void => {
+    if (!p.glue || done.has(p)) return;
+    if (path.includes(p)) {
+      warnings.push(`Part "${p.name}" is glued in a loop of parts; it is left where it is.`);
+      done.add(p);
+      return;
+    }
+    const host = parts.find((q) => q.name === p.glue!.host && q !== p);
+    if (!host?.placements) {
+      warnings.push(`Part "${p.name}" is glued to "${p.glue.host}", which is not a placed part.`);
+      done.add(p);
+      return;
+    }
+    visit(host, [...path, p]);
+    const hs = host.placements.map(placementMatrix);
+    const z = p.glue.face === 'top' ? host.thickness : -p.thickness;
+    const per = p.placements!.length / (p.stack ?? 1);
+    p.placements = p.placements!.map((pl, i) => {
+      const h = hs.length === per ? hs[Math.floor(i / (p.stack ?? 1))] : hs[0];
+      return { ...pl, matrix: multiply(h, multiply(translation(0, 0, z), placementMatrix(pl))) };
+    });
+    done.add(p);
+  };
+  for (const p of parts) visit(p, []);
+}
+
+function inPoly(p: [number, number][], x: number, y: number): boolean {
+  let c = false;
+  for (let i = 0, j = p.length - 1; i < p.length; j = i++) {
+    const [xi, yi] = p[i],
+      [xj, yj] = p[j];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
+  }
+  return c;
 }

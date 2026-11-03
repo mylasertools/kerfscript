@@ -51,19 +51,21 @@ export const BUILTINS = new Set(
   (
     'rect square circle ellipse regular_polygon star polygon path text line polyline arc ' +
     'translate rotate scale mirror multmatrix union group difference intersection hull offset ' +
-    'pattern fill_holes close stroke outline part place step hardware material finger_rect ' +
-    'finger_holes tslot living_hinge children echo assert box divider kerf_gauge slot_gauge ' +
-    'joint_test slotted_divider grid_dividers enclosure enclosure_cutouts vents keyhole ' +
-    'keyholes hanging_hole hanging_loop flex_rect flex_box flex_panel tabs slots tab_rect abs ' +
-    'sign floor ceil round sqrt exp ln log sin cos tan asin acos atan atan2 pow min max clamp ' +
-    'lerp norm cross path_length point_at heading_at path_points rotation euler orient len ' +
-    'concat reverse sum slice str chr ord upper lower split join search contains lookup ' +
-    'is_num is_string is_bool is_list is_undef is_function type_of rands text_width ' +
-    'text_metrics finger_count'
+    'pattern spline hatch paint measure fill_holes close stroke outline part place step ' +
+    'hardware material finger_rect finger_holes tslot living_hinge children echo assert box ' +
+    'divider kerf_gauge slot_gauge joint_test slotted_divider grid_dividers enclosure ' +
+    'enclosure_cutouts vents spur_gear gear_window rack lantern_disc peg_wheel eccentric ' +
+    'snail_cam tappets world_map keyhole keyholes hanging_hole hanging_loop flex_rect ' +
+    'flex_box flex_panel narrow_hinge flex_strip cam_lock lock_key ring_stack symbol tabs ' +
+    'slots tab_rect abs sign floor ceil round sqrt exp ln log sin cos tan asin acos atan ' +
+    'atan2 pow min max clamp lerp norm cross path_length point_at heading_at path_points ' +
+    'spline_points rotation euler orient len concat reverse sum slice str chr ord upper lower ' +
+    'split join search contains lookup is_num is_string is_bool is_list is_undef is_function ' +
+    'type_of rands text_width text_metrics finger_count'
   ).split(' '),
 );
 
-const NUMBER = /(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/y;
+const NUMBER = /(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?(?:(?:mm|cm|m|in|ft)(?![A-Za-z0-9_]))?/y;
 const WORD = /\$?[A-Za-z_][A-Za-z0-9_]*/y;
 const CALL = /\s*\(/y;
 const PATH = /<[^>]*>?/y;

@@ -1,6 +1,6 @@
 // Copyright (c) 2026 MyLaserTools. SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-MyLaserTools-Commercial
 
-import { intersection, type Bend, type Poly } from './geometry.js';
+import { intersection, pieces, type Bend, type Poly } from './geometry.js';
 
 export type Vec3 = [number, number, number];
 
@@ -16,6 +16,8 @@ export interface AssemblyPart {
   name: string;
   copy: number;
   thickness: number;
+  // The sheet's material name, as $material gives it
+  material?: string;
   matrix: number[];
   outline: Poly[];
   placed: boolean;
@@ -26,6 +28,17 @@ export interface AssemblyPart {
   step?: number;
   // Glued in a stack of this many layers
   stack?: number;
+  // What is engraved and scored on it, in its own coordinates, for 3D views
+  marks?: Mark[];
+}
+
+export interface Mark {
+  layer: string;
+  mode: 'fill' | 'line';
+  color: string;
+  side: 'front' | 'back';
+  regions: Poly[];
+  lines: Poly[];
 }
 
 const RAD = Math.PI / 180;
@@ -103,7 +116,7 @@ function bounds2(regions: Poly[]): [number, number, number, number] {
   return [x0, y0, x1, y1];
 }
 
-function worldBox(p: AssemblyPart): [Vec3, Vec3] {
+export function worldBox(p: AssemblyPart): [Vec3, Vec3] {
   const [x0, y0, x1, y1] = bounds2(p.outline);
   const lo: Vec3 = [Infinity, Infinity, Infinity];
   const hi: Vec3 = [-Infinity, -Infinity, -Infinity];
@@ -431,6 +444,32 @@ export function bentPieces(p: AssemblyPart): AssemblyPart[] {
     const outline = intersection(p.outline, [band]);
     if (outline.length)
       out.push({ ...p, outline, bends: undefined, matrix: multiply(p.matrix, runs[k]) });
+  }
+  return out;
+}
+
+// Areas of a part cut up for a 3D view: each piece its outline and then
+// its holes. Where the part bends, the pieces are bands `step` wide across
+// the hinge, so bendPoint() can curve them smoothly.
+export function meshPieces(regions: Poly[], bends?: Bend[], step = 2): Poly[][] {
+  if (!bends?.length) return pieces(regions);
+  const BIG = 1e7;
+  const cuts: number[] = [];
+  for (const b of sortedBends(bends)) {
+    const n = Math.max(1, Math.ceil((b.x1 - b.x0) / step));
+    for (let i = 0; i <= n; i++) cuts.push(b.x0 + ((b.x1 - b.x0) * i) / n);
+  }
+  const xs = [-BIG, ...cuts.sort((a, b) => a - b), BIG];
+  const out: Poly[][] = [];
+  for (let i = 0; i < xs.length - 1; i++) {
+    if (!(xs[i + 1] > xs[i])) continue;
+    const band: Poly = [
+      [xs[i], -BIG],
+      [xs[i + 1], -BIG],
+      [xs[i + 1], BIG],
+      [xs[i], BIG],
+    ];
+    for (const p of pieces(intersection(regions, [band]))) out.push(p);
   }
   return out;
 }

@@ -1,0 +1,54 @@
+// kerf/sizes: paper, card and photo sizes, in millimetres, for holders,
+// folders, frames and boxes made to fit them.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+
+// Paper sizes as [width, height], portrait: "A0" to "A8", "B4" to "B6",
+// "C4" to "C6" envelopes, "DL", "letter", "legal", "tabloid", "half letter",
+// "executive", and the notebook sizes "pocket" (90 x 140) and "traveler"
+// (110 x 210).
+function paper_size(name) = let (s = lookup_size(name, PAPER_SIZES))
+  is_undef(s) ? assert(false, str("Unknown paper size \"", name, "\". Known: ", size_names(PAPER_SIZES))) : s;
+
+// Card sizes as [width, height], landscape: "business" (85 x 55, Europe),
+// "us business" (88.9 x 50.8), "credit" (85.6 x 53.98, ID-1), "japan"
+// (91 x 55), "playing" (63 x 88), "bridge" (56 x 87), "tarot" (70 x 120),
+// "postcard" (148 x 105), "us postcard" (152.4 x 101.6).
+function card_size(name) = let (s = lookup_size(name, CARD_SIZES))
+  is_undef(s) ? assert(false, str("Unknown card size \"", name, "\". Known: ", size_names(CARD_SIZES))) : s;
+
+// Photo print sizes as [width, height], landscape: "4x6", "5x7", "8x10",
+// "10x15" (cm), "13x18" (cm), "instax mini", "instax square", "instax wide",
+// "polaroid".
+function photo_size(name) = let (s = lookup_size(name, PHOTO_SIZES))
+  is_undef(s) ? assert(false, str("Unknown photo size \"", name, "\". Known: ", size_names(PHOTO_SIZES))) : s;
+
+// A size turned to lie wider than tall
+function landscape(size) = size[0] >= size[1] ? size : [size[1], size[0]];
+// A size turned to stand taller than wide
+function portrait(size) = size[0] <= size[1] ? size : [size[1], size[0]];
+
+PAPER_SIZES = [
+  ["A0", [841, 1189]], ["A1", [594, 841]], ["A2", [420, 594]], ["A3", [297, 420]],
+  ["A4", [210, 297]], ["A5", [148, 210]], ["A6", [105, 148]], ["A7", [74, 105]],
+  ["A8", [52, 74]], ["B4", [250, 353]], ["B5", [176, 250]], ["B6", [125, 176]],
+  ["C4", [229, 324]], ["C5", [162, 229]], ["C6", [114, 162]], ["DL", [110, 220]],
+  ["letter", [215.9, 279.4]], ["legal", [215.9, 355.6]], ["tabloid", [279.4, 431.8]],
+  ["half letter", [139.7, 215.9]], ["executive", [184.15, 266.7]],
+  ["pocket", [90, 140]], ["traveler", [110, 210]]
+];
+CARD_SIZES = [
+  ["business", [85, 55]], ["us business", [88.9, 50.8]], ["credit", [85.6, 53.98]],
+  ["japan", [91, 55]], ["playing", [63, 88]], ["bridge", [56, 87]], ["tarot", [70, 120]],
+  ["postcard", [148, 105]], ["us postcard", [152.4, 101.6]]
+];
+PHOTO_SIZES = [
+  ["4x6", [152.4, 101.6]], ["5x7", [177.8, 127]], ["8x10", [254, 203.2]],
+  ["10x15", [150, 100]], ["13x18", [180, 130]], ["instax mini", [54, 86]],
+  ["instax square", [72, 86]], ["instax wide", [108, 86]], ["polaroid", [88, 107]]
+];
+
+// The size of that name in a table of [name, size], ignoring case
+function lookup_size(name, table) = let (k = lower(name), hit = [for (e = table) if (lower(e[0]) == k) e[1]])
+  len(hit) ? hit[0] : undef;
+// The names in a table, for messages
+function size_names(table) = join([for (e = table) e[0]], ", ");

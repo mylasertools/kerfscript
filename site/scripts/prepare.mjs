@@ -21,5 +21,20 @@ copyFileSync(
   join(repo, 'THIRD-PARTY-NOTICES.md'),
   join(site, 'public/assets/THIRD-PARTY-NOTICES.md'),
 );
+// The 3D assembly view, with three.js, beside the interpreter it imports
+const { build } = await import(join(repo, 'node_modules/esbuild/lib/main.js'));
+await build({
+  entryPoints: [join(site, 'src/viewer/assembly.js')],
+  outfile: join(site, 'public/assets/assembly.js'),
+  bundle: true,
+  minify: true,
+  format: 'esm',
+  target: 'es2020',
+  external: ['./kerfscript.js'],
+  legalComments: 'eof',
+  banner: {
+    js: '/*! KerfScript 3D assembly view | (c) MyLaserTools | AGPL-3.0-only or commercial licence. Includes three.js (MIT, Copyright 2010-2025 three.js authors). */',
+  },
+});
 for (const f of ['AtkinsonHyperlegible-Regular.ttf', 'OFL.txt'])
   copyFileSync(join(repo, 'fonts', f), join(site, 'public/assets/fonts', f));

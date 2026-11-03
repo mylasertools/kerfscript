@@ -42,6 +42,8 @@ export interface PartShape {
   clearance?: number;
   // The assembly step that adds it, 0 for none
   step?: number;
+  // Glued flat on another part's face, placed on it
+  glue?: { host: string; face: 'top' | 'bottom' };
 }
 
 export interface Bend {

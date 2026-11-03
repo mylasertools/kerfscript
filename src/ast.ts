@@ -3,7 +3,7 @@
 import type { Pos } from './lexer.js';
 
 export type Expr =
-  | { kind: 'num'; value: number; pos: Pos }
+  | { kind: 'num'; value: number; pos: Pos; unit?: 'mm' | 'cm' | 'm' | 'in' | 'ft' }
   | { kind: 'str'; value: string; pos: Pos }
   | { kind: 'bool'; value: boolean; pos: Pos }
   | { kind: 'undef'; pos: Pos }

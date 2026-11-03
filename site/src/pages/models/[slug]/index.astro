@@ -58,9 +58,11 @@ function rangeText(p) {
         <div class="view-switch" role="tablist" aria-label="View">
           <button role="tab" aria-selected="true" data-view="material">Parts</button>
           <button role="tab" aria-selected="false" data-view="laser">Laser file</button>
+          <button role="tab" aria-selected="false" data-view="build">Build it</button>
         </div>
         <figure class="sheet" data-panel="material" set:html={m.display} />
         <figure class="sheet laser" data-panel="laser" hidden set:html={laser} />
+        <div class="model-build" data-panel="build" hidden data-build={`/models/${m.slug}/${m.slug}.kerf`} />
         <p class="figure-note">
           {
             m.sheets === 1

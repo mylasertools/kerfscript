@@ -20,6 +20,9 @@ export interface Parameter {
 function literal(e: Expr): { ok: boolean; value?: Value } {
   switch (e.kind) {
     case 'num':
+      // A length in real units depends on $scale: not a plain setting
+      if (e.unit) return { ok: false };
+      return { ok: true, value: e.value };
     case 'str':
     case 'bool':
       return { ok: true, value: e.value };

@@ -111,6 +111,19 @@ include <path>                        // run another file in place
 
 Arguments can be positional or named: `rect([20, 10], r = 2)`.
 
+A library's own `use <path>` and `include <path>` look next to that
+library first, then where the main program's would: `lib/props.kerf`
+saying `use <finish.kerf>` finds `lib/finish.kerf`.
+
+### Lengths in real units
+
+A number written with a unit, as `140cm`, `2.5in`, `1.2m`, `30mm` or `3ft`,
+is a length in the real world: it comes out in millimetres divided by
+`$scale`. With `$scale = 12`, `140cm` is 116.67 mm, so a dollhouse and a
+book-nook version come from one model. Plain numbers are millimetres on
+the sheet and never scale: keep `$thickness`, `$kerf` and joint sizes
+plain. A setting written with a unit is not shown in the customizer.
+
 ### Scope
 
 - Assignments run **in order**. A later assignment to the same name replaces
@@ -158,6 +171,10 @@ module hang_hole(d = 5) {
 | `$fn` `$fa` `$fs` | `0` `2` `0.2` | curve resolution: fixed segment count, or max angle and max segment length |
 | `$font`           |               | default font name for `text()`                                             |
 | `$mirrored`       | `false`       | set inside a mirrored part and on the back face: `text()` reads right      |
+| `$scale`          | `1`           | the model's scale: `140cm` is 1400 mm divided by `$scale`                  |
+| `$nest`           | `false`       | pack small parts into the holes of bigger ones                             |
+| `$registration`   | `false`       | print-and-cut marks in three corners of every sheet                        |
+| `$bounds`         |               | set by `measure()` for the children after the one it measures              |
 
 ## Layers
 
@@ -188,6 +205,13 @@ moving the parts, line it up on the same corner and run the back job.
 
 Files list layers in this order: engrave, custom fill layers, custom line
 and cut layers, score, cut, guide, so a line is never covered by a fill.
+`layer(name, order = n)` moves a custom layer among the others, lowest
+first; at the same order fills still go under lines.
+
+For printing on the parts before cutting, `layer(name, bleed = 2)` lets
+that layer run 2 mm past the part's edge instead of being clipped to it,
+and `$registration = true` puts marks in three corners of every sheet on
+a `registration` layer, for a print-and-cut machine to line up on.
 Set the actual operation order, power and speed in your laser software.
 See [Laser software](docs/compatibility.md) for import details.
 
@@ -233,6 +257,10 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
     angle). The hinge's middle layer keeps its length.
   - `on = "name"`: the part is glued to that bent part, and moves with the
     run of it under its centre.
+  - `glue = "name"`, `face = "top"`: the part is glued flat on that part's
+    top (or bottom) face; its `at` and `rotate` are measured on the face,
+    and the parts list says what it is glued to. With as many copies as
+    the part it is glued on, one goes on each.
   - `slots = ["name", ...]`: where the named parts' material passes through
     this part in the assembly, slots are cut through it the shape of their
     cross-section, at any angle, `clearance = 0.1` wider. Draw tabs on one
@@ -281,6 +309,7 @@ export examples.
 | `text(text, size, fit = width)`                            | no wider than `fit`: the size shrinks to fit, never above `size` if given    |
 | `line(from, to)`                                           | a line, not an area                                                          |
 | `line(from, to, width)`                                    | a strip `width` wide between the points, an area                             |
+| `spline(points, width, steps = 8, closed = false)`         | a smooth curve through the points; with `width`, an area along it            |
 | `polyline(points, closed = false)`                         |                                                                              |
 | `arc(r, start = 0, end = 90)`                              | arc line, angles in degrees                                                  |
 
@@ -311,6 +340,9 @@ playground, the command line and `kerfscript.wasm` have `Atkinson`
 | `fill_holes(min_area)`                         | fills holes smaller than `min_area` mm², or all of them                     |
 | `close(r = 0.5)`                               | closes gaps and notches narrower than `2 r`, keeping the outline            |
 | `pattern(spacing, stagger = 0)`                | repeats its first child over the area of the others, clipped at the edge    |
+| `hatch(angle = 45, pitch = 5, width)`          | parallel lines across the children's area, or stripes `width` wide          |
+| `paint(layers)`                                | each child loses the area of every later one; child i goes on `layers[i]`   |
+| `measure(draw = false)`                        | `$bounds` = `[x0, y0, x1, y1]` of the first child, for the children after   |
 | `hull()`                                       | convex hull; each named part inside gets its own hull                       |
 | `offset(r)` / `offset(delta, chamfer = false)` | grow (positive) or shrink areas; `r` rounds corners                         |
 | `stroke(width)`                                | turns lines into areas of that width, for cutting single line art           |
@@ -361,15 +393,16 @@ arguments.
 
 A path is a list of `[x, y]` points.
 
-| Function                    | Result                                                               |
-| --------------------------- | -------------------------------------------------------------------- |
-| `path_length(points)`       | Length along the path                                                |
-| `point_at(points, s)`       | The point `s` along the path; past either end it carries on straight |
-| `heading_at(points, s)`     | The path's direction `s` along it, in degrees from +x                |
-| `path_points(d, tolerance)` | The points of SVG path data, a list of points for each subpath       |
-| `rotation(angles)`          | The 3 × 3 matrix of `[x, y, z]` degrees as `part()` turns; use `*`   |
-| `euler(matrix)`             | The `[x, y, z]` angles of a rotation matrix, for `rotate`            |
-| `orient(x, z = [0, 0, 1])`  | The angles that turn a part's own x and z axes onto two directions   |
+| Function                                           | Result                                                               |
+| -------------------------------------------------- | -------------------------------------------------------------------- |
+| `path_length(points)`                              | Length along the path                                                |
+| `point_at(points, s)`                              | The point `s` along the path; past either end it carries on straight |
+| `heading_at(points, s)`                            | The path's direction `s` along it, in degrees from +x                |
+| `path_points(d, tolerance)`                        | The points of SVG path data, a list of points for each subpath       |
+| `rotation(angles)`                                 | The 3 × 3 matrix of `[x, y, z]` degrees as `part()` turns; use `*`   |
+| `euler(matrix)`                                    | The `[x, y, z]` angles of a rotation matrix, for `rotate`            |
+| `orient(x, z = [0, 0, 1])`                         | The angles that turn a part's own x and z axes onto two directions   |
+| `spline_points(points, steps = 8, closed = false)` | The points of the smooth curve `spline()` draws                      |
 
 ### Lists and strings
 

@@ -30,6 +30,7 @@ import {
   type Shape,
 } from './geometry.js';
 import { fingerCount, fingerHoles, fingerRect, livingHinge, tslot, type Edge } from './joinery.js';
+import { catmullRom } from './functions.js';
 import {
   IDENTITY4,
   multiply as mul4,
@@ -66,6 +67,10 @@ export interface LayerDef {
   color: string;
   // Marks on the back face, made after turning the part over
   side?: 'back';
+  // Where it goes among the custom layers in the files, lowest first
+  order?: number;
+  // How far past the part's edge it may go, for printing with bleed
+  bleed?: number;
 }
 
 // Hardware the assembly needs: dowels, screws, magnets, paper, as a
@@ -135,7 +140,23 @@ export const DEFAULT_LIMITS: Limits = {
   maxCollisionPairs: 20_000,
 };
 
+// The path of `use <path>` beside the file that says it, when that file
+// is a library in a folder: "lib/props" using "finish" gives "lib/finish"
+export function besideFile(from: string | undefined, path: string): string | undefined {
+  if (!from || own(STDLIB, from) !== undefined || path.startsWith('/')) return undefined;
+  const slash = from.lastIndexOf('/');
+  if (slash < 0) return undefined;
+  const parts = [...from.slice(0, slash).split('/'), ...path.split('/')];
+  const out: string[] = [];
+  for (const p of parts) {
+    if (p === '..' && out.length && out[out.length - 1] !== '..') out.pop();
+    else if (p !== '.' && p !== '') out.push(p);
+  }
+  return out.join('/');
+}
+
 const SHAPE_COST = 100;
+const UNITS = { mm: 1, cm: 10, m: 1000, in: 25.4, ft: 304.8 };
 const LIST_COST = 4;
 // Characters in a string that cost as much memory as one list item
 const CHARS_PER_ITEM = 8;
@@ -262,6 +283,9 @@ interface BuiltinCtx {
   env: Env;
   children: () => Shape;
   childList: () => Shape[];
+  // The children one at a time, calling after() with each before the next
+  // runs, so a built-in can set special variables for the ones after
+  childSeq: (after: (i: number, s: Shape) => void) => Shape[];
 }
 
 export interface EvalResult {
@@ -313,6 +337,7 @@ export class Evaluator {
       $sheet: [600, 400],
       $gap: 3,
       $layout: 'pack',
+      $scale: 1,
       PI: Math.PI,
     };
     for (const [k, v] of Object.entries(defaults)) g.vars.set(k, v);
@@ -336,13 +361,25 @@ export class Evaluator {
   }
 
   private load(path: string, at: Pos): Program {
-    const hit = this.loaded.get(path);
-    if (hit) return hit;
-    const src = own(STDLIB, path) ?? this.opts.resolve?.(path);
+    // A library's own use <...> looks next to that library first
+    const near = besideFile(at.file, path);
+    let key = path;
+    let src: string | undefined = own(STDLIB, path);
+    if (src === undefined && near !== undefined) {
+      const hit = this.loaded.get(near);
+      if (hit) return hit;
+      src = this.opts.resolve?.(near);
+      if (typeof src === 'string') key = near;
+    }
+    if (key === path) {
+      const hit = this.loaded.get(path);
+      if (hit) return hit;
+      src ??= this.opts.resolve?.(path);
+    }
     if (typeof src !== 'string') throw new KerfError(`Library <${path}> not found`, at);
-    this.loaded.set(path, { body: [] });
-    const { program } = parse(src, path);
-    this.loaded.set(path, program);
+    this.loaded.set(key, { body: [] });
+    const { program } = parse(src, key);
+    this.loaded.set(key, program);
     return program;
   }
 
@@ -604,6 +641,19 @@ export class Evaluator {
         }
         return out;
       },
+      childSeq: (after) => {
+        const e = childEnv();
+        this.hoist(s.children, e);
+        const out: Shape[] = [];
+        for (const st of s.children) {
+          const r = this.stmt(st, e);
+          if (kids.includes(st)) {
+            out.push(r ?? emptyShape());
+            after(out.length - 1, r ?? emptyShape());
+          }
+        }
+        return out;
+      },
     };
     let out: Shape;
     try {
@@ -667,6 +717,7 @@ export class Evaluator {
   expr(x: Expr, env: Env): Value {
     switch (x.kind) {
       case 'num':
+        return x.unit ? this.length(x, env) : x.value;
       case 'str':
       case 'bool':
         return x.value;
@@ -857,6 +908,13 @@ export class Evaluator {
     const f = this.expr(x.callee, env);
     if (!isFn(f)) throw new KerfError(`Can't call a ${typeName(f)}`, x.pos);
     return this.callFunction(f, this.evalArgs(x.args, env, x.pos), env, 'function');
+  }
+
+  // A length in real units, in sheet millimetres at $scale
+  private length(x: Extract<Expr, { kind: 'num' }>, env: Env): number {
+    const scale = toNumber(env.get('$scale').value ?? 1);
+    if (!(scale > 0)) throw new KerfError('$scale must be a number more than 0', x.pos);
+    return (x.value * UNITS[x.unit!]) / scale;
   }
 
   private callable(name: string, env: Env): boolean {
@@ -1554,6 +1612,113 @@ export class Evaluator {
           }
         return { layers: out, parts: [] };
       },
+      // A smooth curve through points: a line, or with a width an area
+      spline: (c) => {
+        const pts = this.points(this.arg(c.args, 'points', 0), 'points');
+        const width = this.arg(c.args, 'width', 1);
+        const n = Math.max(
+          1,
+          Math.floor(this.num(this.arg(c.args, 'steps', -1, 8), 'spline', 'steps')),
+        );
+        const closed = truthy(this.arg(c.args, 'closed', -1, false));
+        if (!(pts.length * n <= this.limits.maxSegments * 10))
+          throw new Error('too many points: use fewer points or steps');
+        const line = catmullRom(pts, n, closed);
+        if (width === undefined) return lineShape([line]);
+        const w = this.num(width, 'spline', 'width');
+        if (!(w > 0)) throw new Error('width must be more than 0');
+        return regionShape(union(strokeLines([line], w)));
+      },
+      // Parallel lines across the area of the children, `pitch` apart at
+      // `angle` degrees; with a width, stripes of that width
+      hatch: (c) => {
+        const angle = this.num(this.arg(c.args, 'angle', 0, 45), 'hatch', 'angle');
+        const pitch = this.num(this.arg(c.args, 'pitch', 1, 5), 'hatch', 'pitch');
+        const width = this.arg(c.args, 'width', 2);
+        if (!(pitch > 0)) throw new Error('pitch must be more than 0');
+        const keep = union(flat([c.children()], 'hatch').regions);
+        const b = bounds(keep);
+        if (!b) return emptyShape();
+        const [cx, cy] = [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2];
+        const R = Math.hypot(b[2] - b[0], b[3] - b[1]) / 2 + pitch;
+        const a = (angle * Math.PI) / 180;
+        const [ux, uy] = [Math.cos(a), Math.sin(a)];
+        const [vx, vy] = [-uy, ux];
+        const n = Math.ceil(R / pitch);
+        if (!(2 * n + 1 <= this.limits.maxSegments * 10))
+          throw new Error('pitch is too small for the area');
+        this.tick(c.args.at, 2 * n + 1);
+        const lines: Poly[] = [];
+        // Lines through the centre's grid, so stripes line up between shapes
+        const k0 = Math.round((cx * vx + cy * vy) / pitch);
+        for (let k = k0 - n; k <= k0 + n; k++) {
+          const d = k * pitch - (cx * vx + cy * vy);
+          const [px, py] = [cx + vx * d, cy + vy * d];
+          lines.push([
+            [px - ux * R, py - uy * R],
+            [px + ux * R, py + uy * R],
+          ]);
+        }
+        if (width === undefined) return lineShape(clipLines(lines, keep, 'inside'));
+        const w = this.num(width, 'hatch', 'width');
+        if (!(w > 0)) throw new Error('width must be more than 0');
+        return regionShape(intersection(union(strokeLines(lines, w).map((p) => p)), keep));
+      },
+      // Painter's order: each child loses the area of every child after it.
+      // With layers, child i goes on layers[i] ("" leaves it out: a bare
+      // area that still covers the ones before it); without, each keeps
+      // its own layers.
+      paint: (c) => {
+        const names = this.arg(c.args, 'layers', 0);
+        if (
+          names !== undefined &&
+          (!Array.isArray(names) || names.some((n) => typeof n !== 'string'))
+        )
+          throw new Error('layers must be a list of layer names');
+        const kids = c.childList();
+        const out: Shape[] = [];
+        let above: Poly[] = [];
+        for (let i = kids.length - 1; i >= 0; i--) {
+          const k = kids[i];
+          if (k.parts.length) throw new Error('part() cannot go inside paint()');
+          const later = above;
+          const mine = union(flat([k], 'paint').regions);
+          above = later.length ? union([...later, ...mine]) : mine;
+          const layer = Array.isArray(names) ? (names[i] as string | undefined) : undefined;
+          if (layer === '') continue;
+          if (layer !== undefined) {
+            if (!this.layers.has(layer))
+              this.layers.set(layer, { name: layer, mode: 'fill', color: '#000000' });
+            out.push(regionShape(later.length ? difference(mine, later) : mine, layer));
+          } else
+            out.push(
+              later.length
+                ? mapLayers(k, (l) => ({
+                    regions: difference(l.regions, later),
+                    lines: clipLines(l.lines, later, 'outside'),
+                  }))
+                : k,
+            );
+        }
+        return merge(out.reverse());
+      },
+      // Measures its first child: $bounds = [x0, y0, x1, y1] for the ones
+      // after it. The first child is drawn only with draw = true.
+      measure: (c) => {
+        const draw = truthy(this.arg(c.args, 'draw', 0, false));
+        const kids = c.childSeq((i, s) => {
+          if (i !== 0) return;
+          const b =
+            layerBounds(s.layers) ??
+            bounds(
+              s.parts.flatMap((p) =>
+                [...p.layers.values()].flatMap((l) => [...l.regions, ...l.lines]),
+              ),
+            );
+          c.env.vars.set('$bounds', b ? [...b] : undefined);
+        });
+        return merge(draw ? kids : kids.slice(1));
+      },
       // Fills holes smaller than min_area (all holes without it)
       fill_holes: (c) => {
         const min = this.arg(c.args, 'min_area', 0);
@@ -1593,13 +1758,31 @@ export class Evaluator {
         const mode = this.arg(c.args, 'mode', 1);
         const color = this.arg(c.args, 'color', 2);
         const known = this.layers.get(name);
-        if (mode !== undefined || color !== undefined || !known) {
+        const order = this.arg(c.args, 'order', -1);
+        const bleed = this.arg(c.args, 'bleed', -1);
+        if (
+          mode !== undefined ||
+          color !== undefined ||
+          order !== undefined ||
+          bleed !== undefined ||
+          !known
+        ) {
           const m = (mode ?? known?.mode ?? 'line') as LayerDef['mode'];
           if (!['cut', 'line', 'fill', 'guide'].includes(m))
             throw new Error('mode must be "cut", "line", "fill" or "guide"');
           const col = toText(color ?? known?.color ?? '#00aa00');
           if (!/^#[0-9a-fA-F]{6}$/.test(col)) throw new Error('color must look like "#00aa00"');
-          this.layers.set(name, { name, mode: m, color: col });
+          const o = order === undefined ? known?.order : this.num(order, 'layer', 'order');
+          const b = bleed === undefined ? known?.bleed : this.num(bleed, 'layer', 'bleed');
+          if (b !== undefined && !(b >= 0)) throw new Error('bleed must be 0 or more');
+          if (b && m === 'cut') throw new Error('a cut layer has no bleed');
+          this.layers.set(name, {
+            name,
+            mode: m,
+            color: col,
+            ...(o !== undefined && { order: o }),
+            ...(b !== undefined && { bleed: b }),
+          });
         }
         const side = this.arg(c.args, 'side', -1, 'front');
         if (side !== 'front' && side !== 'back')
@@ -1620,15 +1803,23 @@ export class Evaluator {
           throw new Error(`more than ${this.limits.maxParts} part copies in total, the limit`);
         const at = this.arg(c.args, 'at', -1);
         const turn = this.arg(c.args, 'rotate', -1);
-        const framed = this.frame !== IDENTITY4;
+        const glueArg = this.arg(c.args, 'glue', -1);
+        const glue = glueArg === undefined ? undefined : toText(glueArg);
+        const face = toText(this.arg(c.args, 'face', -1, 'top'));
+        if (face !== 'top' && face !== 'bottom')
+          throw new Error(`face must be "top" or "bottom", got ${show(face)}`);
+        // A glued part is placed on its host's face when the parts are
+        // rendered, its at and rotate measured on that face
+        const framed = this.frame !== IDENTITY4 && glue === undefined;
         let placements =
-          at === undefined && turn === undefined && !framed
+          at === undefined && turn === undefined && !framed && glue === undefined
             ? undefined
             : this.placements(at, turn, qty);
         const t = this.thickness(c.env);
         if (placements && (framed || stack > 1))
           placements = placements.flatMap((pl) => {
-            const m = mul4(this.frame, placementMatrix(pl));
+            const m =
+              glue === undefined ? mul4(this.frame, placementMatrix(pl)) : placementMatrix(pl);
             return Array.from({ length: stack }, (_, k) => ({
               ...pl,
               matrix: mul4(m, translation(0, 0, k * t)),
@@ -1666,6 +1857,7 @@ export class Evaluator {
               ...(on !== undefined ? { on: toText(on) } : {}),
               ...(slots ? { slots, clearance } : {}),
               ...(this.step ? { step: this.step } : {}),
+              ...(glue !== undefined && { glue: { host: glue, face: face as 'top' | 'bottom' } }),
             },
           ],
         };
