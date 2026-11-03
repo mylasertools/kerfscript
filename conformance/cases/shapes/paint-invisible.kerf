@@ -1,0 +1,10 @@
+// A paint() child wholly on an area of the same layer under it warns
+// => warning: paint(): child 2 lies wholly on an area of the same layer "engrave" under it, so it can't be seen (line 5)
+part("sign") {
+  rect([60, 30]);
+  paint(["engrave", "engrave", "score"]) {
+    translate([5, 5]) rect([50, 20]);
+    translate([10, 10]) rect([10, 5]);
+    translate([30, 10]) rect([10, 5]);
+  }
+}

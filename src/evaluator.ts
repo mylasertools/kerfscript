@@ -957,6 +957,24 @@ export class Evaluator {
   }
 
   // A length in real units, in sheet millimetres at $scale
+  // A paint() child wholly on the area under it, in the same layer, merges
+  // with it and can't be seen: cream text on a cream sign
+  private invisiblePaint(kids: Shape[], regions: Poly[][], names: Value, at: Pos) {
+    const layerOf = (i: number) =>
+      Array.isArray(names) ? String(names[i] ?? '') : [...kids[i].layers.keys()].sort().join(',');
+    for (let i = 1; i < kids.length; i++) {
+      if (!regions[i]?.length) continue;
+      const key = layerOf(i);
+      const under = union(kids.flatMap((_, j) => (j < i && layerOf(j) === key ? regions[j] : [])));
+      if (!under.length) continue;
+      const left = difference(regions[i], under);
+      if (left.reduce((a, r) => a + Math.abs(area(r)), 0) > 1e-3) continue;
+      this.warn(
+        `paint(): child ${i + 1} lies wholly on an area of the same layer${Array.isArray(names) && key ? ` "${key}"` : ''} under it, so it can't be seen (${where(at, false)})`,
+      );
+    }
+  }
+
   // Not in expr() itself: its frame size limits how deep programs recurse
   private record(x: Extract<Expr, { kind: 'record' }>, env: Env): Value {
     const fields = new Map<string, Value>();
@@ -1745,11 +1763,13 @@ export class Evaluator {
         const kids = c.childList();
         const out: Shape[] = [];
         let above: Poly[] = [];
+        const regions: Poly[][] = [];
         for (let i = kids.length - 1; i >= 0; i--) {
           const k = kids[i];
           if (k.parts.length) throw new Error('part() cannot go inside paint()');
           const later = above;
           const mine = union(flat([k], 'paint').regions);
+          regions[i] = mine;
           above = later.length ? union([...later, ...mine]) : mine;
           const layer = Array.isArray(names) ? (names[i] as string | undefined) : undefined;
           if (layer === '') continue;
@@ -1767,6 +1787,7 @@ export class Evaluator {
                 : k,
             );
         }
+        this.invisiblePaint(kids, regions, names, c.args.at);
         return merge(out.reverse());
       },
       // Measures its first child: $bounds = [x0, y0, x1, y1] for the ones

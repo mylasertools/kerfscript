@@ -361,7 +361,7 @@ playground, the command line and `kerfscript.wasm` have `Atkinson`
 | `close(r = 0.5)`                               | closes gaps and notches narrower than `2 r`, keeping the outline                                                                        |
 | `pattern(spacing, stagger = 0)`                | repeats its first child over the area of the others, clipped at the edge                                                                |
 | `hatch(angle = 45, pitch = 5, width)`          | parallel lines across the children's area, or stripes `width` wide                                                                      |
-| `paint(layers)`                                | each child loses the area of every later one; child i goes on `layers[i]`                                                               |
+| `paint(layers)`                                | each child loses the area of every later one; child i goes on `layers[i]`. A child wholly on an area of its own layer warns             |
 | `measure(draw = false)`                        | `$bounds` = `[x0, y0, x1, y1]` of the first child, for the children after                                                               |
 | `hull()`                                       | convex hull; each named part inside gets its own hull                                                                                   |
 | `offset(r)` / `offset(delta, chamfer = false)` | grow (positive) or shrink areas; `r` rounds corners                                                                                     |

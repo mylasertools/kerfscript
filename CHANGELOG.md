@@ -87,6 +87,8 @@ name=from:step:to` checks a design over every combination of settings.
 - The collision check reports any overlap deeper than 0.1 mm, where it
   needed a cubic millimetre, and slots need a part to reach 1 mm in,
   so a part dipping 0.13 mm into a floor is reported, not slotted.
+- A `paint()` child lying wholly on an area of the same layer under it
+  warns that it can't be seen.
 - A part narrower than `$min_width` (1.5 mm unless set; 0 turns it off)
   somewhere warns, saying where.
 - `symbol(..., box = "grid")` sizes and places a symbol by its icon set's
