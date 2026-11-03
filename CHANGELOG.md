@@ -133,6 +133,10 @@ name=from:step:to` checks a design over every combination of settings.
   sheet smaller. Redefining a layer that is already another layer's back
   (`layer("score-back", ...)` after `layer("score", side = "back")`) is an
   error rather than quietly moving its marks to the front.
+- A bend reaching beyond its part warns, and a 3D view cuts a part's bends
+  into at most 2000 bands, only where there is material. `$label_parts`
+  warns and leaves the parts unnumbered when the program has a front layer
+  of its own named `engrave-back`.
 - The playground's downloads include the back-face jobs: a sheet with back
   marks lists back SVG and DXF files, and one such sheet downloads as a ZIP
   of its front and back.

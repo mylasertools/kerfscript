@@ -43,7 +43,7 @@ import {
 import { KerfError } from './lexer.js';
 import { parse } from './parser.js';
 import { FontBook, textRegions, type FontSource } from './text.js';
-import { checkSetting, toNumber, toText, type Value } from './values.js';
+import { checkSetting, fmt, toNumber, toText, type Value } from './values.js';
 
 export interface RenderOptions {
   /** Capture nominal manufacturing geometry before toolpath compensation. */
@@ -245,7 +245,15 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   let label = 0;
   if (labelParts && !fonts)
     warnings.push('$label_parts needs a font for the numbers. Pass fonts to render().');
-  if (labelParts && fonts) {
+  // The program's own front layer by that name would take the numbers
+  // into the front job
+  const labelLayer = defs.get('engrave-back');
+  if (labelParts && fonts && labelLayer && labelLayer.side !== 'back')
+    warnings.push(
+      '$label_parts engraves the numbers on the layer "engrave-back", which this program uses for the front; rename that layer to number the parts.',
+    );
+  const numbering = labelParts && !!fonts && (!labelLayer || labelLayer.side === 'back');
+  if (numbering) {
     const engrave = defs.get('engrave');
     if (!defs.has('engrave-back'))
       defs.set('engrave-back', {
@@ -260,7 +268,21 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       [...p.layers].filter(([k]) => mode(k) === 'cut').flatMap(([, l]) => l.regions),
     );
     let number: number | undefined;
-    if (labelParts && fonts && material.length) {
+    if (p.bends && material.length) {
+      let lo = Infinity,
+        hi = -Infinity;
+      for (const r of material)
+        for (const [x] of r) {
+          lo = Math.min(lo, x);
+          hi = Math.max(hi, x);
+        }
+      for (const b of p.bends)
+        if (b.x0 < lo - 1e-6 || b.x1 > hi + 1e-6)
+          warnings.push(
+            `Part "${p.name}" bends from x = ${fmt(b.x0)} to ${fmt(b.x1)}, beyond the part (x = ${fmt(lo)} to ${fmt(hi)}); only the part itself bends.`,
+          );
+    }
+    if (numbering && material.length) {
       number = ++label;
       const mark = partLabel(material, String(number), fonts, toText(g('$font') ?? ''));
       if (mark.length) {

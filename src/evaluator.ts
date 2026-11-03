@@ -445,22 +445,39 @@ export class Evaluator {
     };
     walk(env, 0);
     const vars = [...seen].sort(([a], [b]) => (a < b ? -1 : 1));
-    // A function's text is only its parameters, so two different ones
-    // would look alike: don't reuse when any special variable holds one
-    const visited = new Set<object>();
-    const stack: Value[] = vars.map(([, v]) => v);
+    // Each value written exactly, every digit of a number, and no more than
+    // 20000 characters in all. A function's code and scope cannot be
+    // written, so a special variable holding one is never reused.
+    const out: string[] = [];
+    let n = 0;
+    const stack: (Value | { text: string })[] = [];
+    for (let i = vars.length - 1; i >= 0; i--)
+      stack.push({ text: ';' }, vars[i][1], { text: `${vars[i][0]}=` });
     while (stack.length) {
+      if (n > 20000) return '';
       const v = stack.pop();
-      if (typeof v !== 'object' || v === null || visited.has(v)) continue;
-      visited.add(v);
-      if (isFn(v)) return '';
-      if (Array.isArray(v)) for (const x of v) stack.push(x);
-      else if (isRec(v)) for (const x of v.fields.values()) stack.push(x);
+      let t: string;
+      if (v && typeof v === 'object' && 'text' in v && !Array.isArray(v)) t = v.text;
+      else if (typeof v === 'number') t = Object.is(v, -0) ? '-0' : String(v);
+      else if (typeof v === 'string') t = JSON.stringify(v);
+      else if (v === undefined || typeof v === 'boolean') t = String(v);
+      else if (Array.isArray(v)) {
+        stack.push({ text: ']' });
+        for (let i = v.length - 1; i >= 0; i--) stack.push(v[i], { text: ',' });
+        t = '[';
+      } else if (isRange(v)) t = `[${v.start}:${v.step}:${v.end}]`;
+      else if (isRec(v)) {
+        stack.push({ text: '}' });
+        const fields = [...v.fields];
+        for (let i = fields.length - 1; i >= 0; i--)
+          stack.push(fields[i][1], { text: `${fields[i][0]}=` });
+        t = '{';
+      } else return '';
+      out.push(t);
+      n += t.length;
     }
-    const text = write(vars as unknown as Value, 20000, true);
-    // Too much to compare cheaply: don't reuse
-    if (!text.whole) return '';
-    return `${this.frame.join(',')}|${this.step}|${this.stepFolded}|${text.text}`;
+    const text = out.join('');
+    return `${this.frame.join(',')}|${this.step}|${this.stepFolded}|${text}`;
   }
 
   // A count of the things a statement can make besides its shape

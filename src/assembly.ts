@@ -475,16 +475,33 @@ export function bentPieces(p: AssemblyPart): AssemblyPart[] {
   return out;
 }
 
+/** The most bands a part's bends are cut into for a 3D view */
+export const MAX_BENT_BANDS = 2000;
+
 // Areas of a part cut up for a 3D view: each piece its outline and then
 // its holes. Where the part bends, the pieces are bands `step` wide across
 // the hinge, so bendPoint() can curve them smoothly.
 export function meshPieces(regions: Poly[], bends?: Bend[], step = 2): Poly[][] {
   if (!bends?.length) return pieces(regions);
   const BIG = 1e7;
+  // Bands only where there is material, and at most MAX_BENT_BANDS of them
+  // however wide the bends: a bend's width comes from the program
+  let lo = Infinity,
+    hi = -Infinity;
+  for (const r of regions)
+    for (const [x] of r) {
+      lo = Math.min(lo, x);
+      hi = Math.max(hi, x);
+    }
+  const spans = sortedBends(bends)
+    .map((b) => [Math.max(b.x0, lo), Math.min(b.x1, hi)])
+    .filter(([a, b]) => b > a);
+  const total = spans.reduce((t, [a, b]) => t + (b - a), 0);
+  const width = Math.max(step, total / MAX_BENT_BANDS);
   const cuts: number[] = [];
-  for (const b of sortedBends(bends)) {
-    const n = Math.max(1, Math.ceil((b.x1 - b.x0) / step));
-    for (let i = 0; i <= n; i++) cuts.push(b.x0 + ((b.x1 - b.x0) * i) / n);
+  for (const [a, b] of spans) {
+    const n = Math.max(1, Math.ceil((b - a) / width));
+    for (let i = 0; i <= n; i++) cuts.push(a + ((b - a) * i) / n);
   }
   const xs = [-BIG, ...cuts.sort((a, b) => a - b), BIG];
   const out: Poly[][] = [];

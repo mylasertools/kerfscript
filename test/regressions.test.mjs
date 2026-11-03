@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { KerfError, render } from '../dist/index.js';
+import { readFileSync } from 'node:fs';
+import { KerfError, meshPieces, render } from '../dist/index.js';
 
 const layers = (r) => r.sheets[0].items.map((it) => it.layers);
 
@@ -262,4 +263,59 @@ test('hardware sides are bounded', () => {
       ),
     /sides must be from 3 to 128/,
   );
+});
+
+test('the children cache tells apart numbers that print alike', () => {
+  const r = render(
+    'module twice() { $a = 1.0000000001; children(); translate([40, 0]) { $a = 1.0000000002; children(); } }\ntwice() square($a == 1.0000000001 ? 10 : 20);',
+  );
+  const sizes = layers(r)[0]
+    .get('cut')
+    .regions.map((p) =>
+      Math.round(Math.max(...p.map((q) => q[0])) - Math.min(...p.map((q) => q[0]))),
+    );
+  assert.deepEqual(
+    sizes.sort((a, b) => a - b),
+    [10, 20],
+  );
+});
+
+test('$label_parts does not put numbers on a front layer named engrave-back', async () => {
+  const font = readFileSync(
+    new URL('../site/public/assets/fonts/AtkinsonHyperlegible-Regular.ttf', import.meta.url),
+  );
+  const r = render(
+    '$label_parts = true;\nlayer("engrave-back", "fill", "#000000") translate([100, 0]) square(1);\npart("p") square(40);',
+    {
+      fonts: { A: font.buffer.slice(font.byteOffset, font.byteOffset + font.byteLength) },
+      defaultFont: 'A',
+    },
+  );
+  assert.ok(
+    r.warnings.some((w) => /uses for the front/.test(w)),
+    r.warnings.join('\n'),
+  );
+  assert.ok(!r.sheets.some((s) => s.back));
+});
+
+test('a bend far beyond its part warns and stays cheap to draw', () => {
+  const r = render('$thickness = 3;\npart("p", bend = [0, 1000000000, 90]) rect([40, 10]);');
+  assert.ok(
+    r.warnings.some((w) => /beyond the part/.test(w)),
+    r.warnings.join('\n'),
+  );
+  const pieces = meshPieces(r.assembly[0].outline, r.assembly[0].bends);
+  assert.ok(pieces.length <= 2002, String(pieces.length));
+  const wide = meshPieces(
+    [
+      [
+        [0, 0],
+        [1e6, 0],
+        [1e6, 1],
+        [0, 1],
+      ],
+    ],
+    [{ x0: 0, x1: 1e6, angle: 90 }],
+  );
+  assert.ok(wide.length <= 2002, String(wide.length));
 });
