@@ -11,6 +11,8 @@ added to old ones change the text of warnings.
 Records: `{kind = "armchair", x = 10}` holds values by name, read as
 `s.kind` or `s["kind"]` (a missing field is `undef`), with `keys()`,
 `merge()`, `is_record()` and `len()`. `kerf fmt` lays them out as lists.
+`call("roses", 40, 30)` calls a module by name, so a table entry can carry
+the module that draws it.
 
 Assembly:
 

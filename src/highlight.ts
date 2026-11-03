@@ -51,7 +51,7 @@ export const BUILTINS = new Set(
   (
     'rect square circle ellipse regular_polygon star polygon path text line polyline arc ' +
     'translate rotate scale mirror multmatrix union group difference intersection hull offset ' +
-    'pattern spline hatch paint measure fill_holes close stroke outline part place step ' +
+    'pattern spline hatch paint measure fill_holes close stroke outline part place call step ' +
     'hardware material finger_rect finger_holes tslot living_hinge children echo assert box ' +
     'divider kerf_gauge slot_gauge joint_test slotted_divider grid_dividers enclosure ' +
     'enclosure_cutouts vents spur_gear gear_window rack lantern_disc peg_wheel eccentric ' +

@@ -620,7 +620,21 @@ export class Evaluator {
     if (!this.warnings.includes(warning)) this.warnings.push(warning);
   }
 
+  // call("name", args...): the module of that name, so a table can say
+  // which module draws each entry
+  private callByName(s: Extract<Stmt, { kind: 'call' }>, env: Env): Shape {
+    const i = s.args.findIndex((a) => a.name === 'name');
+    const at = i >= 0 ? i : s.args.findIndex((a) => a.name === null);
+    if (at < 0) throw new KerfError('call() needs the name of a module', s.pos);
+    const name = this.expr(s.args[at].value, env);
+    if (typeof name !== 'string')
+      throw new KerfError(`call() needs a module's name as a string, got ${typeName(name)}`, s.pos);
+    if (name === 'call') throw new KerfError("call() can't call itself", s.pos);
+    return this.callModule({ ...s, name, args: s.args.filter((_, k) => k !== at) }, env);
+  }
+
   private callModule(s: Extract<Stmt, { kind: 'call' }>, env: Env): Shape {
+    if (s.name === 'call' && !env.mod('call')) return this.callByName(s, env);
     const args = this.evalArgs(s.args, env, s.pos);
     const user = env.mod(s.name);
     if (user) {

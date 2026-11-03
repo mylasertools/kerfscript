@@ -379,11 +379,12 @@ playground, the command line and `kerfscript.wasm` have `Atkinson`
 
 ### Other
 
-| Module                       | Effect                                                                           |
-| ---------------------------- | -------------------------------------------------------------------------------- |
-| `echo(...)`                  | Report values without creating geometry                                          |
-| `assert(condition, message)` | Stop with `message` when `condition` is false                                    |
-| `children(index)`            | Render a child passed to the current module; omit `index` to render all children |
+| Module                       | Effect                                                                                                           |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `echo(...)`                  | Report values without creating geometry                                                                          |
+| `assert(condition, message)` | Stop with `message` when `condition` is false                                                                    |
+| `children(index)`            | Render a child passed to the current module; omit `index` to render all children                                 |
+| `call(name, ...)`            | Call the module named by the string `name` with the other arguments and the children: `call(entry.draw, 40, 30)` |
 
 ## Built-in functions
 

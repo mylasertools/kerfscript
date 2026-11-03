@@ -484,6 +484,15 @@ export const SIGNATURES: Signature[] = [
     doc: 'Place the parts inside in the assembled view, with their own placements inside this one',
   },
   {
+    name: 'call',
+    kind: 'module',
+    params: [p('name', 'The name of a module, as "roses"')],
+    rest: true,
+    children: true,
+    section: 'Other',
+    doc: 'Calls the module of that name with the other arguments and the children, so a table can carry which module draws each entry',
+  },
+  {
     name: 'step',
     kind: 'module',
     params: [

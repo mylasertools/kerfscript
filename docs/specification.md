@@ -416,6 +416,13 @@ A modifier changes the call: `*` skips it entirely, so its arguments and
 children are not evaluated; `#` and `%` move all of its shapes to the
 `guide` layer; `!` has no effect and is accepted for OpenSCAD files.
 
+`call(name, ...)` calls the module whose name is the string `name` (the
+first positional argument, or `name = ...`), user-defined or built-in, with
+the remaining arguments and the call's children, as if it were written
+`name(...)`. A `name` that is not a string is the error `call() needs a
+module's name as a string, got <type>`; an unknown name is `Unknown
+module <name>()`. A user module named `call` hides this.
+
 ### Special variables
 
 A name starting with `$` is a special variable. It is looked up through

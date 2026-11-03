@@ -1,0 +1,11 @@
+// call(name, ...) calls the module of that name with the other arguments
+// and the children
+// => part: "a" size=40x30
+// => part: "b" size=20x20
+// => part: "c" size=3x4
+module roses(w, h) rect([w, h]);
+module frame(w) difference() { rect(w); translate([2, 2]) children(); }
+entry = {draw = "roses", w = 40};
+part("a") call(entry.draw, entry.w, h = 30);
+part("b") call("frame", 20) rect(5);
+part("c") call("rect", [3, 4]);
