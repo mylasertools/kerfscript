@@ -1,0 +1,7 @@
+// intersection() with a child of lines alone keeps only the lines, clipped
+// to the other children's area, when the lines come first
+// => layer: "score" length=20
+intersection() {
+  score() line([-10, 5], [30, 5]);
+  rect([20, 20]);
+}

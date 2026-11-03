@@ -336,21 +336,21 @@ playground, the command line and `kerfscript.wasm` have `Atkinson`
 
 ### Combining
 
-| Module                                         | Notes                                                                       |
-| ---------------------------------------------- | --------------------------------------------------------------------------- |
-| `union()` / `group()`                          | joins children                                                              |
-| `difference()`                                 | removes every later child's area from every layer of the first child        |
-| `intersection()`                               | keeps the area common to all children; lines of any child are clipped to it |
-| `fill_holes(min_area)`                         | fills holes smaller than `min_area` mm², or all of them                     |
-| `close(r = 0.5)`                               | closes gaps and notches narrower than `2 r`, keeping the outline            |
-| `pattern(spacing, stagger = 0)`                | repeats its first child over the area of the others, clipped at the edge    |
-| `hatch(angle = 45, pitch = 5, width)`          | parallel lines across the children's area, or stripes `width` wide          |
-| `paint(layers)`                                | each child loses the area of every later one; child i goes on `layers[i]`   |
-| `measure(draw = false)`                        | `$bounds` = `[x0, y0, x1, y1]` of the first child, for the children after   |
-| `hull()`                                       | convex hull; each named part inside gets its own hull                       |
-| `offset(r)` / `offset(delta, chamfer = false)` | grow (positive) or shrink areas; `r` rounds corners                         |
-| `stroke(width)`                                | turns lines into areas of that width, for cutting single line art           |
-| `outline()`                                    | turns areas into their outline lines                                        |
+| Module                                         | Notes                                                                                                                                   |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `union()` / `group()`                          | joins children                                                                                                                          |
+| `difference()`                                 | removes every later child's area from every layer of the first child                                                                    |
+| `intersection()`                               | keeps the area common to all children; lines of any child are clipped to the others' area, and a child of lines alone leaves only lines |
+| `fill_holes(min_area)`                         | fills holes smaller than `min_area` mm², or all of them                                                                                 |
+| `close(r = 0.5)`                               | closes gaps and notches narrower than `2 r`, keeping the outline                                                                        |
+| `pattern(spacing, stagger = 0)`                | repeats its first child over the area of the others, clipped at the edge                                                                |
+| `hatch(angle = 45, pitch = 5, width)`          | parallel lines across the children's area, or stripes `width` wide                                                                      |
+| `paint(layers)`                                | each child loses the area of every later one; child i goes on `layers[i]`                                                               |
+| `measure(draw = false)`                        | `$bounds` = `[x0, y0, x1, y1]` of the first child, for the children after                                                               |
+| `hull()`                                       | convex hull; each named part inside gets its own hull                                                                                   |
+| `offset(r)` / `offset(delta, chamfer = false)` | grow (positive) or shrink areas; `r` rounds corners                                                                                     |
+| `stroke(width)`                                | turns lines into areas of that width, for cutting single line art                                                                       |
+| `outline()`                                    | turns areas into their outline lines                                                                                                    |
 
 ### Joinery
 

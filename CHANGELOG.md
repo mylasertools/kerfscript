@@ -47,7 +47,10 @@ width)`, `pattern(spacing, stagger)` that repeats a tile cheaply,
   `paint(layers)` for painter's order, `measure()` with `$bounds`,
   `fill_holes(min_area)`, `close(r)`, `line(a, b, width)` as an area,
   `text(fit = width)`, and `path(d, close = true)`.
-- `intersection()` clips lines in any child, not only the first.
+- `intersection()` clips the lines of any child, not only the first, to the
+  area of the other children. A child of lines alone leaves no area, so
+  `intersection() { outline() circle(d = 20); square(40); }` gives only the
+  clipped arc, whichever child comes first.
 - `path_length()`, `point_at()`, `heading_at()` and `path_points()` work
   along paths.
 - Lengths in real units, as `140cm`, `2in` or `1.2m`, divided by `$scale`.

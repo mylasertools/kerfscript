@@ -1,0 +1,6 @@
+// intersection() of children that all have area keeps what they share
+// => layer: "cut" area=100
+intersection() {
+  rect([20, 20]);
+  translate([10, 10]) rect([20, 20]);
+}

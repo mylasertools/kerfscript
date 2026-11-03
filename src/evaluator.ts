@@ -1488,23 +1488,28 @@ export class Evaluator {
           }
           return keep;
         };
-        const first = kids.find(area) ?? kids[0];
+        // The area is what every child covers, so a child of lines alone
+        // leaves none; each child's lines are clipped to the area of the
+        // others, and pass whole when no other child has any
+        const first = kids[0];
+        const allArea = kids.every(area);
         const keep = keepOf(first);
-        let out = keep
-          ? mapLayers(first, (l) => ({
-              regions: intersection(l.regions, keep),
-              lines: clipLines(l.lines, keep, 'inside'),
-            }))
-          : first;
+        let out = mapLayers(first, (l) => ({
+          regions: !allArea ? [] : keep ? intersection(l.regions, keep) : l.regions,
+          lines: keep ? clipLines(l.lines, keep, 'inside') : l.lines,
+        }));
         for (const r of kids) {
           if (r === first) continue;
           if (r.parts.length)
             throw new Error('part() can only be the first child of intersection()');
-          const k = keepOf(r) ?? [];
+          const k = keepOf(r);
           const lines = new Map<string, Layer>();
           for (const [name, l] of r.layers)
             if (l.lines.length)
-              lines.set(name, { regions: [], lines: clipLines(l.lines, k, 'inside') });
+              lines.set(name, {
+                regions: [],
+                lines: k ? clipLines(l.lines, k, 'inside') : l.lines,
+              });
           if (lines.size) out = merge([out, { layers: lines, parts: [] }]);
         }
         return out;
