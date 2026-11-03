@@ -152,7 +152,7 @@ export function besideFile(from: string | undefined, path: string): string | und
     if (p === '..' && out.length && out[out.length - 1] !== '..') out.pop();
     else if (p !== '.' && p !== '') out.push(p);
   }
-  return out.join('/');
+  return (from.startsWith('/') ? '/' : '') + out.join('/');
 }
 
 const SHAPE_COST = 100;
@@ -385,6 +385,21 @@ export class Evaluator {
 
   private hoist(stmts: Stmt[], env: Env) {
     for (const s of stmts) {
+      // A definition with a built-in's name hides it from here on, which
+      // a new built-in can do to an old library without anyone noticing
+      if (
+        (s.kind === 'module' || s.kind === 'function') &&
+        (s.pos.file === undefined || own(STDLIB, s.pos.file) === undefined)
+      ) {
+        const hides =
+          s.kind === 'module'
+            ? own(this.builtins, s.name) !== undefined
+            : own(FUNCTIONS, s.name) !== undefined || SPECIAL.includes(s.name);
+        if (hides)
+          this.warn(
+            `${s.kind} ${s.name} hides the built-in ${s.name}(); rename it to use both (${where(s.pos, false)})`,
+          );
+      }
       if (s.kind === 'module') env.mods.set(s.name, { params: s.params, body: s.body, env });
       else if (s.kind === 'function') env.fns.set(s.name, { params: s.params, body: s.body, env });
       else if (s.kind === 'use' && !s.include) {

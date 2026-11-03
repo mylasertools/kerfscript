@@ -218,6 +218,8 @@ export function libraryFile(
 ): string | undefined {
   const tries = (dir: string, p: string) =>
     [join(dir, p), join(dir, p + '.kerf')].find((f) => exists(f));
+  // An absolute path names the file itself
+  if (isAbsolute(path)) return [path, path + '.kerf'].find((f) => exists(f));
   const slash = path.indexOf('/');
   const root = slash > 0 ? findProject(base) : undefined;
   if (root) {

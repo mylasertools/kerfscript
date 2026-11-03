@@ -72,6 +72,10 @@ Output:
 - `kerf check --stats` counts points by part and layer, and `--sweep
 name=from:step:to` checks a design over every combination of settings.
 - A library's own `use` looks next to it first.
+- `use` takes an absolute path, as `use </home/me/lib/props>`.
+- A module or function defined with a built-in's name warns that it hides
+  the built-in.
+- A stack glued under its host (`face = "bottom"`) grows down, away from it.
 
 New libraries:
 

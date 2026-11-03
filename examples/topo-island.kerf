@@ -54,21 +54,21 @@ top = land(peak);
 function level(k) = coast + (top - coast) * k / (layers + 1);
 
 // Distance along a ray where the land first drops below height h
-function cross(prof, h, j = 1) =
+function crossing(prof, h, j = 1) =
   j > samples ? reach :
   prof[j] < h ? dr * (j - 1 + (prof[j - 1] - h) / (prof[j - 1] - prof[j])) :
-  cross(prof, h, j + 1);
+  crossing(prof, h, j + 1);
 
 function contour(k) = [for (i = [0:rays - 1]) let (a = i * 360 / rays)
-  peak + max(cross(profiles[i], level(k)), 3) * [cos(a), sin(a)]];
+  peak + max(crossing(profiles[i], level(k)), 3) * [cos(a), sin(a)]];
 
 // Smooth the traced outline and keep it free of slivers
-module layer(k) offset(r = 1.2) offset(r = -1.2) polygon(contour(k));
+module contour_layer(k) offset(r = 1.2) offset(r = -1.2) polygon(contour(k));
 
 // Assembled: the layers stacked on the base, lowest first
 part("Base", at = [0, 0, 0]) {
   rect(plate, r = 4);
-  score() layer(1);
+  score() contour_layer(1);
   engrave() if (name != "") translate([plate[0] - 10, 10])
     text(name, size = plate[1] * 0.045, halign = "right", spacing = 1.2);
   score() translate([plate[0] - 18, plate[1] - 20]) {
@@ -78,9 +78,9 @@ part("Base", at = [0, 0, 0]) {
 }
 
 for (k = [1:layers]) step(str("Glue layer ", k, " on its scored outline")) part(str("Layer ", k), at = [0, 0, k * $thickness]) {
-  layer(k);
+  contour_layer(k);
   if (k < layers) {
-    score() layer(k + 1);
+    score() contour_layer(k + 1);
     // The number hides under the next layer
     engrave() translate(peak) text(str(k), size = 4, halign = "center", valign = "center");
   }

@@ -142,6 +142,15 @@ test('use <name/...> finds the project itself, installed libraries, then files b
   ]);
 });
 
+test('use <...> takes an absolute path, and that library finds its own beside it', () => {
+  const lib = folder({ 'a.kerf': 'use <b>\nmodule a() b();', 'b.kerf': 'module b() rect(10);' });
+  const elsewhere = folder({});
+  const design = `use <${join(lib, 'a')}>\npart("x") a();`;
+  const r = render(design, { resolve: resolver(join(elsewhere, 'design.kerf')) });
+  assert.equal(r.parts[0].width, 10);
+  assert.equal(libraryFile(elsewhere, join(lib, 'b.kerf')), join(lib, 'b.kerf'));
+});
+
 test('a folder library installs, renders, and is pinned by a hash of its files', async () => {
   const lib = folder(FEET);
   const root = folder({ 'base.kerf': BASE });

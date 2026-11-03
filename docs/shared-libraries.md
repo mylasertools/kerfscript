@@ -74,7 +74,10 @@ the nearest folder at or above the design's own with a `kerf.json`:
    this for its own files, and so do the designs and examples inside it.
 2. `use <name/...>`, where `kerf_libraries/name/` exists: that installed
    library's file.
-3. Anything else: a file in the design's folder or below it, as before.
+3. An absolute path, as `use </home/me/lib/props>`: that file, wherever
+   the design is. Handy for a scratch design outside the project; a
+   design to share should use the other forms.
+4. Anything else: a file in the design's folder or below it, as before.
 
 Each path is tried as written and with `.kerf` added. A design in
 `projects/shelf/designs/` therefore finds `use <feet/feet>` in

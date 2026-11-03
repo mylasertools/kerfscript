@@ -291,6 +291,11 @@ built-in of the same name: `len = 3; echo(len([1, 2]))` writes 2. (Before
 language version 0.3 any variable hid them.) Calling a value that is not a
 function in any other way is an error: `Can't call a number`.
 
+A module or function defined with the name of a built-in hides the
+built-in wherever the definition is visible, and the program warns
+`module rect hides the built-in rect(); rename it to use both`, with its
+line. The standard library's own definitions do not warn.
+
 Arguments are evaluated left to right in the caller's scope, then bound to
 parameters:
 
@@ -441,7 +446,8 @@ rest (the `resolve` render option). The command line, the desktop app and
 the language server look in the design's project, the nearest folder at or
 above the design's with a `kerf.json`: `<name/...>` is a file of the
 project when `name` is the project's own name, or of the installed library
-in `kerf_libraries/name/`; any other path is a file in the design's folder.
+in `kerf_libraries/name/`; an absolute path is that file; any other path
+is a file in the design's folder.
 Each tries `path`, then `path.kerf` ([Shared libraries](shared-libraries.md)).
 From language version 0.3, a `use` or `include` inside a library whose
 path has a folder, as `lib/props`, first asks for the path beside it,
