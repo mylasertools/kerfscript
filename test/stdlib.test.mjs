@@ -382,6 +382,14 @@ test('the lock fits together locked and open', () => {
   }
 });
 
+test('ring_stack refuses a hole that leaves its core plates too thin', () => {
+  assert.throws(
+    () => render('use <kerf/rings>\n$thickness = 3;\nring_stack([30, 40, 30], 5.5);'),
+    /make it at least 7.1 mm/,
+  );
+  assert.ok(render('use <kerf/rings>\n$thickness = 3;\nring_stack([30, 40, 30], 7.1);').parts.length);
+});
+
 test('ring_stack makes one part for each size of ring, and a base can slot its feet', () => {
   const r = render(`use <kerf/rings>
     $fn = 48;

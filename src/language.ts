@@ -138,6 +138,15 @@ const SPECIAL: Record<string, { value?: string; doc: string }> = {
   $fs: { value: '0.2', doc: 'Largest length of a curve segment, in mm' },
   $font: { doc: 'Default font name for `text()`' },
   $children: { doc: 'How many child statements the module was called with' },
+  $scale: { value: '1', doc: "The model's scale: `140cm` is 1400 mm divided by `$scale`" },
+  $nest: { value: 'false', doc: 'Pack small parts into the holes of bigger ones' },
+  $registration: { value: 'false', doc: 'Print-and-cut marks in three corners of every sheet' },
+  $min_width: {
+    value: '1.5',
+    doc: "Warn where a part's material is narrower than this; `0` turns it off",
+  },
+  $mirrored: { doc: 'True inside a mirrored part and on the back face, so `text()` reads right' },
+  $bounds: { doc: 'Set by `measure()` for the children after the one it measures' },
   PI: { value: '3.141592653589793', doc: 'π, half a turn in radians' },
 };
 const CONSTANTS = ['true', 'false', 'undef'];

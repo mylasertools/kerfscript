@@ -21,6 +21,12 @@ module ring_stack(diameters, hole, name = "ring", count = undef, feet = true, cl
   assert(min(ds) > hole + 4, "every ring must be at least 4 mm wider than the hole");
   h = n * t;
   w = ring_core_width(hole, clearance);
+  // The halving slot leaves a strip each side of it, which must stay
+  // $min_width (1.5 mm unless set) wide
+  m = is_undef($min_width) ? 1.5 : $min_width;
+  least = ceil(sqrt(pow(t + 3 * clearance + 2 * m, 2) + pow(t + clearance, 2)) * 10) / 10;
+  assert((w - t - clearance) / 2 >= m - 0.001,
+    str("A hole of ", hole, " mm leaves the core plates too thin beside their slot in ", t, " mm material; make it at least ", least, " mm"));
   sizes = [for (i = [0:n - 1]) if (len([for (k = [0:n - 1]) if (k < i && ds[k] == ds[i]) k]) == 0) ds[i]];
   for (d = sizes) let (at = [for (k = [0:n - 1]) if (ds[k] == d) [0, 0, k * t]])
     part(len(sizes) == 1 ? name : str(name, " ", round(d * 10) / 10), qty = len(at), at = at) difference() {
