@@ -17,6 +17,7 @@ import {
   lineShape,
   merge,
   offset,
+  pieces,
   regionShape,
   retag,
   roundedRect,
@@ -1648,9 +1649,14 @@ export class Evaluator {
             `the pattern would have ${count} copies, more than the limit of ${this.limits.maxParts * 10}`,
           );
         this.tick(c.args.at, count);
+        // The area's separate pieces with their boxes: a tile is tested and
+        // clipped only against the pieces it may touch, so an area of many
+        // small shapes costs what they cover, not their bounding box
+        const groups = pieces(keep).map((g) => ({ polys: g, box: bounds(g)! }));
+        let near: Poly[] = keep;
         const inside = (x: number, y: number) => {
           let w = 0;
-          for (const p of keep)
+          for (const p of near)
             for (let i = 0, j = p.length - 1; i < p.length; j = i++) {
               const [ax, ay] = p[j],
                 [bx, by] = p[i];
@@ -1673,13 +1679,18 @@ export class Evaluator {
               oy = j * dy;
             const b = [tb[0] + ox, tb[1] + oy, tb[2] + ox, tb[3] + oy];
             if (b[2] < ab[0] || b[0] > ab[2] || b[3] < ab[1] || b[1] > ab[3]) continue;
+            const hit = groups.filter(
+              (g) => !(b[2] < g.box[0] || b[0] > g.box[2] || b[3] < g.box[1] || b[1] > g.box[3]),
+            );
+            if (!hit.length) continue;
+            near = hit.length === groups.length ? keep : hit.flatMap((g) => g.polys);
             const corners = [
               inside(b[0], b[1]),
               inside(b[2], b[1]),
               inside(b[2], b[3]),
               inside(b[0], b[3]),
             ];
-            const edge = keep.some((p) =>
+            const edge = near.some((p) =>
               p.some(([x, y]) => x > b[0] && x < b[2] && y > b[1] && y < b[3]),
             );
             const whole = corners.every(Boolean) && !edge;
@@ -1690,8 +1701,8 @@ export class Evaluator {
                 whole
                   ? l
                   : {
-                      regions: intersection(l.regions, keep),
-                      lines: clipLines(l.lines, keep, 'inside'),
+                      regions: intersection(l.regions, near),
+                      lines: clipLines(l.lines, near, 'inside'),
                     },
               );
           }

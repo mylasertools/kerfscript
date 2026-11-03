@@ -87,6 +87,9 @@ name=from:step:to` checks a design over every combination of settings.
 - The collision check reports any overlap deeper than 0.1 mm, where it
   needed a cubic millimetre, and slots need a part to reach 1 mm in,
   so a part dipping 0.13 mm into a floor is reported, not slotted.
+- `pattern()` over an area of many small shapes tests and clips each tile
+  only against the shapes it may touch: 30 hearts on a facade take 0.2 s,
+  not 6.
 - `$label_parts = true` engraves each part's number on its back face and
   lists the numbers in `kerf check`'s parts and steps (`label` on each part).
 - A `paint()` child lying wholly on an area of the same layer under it
