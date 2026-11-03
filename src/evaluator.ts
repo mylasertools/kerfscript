@@ -40,6 +40,7 @@ import {
   type Vec3,
 } from './assembly.js';
 import { KerfError, where, type Pos } from './lexer.js';
+import { HARDWARE_COLORS, HARDWARE_KINDS } from './hardware.js';
 import { parse } from './parser.js';
 import { signature } from './signatures.js';
 import { LIBRARIES } from './stdlib.js';
@@ -343,6 +344,11 @@ export class Evaluator {
     for (const [k, v] of Object.entries(defaults)) g.vars.set(k, v);
     const top = new Env(g);
     const shape = this.block(program.body, top, true);
+    const scale = top.vars.get('$scale');
+    if (this.unscaled && scale !== undefined && scale !== 1)
+      this.warn(
+        `A length with a unit comes before $scale is set, so it is not scaled; set $scale first (${where(this.unscaled, false)})`,
+      );
     return {
       shape,
       globals: top,
@@ -418,6 +424,9 @@ export class Evaluator {
       }
     }
   }
+
+  // The first length with a unit read before the program set $scale
+  private unscaled?: Pos;
 
   // Libraries being used or included, innermost last, to catch a loop
   private using: string[] = [];
@@ -929,6 +938,8 @@ export class Evaluator {
   private length(x: Extract<Expr, { kind: 'num' }>, env: Env): number {
     const scale = toNumber(env.get('$scale').value ?? 1);
     if (!(scale > 0)) throw new KerfError('$scale must be a number more than 0', x.pos);
+    // Remembered in case the program sets $scale further down
+    if (scale === 1 && x.unit !== 'mm') this.unscaled ??= x.pos;
     return (x.value * UNITS[x.unit!]) / scale;
   }
 
@@ -1928,6 +1939,10 @@ export class Evaluator {
       },
       hardware: (c) => {
         const kind = toText(this.arg(c.args, 'kind', 0, 'dowel'));
+        if (own(HARDWARE_KINDS, kind) === undefined && own(HARDWARE_COLORS, kind) === undefined)
+          this.warn(
+            `hardware(): unknown kind "${kind}"; the 3D view shows it grey (${where(c.args.at, false)})${didYouMean(kind, Object.keys(HARDWARE_KINDS))}`,
+          );
         const from = this.vec3(this.arg(c.args, 'from', 1), 'from');
         const to = this.vec3(this.arg(c.args, 'to', 2), 'to');
         const sz = this.arg(c.args, 'size', 3, 6);

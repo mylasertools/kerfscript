@@ -163,6 +163,29 @@ from one point to another, a screw, a magnet, a strip of paper. `size` is
 a diameter, or `[w, h]` for a flat piece. `kerf check` lists the hardware
 with the parts, and the 3D view shows it.
 
+The kinds are these; a colour (`pink`, `yellow`, `red`, `green`, `blue`,
+`orange`, `purple`, `black`, `grey`) works too, and any other kind warns
+and shows grey. JavaScript gets the list as `HARDWARE_KINDS`.
+
+| Kind      | What it is                | Shown            |
+| --------- | ------------------------- | ---------------- |
+| `dowel`   | a wooden dowel or axle    | matt, #e2c48f    |
+| `steel`   | a steel rod, pin or axle  | metal, #a7adb3   |
+| `brass`   | a brass rod, tube or pin  | metal, #c9a227   |
+| `screw`   | a screw                   | metal, #9aa0a6   |
+| `bolt`    | a bolt                    | metal, #9aa0a6   |
+| `nut`     | a nut                     | metal, #9aa0a6   |
+| `magnet`  | a disc or block magnet    | metal, #55585c   |
+| `paper`   | a sheet or strip of paper | matt, #fbfaf6    |
+| `card`    | card stock                | matt, #f4f1e8    |
+| `felt`    | felt pads or lining       | matt, #6f6a64    |
+| `elastic` | an elastic band or cord   | matt, #262626    |
+| `cord`    | cord, string or thread    | matt, #b23a3a    |
+| `ribbon`  | ribbon or tape            | matt, #c2485a    |
+| `wire`    | wire                      | metal, #b87333   |
+| `led`     | an LED or a strip of them | glowing, #fff4c2 |
+| `white`   | anything white            | matt, #f7f7f4    |
+
 ```kerf
 step("Stand the walls in the base") {
   part("base", at = [-30, -40, 0]) rect([60, 80]);

@@ -195,6 +195,30 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       material: toText(g('$material') ?? 'material'),
     });
   if (!parts.length) warnings.push('Nothing to cut: the program made no shapes.');
+  // Slots, glue and riders find parts by name, so one name for two
+  // different parts is ambiguous; identical copies are fine
+  const shapeOf = (p: PartShape) =>
+    JSON.stringify([
+      p.thickness,
+      p.material,
+      [...p.layers].map(([k, l]) => [
+        k,
+        l.regions.map((r) => r.map(([x, y]) => [Math.round(x * 100), Math.round(y * 100)])),
+        l.lines.map((r) => r.map(([x, y]) => [Math.round(x * 100), Math.round(y * 100)])),
+      ]),
+    ]);
+  const byName = new Map<string, string>();
+  const doubled = new Set<string>();
+  for (const p of parts) {
+    const sig = shapeOf(p),
+      had = byName.get(p.name);
+    if (had === undefined) byName.set(p.name, sig);
+    else if (had !== sig) doubled.add(p.name);
+  }
+  for (const n of doubled)
+    warnings.push(
+      `Two different parts are named "${n}"; slots, glue and on = find parts by name, so give each its own.`,
+    );
 
   glueOn(parts, warnings);
   cutSlots(parts, mode, warnings);

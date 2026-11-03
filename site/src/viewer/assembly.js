@@ -32,7 +32,7 @@ import {
   WebGLRenderer,
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { bendPoint, meshPieces } from './kerfscript.js';
+import { bendPoint, HARDWARE_COLORS, HARDWARE_KINDS, meshPieces } from './kerfscript.js';
 import { referenceKey, verificationFindings } from './verification.js';
 
 // Wood and other sheets by their material name; anything else a light wood
@@ -49,32 +49,6 @@ const MATERIALS = [
   [/clear|acrylic|perspex|glass/i, '#cfe6ee'],
   [/birch|plywood|poplar|maple|wood|material/i, '#dcc39a'],
 ];
-const HARDWARE = {
-  dowel: '#e2c48f',
-  brass: '#c9a227',
-  screw: '#9aa0a6',
-  bolt: '#9aa0a6',
-  nut: '#9aa0a6',
-  magnet: '#55585c',
-  paper: '#fbfaf6',
-  card: '#f4f1e8',
-  elastic: '#262626',
-  cord: '#b23a3a',
-  ribbon: '#c2485a',
-  white: '#f7f7f4',
-};
-const NAMED = {
-  pink: '#f2a7c3',
-  yellow: '#f5d76e',
-  red: '#d9534f',
-  green: '#6dbb6d',
-  blue: '#5b8fd9',
-  orange: '#f0a04b',
-  purple: '#9b72cf',
-  black: '#222222',
-  grey: '#9a9a9a',
-  gray: '#9a9a9a',
-};
 
 const colorOf = (material) => (MATERIALS.find(([re]) => re.test(material)) ?? [0, '#dcc39a'])[1];
 const transparent = (material) => /clear|acrylic|perspex|glass/i.test(material);
@@ -152,7 +126,8 @@ function hardwareObject(h) {
   const b = new Vector3(...h.to);
   const length = a.distanceTo(b);
   if (!(length > 0)) return null;
-  const color = NAMED[h.kind] ?? HARDWARE[h.kind] ?? '#c8c8c8';
+  const look = HARDWARE_KINDS[h.kind];
+  const color = HARDWARE_COLORS[h.kind] ?? look?.color ?? '#c8c8c8';
   const geo = Array.isArray(h.size)
     ? new BoxGeometry(h.size[0], length, h.size[1])
     : new CylinderGeometry(h.size / 2, h.size / 2, length, h.sides ?? 24);
@@ -160,8 +135,9 @@ function hardwareObject(h) {
     geo,
     new MeshStandardMaterial({
       color,
-      roughness: h.kind === 'brass' || h.kind === 'screw' ? 0.35 : 0.8,
-      metalness: h.kind === 'brass' || h.kind === 'screw' ? 0.6 : 0,
+      roughness: look?.metal ? 0.35 : 0.8,
+      metalness: look?.metal ? 0.6 : 0,
+      ...(look?.glow && { emissive: color, emissiveIntensity: 0.6 }),
     }),
   );
   // The box's y along the segment, its z along up
