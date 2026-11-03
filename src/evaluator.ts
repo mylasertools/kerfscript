@@ -1838,9 +1838,11 @@ export class Evaluator {
           placements = placements.flatMap((pl) => {
             const m =
               glue === undefined ? mul4(this.frame, placementMatrix(pl)) : placementMatrix(pl);
+            // A stack glued under its host grows down, away from it
+            const dz = glue !== undefined && face === 'bottom' ? -t : t;
             return Array.from({ length: stack }, (_, k) => ({
               ...pl,
-              matrix: mul4(m, translation(0, 0, k * t)),
+              matrix: mul4(m, translation(0, 0, k * dz)),
             }));
           });
         const mirrored = truthy(this.arg(c.args, 'mirror', -1, false));

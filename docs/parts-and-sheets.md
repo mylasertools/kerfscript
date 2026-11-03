@@ -100,7 +100,8 @@ place(at = [20, 10, 30], rotate = [0, 0, 90]) box([80, 60, 40], name = "crate");
   reads the right way round.
 - `glue = "top plate", face = "top"` lays a part on another part's face,
   its `at` and `rotate` measured on that face. Move the plate, and what is
-  glued on it moves too.
+  glued on it moves too. A stack glued under a part (`face = "bottom"`)
+  grows down, away from it.
 
 ```kerf
 part("seat", at = [0, 0, 40]) rect([80, 80], r = 6);

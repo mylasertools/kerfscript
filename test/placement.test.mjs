@@ -60,6 +60,24 @@ test("glue lays a part on another part's face, which may come later", () => {
   near(at(part(under, 'felt').matrix), [0, 0, 37]);
 });
 
+test('a stack glued under its host grows down, away from it', () => {
+  const r = render(
+    'part("feet", glue = "seat", face = "bottom", stack = 3) rect(10); part("seat", at = [0, 0, 40]) rect(30);',
+  );
+  assert.deepEqual(
+    r.assembly.filter((a) => a.name === 'feet').map((a) => a.matrix[11]),
+    [37, 34, 31],
+  );
+  const top = render(
+    'part("pads", glue = "seat", stack = 2) rect(10); part("seat", at = [0, 0, 40]) rect(30);',
+  );
+  assert.deepEqual(
+    top.assembly.filter((a) => a.name === 'pads').map((a) => a.matrix[11]),
+    [43, 46],
+  );
+  assert.deepEqual(r.warnings, []);
+});
+
 test('mirror = true cuts the part mirrored with its text reading', () => {
   const r = render(
     'part("m", mirror = true) { polygon([[0, 0], [40, 0], [0, 30]]); engrave() translate([5, 5]) text("AB", size = 8); }',
