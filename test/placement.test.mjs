@@ -542,3 +542,23 @@ test('kerf instructions draws each step with its parts and hardware', async () =
   // Each step has a drawing
   assert.equal((html.match(/<div class="view"><svg/g) ?? []).length, 2);
 });
+
+test('kerf render -o x.png draws a picture of each sheet', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'kerf-'));
+  writeFileSync(
+    join(dir, 'p.kerf'),
+    'part("p") { rect([40, 20]); engrave() translate([5, 5]) rect([10, 10]); }',
+  );
+  execFileSync(
+    'node',
+    ['dist/cli.js', 'render', join(dir, 'p.kerf'), '-o', join(dir, 'p.png'), '--px', '200'],
+    {
+      stdio: 'pipe',
+    },
+  );
+  const png = readFileSync(join(dir, 'p.png'));
+  assert.deepEqual([...png.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+  assert.equal(png.readUInt32BE(16), 200);
+  // The sheet is 46 x 26 mm with its gap: 200 x 113 pixels
+  assert.equal(png.readUInt32BE(20), 113);
+});

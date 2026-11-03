@@ -103,6 +103,8 @@ name=from:step:to` checks a design over every combination of settings.
   somewhere warns, saying where.
 - `symbol(..., box = "grid")` sizes and places a symbol by its icon set's
   grid, so a set lines up as drawn.
+- `kerf render model.kerf -o model.png [--px 1200]` draws a picture of each
+  sheet to check by eye: material, fills in their colours, lines on top.
 - `kerf instructions model.kerf` (and `instructionsHtml()`) writes printable
   assembly instructions: parts, sheets, and a page per step with the model
   drawn so far, that step's parts picked out.

@@ -104,26 +104,27 @@ installed libraries by themselves.
 
 ## Options
 
-| Option                | Use                                                                                  |
-| --------------------- | ------------------------------------------------------------------------------------ |
-| `-o, --out <file>`    | Output path ending in `.svg`, `.dxf` or `.json`; defaults to `<file>.svg`            |
-| `-D name=value`       | Override a parameter; repeat for multiple values                                     |
-| `-p, --params <file>` | Load parameter values from a JSON file                                               |
-| `--font <file.ttf>`   | Supply a font file; repeat for multiple fonts. `Atkinson` is built in                |
-| `--kerf <mm>`         | Override kerf for every part                                                         |
-| `--sheet <W>x<H>`     | Set the sheet width and height in millimetres                                        |
-| `--gap <mm>`          | Set spacing between parts                                                            |
-| `--margin <mm>`       | Set spacing at sheet edges; defaults to the gap                                      |
-| `--no-pack`           | Keep the positions defined in the program                                            |
-| `--guides`            | Include the guide layer                                                              |
-| `--split`             | Export one file per sheet, and each sheet's back-face job                            |
-| `--nest`              | Pack small parts into the holes of bigger ones                                       |
-| `--stats`             | With `check`: points in the files, by part and layer                                 |
-| `--sweep name=a:s:b`  | With `check`: try every value from a to b in steps of s, or `name=a,b,c`             |
-| `--call 'm(1, 2)'`    | Run one call of the file's modules instead of its program; `-D` sets variables first |
-| `--params-list file`  | With `check`: try each set of settings in a JSON list of objects                     |
-| `-h, --help`          | Show command help                                                                    |
-| `-v, --version`       | Show version numbers                                                                 |
+| Option                 | Use                                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------ |
+| `-o, --out <file>`     | Output path ending in `.svg`, `.dxf` or `.json`; defaults to `<file>.svg`            |
+| `-D name=value`        | Override a parameter; repeat for multiple values                                     |
+| `-p, --params <file>`  | Load parameter values from a JSON file                                               |
+| `--font <file.ttf>`    | Supply a font file; repeat for multiple fonts. `Atkinson` is built in                |
+| `--kerf <mm>`          | Override kerf for every part                                                         |
+| `--sheet <W>x<H>`      | Set the sheet width and height in millimetres                                        |
+| `--gap <mm>`           | Set spacing between parts                                                            |
+| `--margin <mm>`        | Set spacing at sheet edges; defaults to the gap                                      |
+| `--no-pack`            | Keep the positions defined in the program                                            |
+| `--guides`             | Include the guide layer                                                              |
+| `--split`              | Export one file per sheet, and each sheet's back-face job                            |
+| `--nest`               | Pack small parts into the holes of bigger ones                                       |
+| `--stats`              | With `check`: points in the files, by part and layer                                 |
+| `--sweep name=a:s:b`   | With `check`: try every value from a to b in steps of s, or `name=a,b,c`             |
+| `-o out.png`, `--px n` | A picture of each sheet, `n` pixels wide (1200), to look at rather than cut          |
+| `--call 'm(1, 2)'`     | Run one call of the file's modules instead of its program; `-D` sets variables first |
+| `--params-list file`   | With `check`: try each set of settings in a JSON list of objects                     |
+| `-h, --help`           | Show command help                                                                    |
+| `-v, --version`        | Show version numbers                                                                 |
 
 `-D` accepts KerfScript values, including numbers, quoted strings, booleans
 and lists. For example: `-D width=200` or `-D 'name="Ada"'`.

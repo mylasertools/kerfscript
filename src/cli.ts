@@ -22,6 +22,7 @@ import { startServer, workerMain } from './lsp.js';
 import { verificationCommand } from './verify/command.js';
 import { diffRenders } from './diff.js';
 import { instructionsHtml } from './instructions.js';
+import { sheetPng } from './png.js';
 import {
   add,
   check as checkLibraries,
@@ -98,6 +99,8 @@ Options:
   --sweep name=a:step:b   with check: try every value, or name=a,b,c, or
                           settings that go together: w,d=100,80;200,150; repeat to
                           try every combination, and exit 1 if any warns or fails
+  -o out.png              a picture of each sheet to look at (not to cut),
+  --px 1200               its width in pixels
   --call 'roses(40, 30)'   render or check one call of a library's module
                           instead of the file's own program; -D sets
                           variables first, as -D '$thickness=4'
@@ -159,6 +162,7 @@ function main(argv: string[]) {
   let split = false;
   let stats = false;
   let call: string | undefined;
+  let px = 1200;
   const sweeps: Record<string, Value>[][] = [];
   for (let i = 1; i < argv.length; i++) {
     const a = argv[i];
@@ -196,7 +200,10 @@ function main(argv: string[]) {
     else if (a === '--sweep') sweeps.push(sweepValues(next()));
     else if (a === '--params-list') sweeps.push(paramsList(next()));
     else if (a === '--call') call = next();
-    else if (a.startsWith('-')) fail(`Unknown option ${a}`);
+    else if (a === '--px') {
+      px = Number(next());
+      if (!(px >= 16 && px <= 10000)) fail('--px needs a width in pixels from 16 to 10000');
+    } else if (a.startsWith('-')) fail(`Unknown option ${a}`);
     else if (!file) file = a;
     else fail(`Unexpected argument ${a}`);
   }
@@ -282,6 +289,15 @@ function main(argv: string[]) {
   const target = out || file.replace(/\.kerf$/i, '') + '.svg';
   const ext = extname(target).toLowerCase();
   const body = (s: (typeof result.sheets)[number]) => (ext === '.dxf' ? s.dxf : s.svg);
+  if (ext === '.png') {
+    // A picture to look at: one file per sheet
+    result.sheets.forEach((s, i) => {
+      const name = result.sheets.length > 1 ? target.replace(/(\.[^.]+)$/, `-${i + 1}$1`) : target;
+      writeFileSync(name, sheetPng(s, result.layers, px));
+      process.stderr.write(`Wrote ${name}\n`);
+    });
+    return;
+  }
   if (ext === '.json') {
     writeFileSync(
       target,
