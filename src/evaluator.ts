@@ -429,6 +429,30 @@ export class Evaluator {
     }
   }
 
+  // Children shapes already made in a module call, by statement
+  private childCache = new WeakMap<object, Map<Stmt, { key: string; shape: Shape | null }>>();
+
+  // What a child may depend on besides its own code: the special
+  // variables it can see, the place() frame and the step
+  private childKey(env: Env): string {
+    const seen = new Map<string, Value>();
+    const walk = (e: Env | undefined, depth: number) => {
+      for (; e && depth < 200; e = e.caller ?? e.parent, depth++)
+        for (const [k, v] of e.vars) if (k.startsWith('$') && !seen.has(k)) seen.set(k, v);
+    };
+    walk(env, 0);
+    const vars = [...seen].sort(([a], [b]) => (a < b ? -1 : 1));
+    const text = write(vars as unknown as Value, 20000, true);
+    // Too much to compare cheaply: don't reuse
+    if (!text.whole) return '';
+    return `${this.frame.join(',')}|${this.step}|${this.stepFolded}|${text.text}`;
+  }
+
+  // A count of the things a statement can make besides its shape
+  private effects(): string {
+    return `${this.echoes.length},${this.hardware.length},${this.stepNames.length},${this.warnings.length},${this.copies}`;
+  }
+
   // The first length with a unit read before the program set $scale
   private unscaled?: Pos;
 
@@ -706,10 +730,16 @@ export class Evaluator {
       err.call = s.name;
       throw err;
     }
-    this.pointCount += shapePoints(out);
-    if (this.pointCount > this.limits.maxPoints)
+    // The cap is on any shape the program keeps; the work along the way,
+    // every built-in's output counted, may be ten times that
+    const made = shapePoints(out);
+    // children() hands on shapes counted when they were made
+    if (s.name !== 'children') this.pointCount += made;
+    if (made > this.limits.maxPoints || this.pointCount > this.limits.maxPoints * 10)
       throw new KerfError(
-        `The shapes have more than ${this.limits.maxPoints} points, the limit. Use fewer or simpler shapes, or a lower $fn.`,
+        made > this.limits.maxPoints
+          ? `The shapes have more than ${this.limits.maxPoints} points, the limit. Use fewer or simpler shapes, or a lower $fn.`
+          : `Making the shapes took more than ${this.limits.maxPoints * 10} points of work, the limit. Use fewer or simpler shapes, or a lower $fn.`,
         s.pos,
       );
     return out;
@@ -1212,7 +1242,7 @@ export class Evaluator {
 
   private spend(points: number) {
     this.pointCount += points;
-    if (!(this.pointCount <= this.limits.maxPoints))
+    if (!(points <= this.limits.maxPoints && this.pointCount <= this.limits.maxPoints * 10))
       throw new Error(
         `the shapes need more than ${this.limits.maxPoints} points, the limit. Use fewer or simpler shapes.`,
       );
@@ -2075,11 +2105,27 @@ export class Evaluator {
           for (const i of this.iterable(idx, c.args.at))
             if (kids[toNumber(i)]) want.add(kids[toNumber(i)]);
         const out: Shape[] = [];
+        // A child used again in the same call, with the same special
+        // variables, frame and step, is the same shape: tones() and the
+        // like take each child several times
+        const cache =
+          this.childCache.get(ctx) ?? new Map<Stmt, { key: string; shape: Shape | null }>();
+        this.childCache.set(ctx, cache);
+        const key = this.childKey(e);
         for (const st of ctx.stmts) {
           if (st.kind === 'assign') this.stmt(st, e);
           else if (want.has(st)) {
+            const hit = key && cache.get(st);
+            if (hit && hit.key === key) {
+              if (hit.shape) out.push(hit.shape);
+              continue;
+            }
+            const before = this.effects();
             const r = this.stmt(st, e);
             if (r) out.push(r);
+            // Only what makes nothing else: no echo, part, hardware, step or warning
+            if (key && this.effects() === before && !r?.parts.length)
+              cache.set(st, { key, shape: r });
           }
         }
         return merge(out);

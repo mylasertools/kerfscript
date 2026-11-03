@@ -559,7 +559,7 @@ Programs are also limited in how much memory they can ask for:
 | `maxListLength`     | 1,000,000 | items in one list or range, or characters in one string, including the text `echo()` writes in one call                    |
 | `maxListItems`      | 3,000,000 | items in all lists the program builds, plus 4 for each list, one for every 8 characters of the strings it builds or echoes |
 | `maxTextLength`     | 2,000     | characters in one `text()`                                                                                                 |
-| `maxPoints`         | 2,000,000 | points in all shapes the modules make, plus 100 for each shape                                                             |
+| `maxPoints`         | 2,000,000 | points in any one shape a module makes; all the shapes made along the way, plus 100 for each, may add up to ten times this |
 | `maxOutputPoints`   | 1,000,000 | points in the exported files, counting every copy                                                                          |
 | `maxSheets`         | 200       | sheets in the layout                                                                                                       |
 | `maxCollisionPairs` | 20,000    | pairs of touching placed parts checked for collisions; past it the check stops with a warning                              |

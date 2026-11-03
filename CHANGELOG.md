@@ -87,6 +87,9 @@ name=from:step:to` checks a design over every combination of settings.
 - The collision check reports any overlap deeper than 0.1 mm, where it
   needed a cubic millimetre, and slots need a part to reach 1 mm in,
   so a part dipping 0.13 mm into a floor is reported, not slotted.
+- `children(i)` used several times in one call makes the child once (when it
+  only makes a shape), and the point cap is on each shape kept, with ten
+  times that for all the work along the way.
 - `pattern()` over an area of many small shapes tests and clips each tile
   only against the shapes it may touch: 30 hearts on a facade take 0.2 s,
   not 6.

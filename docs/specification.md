@@ -407,7 +407,10 @@ A statement `name(args) children` calls a module:
    statement at that position from 0, or those at a list or range of
    positions (a position outside them runs nothing);
    `$children` is the number of child statements that are not assignments
-   or definitions.
+   or definitions. A child statement run again in the same call, with
+   the same special variables, `place()` frame and step, gives the same
+   shape and may be reused rather than run again; one that echoes, warns,
+   makes parts, hardware or steps is always run again.
 2. Otherwise a built-in module named `name` runs.
 3. Otherwise the error is `Unknown module name().`, with a hint for
    OpenSCAD's `color()` and `square()`.
@@ -529,14 +532,15 @@ Errors come from:
 - limits. A program from someone else can run in a browser, so these are
   enforced:
 
-| Limit                                       | Default   | Message starts with                        |
-| ------------------------------------------- | --------- | ------------------------------------------ |
-| Statements, calls and loop steps            | 5,000,000 | `Stopped after N steps`                    |
-| Nested module calls                         | 1,000     | `Recursion too deep in module name()`      |
-| Nested function calls                       | 2,000     | `Recursion too deep in name()`             |
-| Items in one list, characters in one string | 1,000,000 | `a list of N items` / `a range of N items` |
-| Items in all lists and strings              | 3,000,000 | `The lists and strings hold more than`     |
-| Points in all shapes                        | 2,000,000 | `The shapes have more than`                |
+| Limit                                                     | Default    | Message starts with                        |
+| --------------------------------------------------------- | ---------- | ------------------------------------------ |
+| Statements, calls and loop steps                          | 5,000,000  | `Stopped after N steps`                    |
+| Nested module calls                                       | 1,000      | `Recursion too deep in module name()`      |
+| Nested function calls                                     | 2,000      | `Recursion too deep in name()`             |
+| Items in one list, characters in one string               | 1,000,000  | `a list of N items` / `a range of N items` |
+| Items in all lists and strings                            | 3,000,000  | `The lists and strings hold more than`     |
+| Points in one shape a module makes                        | 2,000,000  | `The shapes have more than`                |
+| Points in all shapes made, `children()` not counted again | 20,000,000 | `Making the shapes took more than`         |
 
 The [JavaScript API](javascript.md#running-untrusted-code) lists every
 limit and how to change it.
