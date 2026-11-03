@@ -118,6 +118,7 @@ installed libraries by themselves.
 | `--nest`              | Pack small parts into the holes of bigger ones                            |
 | `--stats`             | With `check`: points in the files, by part and layer                      |
 | `--sweep name=a:s:b`  | With `check`: try every value from a to b in steps of s, or `name=a,b,c`  |
+| `--params-list file`  | With `check`: try each set of settings in a JSON list of objects          |
 | `-h, --help`          | Show command help                                                         |
 | `-v, --version`       | Show version numbers                                                      |
 
@@ -136,6 +137,16 @@ command exits with 1 if any combination warns or fails:
 
 ```sh
 kerf check tray.kerf --sweep '$thickness=3:0.5:6' --sweep size=small,large
+```
+
+Settings that only make sense together go in one `--sweep`, their names
+joined by commas and each set of values after a `;`, so the sets are tried
+as they are rather than crossed. `--params-list` reads the sets from a JSON
+list instead; both cross with the other sweeps:
+
+```sh
+kerf check room.kerf --sweep 'width,depth,height=115,140,190;160,200,260' --sweep '$thickness=3,4'
+kerf check room.kerf --params-list sizes.json
 ```
 
 The `"sheet": [600, 400]` in a project's `kerf.json` is the sheet for every

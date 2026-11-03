@@ -88,8 +88,11 @@ Options:
                           a sheet with back-face marks also gets out-1-back.svg
   --nest                  pack small parts into the holes of bigger ones
   --stats                 with check: points in the files by part and layer
-  --sweep name=a:step:b   with check: try every value, or name=a,b,c; repeat to
+  --sweep name=a:step:b   with check: try every value, or name=a,b,c, or
+                          settings that go together: w,d=100,80;200,150; repeat to
                           try every combination, and exit 1 if any warns or fails
+  --params-list sets.json with check: try each set of settings in a JSON list,
+                          crossed with any --sweep
   -h, --help              show this help
   -v, --version           show the version
 `;
@@ -144,7 +147,7 @@ function main(argv: string[]) {
   } = {};
   let split = false;
   let stats = false;
-  const sweeps: [string, Value[]][] = [];
+  const sweeps: Record<string, Value>[][] = [];
   for (let i = 1; i < argv.length; i++) {
     const a = argv[i];
     const next = () => argv[++i] ?? fail(`${a} needs a value`);
@@ -179,6 +182,7 @@ function main(argv: string[]) {
     else if (a === '--stats') stats = true;
     else if (a === '--nest') opts.nest = true;
     else if (a === '--sweep') sweeps.push(sweepValues(next()));
+    else if (a === '--params-list') sweeps.push(paramsList(next()));
     else if (a.startsWith('-')) fail(`Unknown option ${a}`);
     else if (!file) file = a;
     else fail(`Unexpected argument ${a}`);
@@ -203,7 +207,7 @@ function main(argv: string[]) {
     }
   }
   if (sweeps.length) {
-    if (cmd !== 'check') fail('--sweep goes with kerf check');
+    if (cmd !== 'check') fail('--sweep and --params-list go with kerf check');
     return sweep(source, sweeps, {
       ...opts,
       ...(defaultSheet && { defaultSheet }),
@@ -483,12 +487,58 @@ else
     throw e;
   }
 
-// --sweep name=1:0.5:3 or name=a,b,c: the values to try
-function sweepValues(spec: string): [string, Value[]] {
+// --params-list sets.json: a JSON list of settings, each tried as a whole
+function paramsList(file: string): Record<string, Value>[] {
+  let list: unknown;
+  try {
+    list = JSON.parse(readFileSync(file, 'utf8'));
+  } catch (e) {
+    fail(`--params-list ${file}: ${(e as Error).message}`);
+  }
+  if (
+    !Array.isArray(list) ||
+    !list.length ||
+    !list.every((o) => o && typeof o === 'object' && !Array.isArray(o))
+  )
+    fail(`--params-list ${file}: give a JSON list of objects, as [{"width": 100}, {"width": 200}]`);
+  return list as Record<string, Value>[];
+}
+
+// One value as -D reads it, or the word itself
+function sweepValue(v: string): Value {
+  try {
+    return parseValue(v.trim());
+  } catch {
+    return v.trim();
+  }
+}
+
+// --sweep name=1:0.5:3 or name=a,b,c: the values to try. Names that go
+// together take sets: width,depth=100,80;200,150
+function sweepValues(spec: string): Record<string, Value>[] {
   const eq = spec.indexOf('=');
   if (eq < 1) fail(`--sweep needs name=from:step:to or name=a,b,c, got "${spec}"`);
   const name = spec.slice(0, eq);
   const raw = spec.slice(eq + 1);
+  if (name.includes(',')) {
+    const names = name.split(',').map((n) => n.trim());
+    return raw.split(';').map((set) => {
+      let values: Value[];
+      try {
+        const v = parseValue(`[${set}]`);
+        values = Array.isArray(v) ? v : [v];
+      } catch {
+        values = set.split(',').map(sweepValue);
+      }
+      if (values.length !== names.length)
+        fail(`--sweep ${name}: "${set}" gives ${values.length} values for ${names.length} names`);
+      return Object.fromEntries(names.map((n, i) => [n, values[i]]));
+    });
+  }
+  return sweepRange(name, raw).map((v) => ({ [name]: v }));
+}
+
+function sweepRange(name: string, raw: string): Value[] {
   const num = '(-?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?)';
   const range = new RegExp(`^${num}:${num}:${num}$`).exec(raw);
   if (!range && raw.includes(':'))
@@ -501,30 +551,20 @@ function sweepValues(spec: string): [string, Value[]] {
       fail(`--sweep ${name}: the range must go up by a step more than 0`);
     const n = Math.floor((to - from) / step + 1e-9) + 1;
     if (n > 1000) fail(`--sweep ${name}: more than 1000 values`);
-    return [name, Array.from({ length: n }, (_, i) => Math.round((from + i * step) * 1e9) / 1e9)];
+    return Array.from({ length: n }, (_, i) => Math.round((from + i * step) * 1e9) / 1e9);
   }
-  return [
-    name,
-    raw.split(',').map((v) => {
-      try {
-        return parseValue(v.trim());
-      } catch {
-        return v.trim();
-      }
-    }),
-  ];
+  return raw.split(',').map(sweepValue);
 }
 
 // Renders every combination of the swept values and says which build
 // clean; exits 1 when any warns or fails
 function sweep(
   source: string,
-  sweeps: [string, Value[]][],
+  sweeps: Record<string, Value>[][],
   opts: Parameters<typeof render>[1] & {},
 ) {
   let combos: Record<string, Value>[] = [{}];
-  for (const [name, values] of sweeps)
-    combos = combos.flatMap((c) => values.map((v) => ({ ...c, [name]: v })));
+  for (const sets of sweeps) combos = combos.flatMap((c) => sets.map((v) => ({ ...c, ...v })));
   if (combos.length > 5000) fail(`--sweep makes ${combos.length} combinations, more than 5000`);
   let bad = 0;
   for (const c of combos) {

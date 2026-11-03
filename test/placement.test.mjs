@@ -277,6 +277,44 @@ test('a front layer named like a back layer is an error, not a lost back job', (
   );
 });
 
+test('kerf check sweeps settings that go together, and lists of settings', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'kerf-'));
+  writeFileSync(
+    join(dir, 'p.kerf'),
+    'w = 10;\nd = 10;\nassert(w < d * 2, "too long");\npart("p") rect([w, d]);\n',
+  );
+  writeFileSync(join(dir, 'sets.json'), JSON.stringify([{ w: 20, d: 15 }, { w: 40 }]));
+  let out = '';
+  try {
+    execFileSync(
+      'node',
+      [
+        'dist/cli.js',
+        'check',
+        join(dir, 'p.kerf'),
+        '--sweep',
+        'w,d=10,10;30,10',
+        '--params-list',
+        join(dir, 'sets.json'),
+      ],
+      { encoding: 'utf8' },
+    );
+  } catch (e) {
+    out = e.stdout;
+  }
+  // Each pair is crossed with each set, the later setting winning
+  assert.match(out, /w=20 d=15: ok/);
+  assert.match(out, /w=40 d=10: error: .*too long/);
+  assert.match(out, /2 of 4 clean/);
+  assert.throws(
+    () =>
+      execFileSync('node', ['dist/cli.js', 'check', join(dir, 'p.kerf'), '--sweep', 'w,d=1,2,3'], {
+        stdio: 'pipe',
+      }),
+    (e) => e.status === 1 && /gives 3 values for 2 names/.test(String(e.stderr)),
+  );
+});
+
 test('kerf check refuses a sweep that is not a range', () => {
   const dir = mkdtempSync(join(tmpdir(), 'kerf-'));
   writeFileSync(join(dir, 'p.kerf'), 'x = 1;\npart("p") rect(10);\n');
