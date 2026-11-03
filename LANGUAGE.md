@@ -174,6 +174,7 @@ module hang_hole(d = 5) {
 | `$scale`          | `1`           | the model's scale: `140cm` is 1400 mm divided by `$scale`                  |
 | `$nest`           | `false`       | pack small parts into the holes of bigger ones                             |
 | `$registration`   | `false`       | print-and-cut marks in three corners of every sheet                        |
+| `$min_width`      | `1.5`         | warn where a part's material is narrower than this; `0` turns it off       |
 | `$bounds`         |               | set by `measure()` for the children after the one it measures              |
 
 ## Layers

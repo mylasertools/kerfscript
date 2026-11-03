@@ -76,6 +76,8 @@ name=from:step:to` checks a design over every combination of settings.
 - A module or function defined with a built-in's name warns that it hides
   the built-in.
 - A stack glued under its host (`face = "bottom"`) grows down, away from it.
+- A part narrower than `$min_width` (1.5 mm unless set; 0 turns it off)
+  somewhere warns, saying where.
 - `symbol(..., box = "grid")` sizes and places a symbol by its icon set's
   grid, so a set lines up as drawn.
 - `--sweep 'w,d=100,80;200,150'` tries settings that go together as sets,

@@ -1,0 +1,7 @@
+// Material narrower than $min_width warns, saying where
+// => warning: Part "p" is narrower than 1.5 mm ($min_width) in 1 place, at [20, 5] in the part's coordinates.
+part("p") {
+  rect([10, 10]);
+  translate([30, 0]) rect([10, 10]);
+  translate([10, 4.5]) rect([20, 1]);
+}

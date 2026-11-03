@@ -232,10 +232,29 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   const loose: AssemblyPart[] = [];
   const stackedCopies = new Set<AssemblyPart>();
   const ready: { info: PartInfo; layers: Map<string, Layer> }[] = [];
+  const minWidthSet = g('$min_width');
+  const minWidth = minWidthSet === undefined ? 1.5 : toNumber(minWidthSet);
   for (const p of parts) {
     const material = union(
       [...p.layers].filter(([k]) => mode(k) === 'cut').flatMap(([, l]) => l.regions),
     );
+    // Material narrower than $min_width breaks or burns away: what an
+    // opening by that width removes, in pieces bigger than a corner's tip
+    if (minWidth > 0 && material.length) {
+      const opened = offset(offset(material, -minWidth / 2, 'round'), minWidth / 2, 'round');
+      const thin = pieces(difference(material, opened)).filter(
+        (g) => g.reduce((a, r) => a + area(r), 0) > 2 * minWidth * minWidth,
+      );
+      if (thin.length) {
+        const at = thin.slice(0, 3).map((g) => {
+          const [x0, y0, x1, y1] = layerBounds(new Map([['cut', { regions: g, lines: [] }]]))!;
+          return `[${round2((x0 + x1) / 2)}, ${round2((y0 + y1) / 2)}]`;
+        });
+        warnings.push(
+          `Part "${p.name}" is narrower than ${minWidth} mm ($min_width) in ${thin.length} place${thin.length > 1 ? 's' : ''}, at ${at.join(', ')}${thin.length > 3 ? ' and more' : ''} in the part's coordinates.`,
+        );
+      }
+    }
     const layers = new Map<string, Layer>();
     for (const [k, l] of p.layers) {
       if (mode(k) === 'guide' && !options.guides) continue;

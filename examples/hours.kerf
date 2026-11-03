@@ -40,6 +40,8 @@ $kerf = 0.15; // [0:0.01:0.25]
 
 /* [Hidden] */
 $material = "plywood";
+// The click's spring finger is 1.4 mm wide on purpose, and the hands taper
+$min_width = 1.3;
 $sheet = [600, 400];
 $gap = 5;
 $fn = 96;

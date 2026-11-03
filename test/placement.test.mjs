@@ -383,3 +383,11 @@ test('a setting the program never assigns warns', () => {
     'Setting "sise" is not a variable of the program, so it is ignored. Did you mean "size"?',
   ]);
 });
+
+test('$min_width = 0 turns the narrow-material warning off', () => {
+  const bar =
+    'part("p") { rect([10, 10]); translate([30, 0]) rect([10, 10]); translate([10, 4.5]) rect([20, 1]); }';
+  assert.equal(render(bar).warnings.length, 1);
+  assert.deepEqual(render('$min_width = 0;\n' + bar).warnings, []);
+  assert.deepEqual(render('$min_width = 0.8;\n' + bar).warnings, []);
+});
