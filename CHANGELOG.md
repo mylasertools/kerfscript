@@ -84,6 +84,8 @@ name=from:step:to` checks a design over every combination of settings.
 - A stack glued under its host (`face = "bottom"`) grows down, away from it.
 - A `step()` inside a step is a sub-step ("Add the chair: Glue the seat");
   `step(text, substeps = false)` takes inner steps into itself.
+- A stack whose layers meet different parts in slots becomes a part per
+  layer (`top, layer 1`), each cutting only its own slots.
 - The collision check reports any overlap deeper than 0.1 mm, where it
   needed a cubic millimetre, and slots need a part to reach 1 mm in,
   so a part dipping 0.13 mm into a floor is reported, not slotted.

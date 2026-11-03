@@ -562,3 +562,20 @@ test('kerf render -o x.png draws a picture of each sheet', () => {
   // The sheet is 46 x 26 mm with its gap: 200 x 113 pixels
   assert.equal(png.readUInt32BE(20), 113);
 });
+
+test('each layer of a stack cuts only the slots that pass through it', () => {
+  const r = render(`
+    part("top", at = [0, 0, 30], stack = 2, slots = ["leg *", "tool"]) rect([80, 40]);
+    for (x = [10, 65]) part(str("leg ", x), at = [x, 20, 0], rotate = [90, 0, 0]) { rect([5, 30]); translate([1, 29.99]) rect([3, 3.01]); }
+    part("tool", at = [40, 20, 36], rotate = [90, 0, 0]) { translate([0, -3]) rect([3, 3.01]); rect([10, 10]); }`);
+  const by = Object.fromEntries(r.parts.map((p) => [p.name, p]));
+  assert.equal(by['top, layer 1'].pieces, 1);
+  assert.ok(by['top, layer 1'].cutLength > by['top, layer 2'].cutLength);
+  assert.ok(by['top, layer 2'].cutLength > 240);
+  assert.deepEqual(r.warnings, []);
+  // Alike layers stay one stack
+  const same = render(`
+    part("top", at = [0, 0, 30], stack = 2, slots = ["leg"]) rect([80, 40]);
+    part("leg", at = [10, 20, 0], rotate = [90, 0, 0]) { rect([5, 30]); translate([1, 29.99]) rect([3, 6.02]); }`);
+  assert.equal(same.parts.find((p) => p.name === 'top').stack, 2);
+});

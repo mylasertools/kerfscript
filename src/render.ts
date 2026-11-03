@@ -806,6 +806,7 @@ function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: str
       }).map((q) => ({ matrix: q.matrix, thickness: q.thickness, outline: q.outline })),
     );
   const cuts = new Map<PartShape, ReturnType<typeof union>>();
+  const byLayer = new Map<PartShape, Poly2[][]>();
   for (const p of parts) {
     if (!p.slots) continue;
     if (!p.placements) {
@@ -844,6 +845,25 @@ function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: str
     // Compared by the area they differ in, so rounding slivers don't count
     const differ = (a: Poly2[], b: Poly2[]) =>
       xor(a, b).reduce((t, q) => t + Math.abs(area(q)), 0) > 1e-3;
+    // A stack's layers each cut what passes through them: copy i is layer
+    // i % n of its stack
+    const n = p.stack ?? 1;
+    if (n > 1) {
+      const layer = (k: number) => each.filter((_, i) => i % n === k);
+      const perLayer = Array.from({ length: n }, (_, k) => union(layer(k).flat()));
+      if (perLayer.slice(1).some((r) => differ(perLayer[0], r))) {
+        if (
+          Array.from({ length: n }, (_, k) => layer(k)).some((l) =>
+            l.slice(1).some((r) => differ(l[0], r)),
+          )
+        )
+          warnings.push(
+            `Copies of part "${p.name}" meet the parts in slots in different places; they all get every slot. Make them separate parts to cut each its own.`,
+          );
+        byLayer.set(p, perLayer);
+        continue;
+      }
+    }
     if (each.slice(1).some((r) => differ(each[0], r)))
       warnings.push(
         `Copies of part "${p.name}" meet the parts in slots in different places; they all get every slot. Make them separate parts to cut each its own.`,
@@ -859,15 +879,29 @@ function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: str
     }
     cuts.set(p, slot);
   }
-  for (const [p, slot] of cuts) {
-    const layers = new Map(p.layers);
-    // A slot is a hole through the part: no mark is left inside it
-    for (const [k, l] of p.layers)
+  // A slot is a hole through the part: no mark is left inside it
+  const holed = (from: Map<string, Layer>, slot: Poly2[]) => {
+    const layers = new Map(from);
+    for (const [k, l] of from)
       layers.set(k, {
         regions: difference(l.regions, slot),
         lines: clipLines(l.lines, slot, 'outside'),
       });
-    p.layers = layers;
+    return layers;
+  };
+  for (const [p, slot] of cuts) p.layers = holed(p.layers, slot);
+  // A stack whose layers meet different parts becomes a part per layer
+  for (const [p, perLayer] of byLayer) {
+    const n = perLayer.length;
+    const split: PartShape[] = perLayer.map((slot, k) => ({
+      ...p,
+      name: `${p.name}, layer ${k + 1}`,
+      qty: p.qty / n,
+      layers: slot.length ? holed(p.layers, slot) : p.layers,
+      placements: p.placements!.filter((_, i) => i % n === k),
+      stack: undefined,
+    }));
+    parts.splice(parts.indexOf(p), 1, ...split);
   }
 }
 

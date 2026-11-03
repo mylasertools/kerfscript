@@ -122,6 +122,11 @@ and a blind tab's slot goes through: one that only dips into the surface is
 misplaced, and the collision check reports it rather than a
 slot hiding it.
 
+The layers of a stack each cut the slots that pass through them. When they
+differ, as a bench top of `stack = 2` taking the legs' tabs in its lower
+layer and a vice's in its upper one, the stack becomes a part per layer,
+`top, layer 1` and `top, layer 2`, so blind joints don't show through.
+
 ```kerf
 part("shelf", slots = ["back"]) rect([100, 60]);
 part("back", at = [0, 55, 3], rotate = [75, 0, 0]) {
