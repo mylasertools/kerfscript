@@ -248,3 +248,66 @@ test('kerf render writes the back job beside the file', () => {
   });
   assert.ok(existsSync(join(dir, 'p-back.svg')));
 });
+
+test('a front layer named like a back layer is an error, not a lost back job', () => {
+  assert.throws(
+    () =>
+      render(
+        'layer("engrave-back", mode = "fill"); part("p") { rect(10); engrave(side = "back") rect(2); }',
+      ),
+    /already uses for the front/,
+  );
+});
+
+test('kerf check refuses a sweep that is not a range', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'kerf-'));
+  writeFileSync(join(dir, 'p.kerf'), 'x = 1;\npart("p") rect(10);\n');
+  for (const bad of ['x=1..2:1:3', 'x=a:1:3', 'x=1:0:3'])
+    assert.throws(
+      () =>
+        execFileSync('node', ['dist/cli.js', 'check', join(dir, 'p.kerf'), '--sweep', bad], {
+          stdio: 'pipe',
+        }),
+      (e) => e.status === 1 && /--sweep x/.test(String(e.stderr)),
+      bad,
+    );
+});
+
+test('slots take * patterns and leave out "!" names', () => {
+  const src = `
+    part("shelf", at = [0, 0, 0], slots = ["*", "!wall b"]) rect([100, 60]);
+    for (n = [["wall a", 31.5], ["wall b", 11.5]])
+      part(n[0], at = [0, n[1], 3], rotate = [90, 0, 0]) { rect([100, 40]); translate([40, -3]) rect([20, 3.01]); }`;
+  const r = render(src);
+  assert.equal(r.parts.find((p) => p.name === 'shelf').cutLength, 366);
+  assert.equal(r.warnings.filter((w) => /collide/.test(w)).length, 1);
+  assert.match(
+    r.warnings.find((w) => /collide/.test(w)),
+    /wall b/,
+  );
+});
+
+test('a slot clears the marks over it too', () => {
+  const r = render(`
+    part("a", at = [0, 0, 0], slots = ["b"]) { rect([40, 40]); engrave() rect([40, 40]); }
+    part("b", at = [0, 20, 3], rotate = [90, 0, 0]) { rect([40, 10]); translate([10, -3]) rect([10, 3.01]); }`);
+  const engrave = r.sheets[0].items.find((i) => i.part === 'a').layers.get('engrave').regions;
+  assert.ok(
+    engrave.some(
+      (p) =>
+        p.length &&
+        p.reduce(
+          (s, q, i) => s + q[0] * p[(i + 1) % p.length][1] - p[(i + 1) % p.length][0] * q[1],
+          0,
+        ) < 0,
+    ),
+    'the engraving has the slot as a hole',
+  );
+});
+
+test('a part touching the edge from outside leaves no notch', () => {
+  const r = render(`
+    part("c", at = [0, 0, 0], slots = ["s"]) rect([40, 40]);
+    part("s", at = [10, 0, -5], rotate = [90, 0, 0]) rect([10, 8]);`);
+  assert.equal(r.parts.find((p) => p.name === 'c').cutLength, 160);
+});

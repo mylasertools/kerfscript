@@ -264,7 +264,11 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
   - `slots = ["name", ...]`: where the named parts' material passes through
     this part in the assembly, slots are cut through it the shape of their
     cross-section, at any angle, `clearance = 0.1` wider. Draw tabs on one
-    part and let the parts they go into cut their own slots.
+    part and let the parts they go into cut their own slots. A name may
+    have `*` for any run of characters, and `"!name"` leaves out parts the
+    names before it took: `slots = ["*", "!back"]` cuts a slot for every
+    part that passes through except the back. A slot clears every layer,
+    marks included, and a part that only touches the edge leaves no notch.
 - `place(at, rotate) { ... }` places the parts and hardware inside in the
   assembled view, as part()'s `at` and `rotate` do; their own placements
   are inside it. A library module wrapped in `place()` can be set anywhere.

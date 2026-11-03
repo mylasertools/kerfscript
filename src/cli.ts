@@ -484,9 +484,14 @@ function sweepValues(spec: string): [string, Value[]] {
   if (eq < 1) fail(`--sweep needs name=from:step:to or name=a,b,c, got "${spec}"`);
   const name = spec.slice(0, eq);
   const raw = spec.slice(eq + 1);
-  const range = /^(-?[\d.]+):(-?[\d.]+):(-?[\d.]+)$/.exec(raw);
+  const num = '(-?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?)';
+  const range = new RegExp(`^${num}:${num}:${num}$`).exec(raw);
+  if (!range && raw.includes(':'))
+    fail(`--sweep ${name}: "${raw}" is not a range: give from:step:to, as 1:0.5:3`);
   if (range) {
     const [from, step, to] = range.slice(1).map(Number);
+    if (![from, step, to].every(Number.isFinite))
+      fail(`--sweep ${name}: "${raw}" is not a range of numbers`);
     if (!(step > 0) || to < from)
       fail(`--sweep ${name}: the range must go up by a step more than 0`);
     const n = Math.floor((to - from) / step + 1e-9) + 1;

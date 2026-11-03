@@ -358,8 +358,14 @@ function pts(v: Value, fn: string, c: FnCtx): [number, number][] {
 
 // The point s along a path, and the heading there in degrees; before the
 // start and past the end it carries on straight
-function alongPath(p: [number, number][], s: number) {
-  if (p.length < 2) throw new Error('a path needs at least two points');
+function alongPath(points: [number, number][], s: number) {
+  if (points.length < 2) throw new Error('a path needs at least two points');
+  // Repeated points make segments of no length: leave them out, so the
+  // first and last segments have a direction to carry on in
+  const p = points.filter(
+    ([x, y], k) => k === 0 || x !== points[k - 1][0] || y !== points[k - 1][1],
+  );
+  if (p.length < 2) return { point: [p[0][0], p[0][1]], heading: 0 };
   let i = 0;
   let at = 0;
   for (; i < p.length - 2; i++) {
@@ -367,14 +373,10 @@ function alongPath(p: [number, number][], s: number) {
     if (at + l >= s) break;
     at += l;
   }
-  // Skip segments of no length for the heading
-  let j = i;
-  while (j < p.length - 2 && p[j + 1][0] === p[j][0] && p[j + 1][1] === p[j][1]) j++;
-  const [a, b] = [p[j], p[j + 1]];
-  const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
-  const u = (s - at) / l;
+  const [a, b] = [p[i], p[i + 1]];
+  const u = (s - at) / Math.hypot(b[0] - a[0], b[1] - a[1]);
   return {
-    point: [p[i][0] + (b[0] - a[0]) * u, p[i][1] + (b[1] - a[1]) * u],
+    point: [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u],
     heading: Math.atan2(b[1] - a[1], b[0] - a[0]) / RAD,
   };
 }

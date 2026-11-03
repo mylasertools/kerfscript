@@ -85,3 +85,10 @@ test('warnings say where a stray piece and a too-narrow hole are', () => {
     /at \[10.1, 12.5\]/,
   );
 });
+
+test('point_at carries on straight past repeated end points', () => {
+  const r = render(
+    'echo(point_at([[0, 0], [10, 0], [10, 0]], 15), point_at([[0, 0], [0, 0], [10, 0]], -5), heading_at([[0, 0], [10, 0], [10, 0]], 12), point_at([[3, 3], [3, 3]], 4));',
+  );
+  assert.deepEqual(r.echoes, ['[15, 0], [-5, 0], 0, [3, 3]']);
+});

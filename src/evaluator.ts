@@ -1242,7 +1242,14 @@ export class Evaluator {
   // The back-face twin of a layer, made on first use
   private backLayer(name: string): string {
     const back = `${name}-back`;
-    if (!this.layers.has(back)) {
+    const known = this.layers.get(back);
+    // A front layer of the program's own with that name must not take the
+    // back's marks into the front file
+    if (known && known.side !== 'back')
+      throw new Error(
+        `the back of layer "${name}" is the layer "${back}", which this program already uses for the front. Rename that layer.`,
+      );
+    if (!known) {
       const def = this.layers.get(name) ?? { name, mode: 'line' as const, color: '#00aa00' };
       this.layers.set(back, { ...def, name: back, side: 'back' });
     }

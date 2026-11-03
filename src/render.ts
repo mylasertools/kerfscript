@@ -649,6 +649,18 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   };
 }
 
+// A slots name: exact, or with * standing for any run of characters
+function namePattern(name: string): (s: string) => boolean {
+  if (!name.includes('*')) return (s) => s === name;
+  const re = new RegExp(
+    `^${name
+      .split('*')
+      .map((k) => k.replace(/[.+?^${}()|[\]\\]/g, '\\$&'))
+      .join('.*')}$`,
+  );
+  return (s) => re.test(s);
+}
+
 // Cuts the slots part(..., slots = [...]) asks for, where the named
 // parts' material passes through each placed copy of the part
 function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: string[]) {
@@ -682,12 +694,18 @@ function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: str
       warnings.push(`Part "${p.name}" has slots but no at or rotate, so they can't be found.`);
       continue;
     }
-    const others: Solid[] = [];
+    // Names, patterns with * (any run of characters), and !name to leave
+    // parts out of the patterns before it
+    const chosen = new Set<PartShape>();
     for (const name of p.slots) {
-      const found = parts.filter((q) => q.name === name && q !== p);
-      if (!found.length) warnings.push(`Part "${p.name}": no part "${name}" to cut slots for.`);
-      for (const q of found) others.push(...solids(q));
+      const out = name.startsWith('!');
+      const match = namePattern(out ? name.slice(1) : name);
+      const found = parts.filter((q) => q !== p && match(q.name));
+      if (!found.length && !out)
+        warnings.push(`Part "${p.name}": no part "${name}" to cut slots for.`);
+      for (const q of found) out ? chosen.delete(q) : chosen.add(q);
     }
+    const others: Solid[] = [...chosen].flatMap(solids);
     // Per copy; a bent part's runs each cut the slots on their own stretch
     const each = (p.placements ?? []).map((pl) =>
       union(
@@ -712,17 +730,23 @@ function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: str
       );
     const slot = union(each.flat());
     if (!slot.length) {
-      warnings.push(
-        `Part "${p.name}": none of ${p.slots.map((n) => `"${n}"`).join(', ')} pass through it, so it has no slots.`,
-      );
+      // A pattern asks for whatever passes through, which may be nothing
+      if (!p.slots.some((n) => n.includes('*')))
+        warnings.push(
+          `Part "${p.name}": none of ${p.slots.map((n) => `"${n}"`).join(', ')} pass through it, so it has no slots.`,
+        );
       continue;
     }
     cuts.set(p, slot);
   }
   for (const [p, slot] of cuts) {
     const layers = new Map(p.layers);
+    // A slot is a hole through the part: no mark is left inside it
     for (const [k, l] of p.layers)
-      if (mode(k) === 'cut') layers.set(k, { ...l, regions: difference(l.regions, slot) });
+      layers.set(k, {
+        regions: difference(l.regions, slot),
+        lines: clipLines(l.lines, slot, 'outside'),
+      });
     p.layers = layers;
   }
 }

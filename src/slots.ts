@@ -4,7 +4,7 @@
 // part, cut holes in it the shape of their cross-section, at any angle.
 
 import { invert, multiply } from './assembly.js';
-import { area, intersection, offset, union, type Poly } from './geometry.js';
+import { area, intersection, offset, pieces, union, type Poly } from './geometry.js';
 
 export interface Solid {
   matrix: number[];
@@ -71,5 +71,11 @@ export function slotsFor(target: Solid, others: Solid[], clearance: number): Pol
   const all: Poly[] = [];
   for (const o of others) for (const p of crossSection(target, o)) all.push(p);
   if (!all.length) return [];
-  return offset(union(all), clearance / 2, 'miter');
+  // Only what passes through the part's material makes a slot: a part that
+  // touches its edge from outside leaves no notch
+  const inside = pieces(intersection(union(all), target.outline)).filter(
+    (g) => g.reduce((a, r) => a + area(r), 0) > 1e-4,
+  );
+  if (!inside.length) return [];
+  return offset(inside.flat(), clearance / 2, 'miter');
 }
