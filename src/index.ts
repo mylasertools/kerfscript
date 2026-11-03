@@ -38,6 +38,7 @@ export { HARDWARE_KINDS, HARDWARE_COLORS, type HardwareKind } from './hardware.j
 export const VERSION = '0.7.0';
 export const LANGUAGE_VERSION = '0.3';
 export { diffRenders, type DiffEntry } from './diff.js';
+export { instructionsHtml } from './instructions.js';
 export { importSvg, type ImportOptions, type ImportResult } from './import/index.js';
 
 export {

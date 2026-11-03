@@ -21,6 +21,7 @@ import { BUILTIN_FONT, withBuiltinFont } from './font.js';
 import { startServer, workerMain } from './lsp.js';
 import { verificationCommand } from './verify/command.js';
 import { diffRenders } from './diff.js';
+import { instructionsHtml } from './instructions.js';
 import {
   add,
   check as checkLibraries,
@@ -43,6 +44,9 @@ Usage:
   kerf verify <file.kerf> --spec <file.json> [-o report.json]
                                     verify assembly and motion contracts;
                                     exit 0 pass, 1 failed, 2 unverified/invalid
+  kerf instructions <file.kerf> [-o out.html] [options]
+                                    printable assembly instructions, a page
+                                    per step
   kerf diff <a.kerf> <b.kerf>        what changed, by part and layer; exit 1 if
                                     anything did (--json for a list)
   kerf fmt <files or folders>        format .kerf files in place
@@ -137,7 +141,7 @@ function main(argv: string[]) {
     if (!(timeout > 0)) fail('--timeout needs a number of seconds');
     return startServer({ worker: fileURLToPath(import.meta.url), timeout: timeout * 1000 });
   }
-  if (!['render', 'params', 'check'].includes(cmd))
+  if (!['render', 'params', 'check', 'instructions'].includes(cmd))
     fail(`Unknown command "${cmd}". Run kerf --help.`);
   let file = '';
   let out = '';
@@ -267,6 +271,12 @@ function main(argv: string[]) {
         `  sheet ${i + 1}: ${s.width} x ${s.height} mm, ${s.thickness} mm ${s.material}, ${s.items.length} piece${s.items.length === 1 ? '' : 's'}\n`,
       ),
     );
+    return;
+  }
+  if (cmd === 'instructions') {
+    const page = out || file.replace(/\.kerf$/i, '') + '-instructions.html';
+    writeFileSync(page, instructionsHtml(result, basename(file).replace(/\.kerf$/i, '')));
+    process.stderr.write(`Wrote ${page}\n`);
     return;
   }
   const target = out || file.replace(/\.kerf$/i, '') + '.svg';

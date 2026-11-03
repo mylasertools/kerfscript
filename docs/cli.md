@@ -49,6 +49,7 @@ kerf params <file.kerf>
 kerf check <file.kerf>
 kerf verify <file.kerf> --spec <file.json> [-o report.json]
 kerf diff <a.kerf> <b.kerf> [-D name=value] [--json]
+kerf instructions <file.kerf> [-o out.html] [options]
 kerf fmt <files or folders>
 kerf fmt --check <files or folders>
 kerf fmt -
@@ -159,6 +160,16 @@ names in the call:
 ```sh
 kerf render lib/props.kerf --call 'roses(40, 30)' -D '$thickness=4' -o roses.svg
 kerf check lib/kerf/box.kerf --call 'box([w, 40, 30])' -D w=60
+```
+
+`kerf instructions` writes the assembly instructions as one HTML page to
+print or save as PDF: the parts list with each part's number, the sheets,
+then a page per `step()` with the model drawn as it stands after it, the
+step's parts in orange, and the parts and hardware it adds. With
+`$label_parts = true` the numbers match the ones engraved on the parts.
+
+```sh
+kerf instructions lock-box.kerf -o lock-box-instructions.html
 ```
 
 `kerf diff` renders two designs (or one design before and after a change)

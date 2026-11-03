@@ -145,6 +145,12 @@ format('x=1;module m(a,b=2){rect([a,b]);}');
 
 `format(source, { indent: 4 })` uses four spaces per level.
 
+## instructionsHtml()
+
+`instructionsHtml(result, title)` turns a `render()` result into the page
+`kerf instructions` writes: a standalone HTML document with the parts,
+the sheets and a drawing for each step.
+
 ## diffRenders()
 
 `diffRenders(a, b)` compares two results of `render(source, { layout: "none" })`

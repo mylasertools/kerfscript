@@ -524,3 +524,21 @@ function layerBox(l) {
     ys = pts.map((q) => q[1]);
   return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
 }
+
+test('kerf instructions draws each step with its parts and hardware', async () => {
+  const { instructionsHtml } = await import('../dist/index.js');
+  const r = render(`
+    step("Stand the walls in the base") {
+      part("base", at = [-30, -40, 0]) rect([60, 80]);
+      for (y = [-40, 37]) part(str("wall ", y), at = [-30, y + 3, 3], rotate = [90, 0, 0]) rect([60, 40]);
+    }
+    step("Slide the axle through") hardware("dowel", [0, -45, 25], [0, 45, 25], 6);`);
+  const html = instructionsHtml(r, 'Cart <1>');
+  assert.match(html, /<title>Cart &lt;1&gt;: assembly<\/title>/);
+  assert.equal((html.match(/<section>/g) ?? []).length, 2);
+  assert.match(html, /<span>1<\/span> Stand the walls in the base/);
+  assert.match(html, /<b>1<\/b> base/);
+  assert.match(html, /dowel, 6 mm, 90 mm long/);
+  // Each step has a drawing
+  assert.equal((html.match(/<div class="view"><svg/g) ?? []).length, 2);
+});

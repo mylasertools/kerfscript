@@ -103,6 +103,9 @@ name=from:step:to` checks a design over every combination of settings.
   somewhere warns, saying where.
 - `symbol(..., box = "grid")` sizes and places a symbol by its icon set's
   grid, so a set lines up as drawn.
+- `kerf instructions model.kerf` (and `instructionsHtml()`) writes printable
+  assembly instructions: parts, sheets, and a page per step with the model
+  drawn so far, that step's parts picked out.
 - `kerf diff a.kerf b.kerf` (and `diffRenders()`) lists what changed between
   two renders, by part and layer, with where.
 - `kerf render lib.kerf --call 'roses(40, 30)'` renders one call of a
