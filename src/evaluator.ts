@@ -50,6 +50,7 @@ import {
   equals,
   isFn,
   isRange,
+  isRec,
   own,
   rangeValues,
   show,
@@ -805,6 +806,7 @@ export class Evaluator {
       case 'index': {
         const t = this.expr(x.target, env);
         const i = this.expr(x.index, env);
+        if (isRec(t) && typeof i === 'string') return t.fields.get(i);
         if (typeof i !== 'number')
           throw new KerfError(`List index must be a number, got ${typeName(i)}`, x.pos);
         if (Array.isArray(t)) return t[Math.floor(i)];
@@ -812,8 +814,12 @@ export class Evaluator {
         if (isRange(t)) return [t.start, t.step, t.end][Math.floor(i)];
         return undefined;
       }
+      case 'record':
+        return this.record(x, env);
       case 'member': {
         const t = this.expr(x.target, env);
+        // A record's field, undef when it has none of that name
+        if (isRec(t)) return t.fields.get(x.name);
         const i = { x: 0, y: 1, z: 2 }[x.name];
         if (Array.isArray(t) && i !== undefined) return t[i];
         if (isRange(t) && (x.name === 'begin' || x.name === 'step' || x.name === 'end'))
@@ -937,6 +943,13 @@ export class Evaluator {
   }
 
   // A length in real units, in sheet millimetres at $scale
+  // Not in expr() itself: its frame size limits how deep programs recurse
+  private record(x: Extract<Expr, { kind: 'record' }>, env: Env): Value {
+    const fields = new Map<string, Value>();
+    for (const f of x.fields) fields.set(f.name, this.expr(f.value, env));
+    return { type: 'record', fields };
+  }
+
   private length(x: Extract<Expr, { kind: 'num' }>, env: Env): number {
     const scale = toNumber(env.get('$scale').value ?? 1);
     if (!(scale > 0)) throw new KerfError('$scale must be a number more than 0', x.pos);

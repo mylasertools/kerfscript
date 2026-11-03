@@ -473,6 +473,9 @@ class Walker {
       case 'member':
         this.expr(e.target, scope);
         return;
+      case 'record':
+        for (const f of e.fields) this.expr(f.value, scope);
+        return;
       case 'call': {
         let callee: Reference | undefined;
         if (e.callee.kind === 'var')

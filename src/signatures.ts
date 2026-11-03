@@ -752,7 +752,21 @@ export const SIGNATURES: Signature[] = [
     kind: 'function',
     params: value,
     section: 'Lists and strings',
-    doc: 'Number of items in a list or characters in a string',
+    doc: 'Number of items in a list, characters in a string or fields in a record',
+  },
+  {
+    name: 'keys',
+    kind: 'function',
+    params: [p('record', 'A record, as {name = value}')],
+    section: 'Lists and strings',
+    doc: "A record's field names, in the order they were written",
+  },
+  {
+    name: 'merge',
+    kind: 'function',
+    params: [p('a', 'A record'), p('b', 'A record whose fields add to or replace those of a')],
+    section: 'Lists and strings',
+    doc: 'A record with the fields of a and b, b winning where both have one',
   },
   {
     name: 'concat',
@@ -867,12 +881,13 @@ export const SIGNATURES: Signature[] = [
   is('is_list', 'a list'),
   is('is_undef', 'undef'),
   is('is_function', 'a function'),
+  is('is_record', 'a record, as {name = value}'),
   {
     name: 'type_of',
     kind: 'function',
     params: value,
     section: 'Types',
-    doc: 'The type name: number, string, boolean, undef, list, range or function',
+    doc: 'The type name: number, string, boolean, undef, list, range, function or record',
   },
   {
     name: 'rands',

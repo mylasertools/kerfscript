@@ -27,7 +27,7 @@ interface Item {
   // What the token does, worked out as the formatter reaches it
   // header: the ) after for (...), if (...), let (...) or function (...),
   // which a list can follow
-  role?: 'unary' | 'modifier' | 'range' | 'header';
+  role?: 'unary' | 'modifier' | 'range' | 'header' | 'record';
 }
 
 const KEYWORDS = new Set([
@@ -121,6 +121,8 @@ interface Bracket {
   ternaries: number;
   // Opened after for, if, let or function
   header: boolean;
+  // A { that starts a record value, not a block
+  record?: boolean;
 }
 
 // The program with its layout set. Throws a KerfError for a program that
@@ -145,7 +147,7 @@ export function format(source: string, options: FormatOptions = {}): string {
   let last: Item | undefined; // the previous item on this line
 
   const top = (): Bracket | undefined => stack[stack.length - 1];
-  const atBlock = () => !top() || top()!.open === '{';
+  const atBlock = () => !top() || (top()!.open === '{' && !top()!.record);
   const closes = (t: Item) => t.kind === 'token' && !!top() && t.text === CLOSE[top()!.open];
 
   const newLine = (indent: number, blank: boolean) => {
@@ -220,6 +222,10 @@ export function format(source: string, options: FormatOptions = {}): string {
       } else if (open?.open === '[') it.role = 'range';
     }
 
+    if (text === '}' && top()?.record) it.role = 'record';
+    else if (text === '{' && !!prev && ['=', '(', ',', '[', '?', ':'].includes(prev.text))
+      it.role = 'record';
+
     if (starts) {
       const indent = indentFor(it);
       newLine(indent, it.breaks > 1 && lineNo >= 0);
@@ -238,8 +244,15 @@ export function format(source: string, options: FormatOptions = {}): string {
 
     if (CLOSE[text]) {
       const here = top();
-      const sameLine = here && here.line === lineNo && here.open !== '{' && text !== '{';
+      // After = ( , [ ? or :, a { is a record value
+      const record = it.role === 'record';
+      const sameLine =
+        here &&
+        here.line === lineNo &&
+        (here.open !== '{' || here.record) &&
+        (text !== '{' || record);
       stack.push({
+        record,
         open: text,
         outer: level,
         inner: sameLine ? here!.inner : level + 1,
@@ -247,14 +260,14 @@ export function format(source: string, options: FormatOptions = {}): string {
         ternaries: 0,
         header: text === '(' && !!prev && HEADERS.has(prev.text) && prev.token?.type === 'id',
       });
-      if (text === '{') stmtStart = true;
+      if (text === '{' && !record) stmtStart = true;
     } else if (closes(it)) {
       const done = stack.pop()!;
       if (done.header) {
         it.role = 'header';
         headerLevel = done.outer;
       }
-      if (text === '}') stmtStart = true;
+      if (text === '}' && !done.record) stmtStart = true;
     } else if (text === ';' && atBlock()) stmtStart = true;
     // use <path> and include <path> need no ;
     else if (type === 'str' && text.startsWith('<') && atBlock()) stmtStart = true;
@@ -289,6 +302,8 @@ function space(a: Item, b: Item): boolean {
   if (x === '(' || x === '[') return false;
   // An empty block is {}, as an empty list is []
   if (x === '{' && y === '}') return false;
+  // A record is written as a list is: {a = 1}
+  if ((x === '{' && a.role === 'record') || (y === '}' && b.role === 'record')) return false;
   if (x === '.' || y === '.') return false;
   if (a.role === 'unary' || a.role === 'modifier') return false;
   if (a.role === 'range' || b.role === 'range') return false;

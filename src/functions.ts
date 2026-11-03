@@ -5,6 +5,7 @@ import {
   isFn,
   isNum,
   isRange,
+  isRec,
   joinText,
   rangeValues,
   typeName,
@@ -204,8 +205,21 @@ export const FUNCTIONS: Record<string, Builtin> = {
     return [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
   }),
   len: def('value', (a) =>
-    typeof a[0] === 'string' ? [...a[0]].length : Array.isArray(a[0]) ? a[0].length : undefined,
+    typeof a[0] === 'string'
+      ? [...a[0]].length
+      : Array.isArray(a[0])
+        ? a[0].length
+        : isRec(a[0])
+          ? a[0].fields.size
+          : undefined,
   ),
+  // A record's field names, in the order they were written
+  keys: def('record', (a) => (isRec(a[0]) ? [...a[0].fields.keys()] : undefined)),
+  // A record with fields of the second added to or replacing the first's
+  merge: def('a, b', (a) => {
+    if (!isRec(a[0]) || !isRec(a[1])) throw new Error('merge() takes two records');
+    return { type: 'record', fields: new Map([...a[0].fields, ...a[1].fields]) };
+  }),
   concat: def('...', (a, c) => {
     const n = a.reduce((s: number, x) => s + (Array.isArray(x) ? x.length : 1), 0);
     if (n > c.maxLength)
@@ -284,6 +298,7 @@ export const FUNCTIONS: Record<string, Builtin> = {
   is_string: def('value', (a) => typeof a[0] === 'string'),
   is_bool: def('value', (a) => typeof a[0] === 'boolean'),
   is_list: def('value', (a) => Array.isArray(a[0])),
+  is_record: def('value', (a) => isRec(a[0])),
   is_undef: def('value', (a) => a[0] === undefined),
   is_function: def('value', (a) => isFn(a[0])),
   type_of: def('value', (a) => typeName(a[0])),

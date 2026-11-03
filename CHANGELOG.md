@@ -8,6 +8,10 @@ variable no longer hides a function or built-in of the same name: after
 a unit, which were errors, are now lengths. New warnings and the positions
 added to old ones change the text of warnings.
 
+Records: `{kind = "armchair", x = 10}` holds values by name, read as
+`s.kind` or `s["kind"]` (a missing field is `undef`), with `keys()`,
+`merge()`, `is_record()` and `len()`. `kerf fmt` lays them out as lists.
+
 Assembly:
 
 - `kerf verify` and the JavaScript verification API check explicit rigid fit,

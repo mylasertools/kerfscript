@@ -125,7 +125,9 @@ unary      = ( "-" | "+" | "!" ) unary | power ;
 power      = postfix [ "^" unary ] ;
 postfix    = primary { arguments | "[" expr "]" | "." NAME } ;
 primary    = NUMBER | STRING | "true" | "false" | "undef" | NAME
-           | "(" expr ")" | list ;
+           | "(" expr ")" | list | record ;
+record     = "{" [ field { "," field } [ "," ] ] "}" ;
+field      = NAME "=" expr ;
 
 list       = "[" "]"
            | "[" expr ":" expr [ ":" expr ] "]"
@@ -155,6 +157,9 @@ the first choice that fits. Where that needs more than the next token:
   on its left: `2 ^ 3 ^ 2` is 512 and `-2 ^ 2` is -4. `?:` nests to the
   right.
 - An `else` belongs to the nearest `if`.
+- A `{` where a value is expected starts a record; where a statement is,
+  a block. A record that names a field twice is the error `Field <name> is
+given twice`, at the second.
 
 A token that fits no rule is an error: `Expected <what>, found "<token>"`,
 or `found end of file`, at that token.
@@ -172,6 +177,7 @@ Cases: `values/*`.
 | list     | ordered sequences of values                                                |
 | range    | a start, step and end number; `[a:b]` has step 1                           |
 | function | a parameter list, a body expression and the scope the function was made in |
+| record   | values by field name, in the order the fields were written (from 0.3)      |
 
 `type_of(v)` gives the type's name as above. Values cannot be changed
 after they are made; every operation makes a new value.
@@ -194,6 +200,8 @@ value is true, including `[0]`, `"0"`, ranges and functions.
 - both are `undef`,
 - both are lists of the same length whose items are equal in order,
 - both are ranges with the same start, step and end (`[0:2] == [0:1:2]`),
+- both are records with the same field names whose values are equal, in
+  any order,
 - or both are the same function value.
 
 `a != b` is `!(a == b)`.
@@ -205,7 +213,8 @@ integer when it is one, and otherwise with up to 10 significant digits
 (`1 / 3` is `0.3333333333`, `0.1 + 0.2` is `0.3`). Very large and small
 numbers use exponent form (`1e+21`); infinities are `Infinity` and
 `-Infinity`, NaN is `NaN`, and -0 is `0`. Lists are written as
-`[a, b]`, ranges as `[start:step:end]`, functions as `function(a, b)` and
+`[a, b]`, ranges as `[start:step:end]`, records as `{a = 1, b = "x"}`,
+functions as `function(a, b)` and
 `undef` as `undef`. Strings are written as they are at the top level and in
 double quotes, with escapes, inside a list or after a name. `echo()` writes
 its arguments in the order they are given, a named one as `name = value`.
@@ -271,8 +280,11 @@ index outside the list, a negative index and an index into any other value
 give `undef`.
 
 `a.x`, `a.y` and `a.z` are `a[0]`, `a[1]` and `a[2]` on a list.
-`r.begin`, `r.step` and `r.end` read a range. Any other member gives
-`undef`.
+`r.begin`, `r.step` and `r.end` read a range. On a record, `r.name` and
+`r["name"]` read its field, `undef` when it has none of that name. Any other
+member gives `undef`. `len(r)` counts a record's fields, `keys(r)` lists
+their names in order, and `merge(a, b)` is a record with both's fields,
+`b`'s where both have one. A record is true in a condition.
 
 ### Calls
 

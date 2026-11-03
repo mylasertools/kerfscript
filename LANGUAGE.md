@@ -49,8 +49,22 @@ score() circle(d = size - 6);
 | list     | `[1, 2]`, `[[0, 0], [10, 0], [5, 8]]`                        |
 | range    | `[0:5]` (0 to 5 step 1), `[0:2:10]` (0 to 10 step 2)         |
 | function | `function(x) x * 2`                                          |
+| record   | `{kind = "armchair", x = 10, items = []}`                    |
 
 Points are lists `[x, y]`. `p.x` and `p.y` read the first two items.
+
+A record holds values by name. `s.kind` (or `s["kind"]`) reads a field, and
+a field it doesn't have reads as `undef`, so a table of scene entries can't
+put a value in the wrong place:
+
+```kerf
+chair = {kind = "armchair", x = 10, items = ["cushion"]};
+echo(chair.kind, chair.y);              // armchair, undef
+moved = merge(chair, {x = 40});         // the same with x = 40
+echo(keys(moved), len(moved));          // ["kind", "x", "items"], 3
+```
+
+Records are equal when they have the same fields with equal values.
 
 ## Expressions
 
@@ -414,7 +428,9 @@ A path is a list of `[x, y]` points.
 
 | Function                       | Result                                                                                       |
 | ------------------------------ | -------------------------------------------------------------------------------------------- |
-| `len(value)`                   | Number of items in a list or characters in a string                                          |
+| `len(value)`                   | Number of items in a list, characters in a string or fields in a record                      |
+| `keys(record)`                 | A record's field names, in the order they were written                                       |
+| `merge(a, b)`                  | A record with the fields of both, `b`'s winning                                              |
 | `concat(...)`                  | Join lists and individual values into one list                                               |
 | `reverse(value)`               | Reverse a list or string                                                                     |
 | `sum(values)`                  | Sum a list of numbers                                                                        |
@@ -431,7 +447,7 @@ A path is a list of `[x, y]` points.
 ### Types
 
 `is_num(value)`, `is_string(value)`, `is_bool(value)`, `is_list(value)`,
-`is_undef(value)` and `is_function(value)` return a boolean.
+`is_undef(value)`, `is_function(value)` and `is_record(value)` return a boolean.
 `type_of(value)` returns the type name as a string.
 
 ### Random values

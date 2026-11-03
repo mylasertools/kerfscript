@@ -59,9 +59,9 @@ export const BUILTINS = new Set(
     'flex_box flex_panel narrow_hinge flex_strip cam_lock lock_key ring_stack symbol tabs ' +
     'slots tab_rect abs sign floor ceil round sqrt exp ln log sin cos tan asin acos atan ' +
     'atan2 pow min max clamp lerp norm cross path_length point_at heading_at path_points ' +
-    'spline_points rotation euler orient len concat reverse sum slice str chr ord upper lower ' +
-    'split join search contains lookup is_num is_string is_bool is_list is_undef is_function ' +
-    'type_of rands text_width text_metrics finger_count'
+    'spline_points rotation euler orient len keys merge concat reverse sum slice str chr ord ' +
+    'upper lower split join search contains lookup is_num is_string is_bool is_list is_undef ' +
+    'is_function is_record type_of rands text_width text_metrics finger_count'
   ).split(' '),
 );
 

@@ -1,0 +1,7 @@
+// A record's fields read by name; a missing field is undef
+// => echo: armchair, 11, 2, 1, undef, 10, 4
+// => echo: {kind = "armchair", x = 10, items = [1, 2], sub = {a = 1}}
+// => warning: Nothing to cut: the program made no shapes.
+s = {kind = "armchair", x = 10, items = [1, 2], sub = {a = 1}};
+echo(s.kind, s.x + 1, s.items[1], s.sub.a, s.missing, s["x"], len(s));
+echo(s);

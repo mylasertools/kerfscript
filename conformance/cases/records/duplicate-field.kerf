@@ -1,0 +1,3 @@
+// A record can't give a field twice
+// => error: Field a is given twice (line 3, column 13)
+r = {a = 1, a = 2};

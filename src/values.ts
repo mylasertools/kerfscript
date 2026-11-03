@@ -17,13 +17,20 @@ export interface Closure {
   name?: string;
 }
 
-export type Value = number | string | boolean | undefined | Value[] | Range | Closure;
+export interface Rec {
+  type: 'record';
+  fields: Map<string, Value>;
+}
+
+export type Value = number | string | boolean | undefined | Value[] | Range | Closure | Rec;
 
 export const isRange = (v: Value): v is Range =>
   typeof v === 'object' && v !== null && !Array.isArray(v) && v.type === 'range';
 export const isFn = (v: Value): v is Closure =>
   typeof v === 'object' && v !== null && !Array.isArray(v) && v.type === 'function';
 export const isNum = (v: Value): v is number => typeof v === 'number';
+export const isRec = (v: Value): v is Rec =>
+  typeof v === 'object' && v !== null && !Array.isArray(v) && v.type === 'record';
 
 // o[key] when o has its own property key, so names such as "toString" do not
 // find what every object inherits
@@ -58,15 +65,20 @@ export function truthy(v: Value): boolean {
   return true;
 }
 
-const same = (a: Value, b: Value) =>
-  isRange(a) && isRange(b) ? a.start === b.start && a.step === b.step && a.end === b.end : a === b;
+const same = (a: Value, b: Value, step?: () => void): boolean =>
+  isRange(a) && isRange(b)
+    ? a.start === b.start && a.step === b.step && a.end === b.end
+    : isRec(a) && isRec(b)
+      ? a.fields.size === b.fields.size &&
+        [...a.fields].every(([k, v]) => b.fields.has(k) && equals(v, b.fields.get(k), step))
+      : a === b;
 
 // a == b. step() runs once for each pair of values compared, so comparing
 // long lists counts towards the program's steps. A list can hold the same
 // list many times, so pairs of lists found equal are not compared again.
 export function equals(a: Value, b: Value, step?: () => void): boolean {
   step?.();
-  if (!Array.isArray(a) || !Array.isArray(b)) return same(a, b);
+  if (!Array.isArray(a) || !Array.isArray(b)) return same(a, b, step);
   const seen = new Map<Value[], Set<Value[]>>();
   const open: [Value[], Value[], number][] = [];
   const enter = (x: Value[], y: Value[]) => {
@@ -88,7 +100,7 @@ export function equals(a: Value, b: Value, step?: () => void): boolean {
     const x = top[0][top[2]];
     const y = top[1][top[2]++];
     step?.();
-    if (Array.isArray(x) && Array.isArray(y) ? !enter(x, y) : !same(x, y)) return false;
+    if (Array.isArray(x) && Array.isArray(y) ? !enter(x, y) : !same(x, y, step)) return false;
   }
   return true;
 }
@@ -98,6 +110,7 @@ export function typeName(v: Value): string {
   if (Array.isArray(v)) return 'list';
   if (isRange(v)) return 'range';
   if (isFn(v)) return 'function';
+  if (isRec(v)) return 'record';
   return typeof v;
 }
 
@@ -107,6 +120,10 @@ function scalar(v: Value): string {
   if (typeof v === 'number') return fmt(v);
   if (isRange(v)) return `[${fmt(v.start)}:${fmt(v.step)}:${fmt(v.end)}]`;
   if (isFn(v)) return `function(${v.params.map((p) => p.name).join(', ')})`;
+  if (isRec(v))
+    return v.fields.size
+      ? `{${[...v.fields].map(([k, x]) => `${k} = ${write(x, 1000, true).text}`).join(', ')}}`
+      : '{}';
   return String(v);
 }
 

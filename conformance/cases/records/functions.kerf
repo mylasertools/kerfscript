@@ -1,0 +1,8 @@
+// keys(), merge(), is_record(), type_of() and equality of records
+// => echo: ["a", "b", "c"], 1, 3, 5
+// => echo: true, false, record, true, false
+// => warning: Nothing to cut: the program made no shapes.
+r = {a = 1, b = 2};
+m = merge(r, {b = 3, c = 5});
+echo(keys(m), m.a, m.b, m.c);
+echo(is_record(r), is_record([1]), type_of(r), r == {a = 1, b = 2}, r == {b = 2, a = 1, c = 0});
