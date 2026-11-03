@@ -297,8 +297,8 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
   hardware the assembly needs, from one point to another: a dowel, a screw,
   a magnet, paper. `size` is a diameter, or `[w, h]` for a flat section
   whose `h` points along `up` (by default up, or along y for something
-  standing upright). `render()` returns it as `hardware`, and `kerf check`
-  lists it.
+  standing upright). A round one is drawn with `sides` sides, 3 to 128.
+  `render()` returns it as `hardware`, and `kerf check` lists it.
 - Shapes outside any part form one part named `part`.
 - `material(thickness, kerf, name) { ... }` sets those special variables for
   its children.
