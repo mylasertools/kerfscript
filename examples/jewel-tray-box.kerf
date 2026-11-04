@@ -30,14 +30,16 @@ iw = width - 2 * t;
 id = depth - 2 * t;
 assert(iw / columns > 18 && id / rows > 18, "Compartments must be wider than 18 mm");
 assert(height > 5 * t + 8, "Increase height for the lid locator and dividers");
-box([width, depth, height]);
-grid_dividers([iw, id, height - 3 * t - 4], columns, rows, clearance = clearance, scoops = true, at = [t, t, t]);
-part("Lid", at = [-lid_overhang, -lid_overhang, height + lid_lift]) {
-  rect([width + 2 * lid_overhang, depth + 2 * lid_overhang], r = 5);
-  score() translate([lid_overhang + width / 2, lid_overhang + depth / 2]) {
-    outline() rect([width * 0.6, depth * 0.54], center = true, r = 8);
-    for (x = [-width * 0.18, 0, width * 0.18]) translate([x, 0]) outline() circle(d = 10);
+step("Glue the box together") box([width, depth, height]);
+step("Drop the compartment grid in, without glue") grid_dividers([iw, id, height - 3 * t - 4], columns, rows, clearance = clearance, scoops = true, at = [t, t, t]);
+step("Glue the lid locator under the lid") {
+  part("Lid", at = [-lid_overhang, -lid_overhang, height + lid_lift]) {
+    rect([width + 2 * lid_overhang, depth + 2 * lid_overhang], r = 5);
+    score() translate([lid_overhang + width / 2, lid_overhang + depth / 2]) {
+      outline() rect([width * 0.6, depth * 0.54], center = true, r = 8);
+      for (x = [-width * 0.18, 0, width * 0.18]) translate([x, 0]) outline() circle(d = 10);
+    }
   }
+  part("Lid locator", at = [t + lid_ease, t + lid_ease, height - t + lid_lift])
+    rect([iw - 2 * lid_ease, id - 2 * lid_ease], r = 3);
 }
-part("Lid locator", at = [t + lid_ease, t + lid_ease, height - t + lid_lift])
-  rect([iw - 2 * lid_ease, id - 2 * lid_ease], r = 3);

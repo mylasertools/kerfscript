@@ -20,11 +20,13 @@ $material = "plywood";
 t = $thickness;
 depth = clear_gap + 2 * t + 24;
 centres = [12 + t / 2, 12 + 1.5 * t + clear_gap];
-part("Foot", at = [0, 0, 0]) difference() {
-  rect([width, depth], r = 5);
-  for (y = centres) translate([8, y]) slots(width - 16, clearance = clearance);
-}
-part("Cheek", qty = 2, at = [for (y = centres) [8, y + t / 2, t]], rotate = [90, 0, 0]) difference() {
-  union() { rect([width - 16, height], r = 4); tabs(width - 16); }
-  if (scoop > 0) translate([(width - 16) / 2, height]) ellipse([(width - 16) * 0.3, scoop]);
-}
+step("Lay the foot flat and check the slot fit")
+  part("Foot", at = [0, 0, 0]) difference() {
+    rect([width, depth], r = 5);
+    for (y = centres) translate([8, y]) slots(width - 16, clearance = clearance);
+  }
+step("Glue both cheeks into the foot")
+  part("Cheek", qty = 2, at = [for (y = centres) [8, y + t / 2, t]], rotate = [90, 0, 0]) difference() {
+    union() { rect([width - 16, height], r = 4); tabs(width - 16); }
+    if (scoop > 0) translate([(width - 16) / 2, height]) ellipse([(width - 16) * 0.3, scoop]);
+  }

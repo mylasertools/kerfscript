@@ -33,25 +33,26 @@ centres = [day_radius + m, 2 * day_radius + 3 * m + month_radius, 2 * (day_radiu
 w = 2 * sum(radii) + 6 * m;
 h = 2 * max(radii) + 2 * m + 8;
 assert(day_radius >= 65, "Use a larger day wheel for readable numbers");
-part("Foot", at = [-6, -40, 0]) difference() {
-  rect([w + 12, 80], r = 5);
-  translate([6, 40 + t / 2]) slots(w, count = 4, width = 20, clearance = clearance);
-}
-part("Backboard", at = [0, t, t], rotate = [90, 0, 0]) {
-  difference() {
-    union() { rect([w, h]); tabs(w, count = 4, width = 20); }
-    for (i = [0:2]) translate([centres[i], radii[i] + m]) circle(d = pin_diameter + 0.3);
+step("Glue the backboard into the foot") {
+  // The foot cuts the slots for the backboard's tabs
+  part("Foot", at = [-6, -40, 0], slots = ["Backboard"], clearance = clearance) rect([w + 12, 80], r = 5);
+  part("Backboard", at = [0, t, t], rotate = [90, 0, 0]) {
+    difference() {
+      union() { rect([w, h]); tabs(w, count = 4, width = 20); }
+      for (i = [0:2]) translate([centres[i], radii[i] + m]) circle(d = pin_diameter + 0.3);
+    }
+    score() for (i = [0:2]) {
+      x = centres[i]; z = 2 * radii[i] + m;
+      polyline([[x - 3, z + 9], [x, z + 3], [x + 3, z + 9]]);
+      translate([x, z + 11]) text(titles[i], size = 4, halign = "center");
+    }
   }
-  score() for (i = [0:2]) {
-    x = centres[i]; z = 2 * radii[i] + m;
-    polyline([[x - 3, z + 9], [x, z + 3], [x + 3, z + 9]]);
-    translate([x, z + 11]) text(titles[i], size = 4, halign = "center");
+}
+step("Bolt on the wheels with a washer behind each") for (i = [0:2]) {
+  part(str(titles[i], " wheel"), at = [centres[i], -washer_gap, radii[i] + m + t], rotate = [90, -(values[i] - 1) * 360 / counts[i], 0]) {
+    difference() { circle(r = radii[i]); circle(d = pin_diameter + 0.3); }
+    score() for (j = [0:counts[i] - 1]) rotate(90 - j * 360 / counts[i]) translate([radii[i] - 8, 0]) rotate(-90)
+      text(i == 2 ? weeks[j] : str(j + 1), size = i == 0 ? 4.4 : 4.5, halign = "center", valign = "center");
   }
+  hardware("steel", [centres[i], -washer_gap - t - 2, radii[i] + m + t], [centres[i], t + 2, radii[i] + m + t], pin_diameter, label = "bolt");
 }
-for (i = [0:2]) part(str(titles[i], " wheel"), at = [centres[i], -washer_gap, radii[i] + m + t], rotate = [90, -(values[i] - 1) * 360 / counts[i], 0]) {
-  difference() { circle(r = radii[i]); circle(d = pin_diameter + 0.3); }
-  score() for (j = [0:counts[i] - 1]) rotate(90 - j * 360 / counts[i]) translate([radii[i] - 8, 0]) rotate(-90)
-    text(i == 2 ? weeks[j] : str(j + 1), size = i == 0 ? 4.4 : 4.5, halign = "center", valign = "center");
-}
-echo("hardware", [for (i = [0:2]) [[centres[i], -washer_gap - t - 2, radii[i] + m + t],
-  [centres[i], t + 2, radii[i] + m + t], pin_diameter, "steel", 24]]);

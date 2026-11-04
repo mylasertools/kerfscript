@@ -31,10 +31,12 @@ part("Laced slat", qty = slats, at = [for (i = [0:slats - 1]) centre(i)], rotate
   rect([width, slat_width], center = true, r = 2);
   for (x = [-0.32 * width, 0.32 * width], y = [-slat_width / 4, slat_width / 4]) translate([x, y]) circle(d = cord_diameter + 0.8);
 }
-echo("hardware", concat(
-  [for (i = [0:slats - 1], x = [-0.32 * width, 0.32 * width])
-    [at_hole(i, x, -slat_width / 4, -0.3), at_hole(i, x, slat_width / 4, -0.3), cord_diameter, "cord", 12]],
-  [for (i = [0:slats - 2], x = [-0.32 * width, 0.32 * width])
-    [at_hole(i, x, slat_width / 4, t + 0.3), at_hole(i + 1, x, -slat_width / 4, t + 0.3), cord_diameter, "cord", 12]],
-  [for (i = [0:slats - 1], x = [-0.32 * width, 0.32 * width], v = [-slat_width / 4, slat_width / 4])
-    [at_hole(i, x, v, -0.3), at_hole(i, x, v, t + 0.3), cord_diameter, "cord", 12]]));
+// Each cord runs across the back of a slat, over the gap on the front,
+// and through both holes
+for (i = [0:slats - 1], x = [-0.32 * width, 0.32 * width]) {
+  hardware("cord", at_hole(i, x, -slat_width / 4, -0.3), at_hole(i, x, slat_width / 4, -0.3), cord_diameter, sides = 12);
+  if (i < slats - 1)
+    hardware("cord", at_hole(i, x, slat_width / 4, t + 0.3), at_hole(i + 1, x, -slat_width / 4, t + 0.3), cord_diameter, sides = 12);
+  for (v = [-slat_width / 4, slat_width / 4])
+    hardware("cord", at_hole(i, x, v, -0.3), at_hole(i, x, v, t + 0.3), cord_diameter, sides = 12);
+}

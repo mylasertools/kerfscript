@@ -72,24 +72,26 @@ module channels() for (p = passages) hull() {
 // Assembled: the base, the maze layers and the cover, stacked; the cover's
 // own material block changes $thickness, so keep the plywood's
 ply = $thickness;
-part("Base", at = [0, 0, 0]) {
-  difference() {
+step("Glue the maze layers onto the base, lining up the screw holes") {
+  part("Base", at = [0, 0, 0]) {
+    difference() {
+      plate();
+      screw_holes();
+    }
+    engrave() {
+      translate(at(start)) circle(d = channel * 0.55);
+      translate(at(goal)) star(5, channel * 0.42, channel * 0.18);
+    }
+  }
+
+  part("Maze layer", qty = layers, at = [for (k = [1:layers]) [0, 0, k * ply]]) difference() {
     plate();
     screw_holes();
-  }
-  engrave() {
-    translate(at(start)) circle(d = channel * 0.55);
-    translate(at(goal)) star(5, channel * 0.42, channel * 0.18);
+    channels();
   }
 }
 
-part("Maze layer", qty = layers, at = [for (k = [1:layers]) [0, 0, k * ply]]) difference() {
-  plate();
-  screw_holes();
-  channels();
-}
-
-if (cover) material(thickness = cover_thickness, name = "clear acrylic") part("Cover", at = [0, 0, (layers + 1) * ply]) difference() {
+if (cover) step("Drop the ball in and screw the clear cover on") material(thickness = cover_thickness, name = "clear acrylic") part("Cover", at = [0, 0, (layers + 1) * ply]) difference() {
   plate();
   screw_holes();
 }

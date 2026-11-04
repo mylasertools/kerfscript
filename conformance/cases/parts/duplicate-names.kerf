@@ -1,0 +1,6 @@
+// Two different parts with one name warn; identical copies made one at a
+// time do not
+// => warning: Two different parts are named "a"; slots, glue and on = find parts by name, so give each its own.
+part("a") rect(10);
+part("a") rect(20);
+for (i = [0:1]) part("b") rect(5);

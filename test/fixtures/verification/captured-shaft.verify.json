@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "model": "Synthetic retained shaft",
+  "configurations": [{ "id": "default" }],
+  "claims": [
+    {
+      "id": "shaft-capture",
+      "kind": "captured-shaft",
+      "shaft": { "hardware": "shaft" },
+      "bearings": [
+        { "part": "bearing", "copy": 1 },
+        { "part": "bearing", "copy": 2 }
+      ],
+      "stack": [{ "part": "lower spacer" }, { "part": "rotor" }, { "part": "upper spacer" }],
+      "stops": [
+        { "body": { "hardware": "head" }, "attachment": { "kind": "integral" } },
+        {
+          "body": { "hardware": "nut" },
+          "attachment": {
+            "kind": "threaded",
+            "thread": { "hardware": "thread" },
+            "minimumEngagement": 3,
+            "secured": true
+          }
+        }
+      ],
+      "clearance": [0.1, 0.5],
+      "endplay": [0.2, 0.6],
+      "minimumOverlap": 1,
+      "maximumStopGap": 0.1
+    }
+  ]
+}

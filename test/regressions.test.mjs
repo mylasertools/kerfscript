@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { KerfError, render } from '../dist/index.js';
+import { readFileSync } from 'node:fs';
+import { KerfError, meshPieces, render } from '../dist/index.js';
 
 const layers = (r) => r.sheets[0].items.map((it) => it.layers);
 
@@ -214,4 +215,167 @@ test('settings from outside the program are values a program could have', () => 
   assert.deepEqual(render('w = 1; echo(w); rect(1);', { params: { w: [1, 'a', true] } }).echoes, [
     '[1, "a", true]',
   ]);
+});
+
+test('the children cache tells apart special variables holding different functions', () => {
+  const r = render(
+    'module twice() { $f = function(x) x; children(); translate([40, 0]) { $f = function(x) x * 2; children(); } }\ntwice() square($f(10));',
+  );
+  // A 10 mm square, then a 20 mm one
+  const sizes = layers(r)[0]
+    .get('cut')
+    .regions.map((p) =>
+      Math.round(Math.max(...p.map((q) => q[0])) - Math.min(...p.map((q) => q[0]))),
+    );
+  assert.deepEqual(
+    sizes.sort((a, b) => a - b),
+    [10, 20],
+  );
+});
+
+test('writing a record is bounded however deeply records nest', () => {
+  // Each level holds the one below twice: 2^40 fields when written out
+  let src = 'r0 = {v = 1};\n';
+  for (let i = 1; i <= 40; i++) src += `r${i} = {a = r${i - 1}, b = r${i - 1}};\n`;
+  src += 'echo(str(r40));';
+  const started = Date.now();
+  assert.throws(() => render(src), /long|limit/i);
+  assert.ok(Date.now() - started < 2000);
+  const short = render('r = {a = {b = [1, "x"]}, c = 2};\necho(r);');
+  assert.deepEqual(short.echoes, ['{a = {b = [1, "x"]}, c = 2}']);
+});
+
+test('a layer that is already the back of another cannot be redefined as a front layer', () => {
+  assert.throws(
+    () =>
+      render(
+        'layer("score", side = "back") square(3);\nlayer("score-back", "line", "#0000ff") square(5);\nsquare(20);',
+      ),
+    /is the back of layer "score"/,
+  );
+});
+
+test('hardware sides are bounded', () => {
+  assert.throws(
+    () =>
+      render(
+        '$thickness = 3;\npart("p") square(10);\nhardware("dowel", [0, 0, 0], [0, 0, 10], 6, sides = 1e9);',
+      ),
+    /sides must be from 3 to 128/,
+  );
+});
+
+test('the children cache tells apart numbers that print alike', () => {
+  const r = render(
+    'module twice() { $a = 1.0000000001; children(); translate([40, 0]) { $a = 1.0000000002; children(); } }\ntwice() square($a == 1.0000000001 ? 10 : 20);',
+  );
+  const sizes = layers(r)[0]
+    .get('cut')
+    .regions.map((p) =>
+      Math.round(Math.max(...p.map((q) => q[0])) - Math.min(...p.map((q) => q[0]))),
+    );
+  assert.deepEqual(
+    sizes.sort((a, b) => a - b),
+    [10, 20],
+  );
+});
+
+test('$label_parts does not put numbers on a front layer named engrave-back', async () => {
+  const font = readFileSync(new URL('../fonts/AtkinsonHyperlegible-Regular.ttf', import.meta.url));
+  const r = render(
+    '$label_parts = true;\nlayer("engrave-back", "fill", "#000000") translate([100, 0]) square(1);\npart("p") square(40);',
+    {
+      fonts: { A: font.buffer.slice(font.byteOffset, font.byteOffset + font.byteLength) },
+      defaultFont: 'A',
+    },
+  );
+  assert.ok(
+    r.warnings.some((w) => /uses for the front/.test(w)),
+    r.warnings.join('\n'),
+  );
+  assert.ok(!r.sheets.some((s) => s.back));
+});
+
+test('a bend far beyond its part warns and stays cheap to draw', () => {
+  const r = render('$thickness = 3;\npart("p", bend = [0, 1000000000, 90]) rect([40, 10]);');
+  assert.ok(
+    r.warnings.some((w) => /beyond the part/.test(w)),
+    r.warnings.join('\n'),
+  );
+  const pieces = meshPieces(r.assembly[0].outline, r.assembly[0].bends);
+  assert.ok(pieces.length <= 2002, String(pieces.length));
+  const wide = meshPieces(
+    [
+      [
+        [0, 0],
+        [1e6, 0],
+        [1e6, 1],
+        [0, 1],
+      ],
+    ],
+    [{ x0: 0, x1: 1e6, angle: 90 }],
+  );
+  assert.ok(wide.length <= 2002, String(wide.length));
+});
+
+test('mirror per copy cuts those copies mirrored, as a part of their own', () => {
+  const r = render(`
+part("side", qty = 2, at = [[0, 0, 0], [40, 0, 0]], rotate = [90, 0, 90], mirror = [false, true]) {
+  polygon([[0, 0], [30, 0], [5, 20]]);
+  engrave() translate([2, 2]) square(3);
+}`);
+  assert.deepEqual(r.warnings, []);
+  assert.deepEqual(
+    r.parts.map((p) => [p.name, p.qty, !!p.mirrored]),
+    [
+      ['side', 1, false],
+      ['side', 1, true],
+    ],
+  );
+  // Copies keep their numbers, the second at x = 40
+  assert.deepEqual(
+    r.assembly.map((a) => [a.copy, a.matrix[3]]),
+    [
+      [1, 0],
+      [2, 40],
+    ],
+  );
+  // The mirrored one's apex is at x = -5
+  const xs = r.assembly[1].outline.flat().map(([x]) => x);
+  assert.equal(Math.min(...xs), -30);
+  assert.throws(
+    () => render('part("x", qty = 2, mirror = [true]) square(3);'),
+    /mirror needs one true or false per copy/,
+  );
+});
+
+test('a fill wholly under a layer stacked above it warns', () => {
+  const r = render(`
+layer("glass", mode = "fill", color = "#88aacc");
+layer("stone", mode = "fill", color = "#888888");
+part("rose") { circle(d = 30); layer("stone") circle(d = 26); layer("glass") square(4, center = true); }`);
+  assert.equal(r.warnings.length, 1);
+  assert.match(r.warnings[0], /layer "glass" .* wholly under "stone", stacked above it/);
+  // Drawn in one paint(), the later piece is on top and nothing hides
+  const ok = render(`
+layer("glass", mode = "fill", color = "#88aacc");
+layer("stone", mode = "fill", color = "#888888");
+part("rose") { circle(d = 30); paint(["stone", "glass"]) { circle(d = 26); square(4, center = true); } }`);
+  assert.deepEqual(ok.warnings, []);
+  // A hairline under a stroked outline is meant to be covered
+  const hair = render(`
+layer("dot", mode = "fill", color = "#ffffff");
+layer("ink", mode = "fill", color = "#000000");
+part("p") { square(20); layer("ink") stroke(0.6) line([2, 5], [18, 5]); layer("dot") translate([5, 4.9]) square([4, 0.2]); }`);
+  assert.deepEqual(hair.warnings, []);
+});
+
+test('a bend ending at the edge, past it only by rounding, does not warn', () => {
+  const r = render(
+    'part("p", bend = [10, 30.0000199, 90], at = [0, 0, 0]) square([30.00002, 10]);',
+  );
+  assert.deepEqual(
+    r.warnings.filter((w) => /beyond the part/.test(w)),
+    [],
+  );
 });

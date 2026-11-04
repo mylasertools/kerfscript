@@ -65,16 +65,18 @@ module link() difference() {
   hull() { circle(d = arm_width); translate([link_length, 0]) circle(d = arm_width); }
   for (x = [0, link_length]) translate([x, 0]) circle(d = pin_diameter + pivot_clearance);
 }
-tray("Base well", base_w, base_height, [0, 0, 0]);
+step("Glue up the base well") tray("Base well", base_w, base_height, [0, 0, 0]);
 for (side = [-1, 1], j = [1:levels]) {
   tag = str(side < 0 ? "Left" : "Right", " tray ", j);
-  tray(tag, tray_width, tray_height, tray_at(side, j), side, j);
-  for (back = [false, true], k = [0:1]) {
-    y = back ? depth + washer_gap + t + (j - 1) * (t + washer_gap) : -washer_gap - (j - 1) * (t + washer_gap);
-    part(str(side < 0 ? "Left" : "Right", " link ", j, back ? " back " : " front ", k + 1),
-      at = pivot(side, j - 1, k) + [0, y, 0], rotate = [90, -(side < 0 ? angle : 180 - angle), 0]) link();
+  step(str("Glue up the level ", j, " trays and bolt their links on outside the front and back walls")) {
+    tray(tag, tray_width, tray_height, tray_at(side, j), side, j);
+    for (back = [false, true], k = [0:1]) {
+      y = back ? depth + washer_gap + t + (j - 1) * (t + washer_gap) : -washer_gap - (j - 1) * (t + washer_gap);
+      part(str(side < 0 ? "Left" : "Right", " link ", j, back ? " back " : " front ", k + 1),
+        at = pivot(side, j - 1, k) + [0, y, 0], rotate = [90, -(side < 0 ? angle : 180 - angle), 0]) link();
+    }
   }
-  if (lids && j == levels) {
+  if (lids && j == levels) step("Glue a locator under each lid and set the lids on the top trays") {
     at = tray_at(side, j);
     part(str(tag, " lid"), at = at + [-2, -2, tray_height]) rect([tray_width + 4, depth + 4], r = 3);
     part(str(tag, " lid locator"), at = at + [t + 0.7, t + 0.7, tray_height - t]) rect([tray_width - 2 * t - 1.4, depth - 2 * t - 1.4], r = 2);

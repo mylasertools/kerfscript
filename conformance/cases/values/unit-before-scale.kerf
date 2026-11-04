@@ -1,0 +1,7 @@
+// A length with a unit read before $scale is set is not scaled, and warns
+// => echo: 1400
+// => warning: A length with a unit comes before $scale is set, so it is not scaled; set $scale first (line 5)
+// => warning: Nothing to cut: the program made no shapes.
+x = 140cm;
+$scale = 24;
+echo(x);

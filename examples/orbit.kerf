@@ -197,35 +197,45 @@ function planet_spin(beta) = (1 + ns / np) * beta - ns / np * a + 180 - 180 / np
 // Each planet is two layers, one planet after another
 planets = [for (j = [0:2], k = [0:1]) [carrier_turn + 120 * j, k]];
 
+// The assembly steps in build order, named first so they number that way
+build_steps = [
+  "Glue the pedestal and the feet under the base",
+  "Put the hub sleeves and the sun gear on the spindle",
+  "Bolt the ring gear on its standoffs",
+  "Set each planet by the timing card and lower the carrier into mesh",
+  "Add the carrier spacer, then the crank and its handle"
+];
+if (output == "all") for (k = build_steps) step(k) {}
+
 if (output == "all" || output == "gears") {
-  part("Sun gear", qty = 2, at = layers(6 * t + 0.5, 2), rotate = [0, 0, a]) sun();
-  part("Planet gear", qty = 6, at = [for (q = planets) at(polar(orbit, q[0]), 6 * t + 0.5 + q[1] * t)],
+  step(build_steps[1]) part("Sun gear", qty = 2, at = layers(6 * t + 0.5, 2), rotate = [0, 0, a]) sun();
+  step(build_steps[3]) part("Planet gear", qty = 6, at = [for (q = planets) at(polar(orbit, q[0]), 6 * t + 0.5 + q[1] * t)],
     rotate = [for (q = planets) [0, 0, planet_spin(q[0])]])
     planet();
-  part("Ring gear", qty = 3, at = layers(6 * t + 0.5, 3)) ring();
+  step(build_steps[2]) part("Ring gear", qty = 3, at = layers(6 * t + 0.5, 3)) ring();
 }
 if (output == "all" || output == "frame") {
-  part("Base", qty = 2, at = layers(0, 2)) base();
-  part("Spindle pedestal", qty = 2, at = [[0, 0, -t], [0, 0, -2 * t]]) difference() {
+  step(build_steps[0]) part("Base", qty = 2, at = layers(0, 2)) base();
+  step(build_steps[0]) part("Spindle pedestal", qty = 2, at = [[0, 0, -t], [0, 0, -2 * t]]) difference() {
     circle(d = 34);
     circle(d = 6.1);
   }
   // A stack of four under each mounting hole, and a foot of seven below it
-  part("Ring standoff", qty = 12, at = [for (j = [0:2], k = [0:3]) at(polar(mounting, 30 + 120 * j), 2 * t + k * t)]) ring_spacer();
-  part("Foot", qty = 21, at = [for (j = [0:2], k = [0:6]) at(polar(mounting, 30 + 120 * j), -7 * t + k * t)]) foot();
+  step(build_steps[2]) part("Ring standoff", qty = 12, at = [for (j = [0:2], k = [0:3]) at(polar(mounting, 30 + 120 * j), 2 * t + k * t)]) ring_spacer();
+  step(build_steps[0]) part("Foot", qty = 21, at = [for (j = [0:2], k = [0:6]) at(polar(mounting, 30 + 120 * j), -7 * t + k * t)]) foot();
 }
-if (output == "all" || output == "carrier") part("Carrier", qty = 2, at = layers(8 * t + 1.2, 2), rotate = [0, 0, carrier_turn]) carrier();
+if (output == "all" || output == "carrier") step(build_steps[3]) part("Carrier", qty = 2, at = layers(8 * t + 1.2, 2), rotate = [0, 0, carrier_turn]) carrier();
 if (output == "all" || output == "hub") {
   // Four below the sun and four above it
-  part("Hub sleeve", qty = 8, at = concat(layers(2 * t + 0.5, 4), layers(8 * t + 0.5, 4))) hub_ring();
-  part("Carrier spacer", at = [0, 0, 10 * t + 1.2]) difference() {
+  step(build_steps[1]) part("Hub sleeve", qty = 8, at = concat(layers(2 * t + 0.5, 4), layers(8 * t + 0.5, 4))) hub_ring();
+  step(build_steps[4]) part("Carrier spacer", at = [0, 0, 10 * t + 1.2]) difference() {
     circle(d = 32);
     circle(d = hub + bearing_clearance);
   }
 }
 if (output == "all" || output == "crank") {
-  part("Crank", qty = 2, at = layers(12 * t + 0.5, 2), rotate = [0, 0, crank_turn]) crank();
-  part("Handle", qty = 6, at = [for (k = [0:5]) at(polar(44, 90 + crank_turn), 14 * t + 1 + k * t)], rotate = [0, 0, crank_turn])
+  step(build_steps[4]) part("Crank", qty = 2, at = layers(12 * t + 0.5, 2), rotate = [0, 0, crank_turn]) crank();
+  step(build_steps[4]) part("Handle", qty = 6, at = [for (k = [0:5]) at(polar(44, 90 + crank_turn), 14 * t + 1 + k * t)], rotate = [0, 0, crank_turn])
     handle();
 }
 // The fit test and the timing card lie on the table beside the model

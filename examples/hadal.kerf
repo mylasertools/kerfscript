@@ -154,11 +154,19 @@ if (output == "fit") fit_test();
 // across it in their slots
 across = [90, 0, 90];
 if (output == "sculpture") {
-  part("Spine", at = [0, t / 2, 0], rotate = [90, 0, 0]) spine();
-  for (i = [0:8]) part(str("Rib ", i + 1), at = [xs[i] * s - t / 2, 0, zs[i] * s], rotate = across) rib(i);
-  part("Cradle A", at = [cradle_x[0] * s - t / 2, 0, 0], rotate = across) cradle(0);
-  part("Cradle B", at = [cradle_x[1] * s - t / 2, 0, 0], rotate = across) cradle(1);
-  part("Plinth", at = [0, 0, -t]) plinth();
+  // The assembly steps, listed first so they number in build order
+  step("Glue cradles A and B into the plinth");
+  step("Lower the spine into the cradles");
+  step("Drop ribs 1 to 9 into the numbered slots on top of the spine");
+  step("Lower the spine into the cradles")
+    part("Spine", at = [0, t / 2, 0], rotate = [90, 0, 0]) spine();
+  step("Drop ribs 1 to 9 into the numbered slots on top of the spine")
+    for (i = [0:8]) part(str("Rib ", i + 1), at = [xs[i] * s - t / 2, 0, zs[i] * s], rotate = across) rib(i);
+  step("Glue cradles A and B into the plinth") {
+    part("Cradle A", at = [cradle_x[0] * s - t / 2, 0, 0], rotate = across) cradle(0);
+    part("Cradle B", at = [cradle_x[1] * s - t / 2, 0, 0], rotate = across) cradle(1);
+    part("Plinth", at = [0, 0, -t]) plinth();
+  }
 }
 
 // Assembly: glue cradles A and B into the plinth, lower the spine into

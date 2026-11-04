@@ -1,0 +1,60 @@
+// Lock box: a finger-jointed box whose lid locks with a key. The lock is
+// three layers glued on the front: turn the key half a turn and its cam
+// throws a bolt up into the keeper, a slotted plate under the lid's front
+// edge, and the lid cannot lift. The lid's insert keeps it square on the
+// walls. Made with box() from kerf/box and cam_lock() from kerf/lock.
+
+/* [Box] */
+// Outside width
+width = 160; // [110:5:300]
+// Outside depth
+depth = 110; // [80:5:220]
+// Height of the walls
+height = 80; // [60:5:180]
+// How far the bolt moves
+throw = 7; // [5:0.5:10]
+// Show the lock locked
+locked = true;
+
+/* [Material] */
+$thickness = 3; // [2.5:0.5:4]
+$kerf = 0.15; // [0:0.01:0.3]
+
+/* [Hidden] */
+use <kerf/box>
+use <kerf/lock>
+$fn = 48;
+$material = "plywood";
+t = $thickness;
+b = lock_bounds(throw);
+nose = lock_nose(throw);
+// The lock's centre on the front, below the lid by room for the keeper:
+// the bolt's nose and 4 mm of keeper above it
+zc = height - b[3] - (throw + 4);
+assert(zc + b[1] > 12, "Make the box taller for the lock");
+// The lid overhangs the front by the lock's three layers
+over = 3 * t + 1;
+step("Make the box: the bottom, then the walls")
+  box([width, depth, height], name = "Box");
+// The lock lies on the front, its bolt moving up
+step("Glue the lock on the front: the base and the cam hub, the frame, the cam and the bolt, then the plate")
+  place(at = [width / 2, 0, zc], rotate = orient([1, 0, 0], [0, -1, 0]))
+    material(name = "walnut") cam_lock(throw, locked = locked, name = "Lock", key = false);
+step("Glue the insert and the keeper under the lid") {
+  part("Lid", at = [0, -over, height], slots = ["Keeper"]) rect([width, depth + over], r = 3);
+  part("Lid insert", glue = "Lid", face = "bottom", at = [t + 0.3, over + t + 0.3, 0])
+    rect([width - 2 * t - 0.6, depth - 2 * t - 0.6], r = 1);
+  // The keeper hangs in the plane of the lock's frame, above it, with a
+  // notch for the bolt's nose and tabs up into the lid
+  kh = height - (zc + b[3] + 0.5);
+  part("Keeper", at = [width / 2 + b[0], -t, zc + b[3] + 0.5], rotate = [90, 0, 0]) difference() {
+    union() {
+      rect([b[2] - b[0], kh]);
+      for (x = [4, b[2] - b[0] - 12]) translate([x, kh - 0.01]) rect([8, t + 0.01]);
+    }
+    translate([(b[2] - b[0] - nose[0]) / 2 - 0.4, -1]) rect([nose[0] + 0.8, nose[1] - b[3] + 1.5]);
+  }
+}
+step("Turn the key to lock it")
+  place(at = [width / 2, 0, zc], rotate = orient([1, 0, 0], [0, -1, 0]))
+    material(name = "walnut") part("Key", at = [0, t / 2, 0], rotate = [90, 0, 0]) lock_key();

@@ -3,22 +3,29 @@
 
 // Box from its outer size [width, depth, height] in the current material.
 // Edges pair "out" with "in", and the bottom owns every bottom corner,
-// so the six panels interlock without gaps.
-module box(size, lid = false, finger = undef) {
+// so the six panels interlock without gaps. `name` goes before each
+// panel's name, as "crate front", so two boxes in one design stay apart;
+// wrap box() in place() to set it anywhere in the assembly. Shapes given
+// to box() go on its front, drawn from the front's bottom left corner
+// outside, as box([120, 80, 60]) engrave() text("TEA").
+module box(size, lid = false, finger = undef, name = "") {
+  function n(panel) = name == "" ? panel : str(name, " ", panel);
   w = size[0];
   d = size[1];
   h = size[2];
   t = $thickness;
   top = lid ? "in" : "flat";
-  part("bottom", at = [0, 0, 0]) finger_rect([w, d], "out", finger = finger);
-  if (lid) part("lid", at = [0, 0, h - t]) finger_rect([w, d], "out", finger = finger);
-  part("front", at = [0, t, 0], rotate = [90, 0, 0])
+  part(n("bottom"), at = [0, 0, 0]) finger_rect([w, d], "out", finger = finger);
+  if (lid) part(n("lid"), at = [0, 0, h - t]) finger_rect([w, d], "out", finger = finger);
+  part(n("front"), at = [0, t, 0], rotate = [90, 0, 0]) {
     finger_rect([w, h], ["in", "out", top, "out"], finger = finger);
-  part("back", at = [0, d, 0], rotate = [90, 0, 0])
+    if ($children > 0) children();
+  }
+  part(n("back"), at = [0, d, 0], rotate = [90, 0, 0])
     finger_rect([w, h], ["in", "out", top, "out"], finger = finger);
-  part("left", rotate = [90, 0, 90])
+  part(n("left"), rotate = [90, 0, 90])
     finger_rect([d, h], ["in", "in", top, "in"], finger = finger);
-  part("right", at = [w - t, 0, 0], rotate = [90, 0, 90])
+  part(n("right"), at = [w - t, 0, 0], rotate = [90, 0, 90])
     finger_rect([d, h], ["in", "in", top, "in"], finger = finger);
 }
 

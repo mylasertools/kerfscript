@@ -107,10 +107,13 @@ module plate(top = false) {
 // Assembled: the walls stand in the base round the middle, sun walls facing
 // each other, and the crown sits on their top tabs
 function wall_at(a) = [(span / 2 - t / 2) * sin(a), -(span / 2 - t / 2) * cos(a), t];
-part("Sun wall", qty = 2, at = [wall_at(0), wall_at(180)], rotate = [[90, 0, 0], [90, 0, 180]]) wall(false);
-part("Moon wall", qty = 2, at = [wall_at(90), wall_at(270)], rotate = [[90, 0, 90], [90, 0, 270]]) wall(true);
-part("Base", at = [0, 0, 0]) plate(false);
-part("Crown", at = [0, 0, t + height]) plate(true);
+step("Plug the four walls into the base, sun walls facing each other") {
+  part("Sun wall", qty = 2, at = [wall_at(0), wall_at(180)], rotate = [[90, 0, 0], [90, 0, 180]]) wall(false);
+  part("Moon wall", qty = 2, at = [wall_at(90), wall_at(270)], rotate = [[90, 0, 90], [90, 0, 270]]) wall(true);
+  part("Base", at = [0, 0, 0]) plate(false);
+}
+step("Lower the crown onto the top tabs and leave it loose")
+  part("Crown", at = [0, 0, t + height]) plate(true);
 
 // The fit test lies on the table beside the lantern
 if (fit_coupon) part("Fit test", at = [foot / 2 + 20, -foot / 2, 0]) {

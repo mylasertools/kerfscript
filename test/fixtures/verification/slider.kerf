@@ -1,0 +1,9 @@
+// A rigid path coupon. The joint is ideal; retention is a separate contract.
+u = 0;
+material(name = "plywood", thickness = 3, kerf = 0) {
+  part("frame", at = [0, 0, 0]) difference() {
+    rect([30, 10]);
+    translate([2, 2]) rect([26, 6]);
+  }
+  part("slider", at = [4 + 10 * u, 3, 0]) rect([4, 4]);
+}

@@ -3,10 +3,14 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { render as renderSource, parameters } from '../dist/index.js';
 
-const hardwareFromEchoes = (echoes) =>
-  echoes
+// Hardware as [from, to, size, kind, sides], from hardware() or from the
+// older echo("hardware", ...) convention
+const hardwareOf = (r) => [
+  ...r.echoes
     .filter((s) => s.startsWith('hardware, '))
-    .flatMap((s) => JSON.parse(s.slice('hardware, '.length)));
+    .flatMap((s) => JSON.parse(s.slice('hardware, '.length))),
+  ...r.hardware.map((h) => [h.from, h.to, h.size, h.kind, h.sides]),
+];
 
 const fonts = {
   atkinson: readFileSync(new URL('../fonts/AtkinsonHyperlegible-Regular.ttf', import.meta.url)),
@@ -96,10 +100,7 @@ test('every operating motion preserves cut geometry at three configurations and 
           geometry(initial),
           `${model.file}: motion altered a cut part`,
         );
-        assert.equal(
-          hardwareFromEchoes(r.echoes).length,
-          hardwareFromEchoes(initial.echoes).length,
-        );
+        assert.equal(hardwareOf(r).length, hardwareOf(initial).length);
         if (index === model.poses.length - 2)
           r.assembly.forEach((p, i) => near(p.matrix, initial.assembly[i].matrix));
       }
@@ -110,7 +111,7 @@ test('every operating motion preserves cut geometry at three configurations and 
 test('balance pans stay level and all suspension cords have equal fixed lengths', () => {
   for (const tilt of [-12, -6, 0, 6, 12]) {
     const r = render(sourceOf('beam-balance'), { params: { tilt } });
-    const cords = hardwareFromEchoes(r.echoes).filter((p) => p[3] === 'cord');
+    const cords = hardwareOf(r).filter((p) => p[3] === 'cord');
     const lengths = cords.map(([a, b]) => Math.hypot(...a.map((v, i) => v - b[i])));
     assert.equal(cords.length, 6);
     near(lengths, Array(6).fill(lengths[0]));
@@ -185,7 +186,7 @@ test('calendar selected values meet their fixed top pointers and each axle remai
     { day: 31, month: 12, weekday: 7 },
   ]) {
     const r = render(sourceOf('wheel-calendar'), { params: settings });
-    const hardware = hardwareFromEchoes(r.echoes);
+    const hardware = hardwareOf(r);
     for (const [i, name, radius, count, value] of [
       [0, 'DAY', 75, 31, settings.day],
       [1, 'MONTH', 48, 12, settings.month],

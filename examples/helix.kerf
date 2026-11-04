@@ -84,10 +84,9 @@ s_exit = s_upper - 33;
 board_y = 58;
 track_y = 34;
 
-// Rotations as 3 x 3 matrices, turned into rotate = [x, y, z]
+// Rotations as 3 x 3 matrices, turned into rotate = [x, y, z] by euler()
 function mm(A, B) = [for (i = [0:2]) [for (j = [0:2]) A[i][0] * B[0][j] + A[i][1] * B[1][j] + A[i][2] * B[2][j]]];
 function rz(r) = [[cos(r), -sin(r), 0], [sin(r), cos(r), 0], [0, 0, 1]];
-function euler(m) = [atan2(m[2][1], m[2][2]), -asin(m[2][0]), atan2(m[1][0], m[0][0])];
 // Parts square to the screw: drawn x towards the board, y up the end plate,
 // thickness up the axis. The lower end's parts face down the axis instead,
 // so their engraved side shows.
@@ -313,54 +312,80 @@ ramp_at = ax(30) + dvec * (ramp_d + t * cos(kappa)) + [0, t * sin(kappa), 0];
 crank_s = -3 * t - 0.5;
 handle = dvec * (crank_radius * cos(theta)) + [0, -crank_radius * sin(theta), 0];
 
+// The assembly steps, listed first so they number in build order
+step("Glue the screw plates on the square bar, each turned one point on from the last");
+step("Slide on the end plates, glue the journals in with a collar each side, and the crank plies below");
+step("Push the trough dowels through the end plates, the lower two into the exit rib");
+step("Glue the end plates, the floors, the end walls and the ramp into the board, and the board into the base");
+step("Glue the rails and the chute walls onto the floors");
+step("Bolt the grip on the crank");
 if (output == "all" || output == "screw") {
-  part("Screw plate", qty = plates, at = [for (j = [0:plates - 1]) ax(s_screw + j * t)],
-    rotate = [for (j = [0:plates - 1]) turned_up(theta - step * j)]) screw_plate();
-  // Two in each bearing; the lower pair face down the axis
-  part("Journal", qty = 4, at = [ax(0), ax(-t), ax(s_upper), ax(s_upper + t)],
-    rotate = [turned_down(theta), turned_down(theta), turned_up(theta), turned_up(theta)]) round_part(20);
-  // Inside and outside each end plate
-  part("Collar", qty = 4, at = [ax(0.5), ax(-2 * t - 0.5), ax(s_top), ax(s_upper + 2 * t + 0.5)],
-    rotate = [turned_up(theta), turned_down(theta), turned_up(theta), turned_up(theta)]) round_part(32);
-  part("Crank", qty = 2, at = [ax(crank_s), ax(crank_s - t)], rotate = turned_down(theta)) crank();
+  step("Glue the screw plates on the square bar, each turned one point on from the last")
+    part("Screw plate", qty = plates, at = [for (j = [0:plates - 1]) ax(s_screw + j * t)],
+      rotate = [for (j = [0:plates - 1]) turned_up(theta - step * j)]) screw_plate();
+  step("Slide on the end plates, glue the journals in with a collar each side, and the crank plies below") {
+    // Two in each bearing; the lower pair face down the axis
+    part("Journal", qty = 4, at = [ax(0), ax(-t), ax(s_upper), ax(s_upper + t)],
+      rotate = [turned_down(theta), turned_down(theta), turned_up(theta), turned_up(theta)]) round_part(20);
+    // Inside and outside each end plate
+    part("Collar", qty = 4, at = [ax(0.5), ax(-2 * t - 0.5), ax(s_top), ax(s_upper + 2 * t + 0.5)],
+      rotate = [turned_up(theta), turned_down(theta), turned_up(theta), turned_up(theta)]) round_part(32);
+    part("Crank", qty = 2, at = [ax(crank_s), ax(crank_s - t)], rotate = turned_down(theta)) crank();
+  }
   // On a 6 mm sleeve over the handle bolt, below the crank and a washer
-  part("Grip ring", qty = 4, at = [for (k = [0:3]) ax(crank_s - 2 * t - 0.8 - k * t) + handle], rotate = turned_down(theta)) ring(18, 6.4);
+  step("Bolt the grip on the crank")
+    part("Grip ring", qty = 4, at = [for (k = [0:3]) ax(crank_s - 2 * t - 0.8 - k * t) + handle], rotate = turned_down(theta)) ring(18, 6.4);
 }
 if (output == "all" || output == "frame") {
-  part("Board", at = [0, board_y + t, 0], rotate = [90, 0, 0]) board();
-  part("Base", at = [0, 0, 0]) base();
-  part("Lower end plate", qty = 2, at = [ax(0), ax(-t)], rotate = euler(down_axis)) mirror([1, 0]) end_plate();
-  part("Upper end plate", qty = 2, at = [ax(s_upper), ax(s_upper + t)], rotate = euler(up_axis)) end_plate();
-  part("Exit rib", at = ax(s_exit - t), rotate = euler(up_axis)) exit_rib();
+  step("Glue the end plates, the floors, the end walls and the ramp into the board, and the board into the base") {
+    part("Board", at = [0, board_y + t, 0], rotate = [90, 0, 0]) board();
+    part("Base", at = [0, 0, 0]) base();
+  }
+  step("Slide on the end plates, glue the journals in with a collar each side, and the crank plies below") {
+    part("Lower end plate", qty = 2, at = [ax(0), ax(-t)], rotate = euler(down_axis)) mirror([1, 0]) end_plate();
+    part("Upper end plate", qty = 2, at = [ax(s_upper), ax(s_upper + t)], rotate = euler(up_axis)) end_plate();
+  }
+  step("Push the trough dowels through the end plates, the lower two into the exit rib")
+    part("Exit rib", at = ax(s_exit - t), rotate = euler(up_axis)) exit_rib();
 }
 if (output == "all" || output == "track") {
   for (i = [0:2]) let (g = legs[i], L = leg_len(g)) {
-    part(str("Track floor ", i + 1), at = leg_origin(g), rotate = [0, leg_theta(g), 0]) leg_floor(L);
+    step("Glue the end plates, the floors, the end walls and the ramp into the board, and the board into the base")
+      part(str("Track floor ", i + 1), at = leg_origin(g), rotate = [0, leg_theta(g), 0]) leg_floor(L);
     // Rails stop at the end walls
-    let (x0 = i == 1 ? g[0] + t : g[0], x1 = i == 1 ? g[1] : g[1] - t)
-      part(str("Track rail ", i + 1), at = [x0, track_y + t, leg_top(i, x0)], rotate = [90, leg_theta(g), 0])
-        rect([(x1 - x0) / cos(sigma), 10]);
+    step("Glue the rails and the chute walls onto the floors")
+      let (x0 = i == 1 ? g[0] + t : g[0], x1 = i == 1 ? g[1] : g[1] - t)
+        part(str("Track rail ", i + 1), at = [x0, track_y + t, leg_top(i, x0)], rotate = [90, leg_theta(g), 0])
+          rect([(x1 - x0) / cos(sigma), 10]);
   }
-  part("End wall 1", at = [284 - t, 0, 0], rotate = [90, 0, 90]) end_wall(top1(284), top1(284) + 13);
-  part("End wall 2", at = [19, 0, 0], rotate = [90, 0, 90]) end_wall(top2(19), top1(40) + 18);
-  part("End wall 3", at = [288 - t, 0, 0], rotate = [90, 0, 90]) end_wall(top3(288), top2(270) + 18);
-  // The exit chute runs from in front of the trough to the board; the
-  // marble rolls back and drops through the hole onto the first leg
-  let (L = (board_y + 18) / cos(beta), le = (board_y + t - 0.1 + 18) / cos(beta))
-    part("Exit floor", at = [0, -18 - t * sin(beta), ze(-18) - t * cos(beta)], rotate = [-beta, 0, 0])
-      difference() {
-        chute_floor(255, 287, L, le, 262, 280);
-        translate([hole_x, (hole_y + 18) / cos(beta)]) circle(d = 20);
-      }
-  part("Exit wall", qty = 2, at = [[255, 0, 0], [287 - t, 0, 0]], rotate = [90, 0, 90]) chute_wall(function(y) ze(y), -18, 10, 6);
-  part("Exit front wall", at = [0, -15, 0], rotate = [90, 0, 0]) translate([255 + t, ze(-18)]) rect([32 - 2 * t, 10]);
-  let (L = (board_y - 31 - t * sin(beta)) / cos(beta), le = (board_y + t - 0.4 - 31) / cos(beta))
-    part("Intake floor", at = [0, 31 + t * sin(beta), zi(31) - t * cos(beta)], rotate = [beta, 0, 0])
-      chute_floor(63, 89, L, le, 68, 84);
-  part("Intake wall", at = [89 - t, 0, 0], rotate = [90, 0, 90]) chute_wall(function(y) zi(y), 31, 12);
-  // Tall enough to catch a marble flying off the last leg
-  part("Intake back wall", at = [63, 0, 0], rotate = [90, 0, 90]) chute_wall(function(y) zi(y), 31, top3(89) + 18 - zi(31));
-  part("Ramp", at = ramp_at, rotate = euler(ramp_frame)) ramp();
+  step("Glue the end plates, the floors, the end walls and the ramp into the board, and the board into the base") {
+    part("End wall 1", at = [284 - t, 0, 0], rotate = [90, 0, 90]) end_wall(top1(284), top1(284) + 13);
+    part("End wall 2", at = [19, 0, 0], rotate = [90, 0, 90]) end_wall(top2(19), top1(40) + 18);
+    part("End wall 3", at = [288 - t, 0, 0], rotate = [90, 0, 90]) end_wall(top3(288), top2(270) + 18);
+    // The exit chute runs from in front of the trough to the board; the
+    // marble rolls back and drops through the hole onto the first leg
+    let (L = (board_y + 18) / cos(beta), le = (board_y + t - 0.1 + 18) / cos(beta))
+      part("Exit floor", at = [0, -18 - t * sin(beta), ze(-18) - t * cos(beta)], rotate = [-beta, 0, 0])
+        difference() {
+          chute_floor(255, 287, L, le, 262, 280);
+          translate([hole_x, (hole_y + 18) / cos(beta)]) circle(d = 20);
+        }
+  }
+  step("Glue the rails and the chute walls onto the floors") {
+    part("Exit wall", qty = 2, at = [[255, 0, 0], [287 - t, 0, 0]], rotate = [90, 0, 90]) chute_wall(function(y) ze(y), -18, 10, 6);
+    part("Exit front wall", at = [0, -15, 0], rotate = [90, 0, 0]) translate([255 + t, ze(-18)]) rect([32 - 2 * t, 10]);
+  }
+  step("Glue the end plates, the floors, the end walls and the ramp into the board, and the board into the base")
+    let (L = (board_y - 31 - t * sin(beta)) / cos(beta), le = (board_y + t - 0.4 - 31) / cos(beta))
+      part("Intake floor", at = [0, 31 + t * sin(beta), zi(31) - t * cos(beta)], rotate = [beta, 0, 0])
+        chute_floor(63, 89, L, le, 68, 84);
+  step("Glue the rails and the chute walls onto the floors") {
+    part("Intake wall", at = [89 - t, 0, 0], rotate = [90, 0, 90]) chute_wall(function(y) zi(y), 31, 12);
+    // Tall enough to catch a marble flying off the last leg
+    part("Intake back wall", at = [63, 0, 0], rotate = [90, 0, 90]) chute_wall(function(y) zi(y), 31, top3(89) + 18 - zi(31));
+  }
+  step("Glue the end plates, the floors, the end walls and the ramp into the board, and the board into the base")
+    part("Ramp", at = ramp_at, rotate = euler(ramp_frame)) ramp();
 }
 // The fit test lies on the table beside the base
 if (output == "all" || output == "coupon") part("Fit test", at = [330, -60, 0]) coupon();

@@ -1,26 +1,49 @@
 // Copyright (c) 2026 MyLaserTools. SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-MyLaserTools-Commercial
 
-import type { Poly } from './geometry.js';
+import { intersection, pieces, type Bend, type Poly } from './geometry.js';
 
 export type Vec3 = [number, number, number];
 
 export interface Placement {
   at: Vec3;
   rotate: Vec3;
+  // A full 4x4 matrix, row by row, when the placement is composed with
+  // place(): it wins over at and rotate
+  matrix?: number[];
 }
 
 export interface AssemblyPart {
   name: string;
   copy: number;
   thickness: number;
+  // The sheet's material name, as $material gives it
+  material?: string;
   matrix: number[];
   outline: Poly[];
   placed: boolean;
+  // Living hinge bends along the part's x, applied after matrix's
+  // placement: see bendPoint()
+  bends?: Bend[];
+  // The assembly step that adds it: 0 when the program has no steps
+  step?: number;
+  // Glued in a stack of this many layers
+  stack?: number;
+  // What is engraved and scored on it, in its own coordinates, for 3D views
+  marks?: Mark[];
+}
+
+export interface Mark {
+  layer: string;
+  mode: 'fill' | 'line';
+  color: string;
+  side: 'front' | 'back';
+  regions: Poly[];
+  lines: Poly[];
 }
 
 const RAD = Math.PI / 180;
 
-function multiply(a: number[], b: number[]): number[] {
+export function multiply(a: number[], b: number[]): number[] {
   const out = new Array(16).fill(0);
   for (let r = 0; r < 4; r++)
     for (let c = 0; c < 4; c++)
@@ -39,6 +62,7 @@ function rotation(axis: 0 | 1 | 2, degrees: number): number[] {
 const clean = (n: number) => (Math.abs(n) < 1e-12 ? 0 : n);
 
 export function placementMatrix(p: Placement): number[] {
+  if (p.matrix) return p.matrix.map(clean);
   const [ax, ay, az] = p.rotate;
   const r = multiply(rotation(2, az), multiply(rotation(1, ay), rotation(0, ax)));
   r[3] = p.at[0];
@@ -92,7 +116,7 @@ function bounds2(regions: Poly[]): [number, number, number, number] {
   return [x0, y0, x1, y1];
 }
 
-function worldBox(p: AssemblyPart): [Vec3, Vec3] {
+export function worldBox(p: AssemblyPart): [Vec3, Vec3] {
   const [x0, y0, x1, y1] = bounds2(p.outline);
   const lo: Vec3 = [Infinity, Infinity, Infinity];
   const hi: Vec3 = [-Infinity, -Infinity, -Infinity];
@@ -243,13 +267,40 @@ function crossing(
   const tilt = dot(nB, side);
   const oA = origin(A.matrix);
   const bLevel = dot(nB, origin(B.matrix));
-  const depths = steps(0, A.thickness, eps, pitch);
+  // Only through the depth of A that B reaches, so a shallow intrusion
+  // is sampled as finely as a deep one
+  let lo = Infinity,
+    hi = -Infinity;
+  for (const ring of B.outline)
+    for (const [x, y] of ring)
+      for (const w of [0, B.thickness]) {
+        const p = apply(B.matrix, x, y, w);
+        const d = dot(nA, [p[0] - oA[0], p[1] - oA[1], p[2] - oA[2]]);
+        if (d < lo) lo = d;
+        if (d > hi) hi = d;
+      }
+  const depths = steps(Math.max(0, lo), Math.min(A.thickness, hi), eps, pitch);
+  // And only across the part of B's slab that A's outline reaches
+  let aLo = Infinity,
+    aHi = -Infinity;
+  for (const ring of A.outline)
+    for (const [x, y] of ring) {
+      const p = apply(A.matrix, x, y, 0);
+      const d = dot(side, [p[0] - oA[0], p[1] - oA[1], p[2] - oA[2]]);
+      if (d < aLo) aLo = d;
+      if (d > aHi) aHi = d;
+    }
   let total = 0;
   for (const depth of depths.at) {
     const base = add(oA, nA, depth);
     const b0 = (bLevel - dot(nB, base)) / tilt;
     const b1 = (bLevel + B.thickness - dot(nB, base)) / tilt;
-    const alongs = steps(Math.min(b0, b1), Math.max(b0, b1), eps, pitch);
+    const alongs = steps(
+      Math.max(aLo, Math.min(b0, b1)),
+      Math.min(aHi, Math.max(b0, b1)),
+      eps,
+      pitch,
+    );
     for (const along of alongs.at) {
       const at = add(base, side, along);
       const [fromA, dirA] = localLine(invA, at, line);
@@ -316,7 +367,7 @@ export function collisions(
   maxPairs = Infinity,
   eps = 0.05,
   pitch = 0.25,
-  volume = 1,
+  volume = 0.1,
 ): { found: [AssemblyPart, AssemblyPart][]; complete: boolean } {
   const boxes = parts.map(worldBox);
   const inverses = parts.map((p) => invertRigid(p.matrix));
@@ -339,4 +390,130 @@ export function collisions(
       if (hit) found.push([A, B]);
     }
   return { found, complete: true };
+}
+
+export function translation(x: number, y: number, z: number): number[] {
+  return [1, 0, 0, x, 0, 1, 0, y, 0, 0, 1, z, 0, 0, 0, 1];
+}
+
+export const IDENTITY4 = translation(0, 0, 0);
+
+export function invert(m: number[]): number[] {
+  return invertRigid(m);
+}
+
+// One bend: the part beyond x1 turns `angle` degrees about an axis along
+// y, its middle layer bending round a radius that makes the hinge's
+// length. A positive angle folds the far end up, towards the top face.
+function bendAt(b: Bend, t: number, a = b.angle, x = b.x1): number[] {
+  const L = x - b.x0;
+  if (!a || !(L > 0)) return translation(0, 0, 0);
+  const R = (b.x1 - b.x0) / ((b.angle * Math.PI) / 180);
+  const cz = t / 2 + R;
+  return multiply(
+    translation(b.x0, 0, cz),
+    multiply(rotation(1, -a), translation(-b.x0 - L, 0, -cz)),
+  );
+}
+
+export function sortedBends(bends: Bend[]): Bend[] {
+  return [...bends].sort((a, b) => a.x0 - b.x0);
+}
+
+// The matrices for the flat runs between bends, in the part's own
+// coordinates: the first is the identity, the run after bend k is the
+// product of the first k bends
+export function bendRuns(bends: Bend[], t: number): number[][] {
+  const out = [translation(0, 0, 0)];
+  for (const b of sortedBends(bends)) out.push(multiply(out[out.length - 1], bendAt(b, t)));
+  return out;
+}
+
+// Where a point of a bent part goes, in the part's own coordinates
+export function bendPoint(bends: Bend[], t: number, p: Vec3): Vec3 {
+  const list = sortedBends(bends);
+  const runs = bendRuns(list, t);
+  for (let k = list.length - 1; k >= 0; k--) {
+    const b = list[k];
+    if (p[0] >= b.x1) return apply(runs[k + 1], ...p);
+    if (p[0] > b.x0) {
+      const part = (p[0] - b.x0) / (b.x1 - b.x0);
+      const m = multiply(runs[k], bendAt(b, t, b.angle * part, p[0]));
+      return apply(m, ...p);
+    }
+  }
+  return p;
+}
+
+// Which flat run a point along x is on
+export function runOf(bends: Bend[], x: number): number {
+  return sortedBends(bends).filter((b) => (b.x0 + b.x1) / 2 < x).length;
+}
+
+// A bent part as rigid pieces, the hinges left out, to check for
+// collisions
+export function bentPieces(p: AssemblyPart): AssemblyPart[] {
+  if (!p.bends?.length) return [p];
+  const list = sortedBends(p.bends);
+  const runs = bendRuns(list, p.thickness);
+  const BIG = 1e7;
+  const out: AssemblyPart[] = [];
+  for (let k = 0; k <= list.length; k++) {
+    const from = k === 0 ? -BIG : list[k - 1].x1;
+    const to = k === list.length ? BIG : list[k].x0;
+    if (!(to > from)) continue;
+    const band: Poly = [
+      [from, -BIG],
+      [to, -BIG],
+      [to, BIG],
+      [from, BIG],
+    ];
+    const outline = intersection(p.outline, [band]);
+    if (outline.length)
+      out.push({ ...p, outline, bends: undefined, matrix: multiply(p.matrix, runs[k]) });
+  }
+  return out;
+}
+
+/** The most bands a part's bends are cut into for a 3D view */
+export const MAX_BENT_BANDS = 2000;
+
+// Areas of a part cut up for a 3D view: each piece its outline and then
+// its holes. Where the part bends, the pieces are bands `step` wide across
+// the hinge, so bendPoint() can curve them smoothly.
+export function meshPieces(regions: Poly[], bends?: Bend[], step = 2): Poly[][] {
+  if (!bends?.length) return pieces(regions);
+  const BIG = 1e7;
+  // Bands only where there is material, and at most MAX_BENT_BANDS of them
+  // however wide the bends: a bend's width comes from the program
+  let lo = Infinity,
+    hi = -Infinity;
+  for (const r of regions)
+    for (const [x] of r) {
+      lo = Math.min(lo, x);
+      hi = Math.max(hi, x);
+    }
+  const spans = sortedBends(bends)
+    .map((b) => [Math.max(b.x0, lo), Math.min(b.x1, hi)])
+    .filter(([a, b]) => b > a);
+  const total = spans.reduce((t, [a, b]) => t + (b - a), 0);
+  const width = Math.max(step, total / MAX_BENT_BANDS);
+  const cuts: number[] = [];
+  for (const [a, b] of spans) {
+    const n = Math.max(1, Math.ceil((b - a) / width));
+    for (let i = 0; i <= n; i++) cuts.push(a + ((b - a) * i) / n);
+  }
+  const xs = [-BIG, ...cuts.sort((a, b) => a - b), BIG];
+  const out: Poly[][] = [];
+  for (let i = 0; i < xs.length - 1; i++) {
+    if (!(xs[i + 1] > xs[i])) continue;
+    const band: Poly = [
+      [xs[i], -BIG],
+      [xs[i + 1], -BIG],
+      [xs[i + 1], BIG],
+      [xs[i], BIG],
+    ];
+    for (const p of pieces(intersection(regions, [band]))) out.push(p);
+  }
+  return out;
 }

@@ -338,7 +338,7 @@ bob_at = swung([0, -L]);
 // The weight pot hangs from the right of the drum, lower as the wheel turns
 pot_top = zW + 2 * t - 40 - core_r * rad(theta);
 
-if (output == "all" || output == "frame") {
+if (output == "all" || output == "frame") step("Stand the plates in the base on the four pillar bolts") {
   part("Front plate", at = at_front([0, 0], fp - t), rotate = turned(0)) plate(true, true);
   part("Front plate inner", at = at_front([0, 0], front_d), rotate = turned(0)) plate(true, false);
   part("Back plate", qty = 2, at = [at_front([0, 0], 0), at_front([0, 0], t)], rotate = turned(0)) plate(false, false);
@@ -346,7 +346,7 @@ if (output == "all" || output == "frame") {
   part("Base lower", at = [0, 0, 0]) base(false);
   part("Pillar ring", qty = 16, at = [for (p = pillars, k = [0:3]) at_front(p, (2 + k) * t)], rotate = turned(0)) ring(14, 4.4);
 }
-if (output == "all" || output == "escapement") {
+if (output == "all" || output == "escapement") step("Fit the escape wheel and the anchor between the plates, and the hand in front") {
   part("Escape wheel", qty = 2, at = [for (k = [0:1]) at_front([0, zW], (3 + k) * t + 0.5)], rotate = turned(-theta)) escape_wheel();
   part("Anchor", qty = 2, at = [for (k = [0:1]) at_front([0, zP], (3 + k) * t + 0.5)], rotate = turned(alpha)) anchor();
   // The hand can go on the arbor at any angle; shown where the rod hides it least
@@ -355,7 +355,7 @@ if (output == "all" || output == "escapement") {
   part("Arbor spacer", qty = 6, rotate = turned(0), at = [at_front([0, zW], 2 * t), at_front([0, zW], front_d - t),
     at_front([0, zP], 2 * t), at_front([0, zP], front_d - t), at_front([0, zP], fp), at_front([0, zP], fp + t)]) ring(12, 4.4);
 }
-if (output == "all" || output == "pendulum") {
+if (output == "all" || output == "pendulum") step("Bolt the pendulum rod to the crutch and clamp the bob on") {
   part("Crutch", qty = 2, at = [for (k = [0:1]) at_front([0, zP], crutch_d + k * t)], rotate = turned(alpha)) crutch();
   part("Pendulum rod", qty = 2, at = [for (k = [0:1]) at_front([0, zP], rod_d + k * t)], rotate = turned(alpha)) rod();
   part("Bob face", at = at_front(bob_at, rod_d + 4 * t), rotate = turned(alpha)) {
@@ -372,7 +372,7 @@ if (output == "all" || output == "pendulum") {
       translate([7.3, -bob_d / 2]) rect([bob_d, bob_d]);
     }
 }
-if (output == "all" || output == "drive") {
+if (output == "all" || output == "drive") step("Fit the winding drum behind and hang the weight pot on its string") {
   part("Click disc", at = at_front([0, zW], click_d), rotate = turned(-theta)) ring(64, 4.1);
   part("Click ring", at = at_front([0, zW], click_d - t), rotate = turned(-theta)) click_ring();
   part("Ratchet wheel", at = at_front([0, zW], click_d - t), rotate = turned(-theta)) ratchet();

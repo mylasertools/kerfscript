@@ -1,0 +1,9 @@
+// slots = [...] cuts where the named parts pass through the part, with
+// 0.1 clearance
+// => part: "shelf" size=100x60 cut=366
+// => part: "wall" size=100x43
+part("shelf", at = [0, 0, 0], slots = ["wall"]) rect([100, 60]);
+part("wall", at = [0, 31.5, 3], rotate = [90, 0, 0]) {
+  rect([100, 40]);
+  translate([40, -3]) rect([20, 3.01]);
+}

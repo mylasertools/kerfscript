@@ -1,0 +1,3 @@
+// stack = n makes n glued layers at each placement
+// => part: "foot" qty=8 size=10x10
+part("foot", qty = 2, stack = 4, at = [[0, 0, 0], [20, 0, 0]]) rect([10, 10]);

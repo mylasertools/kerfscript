@@ -27,6 +27,9 @@ module frame(top_slot = false) difference() {
   for (x = [leg_width, 2 * leg_width + window]) translate([x, height * 0.2]) rect([window, height * 0.5], r = 3);
   translate([span / 2 - (t + clearance) / 2, top_slot ? height / 2 : -1]) rect([t + clearance, height / 2 + 1]);
 }
-part("Frame A", at = [-span / 2, t / 2, 0], rotate = [90, 0, 0]) frame(true);
-part("Frame B", at = [-t / 2, -span / 2, 0], rotate = [90, 0, 90]) frame(false);
-part("Top", at = [0, 0, height]) circle(d = diameter);
+step("Cross the two frames at their half-depth slots") {
+  part("Frame A", at = [-span / 2, t / 2, 0], rotate = [90, 0, 0]) frame(true);
+  part("Frame B", at = [-t / 2, -span / 2, 0], rotate = [90, 0, 90]) frame(false);
+}
+step("Glue the top on")
+  part("Top", at = [0, 0, height]) circle(d = diameter);

@@ -47,10 +47,12 @@ import { models } from '../lib/site.mjs';
           <div class="view-switch" role="tablist" aria-label="View">
             <button role="tab" aria-selected="true" data-view="material">Material</button>
             <button role="tab" aria-selected="false" data-view="laser">Laser file</button>
+            <button role="tab" aria-selected="false" data-view="3d">Assembled</button>
           </div>
           <label class="pg-select pg-sheet" hidden>Show <select data-sheet></select></label>
         </div>
         <figure class="sheet" data-figure></figure>
+        <div class="pg-3d" data-assembly hidden></div>
         <p class="figure-note" data-size></p>
         <div class="pg-sheets" data-sheets></div>
         <div class="pg-settings" data-settings></div>

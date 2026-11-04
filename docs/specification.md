@@ -1,6 +1,6 @@
 # Specification
 
-Language version 0.2. Copyright (c) 2026 MyLaserTools. This document is
+Language version 0.3. Copyright (c) 2026 MyLaserTools. This document is
 licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 This document defines KerfScript programs precisely: what text is a
@@ -11,7 +11,7 @@ differ, this document is the one to fix.
 
 The [conformance suite](../conformance/README.md) turns these rules into
 small programs with expected results. Each section below names the cases
-that test it. An implementation conforms to language version 0.2 when it
+that test it. An implementation conforms to language version 0.3 when it
 passes every case.
 
 ## Notation
@@ -41,8 +41,9 @@ ignored.
 LINE_COMMENT  = "//" { any character except "\n" } ;
 BLOCK_COMMENT = "/*" { any character } "*/" ;   (* ends at the first "*/" *)
 
-NUMBER   = DIGITS [ "." { DIGIT } ] [ EXPONENT ]
-         | "." DIGITS [ EXPONENT ] ;
+NUMBER   = ( DIGITS [ "." { DIGIT } ] [ EXPONENT ]
+           | "." DIGITS [ EXPONENT ] ) [ UNIT ] ;
+UNIT     = "mm" | "cm" | "m" | "in" | "ft" ;   (* not followed by a LETTER, DIGIT or "_" *)
 EXPONENT = ( "e" | "E" ) [ "+" | "-" ] DIGITS ;
 DIGITS   = DIGIT { DIGIT } ;
 
@@ -124,7 +125,9 @@ unary      = ( "-" | "+" | "!" ) unary | power ;
 power      = postfix [ "^" unary ] ;
 postfix    = primary { arguments | "[" expr "]" | "." NAME } ;
 primary    = NUMBER | STRING | "true" | "false" | "undef" | NAME
-           | "(" expr ")" | list ;
+           | "(" expr ")" | list | record ;
+record     = "{" [ field { "," field } [ "," ] ] "}" ;
+field      = NAME "=" expr ;
 
 list       = "[" "]"
            | "[" expr ":" expr [ ":" expr ] "]"
@@ -154,6 +157,9 @@ the first choice that fits. Where that needs more than the next token:
   on its left: `2 ^ 3 ^ 2` is 512 and `-2 ^ 2` is -4. `?:` nests to the
   right.
 - An `else` belongs to the nearest `if`.
+- A `{` where a value is expected starts a record; where a statement is,
+  a block. A record that names a field twice is the error `Field <name> is
+given twice`, at the second.
 
 A token that fits no rule is an error: `Expected <what>, found "<token>"`,
 or `found end of file`, at that token.
@@ -171,6 +177,7 @@ Cases: `values/*`.
 | list     | ordered sequences of values                                                |
 | range    | a start, step and end number; `[a:b]` has step 1                           |
 | function | a parameter list, a body expression and the scope the function was made in |
+| record   | values by field name, in the order the fields were written (from 0.3)      |
 
 `type_of(v)` gives the type's name as above. Values cannot be changed
 after they are made; every operation makes a new value.
@@ -193,6 +200,8 @@ value is true, including `[0]`, `"0"`, ranges and functions.
 - both are `undef`,
 - both are lists of the same length whose items are equal in order,
 - both are ranges with the same start, step and end (`[0:2] == [0:1:2]`),
+- both are records with the same field names whose values are equal, in
+  any order,
 - or both are the same function value.
 
 `a != b` is `!(a == b)`.
@@ -204,7 +213,8 @@ integer when it is one, and otherwise with up to 10 significant digits
 (`1 / 3` is `0.3333333333`, `0.1 + 0.2` is `0.3`). Very large and small
 numbers use exponent form (`1e+21`); infinities are `Infinity` and
 `-Infinity`, NaN is `NaN`, and -0 is `0`. Lists are written as
-`[a, b]`, ranges as `[start:step:end]`, functions as `function(a, b)` and
+`[a, b]`, ranges as `[start:step:end]`, records as `{a = 1, b = "x"}`,
+functions as `function(a, b)` and
 `undef` as `undef`. Strings are written as they are at the top level and in
 double quotes, with escapes, inside a list or after a name. `echo()` writes
 its arguments in the order they are given, a named one as `name = value`.
@@ -270,21 +280,33 @@ index outside the list, a negative index and an index into any other value
 give `undef`.
 
 `a.x`, `a.y` and `a.z` are `a[0]`, `a[1]` and `a[2]` on a list.
-`r.begin`, `r.step` and `r.end` read a range. Any other member gives
-`undef`.
+`r.begin`, `r.step` and `r.end` read a range. On a record, `r.name` and
+`r["name"]` read its field, `undef` when it has none of that name. Any other
+member gives `undef`. `len(r)` counts a record's fields, `keys(r)` lists
+their names in order, and `merge(a, b)` is a record with both's fields,
+`b`'s where both have one. A record is true in a condition.
 
 ### Calls
 
 In `f(args)`, when `f` is a name:
 
-1. If a variable named `f` is in scope, its value is called. A variable
-   hides a function definition of the same name.
+1. If a variable named `f` is in scope and holds a function, its value is
+   called.
 2. Otherwise a function definition named `f` is called.
 3. Otherwise a built-in function named `f` is called.
-4. Otherwise the error is `Unknown function f()`.
+4. Otherwise, if a variable named `f` is in scope, the error is `"f" is a
+number, not a function` (naming the variable's type).
+5. Otherwise the error is `Unknown function f()`.
 
-Calling a value that is not a function is an error: `"f" is a number, not a
-function` for a name, `Can't call a number` otherwise.
+So a variable that does not hold a function never hides a function or a
+built-in of the same name: `len = 3; echo(len([1, 2]))` writes 2. (Before
+language version 0.3 any variable hid them.) Calling a value that is not a
+function in any other way is an error: `Can't call a number`.
+
+A module or function defined with the name of a built-in hides the
+built-in wherever the definition is visible, and the program warns
+`module rect hides the built-in rect(); rename it to use both`, with its
+line. The standard library's own definitions do not warn.
 
 Arguments are evaluated left to right in the caller's scope, then bound to
 parameters:
@@ -385,7 +407,10 @@ A statement `name(args) children` calls a module:
    statement at that position from 0, or those at a list or range of
    positions (a position outside them runs nothing);
    `$children` is the number of child statements that are not assignments
-   or definitions.
+   or definitions. A child statement run again in the same call, with
+   the same special variables, `place()` frame and step, gives the same
+   shape and may be reused rather than run again; one that echoes, warns,
+   makes parts, hardware or steps is always run again.
 2. Otherwise a built-in module named `name` runs.
 3. Otherwise the error is `Unknown module name().`, with a hint for
    OpenSCAD's `color()` and `square()`.
@@ -393,6 +418,13 @@ A statement `name(args) children` calls a module:
 A modifier changes the call: `*` skips it entirely, so its arguments and
 children are not evaluated; `#` and `%` move all of its shapes to the
 `guide` layer; `!` has no effect and is accepted for OpenSCAD files.
+
+`call(name, ...)` calls the module whose name is the string `name` (the
+first positional argument, or `name = ...`), user-defined or built-in, with
+the remaining arguments and the call's children, as if it were written
+`name(...)`. A `name` that is not a string is the error `call() needs a
+module's name as a string, got <type>`; an unknown name is `Unknown
+module <name>()`. A user module named `call` hides this.
 
 ### Special variables
 
@@ -415,8 +447,15 @@ These start with a value:
 | `$sheet`     | `[600, 400]` |
 | `$gap`       | 3            |
 | `$layout`    | `"pack"`     |
+| `$scale`     | 1            |
 
 `PI` is an ordinary variable set to π in the outermost scope.
+
+A number with a unit (language version 0.3) is a length in the real world:
+its value times 1 for `mm`, 10 for `cm`, 1000 for `m`, 25.4 for `in` and
+304.8 for `ft`, divided by `$scale` where it is evaluated. A `$scale` that
+is not a number more than 0 is the error `$scale must be a number more than
+0`. Cases: `values/units*`.
 
 ## Libraries
 
@@ -429,8 +468,13 @@ rest (the `resolve` render option). The command line, the desktop app and
 the language server look in the design's project, the nearest folder at or
 above the design's with a `kerf.json`: `<name/...>` is a file of the
 project when `name` is the project's own name, or of the installed library
-in `kerf_libraries/name/`; any other path is a file in the design's folder.
+in `kerf_libraries/name/`; an absolute path is that file; any other path
+is a file in the design's folder.
 Each tries `path`, then `path.kerf` ([Shared libraries](shared-libraries.md)).
+From language version 0.3, a `use` or `include` inside a library whose
+path has a folder, as `lib/props`, first asks for the path beside it,
+`lib/` joined with the path (`..` going up a folder), and only when that
+names nothing for the path as written.
 A path that names nothing is the error `Library <path> not found`. Each path is read and parsed once per render.
 
 `use <path>` makes the library's modules and functions available in the
@@ -488,14 +532,15 @@ Errors come from:
 - limits. A program from someone else can run in a browser, so these are
   enforced:
 
-| Limit                                       | Default   | Message starts with                        |
-| ------------------------------------------- | --------- | ------------------------------------------ |
-| Statements, calls and loop steps            | 5,000,000 | `Stopped after N steps`                    |
-| Nested module calls                         | 1,000     | `Recursion too deep in module name()`      |
-| Nested function calls                       | 2,000     | `Recursion too deep in name()`             |
-| Items in one list, characters in one string | 1,000,000 | `a list of N items` / `a range of N items` |
-| Items in all lists and strings              | 3,000,000 | `The lists and strings hold more than`     |
-| Points in all shapes                        | 2,000,000 | `The shapes have more than`                |
+| Limit                                                     | Default    | Message starts with                        |
+| --------------------------------------------------------- | ---------- | ------------------------------------------ |
+| Statements, calls and loop steps                          | 5,000,000  | `Stopped after N steps`                    |
+| Nested module calls                                       | 1,000      | `Recursion too deep in module name()`      |
+| Nested function calls                                     | 2,000      | `Recursion too deep in name()`             |
+| Items in one list, characters in one string               | 1,000,000  | `a list of N items` / `a range of N items` |
+| Items in all lists and strings                            | 3,000,000  | `The lists and strings hold more than`     |
+| Points in one shape a module makes                        | 2,000,000  | `The shapes have more than`                |
+| Points in all shapes made, `children()` not counted again | 20,000,000 | `Making the shapes took more than`         |
 
 The [JavaScript API](javascript.md#running-untrusted-code) lists every
 limit and how to change it.
@@ -518,6 +563,16 @@ placed on another), grouped into parts. The [language
 reference](../LANGUAGE.md#layers) describes layers, parts, materials, kerf
 compensation and sheet packing, and lists the built-in modules that make
 shapes. Shapes outside every `part()` form one part named `part`.
+
+Parts placed in 3D compose with every enclosing `place()`, outermost first,
+then the part's own `at` and `rotate`, then for `stack = n` a move of k
+thicknesses along the part's z for its k-th layer. A part with `glue` is
+placed on its host's face instead, after every part has run. `step()`
+numbers steps from 1 in the order they first run; a part or hardware
+outside every step has step 0. A `step(text)` run inside another step is
+the step named `outer: text`, where `outer` is the enclosing step's name;
+inside `step(..., substeps = false)` an inner `step()` only runs its
+children, in the outer step. Cases: `parts/*`.
 
 ## Known differences
 

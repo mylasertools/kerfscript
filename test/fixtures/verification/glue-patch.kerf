@@ -1,0 +1,11 @@
+// A geometric test coupon, with a 120 mm2 nominal contact patch.
+px = 10;
+pz = 3;
+hole = false;
+material(thickness = 3, kerf = 0, name = "host")
+  part("host", at = [0, 0, 0]) difference() {
+    rect([40, 30]);
+    if (hole) translate([14, 10]) rect([4, 4]);
+  }
+material(thickness = 2, kerf = 0, name = "patch")
+  part("patch", at = [px, 8, pz]) rect([12, 10]);

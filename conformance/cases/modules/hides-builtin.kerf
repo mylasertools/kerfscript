@@ -1,0 +1,9 @@
+// A module or function with a built-in's name hides it, with a warning
+// => warning: module rect hides the built-in rect(); rename it to use both (line 6)
+// => warning: function len hides the built-in len(); rename it to use both (line 7)
+// => echo: 5
+// => part: "part" size=5x5
+module rect(s) square(s);
+function len(v) = 5;
+echo(len([1]));
+rect(5);

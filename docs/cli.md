@@ -47,6 +47,9 @@ to try these commands.
 kerf render <file.kerf> [-o out.svg] [options]
 kerf params <file.kerf>
 kerf check <file.kerf>
+kerf verify <file.kerf> --spec <file.json> [-o report.json] [--summary]
+kerf diff <a.kerf> <b.kerf> [-D name=value] [--json]
+kerf instructions <file.kerf> [-o out.html] [options]
 kerf fmt <files or folders>
 kerf fmt --check <files or folders>
 kerf fmt -
@@ -61,6 +64,11 @@ kerf pack [folder] [-o file]
 `render` exports SVG, DXF or JSON, using the output file's extension to
 choose the format. `params` lists the editable settings as JSON. `check`
 reports parts, dimensions, cut lengths, sheets and warnings.
+
+`verify` checks explicit rigid fit, retention, installation and motion contracts and writes a JSON report. It
+exits with 0 for passed required claims, 1 for failures, and 2 for unverified or
+invalid inputs. See [Assembly verification](verification.md) for supported claims,
+material profiles and the limits of a pass.
 
 `fmt` formats `.kerf` files in place, searching folders for them, except
 `kerf_libraries/`, whose files `kerf.lock` pins as they are. It sets
@@ -96,24 +104,88 @@ installed libraries by themselves.
 
 ## Options
 
-| Option                | Use                                                                       |
-| --------------------- | ------------------------------------------------------------------------- |
-| `-o, --out <file>`    | Output path ending in `.svg`, `.dxf` or `.json`; defaults to `<file>.svg` |
-| `-D name=value`       | Override a parameter; repeat for multiple values                          |
-| `-p, --params <file>` | Load parameter values from a JSON file                                    |
-| `--font <file.ttf>`   | Supply a font file; repeat for multiple fonts. `Atkinson` is built in     |
-| `--kerf <mm>`         | Override kerf for every part                                              |
-| `--sheet <W>x<H>`     | Set the sheet width and height in millimetres                             |
-| `--gap <mm>`          | Set spacing between parts                                                 |
-| `--margin <mm>`       | Set spacing at sheet edges; defaults to the gap                           |
-| `--no-pack`           | Keep the positions defined in the program                                 |
-| `--guides`            | Include the guide layer                                                   |
-| `--split`             | Export one file per sheet                                                 |
-| `-h, --help`          | Show command help                                                         |
-| `-v, --version`       | Show version numbers                                                      |
+| Option                 | Use                                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------ |
+| `-o, --out <file>`     | Output path ending in `.svg`, `.dxf` or `.json`; defaults to `<file>.svg`            |
+| `-D name=value`        | Override a parameter; repeat for multiple values                                     |
+| `-p, --params <file>`  | Load parameter values from a JSON file                                               |
+| `--font <file.ttf>`    | Supply a font file; repeat for multiple fonts. `Atkinson` is built in                |
+| `--kerf <mm>`          | Override kerf for every part                                                         |
+| `--sheet <W>x<H>`      | Set the sheet width and height in millimetres                                        |
+| `--gap <mm>`           | Set spacing between parts                                                            |
+| `--margin <mm>`        | Set spacing at sheet edges; defaults to the gap                                      |
+| `--no-pack`            | Keep the positions defined in the program                                            |
+| `--guides`             | Include the guide layer                                                              |
+| `--split`              | Export one file per sheet, and each sheet's back-face job                            |
+| `--nest`               | Pack small parts into the holes of bigger ones                                       |
+| `--stats`              | With `check`: points in the files, by part and layer                                 |
+| `--sweep name=a:s:b`   | With `check`: try every value from a to b in steps of s, or `name=a,b,c`             |
+| `-o out.png`, `--px n` | A picture of each sheet, `n` pixels wide (1200), to look at rather than cut          |
+| `--call 'm(1, 2)'`     | Run one call of the file's modules instead of its program; `-D` sets variables first |
+| `--params-list file`   | With `check`: try each set of settings in a JSON list of objects                     |
+| `-h, --help`           | Show command help                                                                    |
+| `-v, --version`        | Show version numbers                                                                 |
 
 `-D` accepts KerfScript values, including numbers, quoted strings, booleans
 and lists. For example: `-D width=200` or `-D 'name="Ada"'`.
+
+`kerf check` lists the parts, how many make each glued stack and what a
+part is glued to, the hardware to buy, alike pieces counted together, and
+the assembly steps. A design with marks on the parts' back faces writes a
+second file beside the first, `design-back.svg`: the sheet turned over
+left to right, for the job after the parts are turned over.
+
+`--sweep` checks a design over many settings at once. Repeat it to try
+every combination; each line says `ok` or lists what went wrong, and the
+command exits with 1 if any combination warns or fails:
+
+```sh
+kerf check tray.kerf --sweep '$thickness=3:0.5:6' --sweep size=small,large
+```
+
+Settings that only make sense together go in one `--sweep`, their names
+joined by commas and each set of values after a `;`, so the sets are tried
+as they are rather than crossed. `--params-list` reads the sets from a JSON
+list instead; both cross with the other sweeps:
+
+```sh
+kerf check room.kerf --sweep 'width,depth,height=115,140,190;160,200,260' --sweep '$thickness=3,4'
+kerf check room.kerf --params-list sizes.json
+```
+
+`--call` tries one module of a library on its own, without writing a
+design for it. The file's modules and functions are available, as with
+`use`; `-D` values are set first, so they can be special variables or
+names in the call:
+
+```sh
+kerf render lib/props.kerf --call 'roses(40, 30)' -D '$thickness=4' -o roses.svg
+kerf check lib/kerf/box.kerf --call 'box([w, 40, 30])' -D w=60
+```
+
+`kerf instructions` writes the assembly instructions as one HTML page to
+print or save as PDF: the parts list with each part's number, the sheets,
+then a page per `step()` with the model drawn as it stands after it, the
+step's parts in orange, and the parts and hardware it adds. With
+`$label_parts = true` the numbers match the ones engraved on the parts.
+
+```sh
+kerf instructions lock-box.kerf -o lock-box-instructions.html
+```
+
+`kerf diff` renders two designs (or one design before and after a change)
+with the same settings and lists, part by part and layer by layer, what
+differs: the area of shapes that changed, open lines added or removed, and
+where, in the part's own coordinates. It exits 1 if anything changed, so a
+refactor can prove it changed nothing:
+
+```sh
+kerf diff old/garage.kerf garage.kerf
+```
+
+The `"sheet": [600, 400]` in a project's `kerf.json` is the sheet for every
+design in the project that does not set `$sheet`: set your laser's bed
+once.
 
 ## Examples
 

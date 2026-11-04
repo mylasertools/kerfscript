@@ -186,37 +186,52 @@ rings = concat([for (k = [1:3]) front(pin, depth[0] + k * t)],
 // Spares lie on the table to the right
 function spare(k) = [200 + 18 * k, -40, 0];
 
-if (output == "all" || output == "frame") {
+// The assembly steps, listed first so they number in build order
+step("Glue the backboard layers and the feet, and slide the board down into the feet");
+step("Bolt the root and guide standoffs through the board on brass sleeves");
+step("Clamp the crank disc in front and the rear crank, with its grip, behind");
+step("Put the drive rod, the slider and the wing links on their sleeves, with spacer rings in the gaps");
+step("Join the links to the wings, with the wings level");
+if (output == "all" || output == "frame") step("Glue the backboard layers and the feet, and slide the board down into the feet") {
   part("Backboard", qty = 3, at = [for (k = [1:3]) [0, k * t, 0]], rotate = face()) {
     frame();
     score() translate([-22, 110]) text("FLIGHT", size = 9);
   }
   part("Stand foot", qty = 4, at = [for (x = [-45, 45], k = [0:1]) [x - t + k * t, 1.5 * t, 0]], rotate = [90, 0, 90]) foot();
 }
-if (output == "all" || output == "wings") {
+if (output == "all" || output == "wings") step("Join the links to the wings, with the wings level") {
   part("Right wing", at = front(roots[1], depth[5]), rotate = face(beat)) wing();
   part("Left wing", at = front(roots[0], depth[5]), rotate = face(-beat)) mirror([1, 0]) wing();
 }
 if (output == "all" || output == "linkage") {
-  part("Crank disc", at = front(axle, depth[0]), rotate = face(crank - 90)) crank();
-  part("Rear crank", qty = 3, at = [for (k = [1:3]) front(axle, -3 * t - 4 - k * t)], rotate = face(crank - 90)) rear_crank();
-  part("Drive rod", at = front(pin, depth[1]), rotate = towards(pin, slide)) rod(link);
-  part("Wing link", qty = 2, at = [front(slide, depth[3]), front(slide, depth[4])], rotate = [towards(slide, left_pin), towards(slide, right_pin)])
-    rod(link);
-  part("Slider", at = front(slide, depth[2]), rotate = face()) slider();
-  // The grip turns with the rear crank, 30 mm out
-  part("Handle grip", qty = 5, at = [for (k = [1:5]) front(axle + polar(30, crank), -6 * t - 4 - k * t)], rotate = face(crank - 90))
-    disc(16, 6.3);
+  step("Clamp the crank disc in front and the rear crank, with its grip, behind") {
+    part("Crank disc", at = front(axle, depth[0]), rotate = face(crank - 90)) crank();
+    part("Rear crank", qty = 3, at = [for (k = [1:3]) front(axle, -3 * t - 4 - k * t)], rotate = face(crank - 90)) rear_crank();
+  }
+  step("Put the drive rod, the slider and the wing links on their sleeves, with spacer rings in the gaps") {
+    part("Drive rod", at = front(pin, depth[1]), rotate = towards(pin, slide)) rod(link);
+    part("Wing link", qty = 2, at = [front(slide, depth[3]), front(slide, depth[4])], rotate = [towards(slide, left_pin), towards(slide, right_pin)])
+      rod(link);
+    part("Slider", at = front(slide, depth[2]), rotate = face()) slider();
+  }
+  step("Clamp the crank disc in front and the rear crank, with its grip, behind") {
+    // The grip turns with the rear crank, 30 mm out
+    part("Handle grip", qty = 5, at = [for (k = [1:5]) front(axle + polar(30, crank), -6 * t - 4 - k * t)], rotate = face(crank - 90))
+      disc(16, 6.3);
+  }
 }
 if (output == "all" || output == "spacers") {
-  // 16 under each wing root and 7 under each guide post, glued
-  part("Root standoff", qty = 32, at = [for (r = roots, k = [0:15]) front(r, k * t)], rotate = face()) disc(16, 6.3);
-  part("Guide standoff", qty = 14, at = [for (g = guides, k = [0:6]) front(g, k * t)], rotate = face()) disc(14, 6.3);
+  step("Bolt the root and guide standoffs through the board on brass sleeves") {
+    // 16 under each wing root and 7 under each guide post, glued
+    part("Root standoff", qty = 32, at = [for (r = roots, k = [0:15]) front(r, k * t)], rotate = face()) disc(16, 6.3);
+    part("Guide standoff", qty = 14, at = [for (g = guides, k = [0:6]) front(g, k * t)], rotate = face()) disc(14, 6.3);
+  }
   // Not fitted: the clamp nut on the spindle turns where it would go
   part("Spare standoff", at = spare(0)) disc(14, 6.3);
   // 14 between the moving layers, and four spares
-  part("Spacer ring", qty = 18, at = concat(rings, [for (k = [1:4]) spare(k)]), rotate = concat([for (r = rings) face()], [for (k = [1:4]) [0, 0, 0]]))
-    disc(12, 6.3);
+  step("Put the drive rod, the slider and the wing links on their sleeves, with spacer rings in the gaps")
+    part("Spacer ring", qty = 18, at = concat(rings, [for (k = [1:4]) spare(k)]), rotate = concat([for (r = rings) face()], [for (k = [1:4]) [0, 0, 0]]))
+      disc(12, 6.3);
 }
 // The fit test lies on the table beside the board
 if (output == "all" || output == "coupon") part("Fit test", at = [200, -110, 0]) {

@@ -23,12 +23,14 @@ $material = "plywood";
 t = $thickness;
 assert(width / pairs > pair_spacing + hole + 5, "Reduce pairs or increase width");
 assert((height - 40) / max(1, rows - 1) > hole + 5, "Reduce rows or increase height");
-part("Foot", at = [-10, 0, 0]) difference() {
-  rect([width + 20, foot_depth], r = 5);
-  translate([10, foot_depth / 2]) slots(width, clearance = clearance);
-}
-part("Screen", at = [0, foot_depth / 2 + t / 2, t], rotate = [90, 0, 0]) difference() {
-  union() { rect([width, height], r = 5); tabs(width); }
-  for (i = [0:pairs - 1], j = [0:rows - 1], s = [-1, 1])
-    translate([width * (i + 0.5) / pairs + s * pair_spacing / 2, 25 + j * (height - 40) / (rows - 1)]) circle(d = hole);
-}
+step("Lay the foot flat")
+  part("Foot", at = [-10, 0, 0]) difference() {
+    rect([width + 20, foot_depth], r = 5);
+    translate([10, foot_depth / 2]) slots(width, clearance = clearance);
+  }
+step("Test the slot fit, then glue the screen tabs into the foot")
+  part("Screen", at = [0, foot_depth / 2 + t / 2, t], rotate = [90, 0, 0]) difference() {
+    union() { rect([width, height], r = 5); tabs(width); }
+    for (i = [0:pairs - 1], j = [0:rows - 1], s = [-1, 1])
+      translate([width * (i + 0.5) / pairs + s * pair_spacing / 2, 25 + j * (height - 40) / (rows - 1)]) circle(d = hole);
+  }

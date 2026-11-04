@@ -1,0 +1,24 @@
+// Ideal rigid test dimensions, not a rated fastening design.
+upper = 8.6;
+stop_diameter = 10;
+stop_x = 0;
+missing_stop = false;
+nut_z = 23;
+$fn = 96;
+module plate(d = 6.2) difference() {
+  rect([20, 20], center = true);
+  circle(d = d);
+}
+material(thickness = 3, kerf = 0, name = "bearing")
+  part("bearing", qty = 2, at = [[0, 0, 0], [0, 0, 20]]) plate();
+material(thickness = 5, kerf = 0, name = "spacer")
+  part("lower spacer", at = [0, 0, 3]) plate();
+material(thickness = 3, kerf = 0, name = "rotor")
+  part("rotor", at = [0, 0, 8]) plate();
+material(thickness = upper, kerf = 0, name = "spacer")
+  part("upper spacer", at = [0, 0, 11]) plate();
+hardware("steel", [0, 0, 0], [0, 0, 28], 6, label = "shaft");
+hardware("steel", [0, 0, -4], [0, 0, 0], 10, label = "head");
+hardware("steel", [0, 0, 20], [0, 0, 28], 5.2, label = "thread");
+if (!missing_stop)
+  hardware("steel", [stop_x, 0, nut_z], [stop_x, 0, nut_z + 4], stop_diameter, label = "nut");

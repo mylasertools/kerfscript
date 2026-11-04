@@ -1,0 +1,6 @@
+// A variable that holds a function is called before a function of the
+// same name
+// => echo: 2
+function f(x) = 10;
+f = function(x) x * 2;
+echo(f(1));

@@ -158,13 +158,17 @@ module coupon() {
   for (i = [0:2]) label(str(8.1 + 0.1 * i), [75 + 20 * i, 4], 3);
 }
 
-if (output == "all" || output == "arms") {
+// The assembly steps, listed first so they number in build order
+step("Glue the nut block and the anchor block on the board, with an M4 nut in the hex hole");
+step("Bolt the four arms together at their joints, the anchor arm and the link onto the anchor");
+step("Glue the glide feet under the joints, the stylus collars on the dowel and the pencil guides over the pencil hole");
+if (output == "all" || output == "arms") step("Bolt the four arms together at their joints, the anchor arm and the link onto the anchor") {
   part("Anchor arm", at = at(anchor, low), rotate = [0, 0, ik[0]]) anchor_arm();
   part("Pencil arm", at = at(elbow, high), rotate = [0, 0, ik[1]]) pencil_arm();
   part("Stylus arm", at = at(joint_x, low), rotate = [0, 0, ik[0]]) stylus_arm();
   part("Link", at = at(anchor, high), rotate = [0, 0, ik[1]]) link();
 }
-if (output == "all" || output == "board") {
+if (output == "all" || output == "board") step("Glue the nut block and the anchor block on the board, with an M4 nut in the hex hole") {
   part("Base board", at = [0, 0, -t]) base_board();
   part("Nut block", at = at(anchor, 0)) difference() {
     circle(d = 44);
@@ -175,7 +179,7 @@ if (output == "all" || output == "board") {
     circle(d = 4.4);
   }
 }
-if (output == "all" || output == "small") {
+if (output == "all" || output == "small") step("Glue the glide feet under the joints, the stylus collars on the dowel and the pencil guides over the pencil hole") {
   // Two under each of the three joints that move over the paper
   part("Glide foot", qty = 6, at = [for (q = [elbow, joint_c, joint_x], k = [0:1]) at(q, k * t)]) annulus(20, 10);
   // Glued to the stylus dowel so its tip just reaches the paper

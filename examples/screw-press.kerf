@@ -46,17 +46,24 @@ module knob() union() {
   circle(r = 11);
   for (a = [0:60:300]) translate([10 * cos(a), 10 * sin(a)]) circle(r = 4);
 }
-part("Lower platen lamination", qty = platen_layers, at = [for (i = [0:platen_layers - 1]) [0, 0, i * t]]) platen();
-part("Upper platen lamination", qty = platen_layers, at = [for (i = [0:platen_layers - 1]) [0, 0, top + i * t]]) platen();
-for (k = [0:3]) {
-  p = corners[k];
-  z = top + ph + washer_height;
-  part(str("Knob ", k + 1, " cover"), qty = 2, at = [[p[0], p[1], z], [p[0], p[1], z + (middle + 1) * t]], rotate = [0, 0, turn]) difference() {
-    knob(); circle(d = rod_diameter + 0.6);
-  }
-  part(str("Knob ", k + 1, " nut pocket"), qty = middle, at = [for (i = [0:middle - 1]) [p[0], p[1], z + (i + 1) * t]], rotate = [0, 0, turn]) difference() {
-    knob(); circle(d = (nut_flats + nut_clearance) / cos(30), $fn = 6);
+step("Glue up the lower platen and clamp it onto the four rods with nuts") {
+  part("Lower platen lamination", stack = platen_layers, at = [0, 0, 0]) platen();
+  for (p = corners) {
+    hardware("steel", [p[0], p[1], -nut_height], [p[0], p[1], rod_height], rod_diameter, label = "threaded rod");
+    for (z = [-nut_height, ph])
+      hardware("steel", [p[0], p[1], z], [p[0], p[1], z + nut_height], nut_flats / cos(30), sides = 6, label = "hex nut");
   }
 }
-echo("hardware", concat([for (p = corners) [[p[0], p[1], -nut_height], [p[0], p[1], rod_height], rod_diameter, "steel", 24]],
-  [for (p = corners, z = [-nut_height, ph]) [[p[0], p[1], z], [p[0], p[1], z + nut_height], nut_flats / cos(30), "steel", 6]]));
+step("Glue up the upper platen and drop it over the rods")
+  part("Upper platen lamination", stack = platen_layers, at = [0, 0, top]) platen();
+step("Glue each knob's layers round a hex nut, without glue on the thread, and screw them down on washers")
+  for (k = [0:3]) {
+    p = corners[k];
+    z = top + ph + washer_height;
+    part(str("Knob ", k + 1, " cover"), qty = 2, at = [[p[0], p[1], z], [p[0], p[1], z + (middle + 1) * t]], rotate = [0, 0, turn]) difference() {
+      knob(); circle(d = rod_diameter + 0.6);
+    }
+    part(str("Knob ", k + 1, " nut pocket"), stack = middle, at = [p[0], p[1], z + t], rotate = [0, 0, turn]) difference() {
+      knob(); circle(d = (nut_flats + nut_clearance) / cos(30), $fn = 6);
+    }
+  }

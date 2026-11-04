@@ -1,7 +1,7 @@
 // Copyright (c) 2026 MyLaserTools. SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-MyLaserTools-Commercial
 
 import type { Arg, Assign, Expr, ListItem, Param, Program, Stmt } from './ast.js';
-import { KerfError, tokenize, type Comment, type Token } from './lexer.js';
+import { KerfError, tokenize, type Comment, type Pos, type Token } from './lexer.js';
 
 const KEYWORDS = new Set([
   'module',
@@ -316,6 +316,14 @@ class Parser {
     const t = this.peek();
     if (t.type === 'num') {
       this.next();
+      const u = /(mm|cm|m|in|ft)$/.exec(t.value);
+      if (u)
+        return {
+          kind: 'num',
+          value: Number(t.value.slice(0, -u[1].length)),
+          unit: u[1] as 'mm' | 'cm' | 'm' | 'in' | 'ft',
+          pos: t.pos,
+        };
       return { kind: 'num', value: Number(t.value), pos: t.pos };
     }
     if (t.type === 'str') {
@@ -342,7 +350,25 @@ class Parser {
       return e;
     }
     if (this.isP('[')) return this.list();
+    if (this.isP('{')) return this.record();
     this.fail('Expected a value');
+  }
+
+  // {name = value, ...}: a record of named fields
+  record(): Expr {
+    const open = this.expectP('{');
+    const fields: { name: string; value: Expr; pos: Pos }[] = [];
+    while (!this.isP('}')) {
+      const id = this.ident();
+      if (fields.some((f) => f.name === id.value))
+        throw new KerfError(`Field ${id.value} is given twice`, id.pos);
+      this.expectP('=');
+      fields.push({ name: id.value, value: this.expr(), pos: id.pos });
+      if (!this.isP(',')) break;
+      this.next();
+    }
+    this.expectP('}');
+    return { kind: 'record', fields, pos: open.pos };
   }
 
   list(): Expr {

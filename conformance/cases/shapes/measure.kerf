@@ -1,0 +1,6 @@
+// measure() sets $bounds of its first child for the ones after it
+// => echo: [2, 3, 12, 8]
+measure() {
+  translate([2, 3]) rect([10, 5]);
+  echo($bounds);
+}

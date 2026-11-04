@@ -159,9 +159,13 @@ module panel(z) {
   }
 }
 
+function layer_step(z) = str("Lay layer ", z, z == 0 ? " on top" : " on", ", face up");
 if (output == "all") {
-  for (z = [0:layers - 1]) panel(z);
-  part("Backer", at = [0, 0, 0]) blank();
+  // Name the steps in build order first: the backer, then the deepest layer up
+  step("Lay the backer down") {}
+  for (z = [layers - 1:-1:0]) step(layer_step(z)) {}
+  for (z = [0:layers - 1]) step(layer_step(z)) panel(z);
+  step("Lay the backer down") part("Backer", at = [0, 0, 0]) blank();
 } else if (output == "backer") part("Backer") blank();
 else for (z = [0:layers - 1]) if (output == "layer" + str(z)) panel(z);
 

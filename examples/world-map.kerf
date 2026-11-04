@@ -1,0 +1,57 @@
+// World map sign: the world's land engraved on a panel, a heart where a
+// place is (home, or where two people met), its name below, and a message
+// on the back. Two keyholes hang it on the wall. Made with world_map() and
+// geo_point() from kerf/geo, a symbol from kerf/symbols and keyholes() from
+// kerf/hanging.
+
+/* [Map] */
+// Panel width
+width = 300; // [180:10:600]
+// The place to mark, latitude and longitude
+latitude = 48.85; // [-60:0.01:80]
+longitude = 2.35; // [-180:0.01:180]
+// Its name
+place = "PARIS"; // 20
+// The marker
+marker = "heart"; // [heart:Heart, star:Star, home:Home]
+// Message engraved on the back
+message = "WHERE IT ALL BEGAN"; // 40
+
+/* [Material] */
+$thickness = 3; // [2:0.5:6]
+$kerf = 0.15; // [0:0.01:0.3]
+
+/* [Hidden] */
+use <kerf/geo>
+use <kerf/symbols>
+use <kerf/hanging>
+$fn = 48;
+$material = "plywood";
+w = width;
+m = w * 0.04;
+// The map is twice as wide as tall, south of 60 degrees left out; a band
+// above it for the keyholes, and one below for the name
+map_w = w - 2 * m;
+map_h = map_w * 140 / 360;
+top = 26;
+h = top + map_h + m + w * 0.09;
+mid = [w / 2, h - top - map_w * 80 / 360];
+here = mid + geo_point(latitude, longitude, map_w);
+size = w * 0.035;
+part("Map", at = [0, 0, 0], rotate = [90, 0, 0]) {
+  // The marker cut through, so the wall shows behind it
+  difference() {
+    keyholes(w * 0.7, at = [w / 2, h - 7]) rect([w, h], r = 6);
+    translate(here) symbol(marker, size);
+  }
+  engrave() {
+    translate(mid) intersection() {
+      world_map(map_w);
+      translate([-map_w / 2, -60 * map_w / 360]) rect([map_w, map_h]);
+    }
+    translate([w / 2, m + w * 0.035]) text(place, size = w * 0.05, fit = w * 0.6, halign = "center", valign = "center");
+  }
+  // A ring scored round the marker
+  score() translate(here) offset(r = 1.5) symbol(marker, size);
+  engrave(side = "back") translate([w / 2, h / 2]) text(message, size = w * 0.035, fit = w * 0.8, halign = "center", valign = "center");
+}

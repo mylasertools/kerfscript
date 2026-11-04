@@ -5,6 +5,7 @@ src/stdlib.ts
 site/dist
 site/.astro
 site/public/assets/kerfscript.js
+site/public/assets/assembly.js
 site/public/assets/highlight.js
 editors/vscode/LICENSE
 release/

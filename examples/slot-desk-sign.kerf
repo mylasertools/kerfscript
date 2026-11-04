@@ -37,7 +37,6 @@ tab_depth = t - 0.15;
 base_width = width * 0.9;
 base_depth = max(60, height * 0.6);
 word = upper(label);
-text_size = min(18, width * 0.7 / max(1, text_width(word, 1)));
 motif_scale = min(width, height) / 110;
 
 // The outline has a flat bottom: its shoulders sit on the base
@@ -90,7 +89,7 @@ if (output == "sign") {
     score() {
       outline() offset(delta = -4) face();
       translate([0, height * 0.67]) scale(motif_scale) motif();
-      translate([0, height * 0.31]) text(word, size = text_size, halign = "center", valign = "center");
+      translate([0, height * 0.31]) text(word, size = 18, fit = width * 0.7, halign = "center", valign = "center");
     }
   }
   part("Base", at = [0, 0, 0]) difference() {

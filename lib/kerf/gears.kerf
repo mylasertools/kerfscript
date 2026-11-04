@@ -1,0 +1,151 @@
+// kerf/gears: gears, racks, lantern gears and cams for moving models.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+//
+// Gear sizes go by the module `mod`: the pitch diameter is mod * teeth,
+// and two gears mesh when they have the same module and their centres are
+// gear_distance() apart. Lay gears flat in the same plane, or stack them
+// on one axle with spacers.
+
+// The pitch radius, where two gears roll on each other
+function gear_radius(teeth, mod = 2) = mod * teeth / 2;
+
+// Centre distance for two gears in mesh
+function gear_distance(teeth_a, teeth_b, mod = 2) = mod * (teeth_a + teeth_b) / 2;
+
+// How far a gear with `driven` teeth turns when one with `driver` teeth in
+// mesh with it turns `angle` degrees: the other way, slower or faster
+function gear_turn(driver, driven, angle) = -angle * driver / driven;
+
+// The turn that lines a gear's teeth up with another gear's when their
+// centres lie along x: give it to the second gear
+function gear_phase(teeth) = teeth % 2 == 0 ? 180 / teeth : 0;
+
+// The outline of an involute spur gear as a list of points, centred on
+// the origin with a tooth along +x. `backlash` thins each tooth at the
+// pitch circle, so meshed gears don't bind.
+function gear_points(teeth, mod = 2, pressure = 20, backlash = 0.1, steps = 6) =
+  let (
+    rp = mod * teeth / 2,
+    rb = rp * cos(pressure),
+    ra = rp + mod,
+    rd = rp - 1.25 * mod,
+    inv = tan(pressure) - pressure * PI / 180,
+    half = 90 / teeth + inv * 180 / PI - backlash / 2 / rp * 180 / PI,
+    t0 = rd > rb ? sqrt(pow(rd / rb, 2) - 1) : 0,
+    t1 = sqrt(pow(ra / rb, 2) - 1),
+    flank = [for (i = [0:steps]) let (t = t0 + (t1 - t0) * i / steps)
+      [rb * sqrt(1 + t * t), (t - atan(t) * PI / 180) * 180 / PI]],
+    tooth = concat(
+      rd < rb ? [[rd, -half]] : [],
+      [for (p = flank) [p[0], -half + p[1]]],
+      [for (i = [steps:-1:0]) [flank[i][0], half - flank[i][1]]],
+      rd < rb ? [[rd, half]] : []
+    )
+  )
+  [for (k = [0:teeth - 1], p = tooth) let (a = p[1] + k * 360 / teeth) [p[0] * cos(a), p[0] * sin(a)]];
+
+// A spur gear centred on the origin, with a hole for its axle. `spokes`
+// lightening holes (3 to 6) leave a rim; `square` makes the hole square,
+// to turn with a square axle; `hub` adds a ring to engrave round the bore.
+module spur_gear(teeth, mod = 2, bore = 5, pressure = 20, backlash = 0.1, spokes = 0, square = false) {
+  rd = mod * teeth / 2 - 1.25 * mod;
+  difference() {
+    polygon(gear_points(teeth, mod, pressure, backlash));
+    if (square) rect([bore, bore], center = true); else circle(d = bore);
+    if (spokes >= 3) {
+      r_in = bore / 2 + max(4, mod * 1.5);
+      r_out = rd - max(3, mod * 1.5);
+      if (r_out - r_in > 6)
+        for (k = [0:spokes - 1]) rotate(k * 360 / spokes + 180 / spokes)
+          gear_window(r_in, r_out, 360 / spokes, max(2, mod));
+    }
+  }
+}
+
+// A rounded window between two spokes, from radius r0 to r1, `span`
+// degrees wide less a spoke of width w
+module gear_window(r0, r1, span, w) {
+  hull() {
+    translate([r0 + 2, 0]) circle(r = 2);
+    for (s = [-1, 1]) rotate(s * max(1, span / 2 - asin(min(1, (w / 2 + 2) / r1)))) translate([r1 - 2, 0]) circle(r = 2);
+  }
+}
+
+// A straight rack of `teeth` teeth along +x, the pitch line at y = 0, on a
+// bar `height` deep below it. It meshes with a spur_gear() of the same
+// module whose centre is gear_radius() above the pitch line.
+module rack(teeth, mod = 2, height = undef, pressure = 20, backlash = 0.1) {
+  p = PI * mod;
+  h = is_undef(height) ? 3 * mod : height;
+  top = mod;
+  bottom = -1.25 * mod;
+  // Half widths of a tooth at its tip and its root
+  wt = p / 4 - top * tan(pressure) - backlash / 4;
+  wr = p / 4 + 1.25 * mod * tan(pressure) - backlash / 4;
+  translate([0, bottom - h]) rect([teeth * p, h + 0.01]);
+  for (k = [0:teeth - 1])
+    translate([(k + 0.5) * p, 0])
+      polygon([[-wr, bottom], [wr, bottom], [wt, top], [-wt, top]]);
+}
+
+// A lantern gear, as Renaissance mills used: dowel staves between two
+// discs, `staves` of them of diameter `d` on a circle of radius `r`. This
+// is one disc, with holes for the staves and the axle; cut two. It meshes
+// with a peg_wheel() whose pegs are the same size.
+module lantern_disc(staves, r, d = 6, bore = 6, rim = undef) {
+  e = is_undef(rim) ? d * 1.2 : rim;
+  difference() {
+    circle(r = r + d / 2 + e);
+    circle(d = bore);
+    for (k = [0:staves - 1]) rotate(k * 360 / staves) translate([r, 0]) circle(d = d);
+  }
+}
+
+// A wheel with `pegs` holes round its face, `r` from the centre, for
+// dowel pegs standing out of it, to drive a lantern gear set at right
+// angles. The pitch of pegs and staves must match: 2 * PI * r / pegs.
+module peg_wheel(pegs, r, d = 6, bore = 6, rim = undef) {
+  e = is_undef(rim) ? d * 1.5 : rim;
+  difference() {
+    circle(r = r + d / 2 + e);
+    circle(d = bore);
+    for (k = [0:pegs - 1]) rotate(k * 360 / pegs) translate([r, 0]) circle(d = d);
+  }
+}
+
+// Radius of the circle `n` pegs or staves go on, `pitch` apart
+function peg_radius(n, pitch) = pitch * n / (2 * PI);
+
+// An eccentric: a disc of radius r whose axle hole is `offset` from its
+// centre, which pushes a follower up and down by twice the offset
+module eccentric(r, offset, bore = 6, square = false) {
+  difference() {
+    circle(r = r);
+    translate([offset, 0]) if (square) rect([bore, bore], center = true); else circle(d = bore);
+  }
+}
+
+// A snail cam: the radius grows from r0 to r1 over one turn, then drops
+// back, so a follower rises slowly and falls at once, as a trip hammer
+// does. It turns anticlockwise; mirror it to turn the other way.
+module snail_cam(r0, r1, bore = 6, steps = 72, square = false) {
+  difference() {
+    polygon([for (i = [0:steps]) let (a = i * 360 / steps, r = r0 + (r1 - r0) * i / steps) [r * cos(a), r * sin(a)]]);
+    if (square) rect([bore, bore], center = true); else circle(d = bore);
+  }
+}
+
+// Tappets: a hub with `n` arms of length `r`, `w` wide, to lift a lever
+// `n` times a turn
+module tappets(n, r, w = 10, hub = 14, bore = 6, square = false) {
+  difference() {
+    union() {
+      circle(r = hub);
+      for (k = [0:n - 1]) rotate(k * 360 / n) hull() {
+        translate([0, -w / 2]) rect([1, w]);
+        translate([r - w / 2, 0]) circle(d = w);
+      }
+    }
+    if (square) rect([bore, bore], center = true); else circle(d = bore);
+  }
+}

@@ -17,13 +17,20 @@ export interface Closure {
   name?: string;
 }
 
-export type Value = number | string | boolean | undefined | Value[] | Range | Closure;
+export interface Rec {
+  type: 'record';
+  fields: Map<string, Value>;
+}
+
+export type Value = number | string | boolean | undefined | Value[] | Range | Closure | Rec;
 
 export const isRange = (v: Value): v is Range =>
   typeof v === 'object' && v !== null && !Array.isArray(v) && v.type === 'range';
 export const isFn = (v: Value): v is Closure =>
   typeof v === 'object' && v !== null && !Array.isArray(v) && v.type === 'function';
 export const isNum = (v: Value): v is number => typeof v === 'number';
+export const isRec = (v: Value): v is Rec =>
+  typeof v === 'object' && v !== null && !Array.isArray(v) && v.type === 'record';
 
 // o[key] when o has its own property key, so names such as "toString" do not
 // find what every object inherits
@@ -58,15 +65,20 @@ export function truthy(v: Value): boolean {
   return true;
 }
 
-const same = (a: Value, b: Value) =>
-  isRange(a) && isRange(b) ? a.start === b.start && a.step === b.step && a.end === b.end : a === b;
+const same = (a: Value, b: Value, step?: () => void): boolean =>
+  isRange(a) && isRange(b)
+    ? a.start === b.start && a.step === b.step && a.end === b.end
+    : isRec(a) && isRec(b)
+      ? a.fields.size === b.fields.size &&
+        [...a.fields].every(([k, v]) => b.fields.has(k) && equals(v, b.fields.get(k), step))
+      : a === b;
 
 // a == b. step() runs once for each pair of values compared, so comparing
 // long lists counts towards the program's steps. A list can hold the same
 // list many times, so pairs of lists found equal are not compared again.
 export function equals(a: Value, b: Value, step?: () => void): boolean {
   step?.();
-  if (!Array.isArray(a) || !Array.isArray(b)) return same(a, b);
+  if (!Array.isArray(a) || !Array.isArray(b)) return same(a, b, step);
   const seen = new Map<Value[], Set<Value[]>>();
   const open: [Value[], Value[], number][] = [];
   const enter = (x: Value[], y: Value[]) => {
@@ -88,7 +100,7 @@ export function equals(a: Value, b: Value, step?: () => void): boolean {
     const x = top[0][top[2]];
     const y = top[1][top[2]++];
     step?.();
-    if (Array.isArray(x) && Array.isArray(y) ? !enter(x, y) : !same(x, y)) return false;
+    if (Array.isArray(x) && Array.isArray(y) ? !enter(x, y) : !same(x, y, step)) return false;
   }
   return true;
 }
@@ -98,6 +110,7 @@ export function typeName(v: Value): string {
   if (Array.isArray(v)) return 'list';
   if (isRange(v)) return 'range';
   if (isFn(v)) return 'function';
+  if (isRec(v)) return 'record';
   return typeof v;
 }
 
@@ -107,6 +120,7 @@ function scalar(v: Value): string {
   if (typeof v === 'number') return fmt(v);
   if (isRange(v)) return `[${fmt(v.start)}:${fmt(v.step)}:${fmt(v.end)}]`;
   if (isFn(v)) return `function(${v.params.map((p) => p.name).join(', ')})`;
+  if (isRec(v)) return '{}';
   return String(v);
 }
 
@@ -122,23 +136,34 @@ export function write(v: Value, max: number, quote = false): { text: string; who
     out.push(s);
     n += s.length;
   };
-  const open: [Value[], number][] = [];
+  // Lists and records being written, each with its items, the next one's
+  // index and, for a record, the field names
+  const open: { items: Value[]; i: number; keys?: string[]; close: string }[] = [];
   let next: Value = v;
   for (;;) {
     if (Array.isArray(next)) {
       put('[');
-      open.push([next, 0]);
+      open.push({ items: next, i: 0, close: ']' });
+    } else if (isRec(next) && next.fields.size) {
+      put('{');
+      open.push({
+        items: [...next.fields.values()],
+        keys: [...next.fields.keys()],
+        i: 0,
+        close: '}',
+      });
     } else put(scalar(next));
     let more = false;
-    while (open.length && !more) {
+    while (open.length && !more && n <= max) {
       const top = open[open.length - 1];
-      if (top[1] < top[0].length) {
-        if (top[1]) put(', ');
-        next = top[0][top[1]++];
+      if (top.i < top.items.length) {
+        if (top.i) put(', ');
+        if (top.keys) put(`${top.keys[top.i]} = `);
+        next = top.items[top.i++];
         more = true;
       } else {
         open.pop();
-        put(']');
+        put(top.close);
       }
     }
     if (!more || n > max) break;

@@ -52,21 +52,25 @@ module numeral(n, size) {
   strokes = [[[0, 2], [1, 2]], [[1, 2], [1, 1]], [[1, 1], [1, 0]], [[0, 0], [1, 0]], [[0, 1], [0, 0]], [[0, 2], [0, 1]], [[0, 1], [1, 1]]];
   scale(size / 2) for (k = digits[n]) line(strokes[k][0], strokes[k][1]);
 }
-part("Floor", at = [0, 0, 0]) plate();
-part("Cavity spacer", at = [0, 0, t]) difference() {
-  plate();
-  translate([border, border]) rect([iw, id], r = 1);
-}
-for (i = [0:cells - 1]) if (values[i] > 0) part(str("Tile ", values[i]), at = location(i) + (i == moving ? (location(empty) - location(i)) * tile_slide : [0, 0, 0])) {
-  rect([tile_size, tile_size], r = 1);
-  if (numbers) score() translate([tile_size / 2, tile_size / 2]) {
-    if (values[i] >= 10) {
-      translate([-7, -5]) numeral(floor(values[i] / 10), 10);
-      translate([1, -5]) numeral(values[i] % 10, 10);
-    } else translate([-2.5, -5]) numeral(values[i], 10);
+step("Glue the spacer onto the floor") {
+  part("Floor", at = [0, 0, 0]) plate();
+  part("Cavity spacer", at = [0, 0, t]) difference() {
+    plate();
+    translate([border, border]) rect([iw, id], r = 1);
   }
 }
-material(thickness = cover_thickness, name = "clear acrylic") part("Clear retainer", at = [0, 0, 2 * t + vertical_play]) difference() {
-  plate();
-  for (i = [0:cells - 1]) translate([location(i)[0] + tile_size / 2, location(i)[1] + tile_size / 2]) circle(d = tile_size * 0.64);
-}
+step("Set the tiles in the tray")
+  for (i = [0:cells - 1]) if (values[i] > 0) part(str("Tile ", values[i]), at = location(i) + (i == moving ? (location(empty) - location(i)) * tile_slide : [0, 0, 0])) {
+    rect([tile_size, tile_size], r = 1);
+    if (numbers) score() translate([tile_size / 2, tile_size / 2]) {
+      if (values[i] >= 10) {
+        translate([-7, -5]) numeral(floor(values[i] / 10), 10);
+        translate([1, -5]) numeral(values[i] % 10, 10);
+      } else translate([-2.5, -5]) numeral(values[i], 10);
+    }
+  }
+step("Bolt the clear retainer on, with thin washers for a little play")
+  material(thickness = cover_thickness, name = "clear acrylic") part("Clear retainer", at = [0, 0, 2 * t + vertical_play]) difference() {
+    plate();
+    for (i = [0:cells - 1]) translate([location(i)[0] + tile_size / 2, location(i)[1] + tile_size / 2]) circle(d = tile_size * 0.64);
+  }

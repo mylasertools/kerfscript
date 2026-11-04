@@ -193,19 +193,30 @@ wheel_turn = (abs(local) <= 90 - alpha ? let (p = polar(r, local)) atan2(p[1], p
 function stack(x, z, k) = [for (i = [0:k - 1]) [x, 0, z + i * t]];
 feet = [for (x = [-r - 8, c + rim + 8], y = [-rim - 8, rim + 8]) [x, y]];
 
+// The assembly steps, listed first so they number in build order
+step("Glue the feet under the base and the pedestal over the wheel's hole");
+step("Glue the locking disc on the driver arm and bolt the arm on its shaft");
+step("Glue the wheel, the hubs and the dial into one block and set it on its shaft over the pedestal");
+step("Bolt the pointer on its two spacers above the wheel");
+step("Put the grip rings on their sleeve");
 if (output == "all" || output == "motion") {
-  part("Driver arm", qty = 2, at = stack(0, 2 * t + 0.5, 2), rotate = [0, 0, a]) arm();
-  part("Locking disc", qty = 2, at = stack(0, 4 * t + 0.5, 2), rotate = [0, 0, a]) locking_disc();
-  part("Geneva wheel", qty = 2, at = stack(c, 4 * t + 1, 2), rotate = [0, 0, wheel_turn]) wheel();
-  // The grip turns with the driver, opposite the pin
-  part("Grip ring", qty = 5, at = [for (i = [0:4]) concat(polar(grip_offset, a + 180), [6 * t + 1.5 + i * t])], rotate = [0, 0, a])
-    ring(16, 6 + bearing_clearance);
-  part("Output hub", qty = 4, at = stack(c, 6 * t + 1, 4), rotate = [0, 0, wheel_turn]) difference() {
-    circle(d = 28);
-    register();
+  step("Glue the locking disc on the driver arm and bolt the arm on its shaft") {
+    part("Driver arm", qty = 2, at = stack(0, 2 * t + 0.5, 2), rotate = [0, 0, a]) arm();
+    part("Locking disc", qty = 2, at = stack(0, 4 * t + 0.5, 2), rotate = [0, 0, a]) locking_disc();
   }
+  step("Glue the wheel, the hubs and the dial into one block and set it on its shaft over the pedestal")
+    part("Geneva wheel", qty = 2, at = stack(c, 4 * t + 1, 2), rotate = [0, 0, wheel_turn]) wheel();
+  // The grip turns with the driver, opposite the pin
+  step("Put the grip rings on their sleeve")
+    part("Grip ring", qty = 5, at = [for (i = [0:4]) concat(polar(grip_offset, a + 180), [6 * t + 1.5 + i * t])], rotate = [0, 0, a])
+      ring(16, 6 + bearing_clearance);
+  step("Glue the wheel, the hubs and the dial into one block and set it on its shaft over the pedestal")
+    part("Output hub", qty = 4, at = stack(c, 6 * t + 1, 4), rotate = [0, 0, wheel_turn]) difference() {
+      circle(d = 28);
+      register();
+    }
 }
-if (output == "all" || output == "frame") {
+if (output == "all" || output == "frame") step("Glue the feet under the base and the pedestal over the wheel's hole") {
   part("Base", qty = 2, at = stack(0, 0, 2)) base();
   // Takes the M4 shaft only, so the output sleeve stands on it
   part("Output pedestal", qty = 2, at = stack(c, 2 * t, 2)) ring(20, 4.5);
@@ -213,9 +224,12 @@ if (output == "all" || output == "frame") {
   part("Foot cap", qty = 4, at = [for (f = feet) concat(f, [-4 * t])]) ring(18, 4.5);
 }
 if (output == "all" || output == "display") {
-  part("Station dial", at = [c, 0, 10 * t + 1], rotate = [0, 0, wheel_turn]) dial();
-  part("Pointer", at = [c, 0, 13 * t + 2.5]) pointer();
-  part("Pointer spacer", qty = 2, at = stack(c, 11 * t + 2.5, 2)) ring(12, 4.5);
+  step("Glue the wheel, the hubs and the dial into one block and set it on its shaft over the pedestal")
+    part("Station dial", at = [c, 0, 10 * t + 1], rotate = [0, 0, wheel_turn]) dial();
+  step("Bolt the pointer on its two spacers above the wheel") {
+    part("Pointer", at = [c, 0, 13 * t + 2.5]) pointer();
+    part("Pointer spacer", qty = 2, at = stack(c, 11 * t + 2.5, 2)) ring(12, 4.5);
+  }
 }
 // The fit test lies on the table beside the base
 if (output == "all" || output == "coupon") part("Fit test", at = [c + rim + 30, -rim, -4 * t]) fit_test();

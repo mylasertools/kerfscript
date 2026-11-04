@@ -28,7 +28,6 @@ $kerf = 0.15; // [0:0.01:0.3]
 /* [Hidden] */
 $material = "plywood";
 $fn = 64;
-text_size = min(height * 0.4, width * 0.7 / max(1, text_width(label, 1)));
 
 module panel() rect([width, height], r = 6);
 
@@ -40,6 +39,6 @@ module hung() {
 
 part("sign") {
   hung();
-  engrave() translate([width / 2, height * 0.42]) text(label, size = text_size, halign = "center", valign = "center");
+  engrave() translate([width / 2, height * 0.42]) text(label, size = height * 0.4, fit = width * 0.7, halign = "center", valign = "center");
   score() outline() offset(delta = -4) panel();
 }

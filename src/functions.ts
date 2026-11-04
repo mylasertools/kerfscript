@@ -5,11 +5,14 @@ import {
   isFn,
   isNum,
   isRange,
+  isRec,
   joinText,
   rangeValues,
   typeName,
   type Value,
 } from './values.js';
+
+import { flatten, parseSvgPath } from './paths.js';
 
 const RAD = Math.PI / 180;
 
@@ -202,8 +205,21 @@ export const FUNCTIONS: Record<string, Builtin> = {
     return [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
   }),
   len: def('value', (a) =>
-    typeof a[0] === 'string' ? [...a[0]].length : Array.isArray(a[0]) ? a[0].length : undefined,
+    typeof a[0] === 'string'
+      ? [...a[0]].length
+      : Array.isArray(a[0])
+        ? a[0].length
+        : isRec(a[0])
+          ? a[0].fields.size
+          : undefined,
   ),
+  // A record's field names, in the order they were written
+  keys: def('record', (a) => (isRec(a[0]) ? [...a[0].fields.keys()] : undefined)),
+  // A record with fields of the second added to or replacing the first's
+  merge: def('a, b', (a) => {
+    if (!isRec(a[0]) || !isRec(a[1])) throw new Error('merge() takes two records');
+    return { type: 'record', fields: new Map([...a[0].fields, ...a[1].fields]) };
+  }),
   concat: def('...', (a, c) => {
     const n = a.reduce((s: number, x) => s + (Array.isArray(x) ? x.length : 1), 0);
     if (n > c.maxLength)
@@ -282,7 +298,209 @@ export const FUNCTIONS: Record<string, Builtin> = {
   is_string: def('value', (a) => typeof a[0] === 'string'),
   is_bool: def('value', (a) => typeof a[0] === 'boolean'),
   is_list: def('value', (a) => Array.isArray(a[0])),
+  is_record: def('value', (a) => isRec(a[0])),
   is_undef: def('value', (a) => a[0] === undefined),
   is_function: def('value', (a) => isFn(a[0])),
   type_of: def('value', (a) => typeName(a[0])),
+  // Paths: lists of [x, y] points, measured along their length
+  path_length: def('points', (a, c) => {
+    const p = pts(a[0], 'path_length', c);
+    let s = 0;
+    for (let i = 1; i < p.length; i++)
+      s += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]);
+    return s;
+  }),
+  point_at: def(
+    'points, s',
+    (a, c) => alongPath(pts(a[0], 'point_at', c), num(a[1], 'point_at')).point,
+  ),
+  heading_at: def('points, s', (a, c) =>
+    clean(alongPath(pts(a[0], 'heading_at', c), num(a[1], 'heading_at')).heading),
+  ),
+  // The points of SVG path data, each subpath as one list
+  path_points: def('d, tolerance', (a, c) => {
+    if (typeof a[0] !== 'string') throw new Error('path_points() needs SVG path data');
+    const tol = a[1] === undefined ? 0.05 : num(a[1], 'path_points');
+    if (!(tol > 0)) throw new Error('path_points(): tolerance must be more than 0');
+    const f = flatten(parseSvgPath(a[0]), tol);
+    const all = [...f.closed.map((p) => [...p, p[0]]), ...f.open];
+    c.step(all.reduce((n, p) => n + p.length, 0));
+    return all.map((p) => p.map(([x, y]) => [x, y]));
+  }),
+  // A smooth curve through points (Catmull-Rom), `steps` points a span
+  spline_points: def('points, steps, closed', (a, c) => {
+    const p = pts(a[0], 'spline_points', c);
+    const n = a[1] === undefined ? 8 : Math.floor(num(a[1], 'spline_points'));
+    if (!(n >= 1)) throw new Error('spline_points(): steps must be 1 or more');
+    if (p.length * n > c.maxLength)
+      throw new Error('spline_points(): the result would be too long');
+    c.step(p.length * n);
+    return catmullRom(p, n, a[2] === true);
+  }),
+  // Rotations in 3D, as part()'s rotate: the matrix for [x, y, z] degrees,
+  // the angles of a matrix, and the angles that turn x and z onto vectors
+  rotation: def('angles', (a) => {
+    const [x, y, z] = vec3(a[0], 'rotation');
+    return mat(mmul(rz(z), mmul(ry(y), rx(x))));
+  }),
+  euler: def('matrix', (a) => eulerOf(matrix3(a[0], 'euler'))),
+  orient: def('x, z', (a) => {
+    const X = unit(vec3(a[0], 'orient'), 'orient');
+    let Z = vec3(a[1] ?? [0, 0, 1], 'orient');
+    // z made square to x
+    const d = Z[0] * X[0] + Z[1] * X[1] + Z[2] * X[2];
+    Z = unit([Z[0] - d * X[0], Z[1] - d * X[1], Z[2] - d * X[2]], 'orient');
+    const Y = [Z[1] * X[2] - Z[2] * X[1], Z[2] * X[0] - Z[0] * X[2], Z[0] * X[1] - Z[1] * X[0]];
+    return eulerOf([
+      [X[0], Y[0], Z[0]],
+      [X[1], Y[1], Z[1]],
+      [X[2], Y[2], Z[2]],
+    ]);
+  }),
 };
+
+type V3 = [number, number, number];
+type M3 = number[][];
+
+function pts(v: Value, fn: string, c: FnCtx): [number, number][] {
+  const l = list(v, fn, c);
+  return l.map((p, i) => {
+    if (!Array.isArray(p) || typeof p[0] !== 'number' || typeof p[1] !== 'number')
+      throw new Error(`${fn}(): points[${i}] must be an [x, y] point`);
+    return [p[0], p[1]];
+  });
+}
+
+// The point s along a path, and the heading there in degrees; before the
+// start and past the end it carries on straight
+function alongPath(points: [number, number][], s: number) {
+  if (points.length < 2) throw new Error('a path needs at least two points');
+  // Repeated points make segments of no length: leave them out, so the
+  // first and last segments have a direction to carry on in
+  const p = points.filter(
+    ([x, y], k) => k === 0 || x !== points[k - 1][0] || y !== points[k - 1][1],
+  );
+  if (p.length < 2) return { point: [p[0][0], p[0][1]], heading: 0 };
+  let i = 0;
+  let at = 0;
+  for (; i < p.length - 2; i++) {
+    const l = Math.hypot(p[i + 1][0] - p[i][0], p[i + 1][1] - p[i][1]);
+    if (at + l >= s) break;
+    at += l;
+  }
+  const [a, b] = [p[i], p[i + 1]];
+  const u = (s - at) / Math.hypot(b[0] - a[0], b[1] - a[1]);
+  return {
+    point: [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u],
+    heading: Math.atan2(b[1] - a[1], b[0] - a[0]) / RAD,
+  };
+}
+
+function vec3(v: Value, fn: string): V3 {
+  if (!Array.isArray(v) || v.length < 2 || v.length > 3 || !v.every((x) => typeof x === 'number'))
+    throw new Error(`${fn}() needs [x, y, z]`);
+  return [v[0] as number, v[1] as number, (v[2] as number | undefined) ?? 0];
+}
+
+function unit(v: number[], fn: string): V3 {
+  const l = Math.hypot(...v);
+  if (!(l > 1e-12))
+    throw new Error(`${fn}(): a direction can't be [0, 0, 0], or x and z the same way`);
+  return [v[0] / l, v[1] / l, v[2] / l];
+}
+
+function matrix3(v: Value, fn: string): M3 {
+  if (
+    !Array.isArray(v) ||
+    v.length < 3 ||
+    !v
+      .slice(0, 3)
+      .every(
+        (r) =>
+          Array.isArray(r) && r.length >= 3 && r.slice(0, 3).every((x) => typeof x === 'number'),
+      )
+  )
+    throw new Error(`${fn}() needs a 3x3 matrix`);
+  return (v as number[][]).slice(0, 3).map((r) => r.slice(0, 3));
+}
+
+const rx = (d: number): M3 => {
+  const [c, s] = [Math.cos(d * RAD), Math.sin(d * RAD)];
+  return [
+    [1, 0, 0],
+    [0, c, -s],
+    [0, s, c],
+  ];
+};
+const ry = (d: number): M3 => {
+  const [c, s] = [Math.cos(d * RAD), Math.sin(d * RAD)];
+  return [
+    [c, 0, s],
+    [0, 1, 0],
+    [-s, 0, c],
+  ];
+};
+const rz = (d: number): M3 => {
+  const [c, s] = [Math.cos(d * RAD), Math.sin(d * RAD)];
+  return [
+    [c, -s, 0],
+    [s, c, 0],
+    [0, 0, 1],
+  ];
+};
+const mmul = (A: M3, B: M3): M3 =>
+  A.map((r) => [0, 1, 2].map((j) => r[0] * B[0][j] + r[1] * B[1][j] + r[2] * B[2][j]));
+const mat = (M: M3) => M.map((r) => r.map(clean));
+
+// [x, y, z] degrees with R = Rz Ry Rx, as part() turns
+function eulerOf(M: M3): number[] {
+  const sy = -M[2][0];
+  if (Math.abs(sy) > 1 - 1e-12) {
+    // Straight up or down: put the whole turn in z
+    const y = sy > 0 ? 90 : -90;
+    const z = Math.atan2(-M[0][1], M[1][1]) / RAD;
+    return [0, y, clean(z)];
+  }
+  return [
+    clean(Math.atan2(M[2][1], M[2][2]) / RAD),
+    clean(Math.asin(sy) / RAD),
+    clean(Math.atan2(M[1][0], M[0][0]) / RAD),
+  ];
+}
+
+// A Catmull-Rom curve through the points, `n` points for each span; the
+// ends are held straight
+export function catmullRom(p: [number, number][], n: number, closed = false): [number, number][] {
+  if (p.length < 3) return p.map(([x, y]) => [x, y]);
+  const at = (i: number): [number, number] => {
+    if (closed) return p[((i % p.length) + p.length) % p.length];
+    if (i < 0) return [2 * p[0][0] - p[1][0], 2 * p[0][1] - p[1][1]];
+    if (i >= p.length) {
+      const [a, b] = [p[p.length - 1], p[p.length - 2]];
+      return [2 * a[0] - b[0], 2 * a[1] - b[1]];
+    }
+    return p[i];
+  };
+  const out: [number, number][] = [];
+  const spans = closed ? p.length : p.length - 1;
+  for (let i = 0; i < spans; i++) {
+    const [p0, p1, p2, p3] = [at(i - 1), at(i), at(i + 1), at(i + 2)];
+    for (let k = 0; k < n; k++) {
+      const t = k / n,
+        t2 = t * t,
+        t3 = t2 * t;
+      out.push(
+        [0, 1].map(
+          (j) =>
+            0.5 *
+            (2 * p1[j] +
+              (-p0[j] + p2[j]) * t +
+              (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2 +
+              (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t3),
+        ) as [number, number],
+      );
+    }
+  }
+  out.push(closed ? out[0] : [p[p.length - 1][0], p[p.length - 1][1]]);
+  return out;
+}

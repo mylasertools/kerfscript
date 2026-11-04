@@ -122,19 +122,24 @@ module fit_test() {
   }
 }
 
+// Steps are numbered in the order they first run, so name them here in build order
+step("Glue the rails into the base, numbers running from the front") {}
+step("Lower the ribs into their numbered notches, scored faces to the front") {}
 // Assembled: the rails stand in the base, the ribs across them at their
 // stations
-module placed_rib(i) part(str("Rib ", i + 1), at = [0, station(i) + t / 2, 0], rotate = [90, 0, 0]) rib(i);
+module placed_rib(i) step("Lower the ribs into their numbered notches, scored faces to the front") part(str("Rib ", i + 1), at = [0, station(i) + t / 2, 0], rotate = [90, 0, 0]) rib(i);
 if (output == "all" || output == "ribs_a") for (i = [0:3]) placed_rib(i);
 if (output == "all" || output == "ribs_b") for (i = [4:7]) placed_rib(i);
 if (output == "all" || output == "ribs_c") for (i = [8:11]) placed_rib(i);
 if (output == "all" || output == "ribs_d") for (i = [12:15]) placed_rib(i);
 if (output == "all" || output == "rib_e") placed_rib(16);
 if (output == "all" || output == "rails") {
-  part("Rail L", at = [-rail_x - t / 2, 0, 0], rotate = [90, 0, 90]) rail("L");
-  part("Rail R", at = [rail_x - t / 2, 0, 0], rotate = [90, 0, 90]) rail("R");
+  step("Glue the rails into the base, numbers running from the front") {
+    part("Rail L", at = [-rail_x - t / 2, 0, 0], rotate = [90, 0, 90]) rail("L");
+    part("Rail R", at = [rail_x - t / 2, 0, 0], rotate = [90, 0, 90]) rail("R");
+  }
 }
-if (output == "all" || output == "base") part("Base", at = [0, 0, -t]) base();
+if (output == "all" || output == "base") step("Glue the rails into the base, numbers running from the front") part("Base", at = [0, 0, -t]) base();
 if (output == "fit") fit_test();
 
 // Assembly: glue rail L and rail R into the base, numbers running from the

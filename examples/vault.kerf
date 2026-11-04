@@ -205,7 +205,7 @@ function on_lid(x, y, z) = [x, y, z + lid_lift];
 function code_turn(i) = [0, 0, 36 * codes[i]];
 cleats = [for (j = [0:3], k = [0:1]) [j % 2 == 0 ? t : W - t - 12, j < 2 ? 3 * t + k * t : D - 2 * t - k * t, t]];
 
-if (output == "all" || output == "enclosure") {
+if (output == "all" || output == "enclosure") step("Glue up the box: the walls on the base, then the cleats and ledges") {
   part("Base", at = [0, 0, 0]) base();
   part("Front wall", at = wall_at(t), rotate = upright) wall(true, false);
   part("Front inner wall", at = wall_at(2 * t), rotate = upright) wall(true, true);
@@ -219,20 +219,20 @@ if (output == "all" || output == "enclosure") {
     rect([100, 12]);
   part("Lid ledge", qty = 4, at = [for (x = [t + 12, W - t], k = [0:1]) [x, 50, H - 2 * t + k * t]], rotate = along) rect([100, 12]);
 }
-if (output == "all" || output == "lid") {
+if (output == "all" || output == "lid") step("Glue the bearing pads and the rear tongues under the lid") {
   part("Lid", at = on_lid(0, 0, H)) lid();
   part("Bearing pad", qty = 6, at = [for (x = dial_x, k = [0:1]) on_lid(x, 75, H - 2 * t + k * t)]) annulus(32, 18 + rotor_clearance);
   part("Rear tongue", qty = 2, at = [for (x = tongue_x) on_lid(x, D - t - 22.5, H - 3 * t)]) rect([20, 22]);
   part("Tongue spacer", qty = 4, at = [for (x = tongue_x, k = [0:1]) on_lid(x, D - t - 22.5, H - 2 * t + k * t)]) rect([20, 12]);
 }
-if (output == "all" || output == "rotors") {
+if (output == "all" || output == "rotors") step("Build the three rotors through the lid, each set to its code") {
   for (i = [0:2])
     part(str("Gate wheel ", i + 1, ", code ", codes[i]), at = on_lid(dial_x[i], 75, H - 3 * t - 0.5), rotate = code_turn(i)) gate(codes[i]);
   part("Dial", qty = 3, at = [for (x = dial_x) on_lid(x, 75, H + t)], rotate = [for (i = [0:2]) code_turn(i)]) dial();
   part("Hub disc", qty = 9, at = [for (x = dial_x, k = [0:2]) on_lid(x, 75, H - 2 * t - 0.5 + k * t)], rotate = [for (i = [0:2], k = [0:2]) code_turn(i)])
     hub();
 }
-if (output == "all" || output == "fence") {
+if (output == "all" || output == "fence") step("Hang the fence under the lid and bolt the knob on through the slot") {
   part("Fence", at = on_lid(0, fence_slide, H - 3 * t)) fence();
   part("Fence spacer", qty = 4, at = [for (x = guide_x, k = [0:1]) on_lid(x, 29, H - 2 * t + k * t)]) annulus(14, 6.2);
   part("Fence keeper", qty = 2, at = [for (x = guide_x) on_lid(x, 29, H - 4 * t - 0.4)]) annulus(16, 3.4);

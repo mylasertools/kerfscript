@@ -1,0 +1,6 @@
+// $scale divides lengths with units where they are evaluated, not plain
+// numbers
+// => echo: 100, 50, 3
+$scale = 12;
+module show() echo(1.2m, 600mm, $thickness);
+show();

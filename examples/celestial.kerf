@@ -179,17 +179,22 @@ corners = [for (x = [-27 * m, spacing + 27 * m], y = [-27 * m, 27 * m]) [x, y]];
 
 // Bottom to top: the outer orbit has the largest gear and the smallest drive
 levels = ["Lower", "Middle", "Upper"];
-if (output == "all" || output == "gears") for (i = [0:2]) {
+// The assembly steps, listed first so they number in build order
+step("Glue the feet under the base and a pedestal round the foot of each journal");
+step("Stack the orbit gears on the left journal and the drive gears on the right");
+step("Pin the crank on top of the drive gears");
+step("Glue the planets on the orbit gears, fix the sun on its rod and bolt on the handle");
+if (output == "all" || output == "gears") step("Stack the orbit gears on the left journal and the drive gears on the right") for (i = [0:2]) {
   z = teeth[i];
   part(str(levels[i], " orbit gear"), qty = 2, at = layers(0, level_z(i), 2), rotate = [0, 0, orbit_turn(i)]) orbit_gear(z);
   part(str(levels[i], " drive gear"), qty = 2, at = layers(spacing, level_z(i), 2), rotate = [0, 0, a]) drive_gear(90 - z);
 }
-if (output == "all" || output == "frame") {
+if (output == "all" || output == "frame") step("Glue the feet under the base and a pedestal round the foot of each journal") {
   part("Base", qty = 2, at = layers(0, 0, 2)) base();
   part("Foot", qty = 12, at = [for (c = corners, k = [0:2]) concat(c, [-3 * t + k * t])]) foot();
   part("Journal pedestal", qty = 4, at = [for (x = [0, spacing], k = [0:1]) [x, 0, 2 * t + k * t]]) pedestal();
 }
-if (output == "all" || output == "markers") {
+if (output == "all" || output == "markers") step("Glue the planets on the orbit gears, fix the sun on its rod and bolt on the handle") {
   // Three layers on each orbit gear, 12 mm in from its pitch circle
   part("Planet", qty = 9, at = [for (i = [0:2], k = [0:2]) concat(polar(teeth[i] * m / 2 - 12, orbit_turn(i)), [level_z(i) + 2 * t + k * t])],
     rotate = [for (i = [0:2], k = [0:2]) [0, 0, orbit_turn(i)]])
@@ -197,8 +202,10 @@ if (output == "all" || output == "markers") {
   part("Sun", qty = 2, at = layers(0, 85, 2)) sun();
 }
 if (output == "all" || output == "crank") {
-  part("Crank", qty = 2, at = layers(spacing, 75, 2), rotate = [0, 0, a]) crank();
-  part("Handle", qty = 5, at = [for (k = [0:4]) concat([spacing, 0] + polar(40, 90 + a), [82 + k * t])], rotate = [0, 0, a]) handle();
+  step("Pin the crank on top of the drive gears")
+    part("Crank", qty = 2, at = layers(spacing, 75, 2), rotate = [0, 0, a]) crank();
+  step("Glue the planets on the orbit gears, fix the sun on its rod and bolt on the handle")
+    part("Handle", qty = 5, at = [for (k = [0:4]) concat([spacing, 0] + polar(40, 90 + a), [82 + k * t])], rotate = [0, 0, a]) handle();
 }
 // The fit test lies on the table beside the base
 if (output == "all" || output == "coupon") part("Fit test", at = [spacing + 27 * m + 30, -27 * m, -3 * t]) {

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "model": "Stock adaptation and frozen-cut tolerance coupon",
+  "configurations": [
+    {
+      "id": "4mm",
+      "params": { "receiver_t": 4, "tab_depth": 4.1 },
+      "materials": {
+        "receiver": { "thickness": [3.95, 4.05], "kerf": [0.12, 0.18] },
+        "tongue": { "thickness": [1.95, 2.05], "kerf": [0.12, 0.18] }
+      }
+    },
+    {
+      "id": "5mm",
+      "params": { "receiver_t": 5, "tab_depth": 5.1 },
+      "materials": {
+        "receiver": { "thickness": [4.95, 5.05], "kerf": [0.12, 0.18] },
+        "tongue": { "thickness": [1.95, 2.05], "kerf": [0.12, 0.18] }
+      }
+    }
+  ],
+  "claims": [
+    { "id": "stock", "kind": "material-assignment" },
+    {
+      "id": "4mm fit",
+      "kind": "tab-slot",
+      "configurations": ["4mm"],
+      "tab": { "part": "tongue" },
+      "receiver": { "part": "receiver" },
+      "region": [10, 0, 20, 4.1],
+      "clearance": [0.2, 0.4],
+      "flushTolerance": 0.1,
+      "minimumLigament": 9
+    },
+    {
+      "id": "5mm fit",
+      "kind": "tab-slot",
+      "configurations": ["5mm"],
+      "tab": { "part": "tongue" },
+      "receiver": { "part": "receiver" },
+      "region": [10, 0, 20, 5.1],
+      "clearance": [0.2, 0.4],
+      "flushTolerance": 0.1,
+      "minimumLigament": 9
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+// A 2 mm tongue through a 4 mm receiving plate. All dimensions are mm.
+receiver_t = 4;
+tab_depth = 4;
+slot_width = 2.3;
+slot_x = 9.85;
+material(thickness = receiver_t, kerf = 0.15, name = "receiver")
+  part("receiver", at = [0, 0, 0]) difference() {
+    rect([40, 30]);
+    translate([slot_x, 15 - slot_width / 2]) rect([10.3, slot_width]);
+  }
+material(thickness = 2, kerf = 0.15, name = "tongue")
+  part("tongue", at = [0, 16, 0], rotate = [90, 0, 0]) {
+    translate([7, tab_depth]) rect([16, 20 - tab_depth]);
+    translate([10, 0]) rect([10, tab_depth + 0.01]);
+  }

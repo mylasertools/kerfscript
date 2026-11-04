@@ -173,15 +173,23 @@ if (output == "fit") fit_test();
 // Assembled: the two cores cross in the root, the twelve fins stand round
 // them every 30 degrees, and the crown caps them
 function fin_at(i) = concat([(R - t / 2) * cos(30 * (i - 1)), (R - t / 2) * sin(30 * (i - 1))], [0]);
-module placed_fin(i) part(str("Fin ", i), at = fin_at(i), rotate = [90, 0, 90 + 30 * (i - 1)]) fin(i);
+module placed_fin(i) step("Set the twelve fins into their numbered sockets, all bowing the same way") part(str("Fin ", i), at = fin_at(i), rotate = [90, 0, 90 + 30 * (i - 1)]) fin(i);
+// Steps are numbered in the order they first run, so name them here in build order
+step("Cross the two cores and glue them into the root") {}
+step("Set the twelve fins into their numbered sockets, all bowing the same way") {}
+step("Lower the crown over the top tabs and glue it") {}
 if (output == "all" || output == "fins_a") for (i = [1:4]) placed_fin(i);
 if (output == "all" || output == "fins_b") for (i = [5:8]) placed_fin(i);
 if (output == "all" || output == "fins_c") for (i = [9:12]) placed_fin(i);
 if (output == "all" || output == "structure") {
-  part("Root", at = [0, 0, -t]) disc(false);
-  part("Crown", at = [0, 0, height]) disc(true);
-  part("Core A", at = [0, t / 2, 0], rotate = [90, 0, 0]) core(true);
-  part("Core B", at = [-t / 2, 0, 0], rotate = [90, 0, 90]) core(false);
+  step("Cross the two cores and glue them into the root")
+    part("Root", at = [0, 0, -t]) disc(false);
+  step("Lower the crown over the top tabs and glue it")
+    part("Crown", at = [0, 0, height]) disc(true);
+  step("Cross the two cores and glue them into the root") {
+    part("Core A", at = [0, t / 2, 0], rotate = [90, 0, 0]) core(true);
+    part("Core B", at = [-t / 2, 0, 0], rotate = [90, 0, 90]) core(false);
+  }
 }
 
 // Assembly:

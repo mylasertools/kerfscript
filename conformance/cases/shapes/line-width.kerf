@@ -1,0 +1,3 @@
+// line() with a width is a strip between the points, an area
+// => part: "part" size=30x4
+line([0, 0], [30, 0], width = 4);

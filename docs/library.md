@@ -26,6 +26,13 @@ show each module's description when you hover over it.
 | [`kerf/hanging`](#hanging)         | Keyholes, holes and loops for hanging things on a wall         |
 | [`kerf/enclosure`](#enclosures)    | Boxes with a screwed-on lid, cutouts for ports and vents       |
 | [`kerf/calibration`](#calibration) | Test pieces that measure the kerf and how your sheet fits      |
+| [`kerf/gears`](#gears-and-cams)    | Spur gears, racks, lantern gears, cams and tappets             |
+| [`kerf/lock`](#lock)               | A lock with a key, three layers deep                           |
+| [`kerf/rings`](#rings)             | Round things of stacked rings on a crossed core                |
+| [`kerf/joints`](#joints)           | Two profiles halved into each other: crosses, fonts, domes     |
+| [`kerf/sizes`](#sizes)             | Paper, card and photo sizes                                    |
+| [`kerf/symbols`](#symbols)         | 867 pictograms by name                                         |
+| [`kerf/geo`](#maps)                | The world's land, for maps and globes                          |
 
 Sizes are in millimetres. Joints use `$thickness`, the sheet thickness, so
 set it to what you measure. Each section has an example in the gallery that
@@ -39,16 +46,26 @@ you can open in the playground.
 
 Finger-jointed boxes. Example: [box.kerf](../examples/box.kerf).
 
-### `box(size, lid = false, finger)`
+### `box(size, lid = false, finger, name = "")`
 
 The panels of a box as parts `bottom`, `front`, `back`, `left`, `right` and,
-with a lid, `lid`, placed for the assembled view.
+with a lid, `lid`, placed for the assembled view. Shapes given to `box()`
+go on the front, drawn from its bottom left corner as seen from outside.
+Wrap it in `place()` to set it anywhere:
+
+```kerf
+use <kerf/box>
+
+place(at = [0, 0, 40]) box([120, 80, 60], name = "crate")
+  engrave() translate([60, 30]) text("TEA", size = 14, halign = "center");
+```
 
 | Parameter | Default                  | Meaning                                                |
 | --------- | ------------------------ | ------------------------------------------------------ |
 | `size`    |                          | Outside `[width, depth, height]`, lid included         |
 | `lid`     | `false`                  | Add a lid, finger-jointed to the walls like the bottom |
 | `finger`  | `max(3 * $thickness, 6)` | Finger width                                           |
+| `name`    | `""`                     | Goes before each panel's name, as `crate front`        |
 
 ### `divider(size, finger)`
 
@@ -149,12 +166,55 @@ bent at the corners. The tabs of part `bottom` go through slots along the
 strip. Part `lid` rests on top, and part `lid insert`, glued under it,
 keeps it in place. `size` is the outside `[width, depth, height]`, lid
 included, and `r` the outside corner radius, more than two thicknesses.
-The strip is bent, so the parts are not placed in an assembled view.
+The assembled view shows the strip bent round the bottom.
 
 ### `flex_panel(size, r, sw, sd)`
 
 The bottom of `flex_box()`: a rounded rectangle with tabs on its straight
 edges, `sw` long on the front and back and `sd` on the sides.
+
+### `narrow_hinge(size, spacing = 1.5, bridge = 1.5)`
+
+A hinge for a narrow strap or band, as lines across `[w, h]`: cuts from
+alternate edges, each stopping `bridge` short of the far edge, so the
+strip zigzags and bends evenly however narrow it is. Use it where
+`living_hinge()` would leave only a cut or two across.
+
+### `flex_strip(path, width, name = "strip", tabs = true, straight = 10, r, spacing = 1.5, bridge = 3, narrow = false)`
+
+A strip that follows a profile: `path` is a list of `[x, y]` points along
+its middle in a side plate's plane, as `path_points()` or a list
+comprehension gives them. The strip has a living hinge wherever the path
+curves and tabs along both edges wherever it runs straight. It is one
+part, placed in the plate's coordinates with its edge at z = 0 and its
+width running down to `-width`, and bent in the assembled view.
+
+```kerf
+use <kerf/hinge>
+
+W = 80;
+path = [for (a = [180:5:360]) [40, 40] + 40 * [cos(a), sin(a)]];
+module plate() offset(delta = 12) polygon(concat(path, [[80, 70], [0, 70]]));
+part("end A", rotate = [90, 0, 0], slots = ["tray"]) plate();
+part("end B", at = [0, W + $thickness, 0], rotate = [90, 0, 0], slots = ["tray"]) plate();
+place(rotate = [90, 0, 0]) flex_strip(path, W, name = "tray");
+```
+
+Wrap it in `place()` with the plate's placement, put the other plate
+`width` away, and give both plates `slots`: they cut the slots for the
+tabs where the strip passes through them. Segments of the path shorter
+than `straight` are taken as curve; a sharp corner bends round radius
+`r`, two thicknesses by default. `narrow` uses `narrow_hinge()`.
+
+### `strip_bends(path, straight = 10, r)`
+
+The bends `flex_strip()` makes, as `[s0, s1, angle]` along the path:
+where each curve starts and ends and how far it turns, left positive.
+Give them to `part(bend = ...)` for a strip of your own.
+
+### `strip_merge(list)`
+
+Joins bends from `strip_bends()` that touch into one.
 
 ## Dividers
 
@@ -337,3 +397,239 @@ A pair of finger-jointed pieces for each kerf in `kerfs`, parts
 `joint <kerf> out` and `joint <kerf> in`, each cut with that kerf
 compensation. The pair that holds together without glue or forcing has
 the kerf to set for this sheet.
+
+## Gears and cams
+
+`use <kerf/gears>`
+
+Gears, racks, the lantern gears of old mills, and the cams and tappets
+that make a model move. Gears go by their module `mod`: the pitch
+diameter is `mod * teeth`, and two gears mesh when they have the same
+module and their centres are `gear_distance()` apart.
+
+```kerf
+use <kerf/gears>
+
+part("big") spur_gear(36, 2, bore = 6, spokes = 5);
+part("small", at = [gear_distance(36, 12, 2), 0, 0], rotate = [0, 0, gear_phase(12)])
+  spur_gear(12, 2, bore = 6);
+```
+
+### `spur_gear(teeth, mod = 2, bore = 5, pressure = 20, backlash = 0.1, spokes = 0, square = false)`
+
+A gear with involute teeth centred on the origin, a tooth along +x, and a
+hole for its axle: round, or `square` to turn with a square axle.
+`spokes` from 3 to 6 cuts windows between spokes. `backlash` thins each
+tooth so meshed gears don't bind.
+
+### `gear_points(teeth, mod = 2, pressure = 20, backlash = 0.1, steps = 6)`
+
+The gear's outline as a list of points, for gears of your own shape.
+
+### `gear_window(r0, r1, span, w)`
+
+One rounded window between two spokes, from radius `r0` to `r1`.
+
+### `gear_radius(teeth, mod = 2)`, `gear_distance(teeth_a, teeth_b, mod = 2)`
+
+The pitch radius, and the distance between the centres of two gears in
+mesh.
+
+### `gear_turn(driver, driven, angle)`
+
+How far a gear with `driven` teeth turns when one with `driver` teeth in
+mesh with it turns `angle` degrees: the other way round.
+
+### `gear_phase(teeth)`
+
+The turn that lines a gear's teeth up with the gear beside it along x.
+
+### `rack(teeth, mod = 2, height, pressure = 20, backlash = 0.1)`
+
+A straight rack along +x, its pitch line at y = 0. A `spur_gear()` of the
+same module meshes with it from `gear_radius()` above.
+
+### `lantern_disc(staves, r, d = 6, bore = 6, rim)`, `peg_wheel(pegs, r, d = 6, bore = 6, rim)`
+
+A lantern gear is two discs with dowel staves between them; `lantern_disc()`
+is one disc, with holes for `staves` staves of diameter `d` on radius `r`.
+A `peg_wheel()` has dowel pegs standing out of its face, which drive the
+staves of a lantern gear at right angles. Match the pitch of the pegs and
+the staves.
+
+### `peg_radius(n, pitch)`
+
+The radius for `n` pegs or staves `pitch` apart.
+
+### `eccentric(r, offset, bore = 6, square = false)`, `snail_cam(r0, r1, bore = 6, steps = 72, square = false)`, `tappets(n, r, w = 10, hub = 14, bore = 6, square = false)`
+
+Cams: an `eccentric()` pushes a follower up and down by twice `offset`; a
+`snail_cam()` lifts it slowly from `r0` to `r1` over a turn and drops it at
+once, as a trip hammer works; `tappets()` lift a lever `n` times a turn.
+
+## Lock
+
+`use <kerf/lock>`
+
+A lock with a key, for boxes, diaries and money boxes. A flat key turns an
+eccentric cam that slides a bolt; half a turn throws its nose out past the
+lock's top edge into a notch in whatever it locks. It is three layers of
+the current material: a base, a frame with the cam and the bolt, and a
+plate with the keyhole.
+
+### `cam_lock(throw = 7, locked = true, name = "Lock", key = true, ring = true)`
+
+The lock's parts, lying flat with the key's axis on the z axis and the
+bolt moving along +y. Wrap it in `place()` to set it on a box front or a
+cover. `throw` is how far the bolt moves; `locked` shows it thrown;
+`ring` engraves a ring round the keyhole.
+
+### `lock_bounds(throw = 7)`, `lock_nose(throw = 7)`
+
+The lock's outline as `[x0, y0, x1, y1]` round the key's axis, and the
+bolt's nose as `[width, y of its tip when locked]`: cut a notch a little
+wider than the nose where it goes.
+
+### `lock_key(t = $thickness, ws = 5)`, `lock_dims(throw)`
+
+The key, drawn standing on y = 0, and the lock's inner sizes.
+
+## Rings
+
+`use <kerf/rings>`
+
+Round things built from stacked rings threaded on a core of two crossed
+plates: drums, barrels, vases, towers and turned legs.
+
+```kerf
+use <kerf/rings>
+
+ring_stack([for (k = [0:11]) 60 + 20 * sin(k * 15)], 30, name = "vase");
+part("base", at = [0, 0, -$thickness], slots = ["vase core A", "vase core B"]) circle(d = 90);
+```
+
+### `ring_stack(diameters, hole, name = "ring", count, feet = true, clearance = 0.1)`
+
+Rings with outsides `diameters`, bottom up, on z = 0 and the z axis, all
+with a round `hole`; or `count` alike rings of one diameter. The core
+plates, `name core A` and `name core B`, are half-lapped, with two tabs
+each below z = 0 for a base: give the base `slots` naming them. The plates
+keep `$min_width` beside their halving slot and the feet keep it between
+their slots in the base, so a hole too small for either stops with the
+smallest hole that works (about 7 mm, and 12 mm with feet, in 3 mm ply).
+
+### `ring_core_width(hole, clearance = 0.1)`
+
+The width of a core plate whose corners just clear a round hole.
+
+## Joints
+
+`use <kerf/joints>`
+
+Two profiles halved into each other at right angles, standing on a floor:
+a cross on its foot, a font, a dome, a tree.
+
+```kerf
+use <kerf/joints>
+
+module tree() polygon([[-14, 0], [14, 0], [14, 4], [4, 4], [4, 8], [20, 8], [0, 50], [-20, 8], [-4, 8], [-4, 4], [-14, 4]]);
+part("floor", at = [-30, -30, -$thickness], slots = ["tree front", "tree side"]) square(60);
+halved_pair("tree", cap = 30, feet = [[-10, 4], [10, 4]]) { tree(); engrave() translate([0, 20]) circle(d = 4); }
+```
+
+### `halved_pair(name, at = [0, 0, 0], cap, feet = [], side_feet, clearance = 0.1)`
+
+The first child is the profile, drawn with x across and y up, centred on
+x = 0 with the floor at y = 0. The front, `name front`, is the whole
+profile along x, slotted from below; the side, `name side`, is the profile
+along y capped at height `cap` (all of it without), slotted from above, the
+slots meeting halfway up the side. A second child is drawn on both faces,
+clipped to each part: their engraving or print. `feet` are tabs below the
+floor on the front, x positions (3 mm wide) or `[x, width]` pairs, and
+`side_feet` the side's (the same unless given); give the floor `slots`
+naming both parts. The strips beside both slots must keep `$min_width`,
+and a foot may not run into the front's slot: either stops with where.
+
+## Sizes
+
+`use <kerf/sizes>`
+
+Paper, card and photo sizes in millimetres, for holders, folders, frames
+and boxes made to fit them.
+
+### `paper_size(name)`, `card_size(name)`, `photo_size(name)`
+
+`[width, height]` by name, ignoring case: paper from `"A0"` to `"A8"`,
+`"B4"` to `"B6"`, `"C4"` to `"C6"`, `"DL"`, `"letter"`, `"legal"`,
+`"tabloid"`, `"half letter"`, `"executive"`, `"pocket"` and `"traveler"`,
+standing; cards `"business"`, `"us business"`, `"credit"`, `"japan"`,
+`"playing"`, `"bridge"`, `"tarot"`, `"postcard"` and `"us postcard"`, and
+photos `"4x6"`, `"5x7"`, `"8x10"`, `"10x15"`, `"13x18"` and the instant
+film sizes, lying down. An unknown name stops with the list of known ones.
+
+### `landscape(size)`, `portrait(size)`
+
+A size turned to lie wider than tall, or to stand taller than wide.
+
+### `lookup_size(name, table)`, `size_names(table)`
+
+The size of a name in a table of `[name, size]`, and the names in it.
+
+## Symbols
+
+`use <kerf/symbols>`
+
+867 pictograms by name, from open icon sets: animals, food, nature,
+sports, travel, holidays, music, flowers and more. Each comes from a set
+under the Apache 2.0, MIT or CC0 licence, named by `symbol_source()`; the
+[notices](../THIRD-PARTY-NOTICES.md) list them.
+
+```kerf
+use <kerf/symbols>
+
+part("tag") {
+  circle(d = 40);
+  engrave() symbol("paw", 24);
+}
+```
+
+### `symbol(name, size = 10, center = true, fill = "nonzero", box = "drawn")`
+
+The symbol `size` mm across the longer side of what it draws, centred on
+the origin, or with its bottom left corner there. With `box = "grid"`,
+`size` and the centre are those of the icon set's own grid (24 x 24 for
+Material Design Icons), so icons from one set keep their sizes and places
+relative to each other: paw prints in a trail, an icon swapped for another.
+
+### `symbol_names(category)`, `symbol_size(name, size = 10, box = "drawn")`, `symbol_source(name)`, `symbol_entry(name)`
+
+The names of every symbol, or of one category; the `[width, height]` a
+symbol draws at a size; where it comes from as `[source, licence]`; and
+its row of the table, `[name, category, drawn box, source, path, grid]`,
+the boxes as `[x, y, w, h]`.
+
+## Maps
+
+`use <kerf/geo>`
+
+The world's land from Natural Earth (public domain), for maps, globes and
+country-shaped signs.
+
+### `world_map(width = 200, projection = "equirectangular", south = -60)`
+
+The land as shapes, a map `width` mm wide centred on the origin, as
+`"equirectangular"` (twice as wide as tall) or `"mercator"`. Land south of
+`south` is left out.
+
+### `is_land(lat, lon)`
+
+Whether a point is on land, to the nearest degree: quick enough to call
+for every point of a globe.
+
+### `geo_point(lat, lon, width = 200, projection = "equirectangular")`
+
+Where a place goes on the map, to mark a city or a journey.
+
+### `land_polygons()`
+
+The land as polygons: each a list of rings of `[longitude, latitude]`.

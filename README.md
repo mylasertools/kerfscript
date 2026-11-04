@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/@mylasertools/kerfscript"><img src="https://img.shields.io/npm/v/@mylasertools/kerfscript?color=d8361f&label=npm" alt="npm version"></a>
   <a href="COMMERCIAL-LICENSE.md"><img src="https://img.shields.io/badge/licence-AGPL--3.0%20or%20free%20commercial-1f1a17" alt="Licence: AGPL-3.0 or free commercial"></a>
-  <a href="LANGUAGE.md"><img src="https://img.shields.io/badge/language-0.2-e3c69a" alt="Language version 0.2"></a>
+  <a href="LANGUAGE.md"><img src="https://img.shields.io/badge/language-0.3-e3c69a" alt="Language version 0.3"></a>
   <a href="https://kerfscript.mylasertools.com/playground/"><img src="https://img.shields.io/badge/try%20it-playground-5a3519" alt="Try it in the playground"></a>
 </p>
 
@@ -161,6 +161,10 @@ it as the start of your own design.
   cuts come before outer ones, and the whole part is offset by half the kerf.
 - **Parts, not just shapes.** `part("lid", qty = 2)` names a piece; the
   renderer packs parts by material and thickness onto sheets.
+- **Assembled in 3D, step by step.** Give parts a place and they are
+  checked for collisions, shown put together, bent where a living hinge
+  bends, and built one `step()` at a time; tabs drawn on one part cut
+  their own slots in the parts they go into (`slots = [...]`).
 - **Joinery that follows the material.** `finger_rect`, `finger_holes`,
   `tslot` and `living_hinge` use `$thickness`, so the joints resize when the
   material changes. Measure your kerf and cut a test piece for a snug fit.
@@ -234,10 +238,12 @@ Errors are thrown as `KerfError` with `line` and `col`.
   [parts and sheets](docs/parts-and-sheets.md), [settings](docs/customizer.md),
   the [desktop app](docs/desktop.md), the [command line](docs/cli.md), the
   [JavaScript API](docs/javascript.md),
+  [assembly verification](docs/verification.md),
   [WebAssembly](docs/webassembly.md) for other languages and
   [AI assistants](docs/mcp.md)
 - [Standard library](docs/library.md): joints, hinges, dividers, hanging
-  holes, enclosures and test pieces, with a picture and an example of each
+  holes, boxes, enclosures, test pieces, gears and cams, a lock, stacked
+  rings, paper sizes, 867 symbols and a world map
 - [Shared libraries](docs/shared-libraries.md): use and publish `.kerf`
   libraries, pinned in `kerf.lock` so a design cuts the same everywhere
 - [Importing SVG drawings](docs/import.md): turn a drawing into a program,

@@ -1,0 +1,5 @@
+// A library's own use looks beside it first: sub/near's use <helper> finds
+// sub/helper
+// => echo: 42
+use <sub/near>
+echo(near());

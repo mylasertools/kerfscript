@@ -136,7 +136,14 @@ test('a range with a step of 0 is empty and takes no steps', () => {
 });
 
 test('shapes, output and sheets are limited', () => {
-  fails('for (i = [0:200000]) translate([i * 2, 0]) rect(1);', /more than 2000000 points/);
+  fails(
+    'for (i = [0:200000]) translate([i * 2, 0]) rect(1);',
+    /more than 2000000 points|more than 20000000 points of work/,
+  );
+  // One shape over the cap stops at once
+  fails('circle(r = 10, $fn = 3000);', /more than 2000 points, the limit/, {
+    limits: { maxPoints: 2000 },
+  });
   fails('finger_rect([5000, 5000], finger = 0.0001);', /points, the limit/);
   fails('part("p", qty = 9999) circle(r = 5, $fn = 9000);', /The files would have/);
   fails('$sheet = [10, 10]; part("p", qty = 5000) rect(8);', /more than 200 sheets/);
@@ -192,4 +199,15 @@ test('ranges in loops and built-ins stop at the list length limit', () => {
   });
   fails('for (i = [0:100]) rect(1);', /a range of 101 items/, { limits });
   render('echo(sum([0:9])); rect(1);', { limits });
+});
+
+test('a child used again in one call is made once, so it counts once', () => {
+  const kids = [0, 1, 2, 3, 4, 5]
+    .map((k) => `translate([${k * 3}, 0]) circle(d = ${40 - k * 5}, $fn = 400);`)
+    .join(' ');
+  const tones =
+    'module tones() for (i = [0:$children - 1]) difference() { children(i); for (j = [i + 1:$children - 1]) children(j); }\n' +
+    `tones() { ${kids} }`;
+  // Six children used 21 times: made once each, the work stays under 15000
+  render(tones, { limits: { maxPoints: 1500 } });
 });

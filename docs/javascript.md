@@ -31,20 +31,23 @@ changing the source string.
 
 ### Options
 
-| Option        | Value                                                                  |
-| ------------- | ---------------------------------------------------------------------- |
-| `params`      | Parameter values keyed by name                                         |
-| `fonts`       | Font files keyed by name, as `ArrayBuffer` or `Uint8Array`             |
-| `defaultFont` | Name to use when `text()` does not specify a font                      |
-| `resolve`     | `(path) => source` callback for libraries outside the standard library |
-| `kerf`        | Kerf override for every part, in millimetres                           |
-| `layout`      | `"pack"` or `"none"`                                                   |
-| `sheet`       | `[width, height]` in millimetres                                       |
-| `gap`         | Space between parts, in millimetres                                    |
-| `margin`      | Space at sheet edges, in millimetres; defaults to `gap`                |
-| `guides`      | Whether to include guide geometry                                      |
-| `maxSteps`    | Evaluation step limit                                                  |
-| `limits`      | Memory limits, see below; any you leave out keep their default         |
+| Option         | Value                                                                                 |
+| -------------- | ------------------------------------------------------------------------------------- |
+| `params`       | Parameter values keyed by name                                                        |
+| `fonts`        | Font files keyed by name, as `ArrayBuffer` or `Uint8Array`                            |
+| `defaultFont`  | Name to use when `text()` does not specify a font                                     |
+| `resolve`      | `(path) => source` callback for libraries outside the standard library                |
+| `kerf`         | Kerf override for every part, in millimetres                                          |
+| `layout`       | `"pack"` or `"none"`                                                                  |
+| `sheet`        | `[width, height]` in millimetres, over the program's `$sheet`                         |
+| `defaultSheet` | `[width, height]` for programs that do not set `$sheet`: the laser bed                |
+| `nest`         | Pack small parts into the holes of bigger ones, as `$nest`                            |
+| `gap`          | Space between parts, in millimetres                                                   |
+| `margin`       | Space at sheet edges, in millimetres; defaults to `gap`                               |
+| `guides`       | Whether to include guide geometry                                                     |
+| `analysis`     | Capture nominal cut geometry before compensation, for [verification](verification.md) |
+| `maxSteps`     | Evaluation step limit                                                                 |
+| `limits`       | Memory limits, see below; any you leave out keep their default                        |
 
 Supply a font for programs that use text:
 
@@ -61,17 +64,30 @@ The URL should point to a font file provided by your application.
 
 ### Result
 
-| Field             | Contents                                                                                                                                                                                          |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `svg`             | Combined SVG containing all sheets                                                                                                                                                                |
-| `width`, `height` | Combined SVG dimensions in millimetres                                                                                                                                                            |
-| `sheets`          | Each sheet's dimensions, material, thickness, SVG, DXF, paths and placed items                                                                                                                    |
-| `parts`           | Part names, quantities, dimensions, piece counts, cut lengths and material properties                                                                                                             |
-| `assembly`        | One entry per copy of a part with `name`, `copy`, `thickness`, `outline`, a 4 × 4 `matrix` and `placed`, for showing the design put together. Parts without `at` or `rotate` have `placed: false` |
-| `paths`           | Layer paths with `name`, `mode`, `color`, `d`, `regions` and `lines`                                                                                                                              |
-| `layers`          | Layer definitions in output order                                                                                                                                                                 |
-| `warnings`        | Problems that did not stop the render                                                                                                                                                             |
-| `echoes`          | Output from the program's `echo()` calls                                                                                                                                                          |
+| Field             | Contents                                                                                                                                                                                                                                                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `svg`             | Combined SVG containing all sheets                                                                                                                                                                                                                                                                                                   |
+| `width`, `height` | Combined SVG dimensions in millimetres                                                                                                                                                                                                                                                                                               |
+| `sheets`          | Each sheet's dimensions, material, thickness, SVG, DXF, paths and placed items                                                                                                                                                                                                                                                       |
+| `parts`           | Part names, quantities, dimensions, piece counts, cut lengths and material properties                                                                                                                                                                                                                                                |
+| `assembly`        | One entry per copy of a part with `name`, `copy`, `thickness`, `material`, `outline`, a 4 × 4 `matrix` and `placed`, for showing the design put together. Parts without `at` or `rotate` have `placed: false`. A bent part has `bends`; a part in a step has `step`; `marks` holds what is engraved and scored on it, front and back |
+| `steps`           | The text of each assembly step, in order; a part's `step` counts from 1                                                                                                                                                                                                                                                              |
+| `hardware`        | Each `hardware()`: `kind`, `from`, `to`, `size`, `up`, `sides`, `step` and `label`                                                                                                                                                                                                                                                   |
+| `paths`           | Layer paths with `name`, `mode`, `color`, `d`, `regions` and `lines`                                                                                                                                                                                                                                                                 |
+| `layers`          | Layer definitions in output order                                                                                                                                                                                                                                                                                                    |
+| `warnings`        | Problems that did not stop the render                                                                                                                                                                                                                                                                                                |
+| `echoes`          | Output from the program's `echo()` calls                                                                                                                                                                                                                                                                                             |
+| `analysis`        | When requested: nominal cut regions and lines per definition, with compensation kerf; see [assembly verification](verification.md)                                                                                                                                                                                                   |
+
+Each sheet with back-face marks has `back`, with its own `svg`, `dxf` and
+`paths`: the sheet turned over left to right.
+
+`bendPoint(bends, thickness, [x, y, z])` gives where a point of a bent
+part goes, in the part's own coordinates, before its `matrix`; and
+`meshPieces(outline, bends)` cuts a part's outline into pieces narrow
+enough across its hinges to bend smoothly. A 3D view extrudes each piece
+by the thickness, moves its points with `bendPoint()` and then by the
+`matrix`.
 
 Use `result.svg` for a combined preview. Use `result.sheets[i].svg` or
 `.dxf` to export individual sheets, particularly when they use different
@@ -128,6 +144,22 @@ format('x=1;module m(a,b=2){rect([a,b]);}');
 ```
 
 `format(source, { indent: 4 })` uses four spaces per level.
+
+## instructionsHtml()
+
+`instructionsHtml(result, title)` turns a `render()` result into the page
+`kerf instructions` writes: a standalone HTML document with the parts,
+the sheets and a drawing for each step.
+
+## diffRenders()
+
+`diffRenders(a, b)` compares two results of `render(source, { layout: "none" })`
+and returns what differs, one entry per part copy and layer: `part`, `copy`,
+`layer`, `change` (`"added"`, `"removed"` or `"changed"`), `area` (mm² of
+shapes that differ), `linesAdded`, `linesRemoved` and `at`, the box of the
+difference in the part's own coordinates. With layout `"none"`, each sheet
+item's `offset` is the move from the part's coordinates (y down) to the
+sheet's.
 
 ## importSvg()
 

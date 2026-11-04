@@ -9,6 +9,7 @@
 import type { Arg, Assign, Expr, ListItem, Param, Stmt } from './ast.js';
 import { parameters, type Parameter } from './customizer.js';
 import { markLength } from './diagnostics.js';
+import { besideFile } from './evaluator.js';
 import { KerfError, tokenize, type Comment, type Pos, type Token } from './lexer.js';
 import { parse } from './parser.js';
 import { render, type RenderOptions } from './render.js';
@@ -137,6 +138,19 @@ const SPECIAL: Record<string, { value?: string; doc: string }> = {
   $fs: { value: '0.2', doc: 'Largest length of a curve segment, in mm' },
   $font: { doc: 'Default font name for `text()`' },
   $children: { doc: 'How many child statements the module was called with' },
+  $scale: { value: '1', doc: "The model's scale: `140cm` is 1400 mm divided by `$scale`" },
+  $nest: { value: 'false', doc: 'Pack small parts into the holes of bigger ones' },
+  $registration: { value: 'false', doc: 'Print-and-cut marks in three corners of every sheet' },
+  $label_parts: {
+    value: 'false',
+    doc: "Engrave each part's number on its back face, the same number as in the parts list and the steps",
+  },
+  $min_width: {
+    value: '1.5',
+    doc: "Warn where a part's material is narrower than this; `0` turns it off",
+  },
+  $mirrored: { doc: 'True inside a mirrored part and on the back face, so `text()` reads right' },
+  $bounds: { doc: 'Set by `measure()` for the children after the one it measures' },
   PI: { value: '3.141592653589793', doc: 'π, half a turn in radians' },
 };
 const CONSTANTS = ['true', 'false', 'undef'];
@@ -472,6 +486,9 @@ class Walker {
       case 'member':
         this.expr(e.target, scope);
         return;
+      case 'record':
+        for (const f of e.fields) this.expr(f.value, scope);
+        return;
       case 'call': {
         let callee: Reference | undefined;
         if (e.callee.kind === 'var')
@@ -595,10 +612,15 @@ function unclosed(text: string): string {
 const STDLIB_EXPORTS = new Map<string, Exports>();
 
 function loader(resolve: AnalyzeOptions['resolve'], loading: string[]) {
-  return (path: string): Exports | undefined => {
+  return (asked: string): Exports | undefined => {
+    // As render() does: next to the library that asks first
+    const near = besideFile(loading[loading.length - 1], asked);
+    const nearSrc =
+      near !== undefined && own(LIBRARIES, asked) === undefined ? resolve?.(near) : undefined;
+    const path = typeof nearSrc === 'string' ? near! : asked;
     if (loading.includes(path)) return undefined;
     const std = own(LIBRARIES, path);
-    const src = std ?? resolve?.(path);
+    const src = std ?? (typeof nearSrc === 'string' ? nearSrc : resolve?.(path));
     if (typeof src !== 'string') return undefined;
     const hit = std !== undefined ? STDLIB_EXPORTS.get(path) : undefined;
     if (hit) return hit;

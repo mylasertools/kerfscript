@@ -1,5 +1,171 @@
 # Changelog
 
+## 0.7.0 (2026-11-03)
+
+Language version 0.3. Programs for 0.2 run as before, except that a
+variable no longer hides a function or built-in of the same name: after
+`len = 3;`, `len([1, 2])` is 2, where it was an error. Numbers followed by
+a unit, which were errors, are now lengths. New warnings and the positions
+added to old ones change the text of warnings.
+
+Records: `{kind = "armchair", x = 10}` holds values by name, read as
+`s.kind` or `s["kind"]` (a missing field is `undef`), with `keys()`,
+`merge()`, `is_record()` and `len()`. `kerf fmt` lays them out as lists.
+`call("roses", 40, 30)` calls a module by name, so a table entry can carry
+the module that draws it.
+
+Assembly:
+
+- `kerf verify` and the JavaScript verification API check explicit rigid fit,
+  shaft capture, conditional retention, material adaptation, cut invariance,
+  insertion/tool access, assembly support, static stability, ideal joint mobility
+  and continuous translation/rotation clearance. Reports distinguish pass, fail
+  and unverified within their stated scope and record input fingerprints.
+  `render(..., { analysis: true })` captures nominal cuts and native connections;
+  `poseAssembly()` previews the checked paths. Viewer diagnostics highlight
+  implicated bodies. Strength, friction and contact-driven mechanics remain
+  uncovered. See `docs/verification.md`.
+
+- `place(at, rotate) { ... }` places the parts and hardware inside it, with
+  their own placements inside its. `box()` takes a `name` and shapes for
+  its front, so a box can be set anywhere.
+- `part()` takes `stack = n` (glued layers), `mirror = true` (the left of a
+  pair, its text still reading; or one per copy, `mirror = [false, true]`,
+  for a pair whose art faces out on both), `bend = [x0, x1, angle]` (a living hinge
+  shown bent), `on = "part"` (glued to a bent part and moving with it),
+  `glue = "part", face = "top"` (laid on another part's face) and `slots =
+["part", ...]`: slots cut wherever those parts pass through it in the
+  assembly, at any angle, so tabs are drawn once.
+- `step(text) { ... }` makes assembly steps, and `hardware(kind, from, to,
+size)` lists dowels, screws, magnets and paper. `render()` returns
+  `steps` and `hardware`; `kerf check` lists them.
+- `orient(x, z)`, `rotation(angles)` and `euler(matrix)` turn parts any way.
+- Collisions are checked for each flat run of a bent part, and a collision
+  warning says where in the assembly it is.
+
+A 3D view in the playground (the Assembled tab) and on every model page
+(Build it) shows the model put together from the program, bends and
+hardware included, and builds it a step at a time.
+
+Drawing:
+
+- `spline(points, width)` and `spline_points()`, `hatch(angle, pitch,
+width)`, `pattern(spacing, stagger)` that repeats a tile cheaply,
+  `paint(layers)` for painter's order, `measure()` with `$bounds`,
+  `fill_holes(min_area)`, `close(r)`, `line(a, b, width)` as an area,
+  `text(fit = width)`, and `path(d, close = true)`.
+- `intersection()` clips the lines of any child, not only the first, to the
+  area of the other children. A child of lines alone leaves no area, so
+  `intersection() { outline() circle(d = 20); square(40); }` gives only the
+  clipped arc, whichever child comes first.
+- `path_length()`, `point_at()`, `heading_at()` and `path_points()` work
+  along paths.
+- Lengths in real units, as `140cm`, `2in` or `1.2m`, divided by `$scale`.
+
+Output:
+
+- `engrave(side = "back")`, `score(side = "back")` and `layer(side =
+"back")` mark the faces underneath, in a second job per sheet turned over
+  left to right (`sheet.back`, `name-back.svg`).
+- Line layers come after fill layers in the files, and `layer(order = n)`
+  sets the order. `layer(bleed = mm)` lets a printed layer run past the
+  part's edge, and `$registration = true` adds print-and-cut marks.
+- `$nest = true` (`--nest`, the `nest` option) packs small parts into the
+  holes of bigger ones.
+- A project's `kerf.json` can give `"sheet": [w, h]` for every design in
+  it that does not set `$sheet` (the `defaultSheet` option).
+- Warnings about a part in pieces, a hole narrower than the kerf and a
+  collision say where.
+- `kerf check --stats` counts points by part and layer, and `--sweep
+name=from:step:to` checks a design over every combination of settings.
+- A library's own `use` looks next to it first.
+- `use` takes an absolute path, as `use </home/me/lib/props>`.
+- A module or function defined with a built-in's name warns that it hides
+  the built-in.
+- A stack glued under its host (`face = "bottom"`) grows down, away from it.
+- A `step()` inside a step is a sub-step ("Add the chair: Glue the seat");
+  `step(text, substeps = false)` takes inner steps into itself.
+- `kerf verify --summary` (and `triage()`) groups what did not pass by status
+  and reason, with the bodies involved and their measurements.
+- A slot is cut through the whole thickness of the part, so a shoulder that
+  flares just inside its face is covered; parts that only touch still cut
+  nothing.
+- A stack whose layers meet different parts in slots becomes a part per
+  layer (`top, layer 1`), each cutting only its own slots.
+- The collision check reports any overlap deeper than 0.1 mm, where it
+  needed a cubic millimetre, and slots need a part to reach 1 mm in,
+  so a part dipping 0.13 mm into a floor is reported, not slotted.
+- `ring_stack()` refuses a hole that leaves its core plates or the base
+  between their feet thinner than `$min_width`, naming the smallest hole.
+- `children(i)` used several times in one call makes the child once (when it
+  only makes a shape), and the point cap is on each shape kept, with ten
+  times that for all the work along the way.
+- `pattern()` over an area of many small shapes tests and clips each tile
+  only against the shapes it may touch: 30 hearts on a facade take 0.2 s,
+  not 6.
+- `$label_parts = true` engraves each part's number on its back face and
+  lists the numbers in `kerf check`'s parts and steps (`label` on each part).
+- A `paint()` child lying wholly on an area of the same layer under it
+  warns that it can't be seen.
+- A fill lying wholly under fills of layers stacked above it in the files
+  warns: printed it won't show, engraved it burns twice. Two `paint()`
+  calls whose later piece went on an earlier layer do this. Fills narrower
+  than 1 mm all along, a stroke's to cover, are left out.
+- A part narrower than `$min_width` (1.5 mm unless set; 0 turns it off)
+  somewhere warns, saying where.
+- `symbol(..., box = "grid")` sizes and places a symbol by its icon set's
+  grid, so a set lines up as drawn.
+- `kerf render model.kerf -o model.png [--px 1200]` draws a picture of each
+  sheet to check by eye: material, fills in their colours, lines on top.
+- `kerf instructions model.kerf` (and `instructionsHtml()`) writes printable
+  assembly instructions: parts, sheets, and a page per step with the model
+  drawn so far, that step's parts picked out.
+- `kerf diff a.kerf b.kerf` (and `diffRenders()`) lists what changed between
+  two renders, by part and layer, with where.
+- `kerf render lib.kerf --call 'roses(40, 30)'` renders one call of a
+  library's module, with `-D` setting variables first.
+- `--sweep 'w,d=100,80;200,150'` tries settings that go together as sets,
+  and `--params-list sets.json` reads the sets from a file.
+- Two different parts with one name warn, since slots, glue and `on` find
+  parts by name. A length with a unit read before the program sets `$scale`
+  warns. `hardware()` warns about a kind outside the documented list
+  (`HARDWARE_KINDS`), which adds `steel`, `felt`, `wire` and `led`.
+- A setting passed to `render()` (or `-D`, `--sweep`) that the program never
+  assigns warns, with the nearest name.
+- `hardware(sides = ...)` takes 3 to 128 sides, counted as work toward the
+  point limit, and the 3D view never builds more. `kerf render -o x.png`
+  keeps a picture to 16 million pixels, 16384 a side, drawing a long thin
+  sheet smaller. Redefining a layer that is already another layer's back
+  (`layer("score-back", ...)` after `layer("score", side = "back")`) is an
+  error rather than quietly moving its marks to the front.
+- A bend reaching beyond its part warns, and a 3D view cuts a part's bends
+  into at most 2000 bands, only where there is material. `$label_parts`
+  warns and leaves the parts unnumbered when the program has a front layer
+  of its own named `engrave-back`.
+- The playground's downloads include the back-face jobs: a sheet with back
+  marks lists back SVG and DXF files, and one such sheet downloads as a ZIP
+  of its front and back.
+- `kerf verify`: a stability claim over several loads needs its retention
+  links to join them into one assembly; loads held to separate roots are
+  unverified rather than standing together.
+
+New libraries:
+
+- `kerf/gears`: spur gears, racks, lantern gears and peg wheels,
+  eccentrics, snail cams and tappets.
+- `kerf/lock`: a lock with a key, three layers deep.
+- `kerf/rings`: round things of stacked rings on a crossed core.
+- `kerf/joints`: `halved_pair()`, two profiles halved into each other (a
+  cross on its foot, a font, a dome), checking the strips beside the slots.
+- `kerf/sizes`: paper, card and photo sizes by name.
+- `kerf/symbols`: 867 pictograms by name, from open icon sets (see
+  THIRD-PARTY-NOTICES.md).
+- `kerf/geo`: the world's land from Natural Earth, `world_map()` and
+  `is_land()`.
+- `kerf/hinge` adds `flex_strip()`, a strip that follows a profile with
+  hinges on its curves and tabs on its straights, `strip_bends()` and
+  `narrow_hinge()`; `flex_box()` now shows assembled.
+
 ## 0.6.0 (2026-11-02)
 
 Language version 0.2, as in 0.5.0: programs run as before.

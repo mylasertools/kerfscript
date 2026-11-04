@@ -224,11 +224,11 @@ arm_z = [zn + t, zn + 2 * t];
 function heading(p) = let (v = pencil - p) [0, 0, atan2(v[1], v[0])];
 function at(p, z) = concat(p, [z]);
 
-if (output == "all" || output == "base") {
+if (output == "all" || output == "base") step("Glue up the base and the feet, with two spacers round each axle hole") {
   part("Base", qty = 2, at = [[0, 0, 0], [0, 0, t]]) base();
   part("Foot", qty = 8, at = [for (f = feet, k = [0:1]) at(f, -2 * t + k * t)]) circle(d = 30);
 }
-if (output == "all" || output == "gears") {
+if (output == "all" || output == "gears") step("Mesh the two discs and the drive gear on their axles") {
   // Both discs turn the other way from the crank, more slowly
   part("Left disc", qty = 2, at = [for (k = [0:1]) at(discs[0], zg + k * t)], rotate = [0, 0, -a * z0 / z1])
     disc(z1, discs[0], left_pin, "LEFT");
@@ -236,15 +236,18 @@ if (output == "all" || output == "gears") {
     disc(z2, discs[1], right_pin, "RIGHT");
   part("Drive gear", qty = 2, at = [for (k = [0:1]) at(drive, zg + k * t)], rotate = [0, 0, a]) drive_gear();
 }
-if (output == "all" || output == "arms") {
+if (output == "all" || output == "arms") step("Bolt the arms on the crank pins and push the pencil through") {
   part("Arm", qty = 2, at = [at(P[0], arm_z[0]), at(P[1], arm_z[1])], rotate = [heading(P[0]), heading(P[1])]) arm();
   // Under the left arm, down to the paper
   part("Pen sleeve", qty = 3, at = [for (k = [3:-1:1]) at(pencil, arm_z[0] - k * t)]) ring(16, 8.4);
 }
 if (output == "all" || output == "spacers") {
-  part("Axle spacer", qty = 6, at = [for (c = concat(discs, [drive]), k = [0:1]) at(c, 2 * t + k * t)]) ring(16, hole);
-  part("Pin spacer", qty = 3, at = [at(P[0], zn), at(P[1], zn), at(P[1], zn + t)]) ring(14, hole);
-  part("Handle", qty = 5, at = [for (k = [0:4]) at(drive + polar(handle_r, a), 6 * t + 4 + k * t)]) ring(18, hole);
+  step("Glue up the base and the feet, with two spacers round each axle hole")
+    part("Axle spacer", qty = 6, at = [for (c = concat(discs, [drive]), k = [0:1]) at(c, 2 * t + k * t)]) ring(16, hole);
+  step("Bolt the arms on the crank pins and push the pencil through")
+    part("Pin spacer", qty = 3, at = [at(P[0], zn), at(P[1], zn), at(P[1], zn + t)]) ring(14, hole);
+  step("Bolt the handle stack on the drive gear")
+    part("Handle", qty = 5, at = [for (k = [0:4]) at(drive + polar(handle_r, a), 6 * t + 4 + k * t)]) ring(18, hole);
 }
 // The fit test lies on the table beside the base
 if (output == "all" || output == "coupon") part("Fit test", at = [bx + 20, by0, -2 * t]) {

@@ -355,3 +355,153 @@ test('the library examples assemble without collisions or warnings', () => {
     assert.deepEqual(r.warnings, [], name);
   }
 });
+
+// kerf/gears, kerf/lock, kerf/rings, kerf/sizes, kerf/symbols, kerf/geo
+
+test('gears in mesh do not collide, and gear_turn runs the other way', () => {
+  const r = render(`use <kerf/gears>
+    $fn = 48;
+    part("a", at = [0, 0, 0]) spur_gear(24, 2);
+    part("b", at = [gear_distance(24, 12, 2), 0, 0], rotate = [0, 0, gear_phase(12)]) spur_gear(12, 2);
+    echo(gear_radius(24, 2), gear_turn(24, 12, 30));`);
+  assert.deepEqual(r.echoes, ['24, -60']);
+  assert.deepEqual(r.warnings, []);
+  assert.ok(Math.abs(size(r, 'a')[0] - 52) < 0.1, 'the tips reach the addendum circle');
+});
+
+test('a rack is as long as its teeth', () => {
+  const r = render('use <kerf/gears>\npart("r") rack(10, 2);');
+  assert.equal(size(r, 'r')[0], Math.round(10 * Math.PI * 2 * 100) / 100);
+});
+
+test('the lock fits together locked and open', () => {
+  for (const locked of [true, false]) {
+    const r = render(`use <kerf/lock>\n$fn = 48;\ncam_lock(7, locked = ${locked});`);
+    assert.deepEqual(r.warnings, [], `locked = ${locked}`);
+    assert.equal(r.parts.length, 7);
+  }
+});
+
+test('ring_stack refuses a hole that leaves its core plates too thin', () => {
+  assert.throws(
+    () => render('use <kerf/rings>\n$thickness = 3;\nring_stack([30, 40, 30], 5.5);'),
+    /make it at least 7.1 mm/,
+  );
+  assert.ok(
+    render('use <kerf/rings>\n$thickness = 3;\nring_stack([30, 40, 30], 7.1, feet = false);').parts
+      .length,
+  );
+  // The feet need room clear of the other plate's slot in the base
+  assert.throws(
+    () => render('use <kerf/rings>\n$thickness = 3;\nring_stack([30, 40, 30], 10);'),
+    /no room for the core's feet .* make it at least 11.9 mm/,
+  );
+  const base = render(
+    'use <kerf/rings>\n$thickness = 3;\nring_stack([60, 70, 60], 23);\npart("base", at = [-40, -40, -3], slots = ["ring core A", "ring core B"]) rect([80, 80]);',
+  );
+  assert.deepEqual(base.warnings, []);
+  // The base stays one piece round the four foot slots
+  assert.equal(base.parts.find((p) => p.name === 'base').pieces, 1);
+});
+
+test('ring_stack makes one part for each size of ring, and a base can slot its feet', () => {
+  const r = render(`use <kerf/rings>
+    $fn = 48;
+    ring_stack([60, 60, 70, 60], 30, name = "v");
+    part("base", at = [0, 0, -$thickness], slots = ["v core A", "v core B"]) circle(d = 90);`);
+  assert.deepEqual(r.warnings, []);
+  assert.deepEqual(
+    r.parts.map((p) => [p.name, p.qty]),
+    [
+      ['v 60', 3],
+      ['v 70', 1],
+      ['v core A', 1],
+      ['v core B', 1],
+      ['base', 1],
+    ],
+  );
+  assert.ok(r.parts.at(-1).cutLength > Math.PI * 90 + 30, 'the base has slots');
+});
+
+test('flex_strip bends round its path and the plates cut its slots', () => {
+  const r = render(`use <kerf/hinge>
+    $fn = 32;
+    path = concat([[0, 60], [0, 40]], [for (a = [180:5:270]) [40, 40] + 40 * [cos(a), sin(a)]], [[100, 0]]);
+    part("a", rotate = [90, 0, 0], slots = ["s"]) offset(delta = 10) polygon(concat(path, [[100, 70], [0, 70]]));
+    part("b", at = [0, 53, 0], rotate = [90, 0, 0], slots = ["s"]) offset(delta = 10) polygon(concat(path, [[100, 70], [0, 70]]));
+    place(rotate = [90, 0, 0]) flex_strip(path, 50, name = "s");`);
+  assert.deepEqual(r.warnings, []);
+  const s = r.assembly.find((p) => p.name === 's');
+  assert.equal(s.bends.length, 1);
+  assert.ok(Math.abs(s.bends[0].angle - 90) < 1e-6);
+  assert.ok(
+    r.parts.find((p) => p.name === 'a').cutLength > r.parts.find((p) => p.name === 'a').width * 2,
+  );
+});
+
+test('paper, card and photo sizes by name', () => {
+  const r = render(
+    'use <kerf/sizes>\necho(paper_size("a5"), card_size("business"), landscape(photo_size("instax mini")));',
+  );
+  assert.deepEqual(r.echoes, ['[148, 210], [85, 55], [86, 54]']);
+  assert.throws(
+    () => render('use <kerf/sizes>\necho(paper_size("A11"));'),
+    /Unknown paper size "A11"/,
+  );
+});
+
+test('symbols draw at their size and name their source', () => {
+  const r = render(
+    'use <kerf/symbols>\npart("s") symbol("heart", 20);\necho(symbol_source("heart")[1], len(symbol_names()) > 800);',
+  );
+  assert.equal(Math.max(...size(r, 's')), 20);
+  assert.deepEqual(r.echoes, ['Apache-2.0, true']);
+});
+
+test('symbols of one icon set line up by their grid with box = "grid"', () => {
+  // The heart fills 20 of Material Design's 24 units
+  const r = render(
+    'use <kerf/symbols>\npart("s") symbol("heart", 24, box = "grid");\necho(symbol_entry("heart")[5]);',
+  );
+  assert.deepEqual(r.echoes, ['[0, 0, 24, 24]']);
+  assert.ok(Math.abs(size(r, 's')[0] - 20) < 0.05);
+});
+
+test('the map knows land from sea', () => {
+  const r = render(
+    'use <kerf/geo>\necho(is_land(48.8, 2.3), is_land(0, -140), is_land(-23.7, 133.9));\npart("m") world_map(360);',
+  );
+  assert.deepEqual(r.echoes, ['true, false, true']);
+  assert.ok(size(r, 'm')[0] > 350);
+});
+
+test('halved_pair halves a profile with its capped side, feet in the floor', () => {
+  const lib = `use <kerf/joints>
+$thickness = 3;
+module tree() polygon([[-14, 0], [14, 0], [14, 4], [4, 4], [4, 8], [20, 8], [0, 50], [-20, 8], [-4, 8], [-4, 4], [-14, 4]]);
+part("floor", at = [-30, -30, -3], slots = ["tree front", "tree side"]) square(60);
+`;
+  const r = render(
+    `${lib}halved_pair("tree", cap = 30, feet = [[-10, 4], [10, 4]]) { tree(); engrave() translate([0, 20]) circle(d = 4); }`,
+  );
+  assert.deepEqual(r.warnings, []);
+  const by = Object.fromEntries(r.parts.map((p) => [p.name, p]));
+  // The front is all of it with its feet, the side capped at 30 with them
+  assert.equal(by['tree front'].height, 53);
+  assert.equal(by['tree side'].height, 33);
+  // Four feet in the floor, each a slot of its own
+  assert.equal(piece(r, 'floor').cut.regions.filter((p) => p.length).length, 5);
+  // Both faces carry the art
+  assert.ok(piece(r, 'tree front').engrave && piece(r, 'tree side').engrave);
+  // A stem too narrow beside the slot, or a foot in the front's slot, stops
+  assert.throws(
+    () => render(`${lib}halved_pair("t", cap = 30) translate([-1, 0]) tree();`),
+    /narrower than 1.5 mm \(\$min_width\) beside its slot/,
+  );
+  assert.throws(
+    () => render(`${lib}halved_pair("t", cap = 30, feet = [0]) tree();`),
+    /foot at x = 0 runs into its slot/,
+  );
+  // Uncapped, the side's slot from above would cut off the point
+  assert.throws(() => render(`${lib}halved_pair("t") tree();`), /the side is narrower/);
+});

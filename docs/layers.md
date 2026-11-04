@@ -99,10 +99,50 @@ The rectangle and circle use separate engraving layers. You can assign each
 a different power in your laser software. Supported modes are `"cut"`,
 `"line"`, `"fill"` and `"guide"`.
 
+## The back face
+
+`engrave(side = "back")`, `score(side = "back")` and `layer(name, side =
+"back")` mark the face underneath, made after the parts are turned over.
+Draw the marks where they are on the part seen from the top; text reads
+the right way round on the back. They go into each sheet's back job,
+turned over left to right, and not into the front file.
+
+## Painting in order
+
+`paint()` lays shapes like paint, each over the ones before: every child
+loses the area of the children after it. Give it a layer for each child,
+and a picture in several tones comes out with no two layers overlapping:
+
+```kerf
+layer("light", mode = "fill", color = "#c8a070");
+layer("dark", mode = "fill", color = "#000000");
+part("tile") {
+  rect([60, 60]);
+  paint(["light", "dark"]) {
+    circle(d = 50);
+    translate([30, 30]) circle(d = 20);
+  }
+}
+```
+
+A child given the layer `""` is left out, but still covers the ones
+before it: a bare patch.
+
+## Printing on parts
+
+To print on the parts and then cut them, `layer(name, mode = "fill",
+bleed = 2)` lets the printed layer run 2 mm past each part's edge, so the
+cut never leaves a bare rim. `$registration = true` puts marks in three
+corners of every sheet, on the `registration` layer, for a print-and-cut
+machine to line the cut up with the print.
+
 ## Order in the file
 
-KerfScript writes layers in this order: engrave, custom layers, score, cut,
-then guide. Within a cut layer, inner paths precede outer outlines.
+KerfScript writes layers in this order: engrave, custom fill layers,
+custom line and cut layers, score, cut, then guide, so a line is never
+hidden under a fill. `layer(name, order = n)` moves a custom layer among
+the others, lowest first. Within a cut layer, inner paths precede outer
+outlines.
 
 Laser software may reorder these paths. Check its job preview so engraving
 runs before cutting and holes are cut before the surrounding part.

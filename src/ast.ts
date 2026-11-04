@@ -3,7 +3,7 @@
 import type { Pos } from './lexer.js';
 
 export type Expr =
-  | { kind: 'num'; value: number; pos: Pos }
+  | { kind: 'num'; value: number; pos: Pos; unit?: 'mm' | 'cm' | 'm' | 'in' | 'ft' }
   | { kind: 'str'; value: string; pos: Pos }
   | { kind: 'bool'; value: boolean; pos: Pos }
   | { kind: 'undef'; pos: Pos }
@@ -15,6 +15,7 @@ export type Expr =
   | { kind: 'ternary'; cond: Expr; then: Expr; else: Expr; pos: Pos }
   | { kind: 'index'; target: Expr; index: Expr; pos: Pos }
   | { kind: 'member'; target: Expr; name: string; pos: Pos }
+  | { kind: 'record'; fields: { name: string; value: Expr; pos: Pos }[]; pos: Pos }
   | { kind: 'call'; callee: Expr; args: Arg[]; pos: Pos }
   | { kind: 'lambda'; params: Param[]; body: Expr; pos: Pos; end?: number }
   | { kind: 'let'; assigns: Assign[]; body: Expr; pos: Pos; end?: number };

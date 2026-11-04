@@ -1,0 +1,37 @@
+// Ring vase: a vase of stacked rings threaded on two crossed core plates,
+// its outline a smooth curve from the foot to the lip. Rings of the same
+// size are one part, so the cut list stays short. The base cuts its own slots
+// for the core's feet. A glass test tube or a dried posy goes inside. Made
+// with ring_stack() from kerf/rings.
+
+/* [Vase] */
+// Height
+height = 150; // [90:5:260]
+// Widest, at the belly
+belly = 90; // [60:5:160]
+// Where the belly is, from the foot up (0 to 1)
+belly_at = 0.35; // [0.2:0.05:0.7]
+// Neck and lip
+neck = 50; // [40:5:120]
+// The hole through every ring, for a glass tube
+hole = 34; // [24:1:60]
+
+/* [Material] */
+$thickness = 3; // [2:0.5:6]
+$kerf = 0.15; // [0:0.01:0.3]
+
+/* [Hidden] */
+use <kerf/rings>
+$fn = 72;
+$material = "plywood";
+t = $thickness;
+n = max(6, round(height / t));
+// The outline through the foot, the belly, the neck and the lip
+profile = spline_points([[0, belly * 0.7], [belly_at * n, belly], [0.8 * n, neck], [n - 1, neck * 1.12]], 8);
+function width_at(k) = lookup(k, profile);
+assert(neck > hole + 8, "Make the neck wider or the hole smaller");
+step("Slide the two core plates together and stand them in the base")
+  part("Base", at = [0, 0, -t], slots = ["Vase core A", "Vase core B"]) circle(d = belly * 0.7 + 16);
+// Each ring rounded to the nearest millimetre, so alike rings share a part
+step("Thread the rings over the core, biggest at the belly, gluing each to the one below")
+  ring_stack([for (k = [0:n - 1]) round(width_at(k))], hole, name = "Vase");

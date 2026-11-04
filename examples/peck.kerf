@@ -216,25 +216,31 @@ module ring_disc(d, hole) {
 }
 
 if (output == "all" || output == "paddle") {
-  part("Paddle top", at = [0, 0, -t]) paddle(true);
-  part("Paddle base", at = [0, 0, -2 * t]) paddle(false);
+  step("Glue the paddle top onto the paddle base") {
+    part("Paddle top", at = [0, 0, -t]) paddle(true);
+    part("Paddle base", at = [0, 0, -2 * t]) paddle(false);
+  }
 }
 if (output == "all" || output == "hens") {
   hen = [0:n - 1];
-  part("Right body", qty = n, at = [for (i = hen) on_hen(i, [0, -t / 2, 0])], rotate = [for (i = hen) facing(i)]) body_half();
-  part("Left body", qty = n, at = [for (i = hen) on_hen(i, [0, t / 2, 0])], rotate = [for (i = hen) left_facing(i)])
-    mirror([1, 0]) body_half();
-  part("Body spacer", qty = n, at = [for (i = hen) on_hen(i, [0, t / 2, 0])], rotate = [for (i = hen) facing(i)]) spacer();
-  part("Head", qty = n, at = [for (i = hen) on_hen(i, turned(heads[i], t / 2))], rotate = [for (i = hen) facing(i, heads[i])])
-    head();
-  part("Right tail", qty = n, at = [for (i = hen) on_hen(i, turned(heads[i], -t / 2))],
-    rotate = [for (i = hen) facing(i, heads[i])])
-    tail_plate();
-  part("Left tail", qty = n, at = [for (i = hen) on_hen(i, mirrored(-heads[i], t / 2))],
-    rotate = [for (i = hen) left_facing(i, -heads[i])])
-    mirror([1, 0]) tail_plate();
+  step("Bolt each hen's body halves round the spacer and the rocking head") {
+    part("Right body", qty = n, at = [for (i = hen) on_hen(i, [0, -t / 2, 0])], rotate = [for (i = hen) facing(i)]) body_half();
+    part("Left body", qty = n, at = [for (i = hen) on_hen(i, [0, t / 2, 0])], rotate = [for (i = hen) left_facing(i)])
+      mirror([1, 0]) body_half();
+    part("Body spacer", qty = n, at = [for (i = hen) on_hen(i, [0, t / 2, 0])], rotate = [for (i = hen) facing(i)]) spacer();
+    part("Head", qty = n, at = [for (i = hen) on_hen(i, turned(heads[i], t / 2))], rotate = [for (i = hen) facing(i, heads[i])])
+      head();
+  }
+  step("Glue a tail plate either side of each tail") {
+    part("Right tail", qty = n, at = [for (i = hen) on_hen(i, turned(heads[i], -t / 2))],
+      rotate = [for (i = hen) facing(i, heads[i])])
+      tail_plate();
+    part("Left tail", qty = n, at = [for (i = hen) on_hen(i, mirrored(-heads[i], t / 2))],
+      rotate = [for (i = hen) left_facing(i, -heads[i])])
+      mirror([1, 0]) tail_plate();
+  }
 }
-if (output == "all" || output == "weight") {
+if (output == "all" || output == "weight") step("Stack the weight discs, knot ring and string plate on a bolt and tie on the strings") {
   part("Weight disc", qty = 7, at = [for (k = [1:7]) concat(knot, [plate_top - 2 * t - k * t])]) {
     ring_disc(44, 4.4);
     score() circle(d = 36);

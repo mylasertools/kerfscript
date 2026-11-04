@@ -31,6 +31,30 @@ export interface PartShape {
   kerf: number;
   material: string;
   placements?: Placement[];
+  // Glued layers per placement, stacked along the part's own z
+  stack?: number;
+  // Living hinge bends, along the part's x: [x0, x1, angle]
+  bends?: Bend[];
+  // The part this one is glued to, so it moves with that part's bends
+  on?: string;
+  // Parts whose tabs pass through this one: slots cut where they meet it
+  slots?: string[];
+  clearance?: number;
+  // The assembly step that adds it, 0 for none
+  step?: number;
+  // Glued flat on another part's face, placed on it
+  glue?: { host: string; face: 'top' | 'bottom' };
+  // Cut mirrored, left to right
+  mirrored?: boolean;
+  // Which of the part() call's copies these are, 1 up, when mirror per
+  // copy split them: the others are a part of their own
+  copies?: number[];
+}
+
+export interface Bend {
+  x0: number;
+  x1: number;
+  angle: number;
 }
 
 export interface Shape {

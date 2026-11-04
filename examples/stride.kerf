@@ -174,7 +174,11 @@ turn = crank_angle - 70;
 behind = -3 * t - 1;
 function on_axle(d) = [origin.x, -d, origin.y];
 
-if (output == "all" || output == "links") {
+// Steps are numbered in the order they first run, so name them here in build order
+step("Glue the three backboards together and stand them in the feet") {}
+step("Fit the links on brass bushes, back to front, with the spacer rings between them") {}
+step("Fit the hex sockets, the rear cranks and the handle grip on the spindle") {}
+if (output == "all" || output == "links") step("Fit the links on brass bushes, back to front, with the spacer rings between them") {
   part("C crank", at = link_at("C", 0), rotate = face(crank_angle)) crank();
   part("A upper link", at = link_at("A", 2), rotate = face(heading(2, 3))) rod([0, 0], [50 * s, 0], "A");
   part("B lower link", at = link_at("B", 2), rotate = face(heading(2, 4))) rod([0, 0], [61.9 * s, 0], "B");
@@ -183,25 +187,29 @@ if (output == "all" || output == "links") {
   part("E coupler", at = link_at("E", 5), rotate = face(heading(5, 6))) rod([0, 0], [39.4 * s, 0], "E");
   part("F foot", at = pivoted("F", 4, 6), rotate = face(swing(4, 6))) triangle(J[4], J[6], J[7], "F");
 }
-if (output == "all" || output == "frame") part("Backboard", qty = 3, at = [for (k = [1:3]) [0, k * t, 0]], rotate = face(0)) frame();
+if (output == "all" || output == "frame") step("Glue the three backboards together and stand them in the feet") part("Backboard", qty = 3, at = [for (k = [1:3]) [0, k * t, 0]], rotate = face(0)) frame();
 // Two plies each, standing across the board under its ends
 if (output == "all" || output == "feet")
-  part("Stand foot", qty = 4, at = [for (x = [25, 155], k = [0:1]) [x * s - t + k * t, 1.5 * t - 65, 0]], rotate = [90, 0, 90]) stand_foot();
+  step("Glue the three backboards together and stand them in the feet")
+    part("Stand foot", qty = 4, at = [for (x = [25, 155], k = [0:1]) [x * s - t + k * t, 1.5 * t - 65, 0]], rotate = [90, 0, 90]) stand_foot();
 if (output == "all" || output == "accessories") {
   // As many rings as fit each gap; make up the rest with metal shims
-  for (sp = spacers) let (n = floor(sp[1] / t))
-    part(str("Spacer ", sp[0]), qty = n, at = [for (k = [0:n - 1]) front(sp[2], depth(sp[3]) + k * t)], rotate = face(0)) disc(12, 6.4);
-  part("Handle grip", qty = 6, at = [for (k = [1:6]) on_axle(behind - 3 * t - k * t) + [40 * cos(turn), 0, 40 * sin(turn)]], rotate = face(turn))
-    disc(18, hole);
-  part("Rear crank", qty = 2, at = [on_axle(behind - t), on_axle(behind - 2 * t)], rotate = face(turn)) difference() {
-    capsule([0, 0], [40, 0], 10);
-    circle(d = 4.4);
-    translate([40, 0]) circle(d = 4.4);
-  }
-  // One in front of the crank C, one behind the board under the rear cranks
-  part("Hex socket", qty = 2, at = [on_axle(depth("C")), on_axle(behind - 3 * t)], rotate = [face(crank_angle), face(turn)]) difference() {
-    circle(d = 18);
-    circle(d = 8.31, $fn = 6);
+  step("Fit the links on brass bushes, back to front, with the spacer rings between them")
+    for (sp = spacers) let (n = floor(sp[1] / t))
+      part(str("Spacer ", sp[0]), qty = n, at = [for (k = [0:n - 1]) front(sp[2], depth(sp[3]) + k * t)], rotate = face(0)) disc(12, 6.4);
+  step("Fit the hex sockets, the rear cranks and the handle grip on the spindle") {
+    part("Handle grip", qty = 6, at = [for (k = [1:6]) on_axle(behind - 3 * t - k * t) + [40 * cos(turn), 0, 40 * sin(turn)]], rotate = face(turn))
+      disc(18, hole);
+    part("Rear crank", qty = 2, at = [on_axle(behind - t), on_axle(behind - 2 * t)], rotate = face(turn)) difference() {
+      capsule([0, 0], [40, 0], 10);
+      circle(d = 4.4);
+      translate([40, 0]) circle(d = 4.4);
+    }
+    // One in front of the crank C, one behind the board under the rear cranks
+    part("Hex socket", qty = 2, at = [on_axle(depth("C")), on_axle(behind - 3 * t)], rotate = [face(crank_angle), face(turn)]) difference() {
+      circle(d = 18);
+      circle(d = 8.31, $fn = 6);
+    }
   }
 }
 // The fit test lies on the table beside the board

@@ -26,11 +26,13 @@ for (k = [0:1]) {
     translate([6, 10 + t / 2]) slots(width - 12, clearance = clearance);
     translate([width / 2, 10 + t]) rotate(90) slots(foot_length - 24, count = 2, clearance = clearance);
   }
-  part(str("Upright ", k + 1), at = [ox + 6, 10 + t, t], rotate = [90, 0, 0])
-    union() { rect([width - 12, height], r = 4); tabs(width - 12); }
-  part(str("Gusset ", k + 1), at = [ox + width / 2 - t / 2, 10 + t, t], rotate = [90, 0, 90])
-    union() {
-      polygon([[0, 0], [foot_length - 24, 0], [0, brace_height]]);
-      tabs(foot_length - 24, count = 2);
-    }
+  step("Glue each upright into its foot")
+    part(str("Upright ", k + 1), at = [ox + 6, 10 + t, t], rotate = [90, 0, 0])
+      union() { rect([width - 12, height], r = 4); tabs(width - 12); }
+  step("Glue a gusset into each foot, behind its upright")
+    part(str("Gusset ", k + 1), at = [ox + width / 2 - t / 2, 10 + t, t], rotate = [90, 0, 90])
+      union() {
+        polygon([[0, 0], [foot_length - 24, 0], [0, brace_height]]);
+        tabs(foot_length - 24, count = 2);
+      }
 }
