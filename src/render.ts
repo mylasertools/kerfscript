@@ -83,6 +83,8 @@ export interface PartInfo {
   glued?: string;
   // Its number with $label_parts, engraved on its back face
   label?: number;
+  // Cut mirrored, left to right
+  mirrored?: boolean;
 }
 
 export interface Placed {
@@ -215,9 +217,11 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   const byName = new Map<string, string>();
   const doubled = new Set<string>();
   for (const p of parts) {
+    // A mirrored pair, mirror = [false, true], is one part cut both ways
     const sig = shapeOf(p),
-      had = byName.get(p.name);
-    if (had === undefined) byName.set(p.name, sig);
+      key = p.mirrored ? `${p.name}\u0000mirrored` : p.name,
+      had = byName.get(key);
+    if (had === undefined) byName.set(key, sig);
     else if (had !== sig) doubled.add(p.name);
   }
   for (const n of doubled)
@@ -263,6 +267,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
         side: 'back',
       });
   }
+  const hidden: HiddenFill[] = [];
   for (const p of parts) {
     const material = union(
       [...p.layers].filter(([k]) => mode(k) === 'cut').flatMap(([, l]) => l.regions),
@@ -276,8 +281,9 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
           lo = Math.min(lo, x);
           hi = Math.max(hi, x);
         }
+      // The material's points are rounded to 0.0001 mm
       for (const b of p.bends)
-        if (b.x0 < lo - 1e-6 || b.x1 > hi + 1e-6)
+        if (b.x0 < lo - 1e-3 || b.x1 > hi + 1e-3)
           warnings.push(
             `Part "${p.name}" bends from x = ${fmt(b.x0)} to ${fmt(b.x1)}, beyond the part (x = ${fmt(lo)} to ${fmt(hi)}); only the part itself bends.`,
           );
@@ -328,6 +334,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       }
       if (regions.length || lines.length) layers.set(k, { regions, lines });
     }
+    hidden.push(...hiddenFills(p.name, layers, defs));
     if (material.length) {
       // Engraving and scoring, for 3D views
       const marks: Mark[] = [];
@@ -366,7 +373,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
         p.placements.forEach((placement, i) => {
           const part: AssemblyPart = {
             ...flat,
-            copy: i + 1,
+            copy: copyNumber(p, i),
             matrix: placementMatrix(placement),
             placed: true,
             ...(p.bends && { bends: p.bends }),
@@ -387,7 +394,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
         for (let i = 0; i < p.qty; i++)
           loose.push({
             ...flat,
-            copy: i + 1,
+            copy: copyNumber(p, i),
             matrix: placementMatrix({ at: [0, 0, 0], rotate: [0, 0, 0] }),
             placed: false,
             ...(p.step && { step: p.step }),
@@ -431,6 +438,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       material: p.material,
       ...(p.stack && { stack: p.stack }),
       ...(p.glue && { glued: p.glue.host }),
+      ...(p.mirrored && { mirrored: true }),
       ...(number !== undefined && { label: number }),
     };
     if (analysis)
@@ -505,6 +513,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   }
   if (clashes.length > 5)
     warnings.push(`${clashes.length - 5} more pairs of parts collide in the assembly.`);
+  hiddenFillWarnings(hidden, warnings);
   if (assembly.length && loose.length) {
     const names = [...new Set(loose.map((p) => `"${p.name}"`))];
     warnings.push(
@@ -1073,6 +1082,92 @@ function nestInHoles<
 }
 
 type Poly2 = [number, number][];
+
+// A copy's number among its part() call's copies, a stack's layers each
+// counting as one
+function copyNumber(p: PartShape, i: number): number {
+  if (!p.copies) return i + 1;
+  const stack = p.stack ?? 1;
+  return (p.copies[Math.floor(i / stack)] - 1) * stack + (i % stack) + 1;
+}
+
+// A fill wholly under the fills of layers stacked above it on the same face
+// can't be seen in print: two paint() or tones() calls whose later piece
+// went on a layer that comes earlier in the files. The stack is the files'
+// order: engrave, then the custom layers by order and first use.
+interface HiddenFill {
+  part: string;
+  layer: string;
+  under: string[];
+  count: number;
+  at: [number, number];
+}
+function hiddenFills(name: string, layers: Map<string, Layer>, defs: Map<string, LayerDef>) {
+  const keys = [...defs.keys()];
+  const fills = [...layers.keys()].filter(
+    (k) =>
+      defs.get(k)?.mode === 'fill' &&
+      layers.get(k)!.regions.length &&
+      !['score', 'cut', 'guide'].includes(k),
+  );
+  const out: HiddenFill[] = [];
+  if (fills.length < 2) return out;
+  const rank = (k: string) =>
+    k === 'engrave' ? -Infinity : (defs.get(k)?.order ?? 0) * 2 + keys.indexOf(k) / keys.length;
+  fills.sort((a, b) => rank(a) - rank(b));
+  for (let i = 0; i < fills.length - 1; i++) {
+    const side = defs.get(fills[i])!.side ?? 'front';
+    const above = fills.slice(i + 1).filter((k) => (defs.get(k)!.side ?? 'front') === side);
+    if (!above.length) continue;
+    const cover = union(above.flatMap((k) => layers.get(k)!.regions));
+    let found: HiddenFill | undefined;
+    for (const piece of pieces(layers.get(fills[i])!.regions)) {
+      const size = piece.reduce((a, r) => a + area(r), 0);
+      if (!(size > 1e-3)) continue;
+      // A hairline under strokes, narrower than 1 mm all along, is
+      // what the stroke means to cover
+      if (!offset(piece, -0.5, 'round').length) continue;
+      const left = difference(piece, cover).reduce((a, r) => a + area(r), 0);
+      if (left > 1e-3 * Math.max(1, size)) continue;
+      const meets = above.filter((k) => intersection(piece, layers.get(k)!.regions).length);
+      const by = meets.length ? meets : above;
+      if (found) {
+        found.count++;
+        for (const k of by) if (!found.under.includes(k)) found.under.push(k);
+        continue;
+      }
+      const [x0, y0, x1, y1] = layerBounds(new Map([['f', { regions: piece, lines: [] }]]))!;
+      found = {
+        part: name,
+        layer: fills[i],
+        under: by,
+        count: 1,
+        at: [round2((x0 + x1) / 2), round2((y0 + y1) / 2)],
+      };
+    }
+    if (found) out.push(found);
+  }
+  return out;
+}
+
+function hiddenFillWarnings(hidden: HiddenFill[], warnings: string[]) {
+  for (const h of hidden.slice(0, 5)) {
+    const under = h.under.map((k) => `"${k}"`);
+    const list =
+      under.length > 1 ? `${under.slice(0, -1).join(', ')} and ${under.at(-1)}` : under[0];
+    warnings.push(
+      `Part "${h.part}": ${h.count > 1 ? `${h.count} fills` : 'a fill'} on layer "${h.layer}" (${h.count > 1 ? 'the first ' : ''}at [${h.at.join(', ')}]) ${h.count > 1 ? 'lie' : 'lies'} wholly under ${list}, stacked above it in the files: printed, ${h.count > 1 ? 'they' : 'it'} won't show, and engraved, ${h.count > 1 ? 'they burn' : 'it burns'} twice. Draw them in one paint(), or give "${h.layer}" a higher order.`,
+    );
+  }
+  if (hidden.length > 5) {
+    const rest = hidden.slice(5);
+    const parts = new Set(rest.map((h) => h.part)).size;
+    const layers = [...new Set(rest.map((h) => `"${h.layer}"`))];
+    warnings.push(
+      `Fills are hidden the same way in ${rest.length} more place${rest.length > 1 ? 's' : ''}, on ${parts} part${parts > 1 ? 's' : ''} (layer${layers.length > 1 ? 's' : ''} ${layers.slice(0, 5).join(', ')}${layers.length > 5 ? ' and more' : ''}).`,
+    );
+  }
+}
 
 // Parts given glue = "host" are placed on the host's top or bottom face:
 // their own placement is measured on that face. A glued part with as many

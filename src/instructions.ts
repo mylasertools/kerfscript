@@ -222,7 +222,7 @@ ${hw.size ? `<h3>Hardware</h3>${list([...hw].map(([s, q]) => `${s}${q > 1 ? ` &t
   const partRows = r.parts
     .map(
       (p, i) =>
-        `<tr><td>${p.label ?? i + 1}</td><td>${esc(p.name)}</td><td>${p.qty}</td><td>${p.width} &times; ${p.height} mm</td><td>${p.thickness} mm ${esc(p.material)}</td></tr>`,
+        `<tr><td>${p.label ?? i + 1}</td><td>${esc(p.name)}${p.mirrored ? ' (mirrored)' : ''}</td><td>${p.qty}</td><td>${p.width} &times; ${p.height} mm</td><td>${p.thickness} mm ${esc(p.material)}</td></tr>`,
     )
     .join('');
   const sheets = r.sheets

@@ -330,7 +330,7 @@ async function update() {
     ? `<table class="parts"><thead><tr><th>Part</th><th>Qty</th><th>Size</th><th>Cut length</th></tr></thead><tbody>${last.parts
         .map(
           (p) =>
-            `<tr><td>${esc(p.name)}</td><td>${p.qty}</td><td>${fmt(p.width)} × ${fmt(p.height)} mm</td><td>${fmt(p.cutLength / 1000)} m</td></tr>`,
+            `<tr><td>${esc(p.name)}${p.mirrored ? ' (mirrored)' : ''}</td><td>${p.qty}</td><td>${fmt(p.width)} × ${fmt(p.height)} mm</td><td>${fmt(p.cutLength / 1000)} m</td></tr>`,
         )
         .join('')}</tbody></table>`
     : '';

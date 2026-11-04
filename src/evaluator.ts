@@ -26,6 +26,7 @@ import {
   union,
   type Layer,
   type Matrix,
+  type PartShape,
   type Poly,
   type Pt,
   type Shape,
@@ -1999,10 +2000,38 @@ export class Evaluator {
               matrix: mul4(m, translation(0, 0, k * dz)),
             }));
           });
-        const mirrored = truthy(this.arg(c.args, 'mirror', -1, false));
-        if (mirrored) c.env.vars.set('$mirrored', true);
-        let s = c.children();
-        if (mirrored) s = transform(s, [-1, 0, 0, 1, 0, 0]);
+        // mirror = true, or a list with one per copy: those copies are
+        // cut mirrored, a part of their own with the same name
+        const mirrorArg = this.arg(c.args, 'mirror', -1, false);
+        let flips: boolean[];
+        if (Array.isArray(mirrorArg)) {
+          if (mirrorArg.length !== qty)
+            throw new Error(
+              `mirror needs one true or false per copy: qty is ${qty} but mirror has ${mirrorArg.length}`,
+            );
+          flips = mirrorArg.map((v) => truthy(v));
+        } else flips = Array.from({ length: qty }, () => truthy(mirrorArg));
+        const mixed = flips.some((f) => f) && !flips.every((f) => f);
+        if (mixed && glue !== undefined)
+          throw new Error(
+            'mirror per copy cannot go with glue: make the mirrored copies a part of their own',
+          );
+        const mirrored = flips[0];
+        const draw = (flip: boolean) => {
+          const before = c.env.vars.get('$mirrored');
+          const had = c.env.vars.has('$mirrored');
+          if (flip) c.env.vars.set('$mirrored', true);
+          try {
+            const shape = c.children();
+            return flip ? transform(shape, [-1, 0, 0, 1, 0, 0]) : shape;
+          } finally {
+            if (flip) {
+              if (had) c.env.vars.set('$mirrored', before);
+              else c.env.vars.delete('$mirrored');
+            }
+          }
+        };
+        const s = draw(mirrored);
         const bends = this.bends(bendArg);
         const on = this.arg(c.args, 'on', -1);
         const slotsArg = this.arg(c.args, 'slots', -1);
@@ -2014,27 +2043,35 @@ export class Evaluator {
                 return v;
               });
         const clearance = this.num(this.arg(c.args, 'clearance', -1, 0.1), 'part', 'clearance');
-        return {
-          layers: new Map(),
-          parts: [
-            ...s.parts,
-            {
-              name,
-              qty: qty * stack,
-              layers: s.layers,
-              thickness: t,
-              kerf: toNumber(this.dyn(c.env, '$kerf')) || 0,
-              material: toText(this.dyn(c.env, '$material') ?? 'material'),
-              ...(placements ? { placements } : {}),
-              ...(stack > 1 ? { stack } : {}),
-              ...(bends.length ? { bends } : {}),
-              ...(on !== undefined ? { on: toText(on) } : {}),
-              ...(slots ? { slots, clearance } : {}),
-              ...(this.step ? { step: this.step } : {}),
-              ...(glue !== undefined && { glue: { host: glue, face: face as 'top' | 'bottom' } }),
-            },
-          ],
+        const made = (layers: Map<string, Layer>, flip: boolean, copies: number[]): PartShape => {
+          const all = copies.length === qty;
+          const mine = placements?.filter((_, i) => copies.includes(Math.floor(i / stack) + 1));
+          return {
+            name,
+            qty: copies.length * stack,
+            layers,
+            thickness: t,
+            kerf: toNumber(this.dyn(c.env, '$kerf')) || 0,
+            material: toText(this.dyn(c.env, '$material') ?? 'material'),
+            ...(mine ? { placements: mine } : {}),
+            ...(stack > 1 ? { stack } : {}),
+            ...(bends.length ? { bends } : {}),
+            ...(on !== undefined ? { on: toText(on) } : {}),
+            ...(slots ? { slots, clearance } : {}),
+            ...(this.step ? { step: this.step } : {}),
+            ...(glue !== undefined && { glue: { host: glue, face: face as 'top' | 'bottom' } }),
+            ...(flip && { mirrored: true }),
+            ...(!all && { copies }),
+          };
         };
+        const numbers = (flip: boolean) => flips.flatMap((f, i) => (f === flip ? [i + 1] : []));
+        const own = mixed
+          ? [
+              made(s.layers, mirrored, numbers(mirrored)),
+              made(draw(!mirrored).layers, !mirrored, numbers(!mirrored)),
+            ]
+          : [made(s.layers, mirrored, numbers(mirrored))];
+        return { layers: new Map(), parts: [...s.parts, ...own] };
       },
       // Places the parts inside in 3D, as part()'s at and rotate do: their
       // own placements are inside this one

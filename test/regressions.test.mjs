@@ -319,3 +319,65 @@ test('a bend far beyond its part warns and stays cheap to draw', () => {
   );
   assert.ok(wide.length <= 2002, String(wide.length));
 });
+
+test('mirror per copy cuts those copies mirrored, as a part of their own', () => {
+  const r = render(`
+part("side", qty = 2, at = [[0, 0, 0], [40, 0, 0]], rotate = [90, 0, 90], mirror = [false, true]) {
+  polygon([[0, 0], [30, 0], [5, 20]]);
+  engrave() translate([2, 2]) square(3);
+}`);
+  assert.deepEqual(r.warnings, []);
+  assert.deepEqual(
+    r.parts.map((p) => [p.name, p.qty, !!p.mirrored]),
+    [
+      ['side', 1, false],
+      ['side', 1, true],
+    ],
+  );
+  // Copies keep their numbers, the second at x = 40
+  assert.deepEqual(
+    r.assembly.map((a) => [a.copy, a.matrix[3]]),
+    [
+      [1, 0],
+      [2, 40],
+    ],
+  );
+  // The mirrored one's apex is at x = -5
+  const xs = r.assembly[1].outline.flat().map(([x]) => x);
+  assert.equal(Math.min(...xs), -30);
+  assert.throws(
+    () => render('part("x", qty = 2, mirror = [true]) square(3);'),
+    /mirror needs one true or false per copy/,
+  );
+});
+
+test('a fill wholly under a layer stacked above it warns', () => {
+  const r = render(`
+layer("glass", mode = "fill", color = "#88aacc");
+layer("stone", mode = "fill", color = "#888888");
+part("rose") { circle(d = 30); layer("stone") circle(d = 26); layer("glass") square(4, center = true); }`);
+  assert.equal(r.warnings.length, 1);
+  assert.match(r.warnings[0], /layer "glass" .* wholly under "stone", stacked above it/);
+  // Drawn in one paint(), the later piece is on top and nothing hides
+  const ok = render(`
+layer("glass", mode = "fill", color = "#88aacc");
+layer("stone", mode = "fill", color = "#888888");
+part("rose") { circle(d = 30); paint(["stone", "glass"]) { circle(d = 26); square(4, center = true); } }`);
+  assert.deepEqual(ok.warnings, []);
+  // A hairline under a stroked outline is meant to be covered
+  const hair = render(`
+layer("dot", mode = "fill", color = "#ffffff");
+layer("ink", mode = "fill", color = "#000000");
+part("p") { square(20); layer("ink") stroke(0.6) line([2, 5], [18, 5]); layer("dot") translate([5, 4.9]) square([4, 0.2]); }`);
+  assert.deepEqual(hair.warnings, []);
+});
+
+test('a bend ending at the edge, past it only by rounding, does not warn', () => {
+  const r = render(
+    'part("p", bend = [10, 30.0000199, 90], at = [0, 0, 0]) square([30.00002, 10]);',
+  );
+  assert.deepEqual(
+    r.warnings.filter((w) => /beyond the part/.test(w)),
+    [],
+  );
+});

@@ -474,3 +474,34 @@ test('the map knows land from sea', () => {
   assert.deepEqual(r.echoes, ['true, false, true']);
   assert.ok(size(r, 'm')[0] > 350);
 });
+
+test('halved_pair halves a profile with its capped side, feet in the floor', () => {
+  const lib = `use <kerf/joints>
+$thickness = 3;
+module tree() polygon([[-14, 0], [14, 0], [14, 4], [4, 4], [4, 8], [20, 8], [0, 50], [-20, 8], [-4, 8], [-4, 4], [-14, 4]]);
+part("floor", at = [-30, -30, -3], slots = ["tree front", "tree side"]) square(60);
+`;
+  const r = render(
+    `${lib}halved_pair("tree", cap = 30, feet = [[-10, 4], [10, 4]]) { tree(); engrave() translate([0, 20]) circle(d = 4); }`,
+  );
+  assert.deepEqual(r.warnings, []);
+  const by = Object.fromEntries(r.parts.map((p) => [p.name, p]));
+  // The front is all of it with its feet, the side capped at 30 with them
+  assert.equal(by['tree front'].height, 53);
+  assert.equal(by['tree side'].height, 33);
+  // Four feet in the floor, each a slot of its own
+  assert.equal(piece(r, 'floor').cut.regions.filter((p) => p.length).length, 5);
+  // Both faces carry the art
+  assert.ok(piece(r, 'tree front').engrave && piece(r, 'tree side').engrave);
+  // A stem too narrow beside the slot, or a foot in the front's slot, stops
+  assert.throws(
+    () => render(`${lib}halved_pair("t", cap = 30) translate([-1, 0]) tree();`),
+    /narrower than 1.5 mm \(\$min_width\) beside its slot/,
+  );
+  assert.throws(
+    () => render(`${lib}halved_pair("t", cap = 30, feet = [0]) tree();`),
+    /foot at x = 0 runs into its slot/,
+  );
+  // Uncapped, the side's slot from above would cut off the point
+  assert.throws(() => render(`${lib}halved_pair("t") tree();`), /the side is narrower/);
+});

@@ -30,7 +30,8 @@ Assembly:
   their own placements inside its. `box()` takes a `name` and shapes for
   its front, so a box can be set anywhere.
 - `part()` takes `stack = n` (glued layers), `mirror = true` (the left of a
-  pair, its text still reading), `bend = [x0, x1, angle]` (a living hinge
+  pair, its text still reading; or one per copy, `mirror = [false, true]`,
+  for a pair whose art faces out on both), `bend = [x0, x1, angle]` (a living hinge
   shown bent), `on = "part"` (glued to a bent part and moving with it),
   `glue = "part", face = "top"` (laid on another part's face) and `slots =
 ["part", ...]`: slots cut wherever those parts pass through it in the
@@ -106,6 +107,10 @@ name=from:step:to` checks a design over every combination of settings.
   lists the numbers in `kerf check`'s parts and steps (`label` on each part).
 - A `paint()` child lying wholly on an area of the same layer under it
   warns that it can't be seen.
+- A fill lying wholly under fills of layers stacked above it in the files
+  warns: printed it won't show, engraved it burns twice. Two `paint()`
+  calls whose later piece went on an earlier layer do this. Fills narrower
+  than 1 mm all along, a stroke's to cover, are left out.
 - A part narrower than `$min_width` (1.5 mm unless set; 0 turns it off)
   somewhere warns, saying where.
 - `symbol(..., box = "grid")` sizes and places a symbol by its icon set's
@@ -150,6 +155,8 @@ New libraries:
   eccentrics, snail cams and tappets.
 - `kerf/lock`: a lock with a key, three layers deep.
 - `kerf/rings`: round things of stacked rings on a crossed core.
+- `kerf/joints`: `halved_pair()`, two profiles halved into each other (a
+  cross on its foot, a font, a dome), checking the strips beside the slots.
 - `kerf/sizes`: paper, card and photo sizes by name.
 - `kerf/symbols`: 867 pictograms by name, from open icon sets (see
   THIRD-PARTY-NOTICES.md).

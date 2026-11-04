@@ -266,7 +266,10 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
     along the part's z. The parts list says how many make a stack.
   - `mirror = true`: the part is cut mirrored left to right (x becomes
     -x), and its text still reads the right way round. Make the left of a
-    pair by mirroring the right.
+    pair by mirroring the right. A list with one `true` or `false` per
+    copy mirrors only those copies, `qty = 2, mirror = [false, true]`, so
+    a pair of sides shows its art on the outside of both; the mirrored
+    copies are listed as a part of their own, `(mirrored)`.
   - `bend = [x0, x1, angle]`, or a list of them: a living hinge from x0 to
     x1 along the part's x bends it by `angle` degrees in the assembled
     view, folding the far end up towards its top face (down for a negative
@@ -523,6 +526,7 @@ module and its parameters. Libraries others publish are installed with
 | `kerf/hanging`     | `keyhole()`, `keyholes()`, `hanging_hole()`, `hanging_loop()`               |
 | `kerf/enclosure`   | `enclosure()`, `enclosure_cutouts()`, `vents()`: boxes with a screwed lid   |
 | `kerf/calibration` | `kerf_gauge()`, `slot_gauge()`, `joint_test()`: test pieces                 |
+| `kerf/joints`      | `halved_pair()`: two profiles halved into each other                        |
 
 `box()` makes the six (or five) panels of a finger-jointed box as parts
 `bottom`, `lid`, `front`, `back`, `left`, `right`, from the outer size.

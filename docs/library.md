@@ -29,6 +29,7 @@ show each module's description when you hover over it.
 | [`kerf/gears`](#gears-and-cams)    | Spur gears, racks, lantern gears, cams and tappets             |
 | [`kerf/lock`](#lock)               | A lock with a key, three layers deep                           |
 | [`kerf/rings`](#rings)             | Round things of stacked rings on a crossed core                |
+| [`kerf/joints`](#joints)           | Two profiles halved into each other: crosses, fonts, domes     |
 | [`kerf/sizes`](#sizes)             | Paper, card and photo sizes                                    |
 | [`kerf/symbols`](#symbols)         | 867 pictograms by name                                         |
 | [`kerf/geo`](#maps)                | The world's land, for maps and globes                          |
@@ -520,6 +521,34 @@ smallest hole that works (about 7 mm, and 12 mm with feet, in 3 mm ply).
 ### `ring_core_width(hole, clearance = 0.1)`
 
 The width of a core plate whose corners just clear a round hole.
+
+## Joints
+
+`use <kerf/joints>`
+
+Two profiles halved into each other at right angles, standing on a floor:
+a cross on its foot, a font, a dome, a tree.
+
+```kerf
+use <kerf/joints>
+
+module tree() polygon([[-14, 0], [14, 0], [14, 4], [4, 4], [4, 8], [20, 8], [0, 50], [-20, 8], [-4, 8], [-4, 4], [-14, 4]]);
+part("floor", at = [-30, -30, -$thickness], slots = ["tree front", "tree side"]) square(60);
+halved_pair("tree", cap = 30, feet = [[-10, 4], [10, 4]]) { tree(); engrave() translate([0, 20]) circle(d = 4); }
+```
+
+### `halved_pair(name, at = [0, 0, 0], cap, feet = [], side_feet, clearance = 0.1)`
+
+The first child is the profile, drawn with x across and y up, centred on
+x = 0 with the floor at y = 0. The front, `name front`, is the whole
+profile along x, slotted from below; the side, `name side`, is the profile
+along y capped at height `cap` (all of it without), slotted from above, the
+slots meeting halfway up the side. A second child is drawn on both faces,
+clipped to each part: their engraving or print. `feet` are tabs below the
+floor on the front, x positions (3 mm wide) or `[x, width]` pairs, and
+`side_feet` the side's (the same unless given); give the floor `slots`
+naming both parts. The strips beside both slots must keep `$min_width`,
+and a foot may not run into the front's slot: either stops with where.
 
 ## Sizes
 

@@ -44,6 +44,11 @@ export interface PartShape {
   step?: number;
   // Glued flat on another part's face, placed on it
   glue?: { host: string; face: 'top' | 'bottom' };
+  // Cut mirrored, left to right
+  mirrored?: boolean;
+  // Which of the part() call's copies these are, 1 up, when mirror per
+  // copy split them: the others are a part of their own
+  copies?: number[];
 }
 
 export interface Bend {

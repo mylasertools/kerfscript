@@ -1,0 +1,94 @@
+// kerf/joints: joints between parts.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+
+// Two profiles halved into each other at right angles, standing on z = 0
+// at `at`: a standing cross and its foot, a font, a dome, a tree.
+//
+// The first child is the profile, drawn with x across and y up, centred on
+// x = 0 with the floor at y = 0. The front is the whole profile, slotted
+// from below; the side is the profile capped at `cap` (all of it when cap
+// is undef), slotted from above. The slots meet halfway up the side.
+// A second child, when given, is drawn on both faces: their art, clipped
+// to each part.
+//
+// `feet` puts tabs below y = 0 for a floor to cut slots for: a list of x
+// positions (3 mm wide) or [x, width] pairs, on the front; `side_feet` on
+// the side (the same as feet unless given). Give the floor
+// slots = [str(name, " front"), str(name, " side")].
+//
+// The parts are str(name, " front") along x and str(name, " side") along y.
+// The strips of material each side of the slots must stay $min_width
+// (1.5 mm unless set) wide; the profile, cap and feet are checked for it.
+module halved_pair(name, at = [0, 0, 0], cap = undef, feet = [], side_feet = undef, clearance = 0.1) {
+  t = $thickness;
+  c = clearance;
+  m = is_undef($min_width) ? 1.5 : $min_width;
+  sw = t + c;
+  // [x, width] for each foot
+  function each_foot(list) = [for (f = list) is_list(f) ? [f[0], f[1]] : [f, 3]];
+  ff = each_foot(feet);
+  sf = each_foot(is_undef(side_feet) ? feet : side_feet);
+  // A foot may not run into the front's slot from below
+  for (f = ff)
+    assert(abs(f[0]) - f[1] / 2 >= sw / 2 + m - 0.001,
+      str("halved_pair \"", name, "\": the front's foot at x = ", f[0], " runs into its slot from below; keep it ",
+        sw / 2 + m + f[1] / 2, " mm or more from the middle"));
+  // What of the band [x0, x1] x [y0, y1] is outside the profile
+  module outside(x0, x1, y0, y1) difference() {
+    translate([x0, y0]) rect([x1 - x0, y1 - y0]);
+    children(0);
+  }
+  module with_feet(fs) {
+    children(0);
+    for (f = fs) translate([f[0] - f[1] / 2, -t]) rect([f[1], t + 0.01]);
+  }
+  // The parts, given the profile's bounds b
+  module pair(b) {
+    assert(!is_undef(b), str("halved_pair \"", name, "\": the profile is empty"));
+    assert(b[0] < -sw / 2 - m && b[2] > sw / 2 + m,
+      str("halved_pair \"", name, "\": the profile must be centred on x = 0 and wider than ", sw + 2 * m, " mm"));
+    top = b[3];
+    h = is_undef(cap) ? top : min(cap, top);
+    assert(h > 2 * m, str("halved_pair \"", name, "\": cap must be more than ", 2 * m, " mm"));
+    // The strips beside each slot: the whole profile beside the front's
+    // slot (bottom half), the capped one beside the side's (top half)
+    for (s = [-1, 1]) let (x0 = s > 0 ? sw / 2 : -sw / 2 - m, x1 = s > 0 ? sw / 2 + m : -sw / 2) {
+      measure() {
+        outside(x0, x1, 0, h / 2) children(0);
+        assert(is_undef($bounds),
+          str("halved_pair \"", name, "\": the front is narrower than ", m, " mm ($min_width) beside its slot, at x = ",
+            s * (sw / 2 + m / 2), " below y = ", h / 2));
+      }
+      measure() {
+        outside(x0, x1, h / 2, h) children(0);
+        assert(is_undef($bounds),
+          str("halved_pair \"", name, "\": the side is narrower than ", m, " mm ($min_width) beside its slot, at x = ",
+            s * (sw / 2 + m / 2), " from y = ", h / 2, " to the cap at ", h));
+      }
+    }
+    part(str(name, " front"), at = [at[0], at[1] + t / 2, at[2]], rotate = [90, 0, 0]) difference() {
+      union() {
+        with_feet(ff) children(0);
+        if ($children > 1) children(1);
+      }
+      translate([-sw / 2, -t - 1]) rect([sw, h / 2 + t + 1]);
+    }
+    part(str(name, " side"), at = [at[0] - t / 2, at[1], at[2]], rotate = [90, 0, 90]) difference() {
+      union() {
+        with_feet(sf) intersection() {
+          children(0);
+          translate([b[0] - 1, -1]) rect([b[2] - b[0] + 2, h + 1]);
+        }
+        if ($children > 1) children(1);
+      }
+      translate([-sw / 2, h / 2]) rect([sw, top - h / 2 + 1]);
+    }
+  }
+  measure() {
+    children(0);
+    pair($bounds) {
+      children(0);
+      if ($children > 1) children(1);
+    }
+  }
+}

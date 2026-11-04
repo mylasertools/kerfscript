@@ -257,7 +257,7 @@ function main(argv: string[]) {
     if (stats) printStats(result);
     for (const p of result.parts)
       process.stdout.write(
-        `${p.label !== undefined ? `${p.label}. ` : ''}${p.name}${p.qty > 1 ? ` x${p.qty}` : ''}: ${p.width} x ${p.height} mm, ${p.thickness} mm ${p.material}, cut ${p.cutLength} mm${p.stack ? `, glued in stacks of ${p.stack}` : ''}\n`,
+        `${p.label !== undefined ? `${p.label}. ` : ''}${p.name}${p.mirrored ? ' (mirrored)' : ''}${p.qty > 1 ? ` x${p.qty}` : ''}: ${p.width} x ${p.height} mm, ${p.thickness} mm ${p.material}, cut ${p.cutLength} mm${p.stack ? `, glued in stacks of ${p.stack}` : ''}\n`,
       );
     for (const h of hardwareList(result.hardware)) process.stdout.write(`${h}\n`);
     // With numbered parts, each step says which numbers it adds
