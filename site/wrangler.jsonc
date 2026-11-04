@@ -13,8 +13,7 @@
   "routes": [{ "pattern": "kerfscript.mylasertools.com", "custom_domain": true }],
   "observability": {
     "logs": {
-      "enabled": true,
-      "head_sampling_rate": 0.1,
+      "enabled": false,
     },
   },
 }
