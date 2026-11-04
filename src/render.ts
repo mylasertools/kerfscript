@@ -1119,7 +1119,6 @@ function hiddenFills(name: string, layers: Map<string, Layer>, defs: Map<string,
     const side = defs.get(fills[i])!.side ?? 'front';
     const above = fills.slice(i + 1).filter((k) => (defs.get(k)!.side ?? 'front') === side);
     if (!above.length) continue;
-    const cover = union(above.flatMap((k) => layers.get(k)!.regions));
     let found: HiddenFill | undefined;
     for (const piece of pieces(layers.get(fills[i])!.regions)) {
       const size = piece.reduce((a, r) => a + area(r), 0);
@@ -1127,7 +1126,11 @@ function hiddenFills(name: string, layers: Map<string, Layer>, defs: Map<string,
       // A hairline under strokes, narrower than 1 mm all along, is
       // what the stroke means to cover
       if (!offset(piece, -0.5, 'round').length) continue;
-      const left = difference(piece, cover).reduce((a, r) => a + area(r), 0);
+      // Layer by layer: one union of all their rings lets one layer's
+      // holes and another's outlines add up wrong
+      let rest = piece;
+      for (const k of above) if (rest.length) rest = difference(rest, layers.get(k)!.regions);
+      const left = rest.reduce((a, r) => a + area(r), 0);
       if (left > 1e-3 * Math.max(1, size)) continue;
       const meets = above.filter((k) => intersection(piece, layers.get(k)!.regions).length);
       const by = meets.length ? meets : above;
