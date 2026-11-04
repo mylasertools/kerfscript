@@ -281,9 +281,7 @@ test('the children cache tells apart numbers that print alike', () => {
 });
 
 test('$label_parts does not put numbers on a front layer named engrave-back', async () => {
-  const font = readFileSync(
-    new URL('../site/public/assets/fonts/AtkinsonHyperlegible-Regular.ttf', import.meta.url),
-  );
+  const font = readFileSync(new URL('../fonts/AtkinsonHyperlegible-Regular.ttf', import.meta.url));
   const r = render(
     '$label_parts = true;\nlayer("engrave-back", "fill", "#000000") translate([100, 0]) square(1);\npart("p") square(40);',
     {
