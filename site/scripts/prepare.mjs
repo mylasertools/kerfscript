@@ -6,7 +6,7 @@
 
 import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const site = join(dirname(fileURLToPath(import.meta.url)), '..');
 const repo = join(site, '..');
@@ -22,7 +22,7 @@ copyFileSync(
   join(site, 'public/assets/THIRD-PARTY-NOTICES.md'),
 );
 // The 3D assembly view, with three.js, beside the interpreter it imports
-const { build } = await import(join(repo, 'node_modules/esbuild/lib/main.js'));
+const { build } = await import(pathToFileURL(join(repo, 'node_modules/esbuild/lib/main.js')));
 await build({
   entryPoints: [join(site, 'src/viewer/assembly.js')],
   outfile: join(site, 'public/assets/assembly.js'),
