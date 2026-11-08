@@ -238,8 +238,8 @@ module geneva_wheel(slots, distance, pin_d = 6, bore = 6, clearance = 0.2, squar
   rl = geneva_lock_radius(slots, distance, pin_d);
   w = pin_d + clearance;
   inner = distance - rc - clearance;
-  assert(rl > bore / 2 + 3, "the locking disc is too small for its axle: make the distance longer or the pin thinner");
-  assert(inner - w / 2 > bore / 2 + 3, "the slots reach the axle: use fewer slots or a smaller bore");
+  assert(rl > 0, "the pin is too thick to leave a locking disc: make the distance longer or the pin thinner");
+  assert(inner - w / 2 > bore / 2 + 3, "the slots reach the axle: use more slots, a longer distance or a smaller bore");
   difference() {
     circle(r = ro);
     for (j = [0:slots - 1]) rotate(180 + j * 360 / slots) {
@@ -258,6 +258,7 @@ module geneva_wheel(slots, distance, pin_d = 6, bore = 6, clearance = 0.2, squar
 // side (+x): cut away wherever the wheel's rim passes while the pin is in a
 // slot, so the wheel turns then
 module geneva_lock(slots, distance, pin_d = 6, bore = 6, clearance = 0.2, square = false) {
+  assert(geneva_lock_radius(slots, distance, pin_d) > bore / 2 + 3, "the locking disc is too small for its axle: make the distance longer, the pin thinner or the bore smaller");
   ro = geneva_wheel_radius(slots, distance, pin_d);
   assert(distance - ro - clearance >= bore / 2 + 2, str("the wheel passes within ", round(10 * (distance - ro - clearance)) / 10, " mm of the driver's axle: use a bore of at most ", floor(20 * (distance - ro - clearance - 2)) / 10, " mm or fewer slots"));
   difference() {
@@ -305,19 +306,33 @@ function pawl_face(teeth, at = 90) = round(at / (360 / teeth)) * 360 / teeth;
 // teeth's slope, so it clears them
 function pawl_lean(teeth, r, depth) = atan(depth / ((r - depth / 2) * 2 * PI / teeth)) + 15;
 
-// Where a pawl()'s pivot is, round the wheel's centre
-function pawl_pivot(teeth, r, depth, length = 0, width = 8, at = 90, clearance = 0.2) =
+// The shortest pawl of this width that clears the teeth: its tip edge,
+// along the tooth face, must end before its far end does
+function pawl_min_length(teeth, r, depth, width = 8) =
+  width * (0.5 + tan(pawl_lean(teeth, r, depth))) + 2;
+
+// The pawl's outline round the wheel's centre: its tip on the root by the
+// tooth face, its far end, and back along the face. Its pivot is the
+// middle of its far end. A length of 0 picks 0.8 * r, or longer if the
+// pawl must be to clear the teeth; pawl() refuses a length given shorter
+// than pawl_min_length().
+function pawl_points(teeth, r, depth, length = 0, width = 8, at = 90, clearance = 0.2) =
   let (
     f = pawl_face(teeth, at),
     g = pawl_lean(teeth, r, depth),
-    L = length > 0 ? length : r * 0.8,
+    shortest = pawl_min_length(teeth, r, depth, width),
+    L = length > 0 ? length : max(r * 0.8, shortest),
     n = [cos(f), sin(f)],
     tc = [sin(f), -cos(f)],
     u = cos(g) * tc + sin(g) * n,
     v = cos(g) * n - sin(g) * tc,
     T = (r - depth + clearance) * n + clearance * tc
   )
-  T + (L - width / 2) * u + (width / 2) * v;
+  [T, T + (L - width / 2) * u, T + (L - width / 2) * u + width * v, T + width / cos(g) * n];
+
+// Where a pawl()'s pivot is, round the wheel's centre
+function pawl_pivot(teeth, r, depth, length = 0, width = 8, at = 90, clearance = 0.2) =
+  let (p = pawl_points(teeth, r, depth, length, width, at, clearance)) (p[1] + p[2]) / 2;
 
 // A pawl for a ratchet() of the same sizes, drawn where it works round
 // the wheel's centre: give it the wheel's placement. Its tip rests against
@@ -325,18 +340,13 @@ function pawl_pivot(teeth, r, depth, length = 0, width = 8, at = 90, clearance =
 // hole at pawl_pivot(). Gravity, a rubber band or a spring wire holds it
 // down on the teeth.
 module pawl(teeth, r, depth, length = 0, width = 8, bore = 3, at = 90, clearance = 0.2) {
-  f = pawl_face(teeth, at);
-  g = pawl_lean(teeth, r, depth);
-  L = length > 0 ? length : r * 0.8;
-  n = [cos(f), sin(f)];
-  tc = [sin(f), -cos(f)];
-  u = cos(g) * tc + sin(g) * n;
-  v = cos(g) * n - sin(g) * tc;
-  T = (r - depth + clearance) * n + clearance * tc;
-  H = pawl_pivot(teeth, r, depth, length, width, at, clearance);
+  shortest = pawl_min_length(teeth, r, depth, width);
+  assert(length == 0 || length >= shortest, str("a pawl ", width, " mm wide must be at least ", ceil(2 * shortest) / 2, " mm long to clear the teeth: make it longer or narrower"));
+  p = pawl_points(teeth, r, depth, length, width, at, clearance);
+  H = (p[1] + p[2]) / 2;
   difference() {
     union() {
-      polygon([T, T + (L - width / 2) * u, T + (L - width / 2) * u + width * v, T + width / cos(g) * n]);
+      polygon(p);
       translate(H) circle(d = width);
     }
     translate(H) circle(d = bore);

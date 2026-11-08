@@ -571,11 +571,14 @@ part("wheel", at = [0, 0, 0]) ratchet(12, 30, 5);
 part("pawl", at = [0, 0, 0]) pawl(12, 30, 5);
 ```
 
-### `pawl_pivot(teeth, r, depth, length, width = 8, at = 90, clearance = 0.2)`, `pawl_face(teeth, at = 90)`, `pawl_lean(teeth, r, depth)`
+### `pawl_pivot(teeth, r, depth, length, width = 8, at = 90, clearance = 0.2)`, `pawl_points(...)`, `pawl_min_length(teeth, r, depth, width = 8)`, `pawl_face(teeth, at = 90)`, `pawl_lean(teeth, r, depth)`
 
-Where the pawl's pivot pin goes round the wheel's centre, the angle of the
-tooth face it rests on, and how far it leans out from the wheel's edge to
-clear the teeth as they pass.
+Where the pawl's pivot pin goes round the wheel's centre, its outline, the
+shortest it can be at a given width, the angle of the tooth face it rests
+on, and how far it leans out from the wheel's edge to clear the teeth as
+they pass. Left at 0, `length` is 0.8 × `r`, or the shortest that clears
+the teeth on a small wheel; a `length` given shorter than that is an
+error.
 
 ## Linkages
 
@@ -744,7 +747,9 @@ and boxes made to fit them.
 standing; cards `"business"`, `"us business"`, `"credit"`, `"japan"`,
 `"playing"`, `"bridge"`, `"tarot"`, `"postcard"` and `"us postcard"`, and
 photos `"4x6"`, `"5x7"`, `"8x10"`, `"10x15"`, `"13x18"` and the instant
-film sizes, lying down. An unknown name stops with the list of known ones.
+film sizes `"instant mini"`, `"instant square"`, `"instant wide"` and
+`"instant classic"`, lying down. An unknown name stops with the list of
+known ones.
 
 ### `part_size(name)`
 
@@ -767,9 +772,10 @@ part("dial") difference() { circle(d = 160); circle(d = m.hole); }
 
 A size turned to lie wider than tall, or to stand taller than wide.
 
-### `lookup_size(name, table)`, `size_names(table)`
+### `lookup_size(name, table)`, `size_names(table)`, `lookup_alias(name, aliases)`
 
-The size of a name in a table of `[name, size]`, and the names in it.
+The size of a name in a table of `[name, size]`, the names in it, and the
+name an older name stands for in a table of `[old, new]`.
 
 ## Symbols
 

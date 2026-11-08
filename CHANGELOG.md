@@ -26,6 +26,9 @@
   won't jam. `geneva_wheel()`, `geneva_lock()`, `geneva_crank()` and
   `geneva_turn()` make a Geneva drive; `ratchet()` and `pawl()` a wheel
   that turns one way only.
+- `kerf/sizes`: the instant film photo sizes are now `"instant mini"`,
+  `"instant square"`, `"instant wide"` and `"instant classic"`. The old
+  names still work.
 - `part(material = "red acrylic")` names a part's material without a
   `material()` round it.
 

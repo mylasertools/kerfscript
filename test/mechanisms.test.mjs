@@ -164,6 +164,26 @@ test('a Geneva wheel steps one slot a turn and clears its driver', () => {
   assert.throws(() => render('use <kerf/gears>\ngeneva_lock(8, 60, 6);'), /bore of at most 4.5 mm/);
 });
 
+test('a Geneva pin runs in the slots without touching the wheel', () => {
+  for (const n of [4, 6])
+    for (let a = -180; a < 180; a += 5) {
+      const src = `use <kerf/gears>\n$fn = 48; n = ${n}; C = 60; a = ${a}; rc = geneva_pin_radius(n, C);
+        part("wheel", at = [C, 0, 0], rotate = [0, 0, geneva_turn(n, C, a)]) geneva_wheel(n, C, 6);
+        part("pin", at = [rc * cos(a), rc * sin(a), 0]) circle(d = 6);`;
+      assert.ok(!collides(src), `${n} slots at ${a}`);
+    }
+});
+
+test('Geneva parts say how to fix sizes that will not work', () => {
+  // More slots move the slots' ends away from the axle
+  assert.throws(() => render('use <kerf/gears>\ngeneva_wheel(4, 30, 6, bore = 8);'), /use more slots/);
+  render('use <kerf/gears>\ngeneva_wheel(6, 30, 6, bore = 8);');
+  // The locking disc checks its own bore, not the wheel's
+  assert.throws(() => render('use <kerf/gears>\ngeneva_lock(6, 30, 10, bore = 5);'), /locking disc is too small/);
+  render('use <kerf/gears>\ngeneva_wheel(6, 30, 10, bore = 5);');
+  assert.throws(() => render('use <kerf/gears>\ngeneva_wheel(6, 30, 16);'), /pin is too thick/);
+});
+
 test('a pawl stops its ratchet turning back but lets it turn on', () => {
   const src = (rot, lift = 0) => `use <kerf/gears>\n$fn = 32;
     H = pawl_pivot(12, 30, 5);
@@ -174,4 +194,20 @@ test('a pawl stops its ratchet turning back but lets it turn on', () => {
   // Turning on, the pawl swings up over the tooth
   assert.ok(collides(src(15)));
   assert.ok(!collides(src(15, -8)));
+});
+
+test('a pawl on a small ratchet grows long enough to clear the teeth', () => {
+  const [len] = echo('use <kerf/gears>\necho(pawl_min_length(8, 10, 3) > 0.8 * 10);');
+  assert.equal(len, 'true');
+  // Its outline is a simple shape: the far end lies beyond the tip edge
+  const [ok] = echo(`use <kerf/gears>\np = pawl_points(8, 10, 3);
+    echo(norm(p[1] - p[0]) > norm(p[2] - p[3]));`);
+  assert.equal(ok, 'true');
+  const src = (rot) => `use <kerf/gears>\n$fn = 32;
+    part("wheel", rotate = [0, 0, ${rot}]) ratchet(8, 10, 3);
+    part("pawl", at = [0, 0, 0]) pawl(8, 10, 3);`;
+  assert.ok(!collides(src(0)));
+  // 3 degrees: on a wheel this small, 1 degree moves the face less than the clearance
+  assert.ok(collides(src(-3)), 'turning back runs into the pawl');
+  assert.throws(() => render('use <kerf/gears>\npawl(8, 10, 3, length = 6);'), /at least [\d.]+ mm long/);
 });
