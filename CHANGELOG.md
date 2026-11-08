@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.8.0 (2026-11-08)
+
+Language version 0.3, as in 0.7.0: programs run as before.
 
 - `hardware(shape = "ball")` (or `sides = 0`) is a ball of diameter `size`
   midway between `from` and `to`, which it may leave out: a bulb, a marble
