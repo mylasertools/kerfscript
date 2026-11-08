@@ -28,6 +28,7 @@ import {
   Scene,
   Shape,
   ShapeGeometry,
+  SphereGeometry,
   Vector3,
   WebGLRenderer,
 } from 'three';
@@ -128,21 +129,26 @@ function hardwareObject(h) {
   const a = new Vector3(...h.from);
   const b = new Vector3(...h.to);
   const length = a.distanceTo(b);
-  if (!(length > 0)) return null;
+  // sides = 0 is a ball of diameter size, centred at from
+  const ball = h.sides === 0 && !Array.isArray(h.size) && h.size > 0;
+  if (!(length > 0) && !ball) return null;
   const look = HARDWARE_KINDS[h.kind];
   const color = HARDWARE_COLORS[h.kind] ?? look?.color ?? '#c8c8c8';
+  const material = new MeshStandardMaterial({
+    color,
+    roughness: look?.metal ? 0.35 : 0.8,
+    metalness: look?.metal ? 0.6 : 0,
+    ...(look?.glow && { emissive: color, emissiveIntensity: 0.6 }),
+  });
+  if (ball) {
+    const mesh = new Mesh(new SphereGeometry(h.size / 2, 32, 16), material);
+    mesh.position.copy(a);
+    return mesh;
+  }
   const geo = Array.isArray(h.size)
     ? new BoxGeometry(h.size[0], length, h.size[1])
     : new CylinderGeometry(h.size / 2, h.size / 2, length, sides(h.sides));
-  const mesh = new Mesh(
-    geo,
-    new MeshStandardMaterial({
-      color,
-      roughness: look?.metal ? 0.35 : 0.8,
-      metalness: look?.metal ? 0.6 : 0,
-      ...(look?.glow && { emissive: color, emissiveIntensity: 0.6 }),
-    }),
-  );
+  const mesh = new Mesh(geo, material);
   // The box's y along the segment, its z along up
   const y = b.clone().sub(a).normalize();
   const up = new Vector3(...(h.up ?? [0, 0, 1]));

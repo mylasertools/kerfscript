@@ -441,9 +441,14 @@ test('flex_strip bends round its path and the plates cut its slots', () => {
 
 test('paper, card and photo sizes by name', () => {
   const r = render(
-    'use <kerf/sizes>\necho(paper_size("a5"), card_size("business"), landscape(photo_size("instax mini")));',
+    'use <kerf/sizes>\necho(paper_size("a5"), card_size("business"), landscape(photo_size("instant mini")), photo_size("Instax Mini") == photo_size("instant mini"));',
   );
-  assert.deepEqual(r.echoes, ['[148, 210], [85, 55], [86, 54]']);
+  assert.deepEqual(r.echoes, ['[148, 210], [85, 55], [86, 54], true']);
+  // Older names still work but aren't offered
+  assert.throws(
+    () => render('use <kerf/sizes>\necho(photo_size("x"));'),
+    (e) => /instant classic/.test(e.message) && !/instax|polaroid/i.test(e.message),
+  );
   assert.throws(
     () => render('use <kerf/sizes>\necho(paper_size("A11"));'),
     /Unknown paper size "A11"/,

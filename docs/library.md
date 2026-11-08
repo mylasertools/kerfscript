@@ -26,7 +26,9 @@ show each module's description when you hover over it.
 | [`kerf/hanging`](#hanging)         | Keyholes, holes and loops for hanging things on a wall         |
 | [`kerf/enclosure`](#enclosures)    | Boxes with a screwed-on lid, cutouts for ports and vents       |
 | [`kerf/calibration`](#calibration) | Test pieces that measure the kerf and how your sheet fits      |
-| [`kerf/gears`](#gears-and-cams)    | Spur gears, racks, lantern gears, cams and tappets             |
+| [`kerf/gears`](#gears-and-cams)    | Gears, racks, cams, Geneva drives, ratchets and pawls          |
+| [`kerf/linkage`](#linkages)        | Where linkage joints are at a crank angle                      |
+| [`kerf/cones`](#cones)             | Cones and cut-off cones cut flat, to roll up                   |
 | [`kerf/lock`](#lock)               | A lock with a key, three layers deep                           |
 | [`kerf/rings`](#rings)             | Round things of stacked rings on a crossed core                |
 | [`kerf/joints`](#joints)           | Two profiles halved into each other: crosses, fonts, domes     |
@@ -444,6 +446,27 @@ mesh with it turns `angle` degrees: the other way round.
 
 The turn that lines a gear's teeth up with the gear beside it along x.
 
+### `train_for(ratio, stages = 2, pinion = [10, 20], wheel = [20, 80])`
+
+Tooth counts for a train of `stages` gear pairs (1 to 3) whose ratio, the
+turns in for one turn out, comes nearest `ratio`. Each pair has a pinion
+of `pinion` teeth and a wheel of `wheel` teeth on the next axle. It
+returns `{stages = [[driver, driven], ...], ratio, error}`, `error` being
+how far off it is, as a fraction; of equally near trains it picks the one
+with fewest teeth. A ratio under 1 speeds up, so the wheels drive. It is
+built in, so it works without `use <kerf/gears>`.
+
+```kerf
+use <kerf/gears>
+
+// A year for the Earth in an orrery: [[10, 73], [10, 76], [12, 79]], 0.002% off
+t = train_for(365.25, 3);
+s = t.stages[0];
+part("pinion") spur_gear(s[0], 1.5);
+part("wheel", at = [gear_distance(s[0], s[1], 1.5), 0, 0], rotate = [0, 0, gear_phase(s[1])])
+  spur_gear(s[1], 1.5);
+```
+
 ### `rack(teeth, mod = 2, height, pressure = 20, backlash = 0.1)`
 
 A straight rack along +x, its pitch line at y = 0. A `spur_gear()` of the
@@ -466,6 +489,165 @@ The radius for `n` pegs or staves `pitch` apart.
 Cams: an `eccentric()` pushes a follower up and down by twice `offset`; a
 `snail_cam()` lifts it slowly from `r0` to `r1` over a turn and drops it at
 once, as a trip hammer works; `tappets()` lift a lever `n` times a turn.
+
+### `cam(lift, base_r, follower = "knife", roller_d = 0, bore = 6, steps = 180, square = false)`
+
+A cam whose profile comes from a lift curve: `lift` is a function of the
+angle (0 to 360) giving how far the follower rises above the base circle
+of radius `base_r`. The follower rides on the cam's top (+y) and moves
+straight up and down; turned anticlockwise by `a` degrees (`rotate = [0,
+0, a]`) the cam lifts it `lift(a)`. A `"knife"` follower rides the curve
+itself; a `"roller"` of diameter `roller_d` rolls on a profile inside it.
+
+```kerf
+use <kerf/gears>
+
+$fn = 48;
+turn = 0; // the cam's angle
+// A bird that pecks twice, then rests
+peck = function(a) cam_rise(a, 0, 40, 8) - cam_rise(a, 40, 80, 8) + cam_rise(a, 100, 140, 8) - cam_rise(a, 140, 180, 8);
+part("cam", rotate = [0, 0, turn]) cam(peck, 25, "roller", 10);
+part("roller", at = [0, cam_follower(peck, 25, turn, 10), 0]) difference() { circle(d = 10); circle(d = 3); }
+```
+
+### `cam_rise(a, a0, a1, height)`
+
+A smooth (cycloidal) rise of `height` between angles `a0` and `a1`: 0
+before, `height` after. Add and take away rises to make dwells, rises and
+falls.
+
+### `cam_follower(lift, base_r, angle, roller_d = 0)`, `cam_pressure(lift, base_r, roller_d = 0)`
+
+How high the follower's tip, or its roller's centre, stands above the
+cam's axle at `angle`, to place it from the same curve. `cam_pressure()` is
+the steepest pressure angle over a turn: keep it under about 30 degrees,
+with a bigger base circle or a longer rise, or the follower jams.
+
+### `cam_pitch(lift, base_r, roller_d = 0, steps = 180)`
+
+The curve the follower's tip or roller centre follows, in the cam's turn.
+
+### `geneva_wheel(slots, distance, pin_d = 6, bore = 6, clearance = 0.2)`, `geneva_lock(...)`, `geneva_crank(...)`
+
+A Geneva drive: a driver turning all the time steps a wheel on one slot
+each turn and locks it in between, for counters, calendars and carousels
+that stop to show each scene. The driver's axle is at the origin and the
+wheel's `distance` along +x. The wheel and the locking disc lie side by
+side in one plane; the crank above the disc carries a dowel pin of `pin_d`
+that runs in the slots. With many slots the wheel comes close to the
+driver's axle, and `geneva_lock()` says how small the bore must be.
+
+```kerf
+use <kerf/gears>
+
+$fn = 48;
+a = 0; // the driver's turn
+part("wheel", at = [60, 0, 0], rotate = [0, 0, geneva_turn(6, 60, a)]) geneva_wheel(6, 60, 6);
+part("lock", at = [0, 0, 0], rotate = [0, 0, a]) geneva_lock(6, 60, 6);
+part("crank", at = [0, 0, $thickness], rotate = [0, 0, a]) geneva_crank(6, 60, 6);
+```
+
+### `geneva_turn(slots, distance, angle)`
+
+How far the wheel has turned (clockwise) when the driver has turned
+`angle` anticlockwise from its pin pointing at the wheel: `-360 / slots`
+for each whole turn. With `geneva_pin_radius()`, `geneva_wheel_radius()`
+and `geneva_lock_radius()` for the sizes.
+
+### `ratchet(teeth, r, depth, bore = 6, square = false)`, `pawl(teeth, r, depth, length, width = 8, bore = 3, at = 90, clearance = 0.2)`
+
+A ratchet wheel that turns anticlockwise freely, and a pawl that stops it
+turning back: for a crank that winds one way, a counter or a typewriter
+carriage. The pawl is drawn where it works round the wheel's centre, its
+tip on the tooth face nearest `at` degrees, so give it the wheel's
+placement. It turns on a pin at `pawl_pivot()`, and gravity, a rubber band
+or a spring wire keeps it down on the teeth.
+
+```kerf
+use <kerf/gears>
+
+$fn = 32;
+part("wheel", at = [0, 0, 0]) ratchet(12, 30, 5);
+part("pawl", at = [0, 0, 0]) pawl(12, 30, 5);
+```
+
+### `pawl_pivot(teeth, r, depth, length, width = 8, at = 90, clearance = 0.2)`, `pawl_points(...)`, `pawl_min_length(teeth, r, depth, width = 8)`, `pawl_face(teeth, at = 90)`, `pawl_lean(teeth, r, depth)`
+
+Where the pawl's pivot pin goes round the wheel's centre, its outline, the
+shortest it can be at a given width, the angle of the tooth face it rests
+on, and how far it leans out from the wheel's edge to clear the teeth as
+they pass. Left at 0, `length` is 0.8 × `r`, or the shortest that clears
+the teeth on a small wheel; a `length` given shorter than that is an
+error.
+
+## Linkages
+
+`use <kerf/linkage>`
+
+Where the joints of a linkage are at a crank angle, so moving parts are
+placed from the same numbers as the links' lengths: steam engine pistons,
+typebars, walking legs, waving arms. Each takes the linkage drawn flat.
+
+```kerf
+use <kerf/linkage>
+
+$fn = 32;
+angle = 60; // the crank's turn
+j = four_bar(80, 20, 70, 50, angle);
+part("crank", at = [0, 0, 3], rotate = [0, 0, angle]) hull() { circle(d = 10); translate([20, 0]) circle(d = 10); }
+part("rocker", at = [80, 0, 3], rotate = [0, 0, link_angle([80, 0], j[1])])
+  hull() { circle(d = 10); translate([50, 0]) circle(d = 10); }
+```
+
+### `circle_meet(a, ra, b, rb, side = 1)`
+
+Where a circle of radius `ra` round `a` meets one of radius `rb` round `b`:
+the point left of the line from `a` to `b`, or right of it with `side =
+-1`. `undef` when they don't meet. Two links of those lengths from those
+pivots join there.
+
+### `slider_crank(r, l, angle, offset = 0)`, `slider_stroke(r, l, offset = 0)`
+
+A crank of radius `r` round the origin drives a slider along `y = offset`
+through a rod `l` long: `[crank pin, slider pin]` at the crank's `angle`,
+or `undef` where the rod can't reach. `slider_stroke()` is how far the
+slider travels.
+
+### `four_bar(ground, crank, coupler, rocker, angle, side = 1)`, `four_bar_turns(ground, crank, coupler, rocker)`
+
+A four-bar linkage with the crank's pivot at the origin and the rocker's at
+`[ground, 0]`: `[crank end, rocker end]` at the crank's `angle`, or
+`undef` where the links can't close. `four_bar_turns()` is true when the
+crank turns all the way round (Grashof's rule).
+
+### `link_angle(a, b)`
+
+The angle of the line from `a` to `b`, to turn a link along it.
+
+## Cones
+
+`use <kerf/cones>`
+
+Cones and cut-off cones cut flat from paper, card, veneer or thin plastic,
+to roll up: gramophone horns, lampshades, funnels.
+
+```kerf
+use <kerf/cones>
+
+$fn = 64;
+part("shade") cone_flat(60, 25, 70, tab = 8);
+```
+
+### `cone_flat(r1, r2, h, tab = 0, steps = 0)`
+
+The flat pattern of a cone of radius `r1` at one end, `r2` at the other,
+`h` high: a ring sector with its apex at the origin, opening anticlockwise
+from +x. `tab` adds a glue tab along the far edge with its fold scored.
+Equal radii make a cylinder: a rectangle `2 * PI * r1` wide.
+
+### `cone_pattern(r1, r2, h)`
+
+The sector's `[outer radius, inner radius, angle, slant length]`.
 
 ## Lock
 
@@ -565,15 +747,35 @@ and boxes made to fit them.
 standing; cards `"business"`, `"us business"`, `"credit"`, `"japan"`,
 `"playing"`, `"bridge"`, `"tarot"`, `"postcard"` and `"us postcard"`, and
 photos `"4x6"`, `"5x7"`, `"8x10"`, `"10x15"`, `"13x18"` and the instant
-film sizes, lying down. An unknown name stops with the list of known ones.
+film sizes `"instant mini"`, `"instant square"`, `"instant wide"` and
+`"instant classic"`, lying down. An unknown name stops with the list of
+known ones.
+
+### `part_size(name)`
+
+A bought part's sizes as a record: `body = [width, depth, height]`, and
+for a part with a shaft its diameter `shaft`, the `shaft_length` it stands
+out of the body and the `hole` to cut for it. `"music-18"` is an 18-note
+wind-up music box movement (its shaft is the winding key's), and
+`"quartz-clock"` a 56 mm quartz clock movement with the 16.5 mm shaft, for
+dials up to `dial = 8` mm thick. `"marble-16"` and `"marble-25"` are
+marbles. These are common retail sizes, which vary: measure yours.
+
+```kerf
+use <kerf/sizes>
+
+m = part_size("quartz-clock");
+part("dial") difference() { circle(d = 160); circle(d = m.hole); }
+```
 
 ### `landscape(size)`, `portrait(size)`
 
 A size turned to lie wider than tall, or to stand taller than wide.
 
-### `lookup_size(name, table)`, `size_names(table)`
+### `lookup_size(name, table)`, `size_names(table)`, `lookup_alias(name, aliases)`
 
-The size of a name in a table of `[name, size]`, and the names in it.
+The size of a name in a table of `[name, size]`, the names in it, and the
+name an older name stands for in a table of `[old, new]`.
 
 ## Symbols
 

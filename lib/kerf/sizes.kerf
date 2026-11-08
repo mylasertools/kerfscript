@@ -17,10 +17,19 @@ function card_size(name) = let (s = lookup_size(name, CARD_SIZES))
   is_undef(s) ? assert(false, str("Unknown card size \"", name, "\". Known: ", size_names(CARD_SIZES))) : s;
 
 // Photo print sizes as [width, height], landscape: "4x6", "5x7", "8x10",
-// "10x15" (cm), "13x18" (cm), "instax mini", "instax square", "instax wide",
-// "polaroid".
-function photo_size(name) = let (s = lookup_size(name, PHOTO_SIZES))
+// "10x15" (cm), "13x18" (cm), and instant film: "instant mini", "instant
+// square", "instant wide" and "instant classic".
+function photo_size(name) = let (s = lookup_size(lookup_alias(name, PHOTO_ALIASES), PHOTO_SIZES))
   is_undef(s) ? assert(false, str("Unknown photo size \"", name, "\". Known: ", size_names(PHOTO_SIZES))) : s;
+
+// A bought part's sizes by name, as a record: `body` [width, depth,
+// height], and for parts with one, the `shaft` diameter, the `shaft_length`
+// it stands out of the body and the `hole` to cut for it. Retail sizes vary:
+// measure yours. "music-18" (an 18-note wind-up music box movement, shaft
+// the winding key's), "quartz-clock" (a 56 mm quartz clock movement with
+// the 16.5 mm shaft for dials up to 8 mm thick), "marble-16" and "marble-25".
+function part_size(name) = let (s = lookup_size(name, PART_SIZES))
+  is_undef(s) ? assert(false, str("Unknown part \"", name, "\". Known: ", size_names(PART_SIZES))) : s;
 
 // A size turned to lie wider than tall
 function landscape(size) = size[0] >= size[1] ? size : [size[1], size[0]];
@@ -43,12 +52,27 @@ CARD_SIZES = [
 ];
 PHOTO_SIZES = [
   ["4x6", [152.4, 101.6]], ["5x7", [177.8, 127]], ["8x10", [254, 203.2]],
-  ["10x15", [150, 100]], ["13x18", [180, 130]], ["instax mini", [54, 86]],
-  ["instax square", [72, 86]], ["instax wide", [108, 86]], ["polaroid", [88, 107]]
+  ["10x15", [150, 100]], ["13x18", [180, 130]], ["instant mini", [54, 86]],
+  ["instant square", [72, 86]], ["instant wide", [108, 86]], ["instant classic", [88, 107]]
+];
+// Older names that still work, left out of the list of known names
+PHOTO_ALIASES = [
+  ["instax mini", "instant mini"], ["instax square", "instant square"],
+  ["instax wide", "instant wide"], ["polaroid", "instant classic"]
+];
+PART_SIZES = [
+  ["music-18", {body = [50, 44, 20], shaft = 3.5, hole = 6}],
+  ["quartz-clock", {body = [56, 56, 16], shaft = 7.6, shaft_length = 16.5, hole = 8, dial = 8}],
+  ["marble-16", {body = [16, 16, 16]}],
+  ["marble-25", {body = [25, 25, 25]}]
 ];
 
 // The size of that name in a table of [name, size], ignoring case
 function lookup_size(name, table) = let (k = lower(name), hit = [for (e = table) if (lower(e[0]) == k) e[1]])
   len(hit) ? hit[0] : undef;
+// The name an older name stands for in a table of [old, new], or the name
+// itself
+function lookup_alias(name, aliases) = let (k = lower(name), hit = [for (e = aliases) if (lower(e[0]) == k) e[1]])
+  len(hit) ? hit[0] : name;
 // The names in a table, for messages
 function size_names(table) = join([for (e = table) e[0]], ", ");

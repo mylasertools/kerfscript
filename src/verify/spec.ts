@@ -623,6 +623,7 @@ export function validateSnapshots(inputs: unknown): VerificationIssue[] {
         !vector(h.to, 3) ||
         [...(h.from as number[]), ...(h.to as number[])].some((x) => Math.abs(x) > 1e7) ||
         !coordinate(h.up) ||
+        (h.shape !== undefined && (h.shape !== 'ball' || !positive(h.size))) ||
         !(
           (positive(h.size) && h.size <= 1e6) ||
           (vector(h.size, 2) && (h.size as number[]).every((x) => positive(x) && x <= 1e6))

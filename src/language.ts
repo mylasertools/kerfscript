@@ -151,6 +151,12 @@ const SPECIAL: Record<string, { value?: string; doc: string }> = {
   },
   $mirrored: { doc: 'True inside a mirrored part and on the back face, so `text()` reads right' },
   $bounds: { doc: 'Set by `measure()` for the children after the one it measures' },
+  $area: {
+    doc: 'Set by `measure()`: the area of material the measured child cuts, holes taken out, in square millimetres',
+  },
+  $centroid: {
+    doc: "Set by `measure()`: the measured child's balance point `[x, y]`, the centroid of its material",
+  },
   PI: { value: '3.141592653589793', doc: 'π, half a turn in radians' },
 };
 const CONSTANTS = ['true', 'false', 'undef'];

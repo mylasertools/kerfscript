@@ -191,6 +191,8 @@ module hang_hole(d = 5) {
 | `$label_parts`    | `false`       | engrave each part's number on its back face, as in the parts list and steps |
 | `$min_width`      | `1.5`         | warn where a part's material is narrower than this; `0` turns it off        |
 | `$bounds`         |               | set by `measure()` for the children after the one it measures               |
+| `$area`           |               | set by `measure()`: the area of material the measured child cuts            |
+| `$centroid`       |               | set by `measure()`: the measured child's balance point `[x, y]`             |
 
 ## Layers
 
@@ -262,6 +264,8 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
   `rotate = orient(x, z)` turns the part's own x and z axes onto two
   directions; `euler(rotation(a) * rotation(b))` turns by `b`, then by `a`.
 - More about a part, all named:
+  - `material = "red acrylic"`: the part's material, as `material(name =
+...)` would set `$material` round it.
   - `stack = n`: n layers glued at each placement, one thickness apart
     along the part's z. The parts list says how many make a stack.
   - `mirror = true`: the part is cut mirrored left to right (x becomes
@@ -296,12 +300,15 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
   text as `steps` and each placed part's `step`. The 3D view shows the
   model built up a step at a time. A step inside a step is a sub-step,
   `"outer: inner"`; `step(text, substeps = false)` takes inner steps in.
-- `hardware(kind, from, to, size = 6, up, sides = 24, label)` lists
-  hardware the assembly needs, from one point to another: a dowel, a screw,
-  a magnet, paper. `size` is a diameter, or `[w, h]` for a flat section
-  whose `h` points along `up` (by default up, or along y for something
-  standing upright). A round one is drawn with `sides` sides, 3 to 128.
-  `render()` returns it as `hardware`, and `kerf check` lists it.
+- `hardware(kind, from, to, size = 6, up, sides = 24, shape = "rod", label)`
+  lists hardware the assembly needs, from one point to another: a dowel, a
+  screw, a magnet, paper. `size` is a diameter, or `[w, h]` for a flat
+  section whose `h` points along `up` (by default up, or along y for
+  something standing upright). A round one is drawn with `sides` sides, 3
+  to 128. `shape = "ball"` (or `sides = 0`) is a ball of diameter `size`
+  midway between `from` and `to`; `to` may be left out. It comes back with
+  `sides = 0` and `from` and `to` both at its centre. `render()` returns it
+  as `hardware`, and `kerf check` lists it.
 - Shapes outside any part form one part named `part`.
 - `material(thickness, kerf, name) { ... }` sets those special variables for
   its children.
@@ -366,7 +373,7 @@ playground, the command line and `kerfscript.wasm` have `Atkinson`
 | `pattern(spacing, stagger = 0)`                | repeats its first child over the area of the others, clipped at the edge                                                                |
 | `hatch(angle = 45, pitch = 5, width)`          | parallel lines across the children's area, or stripes `width` wide                                                                      |
 | `paint(layers)`                                | each child loses the area of every later one; child i goes on `layers[i]`. A child wholly on an area of its own layer warns             |
-| `measure(draw = false)`                        | `$bounds` = `[x0, y0, x1, y1]` of the first child, for the children after                                                               |
+| `measure(draw = false)`                        | `$bounds` = `[x0, y0, x1, y1]`, `$area` and `$centroid` = `[x, y]` of the first child, for the children after                           |
 | `hull()`                                       | convex hull; each named part inside gets its own hull                                                                                   |
 | `offset(r)` / `offset(delta, chamfer = false)` | grow (positive) or shrink areas; `r` rounds corners                                                                                     |
 | `stroke(width)`                                | turns lines into areas of that width, for cutting single line art                                                                       |
@@ -411,6 +418,7 @@ arguments.
 | `min(values)`, `max(values)`                   | Minimum or maximum of a list; also accept separate values            |
 | `clamp(x, low, high)`                          | Limit x to the given interval                                        |
 | `lerp(a, b, t)`                                | Interpolate between numbers or vectors; t = 0 gives a, t = 1 gives b |
+| `train_for(ratio, stages = 2, pinion, wheel)`  | Tooth counts for a gear train nearest `ratio`; see kerf/gears        |
 | `norm(v)`                                      | Length of a vector                                                   |
 | `cross(a, b)`                                  | Cross product; a scalar for 2D vectors or a vector for 3D vectors    |
 
@@ -423,6 +431,7 @@ A path is a list of `[x, y]` points.
 | `path_length(points)`                              | Length along the path                                                |
 | `point_at(points, s)`                              | The point `s` along the path; past either end it carries on straight |
 | `heading_at(points, s)`                            | The path's direction `s` along it, in degrees from +x                |
+| `offset_path(points, d, closed = false)`           | The path moved `d` to its left (right for `d < 0`), corners mitred   |
 | `path_points(d, tolerance)`                        | The points of SVG path data, a list of points for each subpath       |
 | `rotation(angles)`                                 | The 3 × 3 matrix of `[x, y, z]` degrees as `part()` turns; use `*`   |
 | `euler(matrix)`                                    | The `[x, y, z]` angles of a rotation matrix, for `rotate`            |

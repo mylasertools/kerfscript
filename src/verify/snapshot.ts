@@ -57,6 +57,7 @@ export function snapshotFromRender(
           to: h.to,
           size: h.size,
           up: h.up,
+          ...(h.sides === 0 && { shape: 'ball' as const }),
         })),
         warnings: result.warnings,
         legacyHardware: result.echoes.some((s) => s.startsWith('hardware, ')),

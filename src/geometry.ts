@@ -331,6 +331,31 @@ export function area(p: Poly): number {
   return -a / 2;
 }
 
+/** The area of regions (holes counting against it) and their centroid. */
+export function regionMoments(regions: Poly[]): { area: number; centroid: [number, number] } {
+  let a = 0,
+    cx = 0,
+    cy = 0;
+  for (const p of regions) {
+    if (p.length < 3) continue;
+    // About the ring's first point, so far-off rings keep their precision
+    const [ox, oy] = p[0];
+    for (let i = 0, j = p.length - 1; i < p.length; j = i++) {
+      const xj = p[j][0] - ox,
+        yj = p[j][1] - oy,
+        xi = p[i][0] - ox,
+        yi = p[i][1] - oy;
+      const k = xj * yi - xi * yj;
+      a += k / 2;
+      cx += ((xj + xi) * k) / 6 + (ox * k) / 2;
+      cy += ((yj + yi) * k) / 6 + (oy * k) / 2;
+    }
+  }
+  return Math.abs(a) < 1e-12
+    ? { area: 0, centroid: [0, 0] }
+    : { area: Math.abs(a), centroid: [cx / a, cy / a] };
+}
+
 export function multiply(m: Matrix, n: Matrix): Matrix {
   return [
     m[0] * n[0] + m[2] * n[1],

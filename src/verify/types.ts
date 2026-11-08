@@ -55,6 +55,8 @@ export interface SnapshotHardware {
   to: Vec3;
   size: number | [number, number];
   up: Vec3;
+  /** A ball of diameter size centred at from (from and to are the same point) */
+  shape?: 'ball';
 }
 
 export interface VerificationSnapshot {
