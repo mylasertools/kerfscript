@@ -20,6 +20,8 @@
   scored glue tab, and `cone_pattern()` gives its sector.
 - `kerf/sizes`: `part_size()` gives the sizes of bought parts: a music box
   movement, a quartz clock movement and marbles.
+- `part(material = "red acrylic")` names a part's material without a
+  `material()` round it.
 
 ## 0.7.0 (2026-11-03)
 

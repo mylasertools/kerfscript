@@ -2000,6 +2000,9 @@ export class Evaluator {
           bendArg === undefined
             ? undefined
             : this.placements(at, turn, qty);
+        // material = "red acrylic" names this part's material, as material() does
+        const materialArg = this.arg(c.args, 'material', -1);
+        if (materialArg !== undefined) c.env.vars.set('$material', toText(materialArg));
         const t = this.thickness(c.env);
         if (placements && (framed || stack > 1))
           placements = placements.flatMap((pl) => {

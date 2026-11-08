@@ -264,6 +264,8 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
   `rotate = orient(x, z)` turns the part's own x and z axes onto two
   directions; `euler(rotation(a) * rotation(b))` turns by `b`, then by `a`.
 - More about a part, all named:
+  - `material = "red acrylic"`: the part's material, as `material(name =
+...)` would set `$material` round it.
   - `stack = n`: n layers glued at each placement, one thickness apart
     along the part's z. The parts list says how many make a stack.
   - `mirror = true`: the part is cut mirrored left to right (x becomes

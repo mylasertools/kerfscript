@@ -458,6 +458,7 @@ export const SIGNATURES: Signature[] = [
       named('rotate', 'How the part is turned in the assembled view, [x, y, z] in degrees'),
       named('stack', 'Layers glued in a stack at each placement, one thickness apart', '1'),
       named('mirror', 'Cut the part mirrored left to right, its text still reading', 'false'),
+      named('material', 'The material it is cut from, as material(name = ...) sets it'),
       named('bend', 'Living hinge bends in the assembled view: [x0, x1, angle] or a list'),
       named('on', 'The name of a bent part this one is glued to, to move with it'),
       named('slots', 'Names of parts whose tabs pass through this one: their slots are cut'),

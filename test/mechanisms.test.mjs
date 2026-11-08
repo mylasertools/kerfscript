@@ -117,3 +117,16 @@ test('part_size gives bought parts by name', () => {
   );
   assert.throws(() => render('use <kerf/sizes>\necho(part_size("x"));'), /Unknown part "x"/);
 });
+
+test('part(material = ...) names its own material', () => {
+  const r = render(
+    '$material = "ply"; part("a", material = "red acrylic") square(5); part("b") square(5);',
+  );
+  assert.deepEqual(
+    r.parts.map((p) => [p.name, p.material]),
+    [
+      ['a', 'red acrylic'],
+      ['b', 'ply'],
+    ],
+  );
+});

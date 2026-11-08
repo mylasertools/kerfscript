@@ -95,6 +95,8 @@ place(at = [20, 10, 30], rotate = [0, 0, 90]) box([80, 60, 40], name = "crate");
 - `stack = 3` glues three layers at each placement, one thickness apart:
   thick feet, posts and blocks from thin sheet. The parts list says how
   many make a stack.
+- `material = "red acrylic"` names the material the part is cut from,
+  as wrapping it in `material(name = "red acrylic")` would.
 - `mirror = true` cuts the part mirrored left to right. A lopsided end
   plate's other half is the same part mirrored, and its engraving still
   reads the right way round.
