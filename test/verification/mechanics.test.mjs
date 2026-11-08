@@ -725,3 +725,10 @@ test('separately retained loads are not stable as one assembly', () => {
   assert.equal(checked.status, 'unverified', JSON.stringify(checked));
   assert.match(checked.message, /separate roots/);
 });
+test('a ball of hardware has an envelope round its centre', () => {
+  // A 10 mm ball over a plate: clear 1 mm above it, touching at 5
+  const source =
+    'z=6; $thickness=1; part("plate",at=[-10,-10,0]) rect([20,20]); hardware("ball",[0,0,z+1],size=10,shape="ball",label="marble");';
+  assert.equal(result(spec([rigid]), [snap(source)], 'clear')[0].status, 'pass');
+  assert.equal(result(spec([rigid]), [snap(source, { z: 4 })], 'clear')[0].status, 'fail');
+});

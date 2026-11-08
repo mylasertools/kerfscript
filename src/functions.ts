@@ -317,6 +317,109 @@ export const FUNCTIONS: Record<string, Builtin> = {
   heading_at: def('points, s', (a, c) =>
     clean(alongPath(pts(a[0], 'heading_at', c), num(a[1], 'heading_at')).heading),
   ),
+  // The path moved sideways by d, to its left going along it (right for
+  // d < 0), each corner mitred: the two edges of a strip drawn along a curve
+  offset_path: def('points, d, closed', (a, c) => {
+    const p = pts(a[0], 'offset_path', c).filter(
+      ([x, y], k, all) => k === 0 || x !== all[k - 1][0] || y !== all[k - 1][1],
+    );
+    const d = num(a[1], 'offset_path');
+    const closed = a[2] === true;
+    // A closed path given with its first point again at the end keeps it
+    const again = closed && p.length > 1 && p[0][0] === p.at(-1)![0] && p[0][1] === p.at(-1)![1];
+    if (again) p.pop();
+    if (p.length < 2) throw new Error('offset_path(): a path needs at least two points');
+    c.step(p.length);
+    const n = p.length;
+    // The left normal of the edge from point i to i + 1
+    const normal = (i: number): [number, number] => {
+      const [x0, y0] = p[i % n],
+        [x1, y1] = p[(i + 1) % n];
+      const l = Math.hypot(x1 - x0, y1 - y0);
+      return [-(y1 - y0) / l, (x1 - x0) / l];
+    };
+    const out = p.map(([x, y], i) => {
+      const first = !closed && i === 0,
+        last = !closed && i === n - 1;
+      const u = first ? normal(0) : normal((i - 1 + n) % n);
+      const v = last ? normal(n - 2) : normal(i);
+      // The mitre: the mean normal, made longer as the corner turns, up to
+      // four times d at the sharpest corners
+      let [mx, my] = [u[0] + v[0], u[1] + v[1]];
+      const ml = Math.hypot(mx, my);
+      if (ml < 1e-9) [mx, my] = u;
+      else {
+        const k = Math.min(2 / (ml * ml), 4 / ml);
+        [mx, my] = [mx * k, my * k];
+      }
+      return [clean(x + d * mx), clean(y + d * my)];
+    });
+    return again ? [...out, out[0]] : out;
+  }),
+  // Tooth counts for a gear train of `stages` pairs whose ratio (turns in
+  // for one turn out) comes nearest `ratio`
+  train_for: def('ratio, stages, pinion, wheel', (a, c) => {
+    const R = num(a[0], 'train_for');
+    if (!(R > 0) || !Number.isFinite(R)) throw new Error('train_for(): ratio must be more than 0');
+    const n = a[1] === undefined ? 2 : num(a[1], 'train_for');
+    if (!(n === 1 || n === 2 || n === 3)) throw new Error('train_for(): stages must be 1, 2 or 3');
+    const span = (v: Value, d: [number, number], what: string): [number, number] => {
+      if (v === undefined) return d;
+      if (!Array.isArray(v) || v.length !== 2 || !v.every((x) => typeof x === 'number'))
+        throw new Error(`train_for(): ${what} must be [fewest, most] teeth`);
+      const [lo, hi] = [Math.ceil(v[0] as number), Math.floor(v[1] as number)];
+      if (!(lo >= 6 && hi >= lo && hi <= 400))
+        throw new Error(`train_for(): ${what} teeth must be from 6 to 400, fewest first`);
+      return [lo, hi];
+    };
+    const [p0, p1] = span(a[2], [10, 20], 'pinion');
+    const [w0, w1] = span(a[3], [20, 80], 'wheel');
+    // A ratio under 1 speeds up: search its inverse, then drive from the wheels
+    const up = R < 1;
+    const target = up ? 1 / R : R;
+    const pairs: [number, number][] = [];
+    for (let p = p0; p <= p1; p++) for (let w = Math.max(w0, p); w <= w1; w++) pairs.push([p, w]);
+    let best: { stages: [number, number][]; err: number; teeth: number } | undefined;
+    const consider = (stages: [number, number][]) => {
+      const r = stages.reduce((x, [p, w]) => (x * w) / p, 1);
+      const err = Math.abs(r / target - 1);
+      const teeth = stages.reduce((t, [p, w]) => t + p + w, 0);
+      if (
+        !best ||
+        err < best.err - 1e-12 ||
+        (Math.abs(err - best.err) <= 1e-12 && teeth < best.teeth)
+      )
+        best = { stages: stages.map((s) => [...s] as [number, number]), err, teeth };
+    };
+    // The last stage's wheel is worked out for each pinion; the stages before
+    // it are tried in order of their pairs, so each train is tried once
+    const last = (before: [number, number][], rest: number) => {
+      c.step();
+      for (let p = p0; p <= p1; p++)
+        for (const w of [Math.floor(rest * p), Math.ceil(rest * p)])
+          if (w >= Math.max(w0, p) && w <= w1) consider([...before, [p, w]]);
+    };
+    if (n === 1) last([], target);
+    else
+      for (let i = 0; i < pairs.length; i++) {
+        const r1 = pairs[i][1] / pairs[i][0];
+        if (n === 2) last([pairs[i]], target / r1);
+        else
+          for (let j = i; j < pairs.length; j++)
+            last([pairs[i], pairs[j]], target / r1 / (pairs[j][1] / pairs[j][0]));
+      }
+    if (!best) throw new Error(`train_for(): no train of ${n} stages reaches a ratio of ${R}`);
+    const stages = best.stages.map(([p, w]) => (up ? [w, p] : [p, w]));
+    const ratio = stages.reduce((x, [d, e]) => (x * e) / d, 1);
+    return {
+      type: 'record',
+      fields: new Map<string, Value>([
+        ['stages', stages],
+        ['ratio', ratio],
+        ['error', ratio / R - 1],
+      ]),
+    };
+  }),
   // The points of SVG path data, each subpath as one list
   path_points: def('d, tolerance', (a, c) => {
     if (typeof a[0] !== 'string') throw new Error('path_points() needs SVG path data');

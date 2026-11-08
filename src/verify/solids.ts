@@ -4,7 +4,7 @@ import { union, type Poly } from '../geometry.js';
 import { multiply, translation, type Vec3 } from '../assembly.js';
 import { apply, dot, EPS, length, materialGuard, netArea, signedArea, sub } from './geometry.js';
 import { findHardware, findPart } from './spec.js';
-import type { BodyRef, Trajectory, VerificationSnapshot } from './types.js';
+import type { BodyRef, SnapshotHardware, Trajectory, VerificationSnapshot } from './types.js';
 
 export class WorkBudget {
   constructor(public remaining = 2000000) {}
@@ -126,9 +126,21 @@ export function allBodies(s: VerificationSnapshot): BodyRef[] {
     throw new Error('Physical inventory has ambiguous identities.');
   return refs;
 }
+// The segment a piece of hardware's envelope runs along. A ball's is the
+// upright diameter through its centre.
+export function hardwareEnds(h: SnapshotHardware): [Vec3, Vec3] {
+  if (h.shape !== 'ball' || typeof h.size !== 'number') return [h.from, h.to];
+  const r = h.size / 2;
+  return [
+    [h.from[0], h.from[1], h.from[2] - r],
+    [h.from[0], h.from[1], h.from[2] + r],
+  ];
+}
 export function bodyMatrix(s: VerificationSnapshot, r: BodyRef): number[] {
   if ('part' in r) return findPart(s, r).matrix;
-  const h = findHardware(s, r),
+  const found = findHardware(s, r),
+    [from, to] = hardwareEnds(found),
+    h = { ...found, from, to },
     z = unit(sub(h.to, h.from));
   if (!length(sub(h.to, h.from)))
     throw new Error('Zero-length hardware needs an explicit physical shape.');
@@ -172,7 +184,8 @@ export function makeSolid(s: VerificationSnapshot, ref: BodyRef, budget: WorkBud
   }
   const h = findHardware(s, ref),
     m = bodyMatrix(s, ref),
-    depth = length(sub(h.to, h.from));
+    [a, b] = hardwareEnds(h),
+    depth = length(sub(b, a));
   if (depth < EPS) throw new Error('Hardware needs a nonzero cylindrical or box envelope.');
   if (Array.isArray(h.size)) {
     const [w, t] = h.size,
@@ -191,6 +204,18 @@ export function makeSolid(s: VerificationSnapshot, ref: BodyRef, budget: WorkBud
         r * Math.cos((i * 2 * Math.PI) / n),
         r * Math.sin((i * 2 * Math.PI) / n),
       ]);
+  if (h.shape === 'ball') {
+    // Outside: the cylinder round the ball. Inside: the cylinder in it, as
+    // wide as it is tall, which the ball holds whole.
+    const r = h.size / 2,
+      k = r / Math.SQRT2,
+      lift = translation(0, 0, r - k);
+    return {
+      ref,
+      inner: [prism(ring(k), 2 * k, multiply(m, lift))],
+      outer: [prism(ring(r / Math.cos(Math.PI / n)), depth, m)],
+    };
+  }
   return {
     ref,
     inner: [prism(ring(h.size / 2), depth, m)],

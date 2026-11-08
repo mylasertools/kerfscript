@@ -13,7 +13,17 @@ import {
 } from './geometry.js';
 import { glueContact, unknown } from './joints.js';
 import { nativeFixedPairs } from './relations.js';
-import { allBodies, bodyMatrix, cross, key, makeSolid, scale, unit, WorkBudget } from './solids.js';
+import {
+  allBodies,
+  bodyMatrix,
+  cross,
+  hardwareEnds,
+  key,
+  makeSolid,
+  scale,
+  unit,
+  WorkBudget,
+} from './solids.js';
 import { findPart } from './spec.js';
 import type {
   AssemblySupportClaim,
@@ -160,7 +170,7 @@ function centroid(s: VerificationSnapshot, r: BodyRef): Vec3 {
   if ('hardware' in r) {
     const m = bodyMatrix(s, r),
       h = s.hardware.find((h) => h.label === r.hardware)!;
-    return apply(m, [0, 0, length(sub(h.to, h.from)) / 2]);
+    return apply(m, [0, 0, length(sub(hardwareEnds(h)[1], hardwareEnds(h)[0])) / 2]);
   }
   const p = findPart(s, r),
     guard = materialGuard(p);

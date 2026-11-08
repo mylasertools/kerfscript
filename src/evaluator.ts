@@ -14,6 +14,7 @@ import {
   isEmpty,
   bounds,
   layerBounds,
+  regionMoments,
   lineShape,
   merge,
   offset,
@@ -1878,6 +1879,17 @@ export class Evaluator {
               ),
             );
           c.env.vars.set('$bounds', b ? [...b] : undefined);
+          // The material's area and its balance point, from what is cut
+          const layersOf = [s.layers, ...s.parts.map((p) => p.layers)];
+          const cut = layersOf.flatMap((ls) => ls.get('cut')?.regions ?? []);
+          const regions = cut.length
+            ? cut
+            : layersOf.flatMap((ls) =>
+                [...ls].filter(([k]) => k !== 'guide').flatMap(([, l]) => l.regions),
+              );
+          const m = regionMoments(union(regions));
+          c.env.vars.set('$area', m.area);
+          c.env.vars.set('$centroid', m.area > 0 ? m.centroid : undefined);
         });
         return merge(draw ? kids : kids.slice(1));
       },
@@ -2115,11 +2127,24 @@ export class Evaluator {
           this.warn(
             `hardware(): unknown kind "${kind}"; the 3D view shows it grey (${where(c.args.at, false)})${didYouMean(kind, Object.keys(HARDWARE_KINDS))}`,
           );
-        const from = this.vec3(this.arg(c.args, 'from', 1), 'from');
-        const to = this.vec3(this.arg(c.args, 'to', 2), 'to');
+        // A ball (sides = 0, or shape = "ball") sits midway between from
+        // and to, which it may leave out; size is its diameter
+        const shape = toText(this.arg(c.args, 'shape', -1, 'rod'));
+        if (shape !== 'rod' && shape !== 'ball')
+          throw new Error(`shape must be "rod" or "ball", got ${show(shape)}`);
+        const sidesArg = this.arg(c.args, 'sides', -1);
+        const ball = shape === 'ball' || sidesArg === 0;
+        let from = this.vec3(this.arg(c.args, 'from', 1), 'from');
+        const toArg = this.arg(c.args, 'to', 2);
+        let to = ball && toArg === undefined ? from : this.vec3(toArg, 'to');
         const sz = this.arg(c.args, 'size', 3, 6);
         const size: number | [number, number] =
           typeof sz === 'number' ? sz : this.vec2(sz, 'size', false);
+        if (ball) {
+          if (typeof size !== 'number' || !(size > 0))
+            throw new Error(`a ball's size is its diameter, a number more than 0`);
+          from = to = [(from[0] + to[0]) / 2, (from[1] + to[1]) / 2, (from[2] + to[2]) / 2];
+        }
         const dir = [to[0] - from[0], to[1] - from[1], to[2] - from[2]];
         const vertical = Math.abs(dir[2]) > 0.9 * Math.hypot(...dir);
         const upArg = this.arg(c.args, 'up', -1);
@@ -2127,11 +2152,13 @@ export class Evaluator {
           upArg === undefined
             ? ((vertical ? [0, 1, 0] : [0, 0, 1]) as Vec3)
             : this.vec3(upArg, 'up');
-        const sides = Math.floor(this.num(this.arg(c.args, 'sides', -1, 24), 'hardware', 'sides'));
+        const sides = ball ? 0 : Math.floor(this.num(sidesArg ?? 24, 'hardware', 'sides'));
         // The 3D view builds every side, so they count as points of work
-        if (!(sides >= 3 && sides <= MAX_HARDWARE_SIDES))
-          throw new Error(`sides must be from 3 to ${MAX_HARDWARE_SIDES}, got ${show(sides)}`);
-        this.pointCount += sides * 2;
+        if (!ball && !(sides >= 3 && sides <= MAX_HARDWARE_SIDES))
+          throw new Error(
+            `sides must be from 3 to ${MAX_HARDWARE_SIDES} (or 0 for a ball), got ${show(sides)}`,
+          );
+        this.pointCount += ball ? 2 * MAX_HARDWARE_SIDES : sides * 2;
         if (this.pointCount > this.limits.maxPoints * 10)
           throw new Error(
             `making the shapes and hardware took more than ${this.limits.maxPoints * 10} points of work, the limit`,

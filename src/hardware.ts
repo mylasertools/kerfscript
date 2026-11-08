@@ -30,6 +30,15 @@ export const HARDWARE_KINDS: Record<string, HardwareKind> = {
   ribbon: { color: '#c2485a', doc: 'ribbon or tape' },
   wire: { color: '#b87333', metal: true, doc: 'wire' },
   led: { color: '#fff4c2', glow: true, doc: 'an LED or a strip of them' },
+  bulb: { color: '#fff4c2', glow: true, doc: 'a light bulb; give it shape = "ball"' },
+  ball: { color: '#8fb8d8', doc: 'a marble, ball or bead; give it shape = "ball"' },
+  tube: { color: '#c9a227', metal: true, doc: 'a tube, as a hollow arbor or a sleeve' },
+  lens: { color: '#d6ecf3', doc: 'a lens, a thin disc of glass or acrylic' },
+  mirror: { color: '#c8d3da', metal: true, doc: 'a mirror' },
+  movement: {
+    color: '#3d3d3d',
+    doc: 'a bought movement, as a clock, music box or motor: a labelled block',
+  },
   white: { color: '#f7f7f4', doc: 'anything white' },
 };
 

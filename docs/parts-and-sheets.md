@@ -188,28 +188,39 @@ from one point to another, a screw, a magnet, a strip of paper. `size` is
 a diameter, or `[w, h]` for a flat piece. `kerf check` lists the hardware
 with the parts, and the 3D view shows it.
 
+`shape = "ball"` (or `sides = 0`) makes a ball of diameter `size` midway
+between `from` and `to`, for a light bulb, a marble or a bead. A ball may
+leave `to` out and sit at `from`: `hardware("bulb", [0, 0, 120], size = 60,
+shape = "ball")`.
+
 The kinds are these; a colour (`pink`, `yellow`, `red`, `green`, `blue`,
 `orange`, `purple`, `black`, `grey`) works too, and any other kind warns
 and shows grey. JavaScript gets the list as `HARDWARE_KINDS`.
 
-| Kind      | What it is                | Shown            |
-| --------- | ------------------------- | ---------------- |
-| `dowel`   | a wooden dowel or axle    | matt, #e2c48f    |
-| `steel`   | a steel rod, pin or axle  | metal, #a7adb3   |
-| `brass`   | a brass rod, tube or pin  | metal, #c9a227   |
-| `screw`   | a screw                   | metal, #9aa0a6   |
-| `bolt`    | a bolt                    | metal, #9aa0a6   |
-| `nut`     | a nut                     | metal, #9aa0a6   |
-| `magnet`  | a disc or block magnet    | metal, #55585c   |
-| `paper`   | a sheet or strip of paper | matt, #fbfaf6    |
-| `card`    | card stock                | matt, #f4f1e8    |
-| `felt`    | felt pads or lining       | matt, #6f6a64    |
-| `elastic` | an elastic band or cord   | matt, #262626    |
-| `cord`    | cord, string or thread    | matt, #b23a3a    |
-| `ribbon`  | ribbon or tape            | matt, #c2485a    |
-| `wire`    | wire                      | metal, #b87333   |
-| `led`     | an LED or a strip of them | glowing, #fff4c2 |
-| `white`   | anything white            | matt, #f7f7f4    |
+| Kind       | What it is                                  | Shown            |
+| ---------- | ------------------------------------------- | ---------------- |
+| `dowel`    | a wooden dowel or axle                      | matt, #e2c48f    |
+| `steel`    | a steel rod, pin or axle                    | metal, #a7adb3   |
+| `brass`    | a brass rod, tube or pin                    | metal, #c9a227   |
+| `screw`    | a screw                                     | metal, #9aa0a6   |
+| `bolt`     | a bolt                                      | metal, #9aa0a6   |
+| `nut`      | a nut                                       | metal, #9aa0a6   |
+| `magnet`   | a disc or block magnet                      | metal, #55585c   |
+| `paper`    | a sheet or strip of paper                   | matt, #fbfaf6    |
+| `card`     | card stock                                  | matt, #f4f1e8    |
+| `felt`     | felt pads or lining                         | matt, #6f6a64    |
+| `elastic`  | an elastic band or cord                     | matt, #262626    |
+| `cord`     | cord, string or thread                      | matt, #b23a3a    |
+| `ribbon`   | ribbon or tape                              | matt, #c2485a    |
+| `wire`     | wire                                        | metal, #b87333   |
+| `led`      | an LED or a strip of them                   | glowing, #fff4c2 |
+| `bulb`     | a light bulb                                | glowing, #fff4c2 |
+| `ball`     | a marble, ball or bead                      | matt, #8fb8d8    |
+| `tube`     | a tube or hollow arbor                      | metal, #c9a227   |
+| `lens`     | a lens                                      | matt, #d6ecf3    |
+| `mirror`   | a mirror                                    | metal, #c8d3da   |
+| `movement` | a bought clock, music box or motor movement | matt, #3d3d3d    |
+| `white`    | anything white                              | matt, #f7f7f4    |
 
 ```kerf
 step("Stand the walls in the base") {

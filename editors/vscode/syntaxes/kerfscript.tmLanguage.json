@@ -163,7 +163,7 @@
         },
         {
           "comment": "Built-in functions",
-          "match": "\\b(abs|sign|floor|ceil|round|sqrt|exp|ln|log|sin|cos|tan|asin|acos|atan|atan2|pow|min|max|clamp|lerp|norm|cross|path_length|point_at|heading_at|path_points|spline_points|rotation|euler|orient|len|keys|merge|concat|reverse|sum|slice|str|chr|ord|upper|lower|split|join|search|contains|lookup|is_num|is_string|is_bool|is_list|is_undef|is_function|is_record|type_of|rands|text_width|text_metrics|finger_count)\\s*(?=\\()",
+          "match": "\\b(abs|sign|floor|ceil|round|sqrt|exp|ln|log|sin|cos|tan|asin|acos|atan|atan2|pow|min|max|clamp|lerp|norm|cross|path_length|point_at|heading_at|offset_path|train_for|path_points|spline_points|rotation|euler|orient|len|keys|merge|concat|reverse|sum|slice|str|chr|ord|upper|lower|split|join|search|contains|lookup|is_num|is_string|is_bool|is_list|is_undef|is_function|is_record|type_of|rands|text_width|text_metrics|finger_count)\\s*(?=\\()",
           "captures": { "1": { "name": "support.function.builtin.kerfscript" } }
         }
       ]

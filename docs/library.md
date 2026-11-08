@@ -444,6 +444,27 @@ mesh with it turns `angle` degrees: the other way round.
 
 The turn that lines a gear's teeth up with the gear beside it along x.
 
+### `train_for(ratio, stages = 2, pinion = [10, 20], wheel = [20, 80])`
+
+Tooth counts for a train of `stages` gear pairs (1 to 3) whose ratio, the
+turns in for one turn out, comes nearest `ratio`. Each pair has a pinion
+of `pinion` teeth and a wheel of `wheel` teeth on the next axle. It
+returns `{stages = [[driver, driven], ...], ratio, error}`, `error` being
+how far off it is, as a fraction; of equally near trains it picks the one
+with fewest teeth. A ratio under 1 speeds up, so the wheels drive. It is
+built in, so it works without `use <kerf/gears>`.
+
+```kerf
+use <kerf/gears>
+
+// A year for the Earth in an orrery: [[10, 73], [10, 76], [12, 79]], 0.002% off
+t = train_for(365.25, 3);
+s = t.stages[0];
+part("pinion") spur_gear(s[0], 1.5);
+part("wheel", at = [gear_distance(s[0], s[1], 1.5), 0, 0], rotate = [0, 0, gear_phase(s[1])])
+  spur_gear(s[1], 1.5);
+```
+
 ### `rack(teeth, mod = 2, height, pressure = 20, backlash = 0.1)`
 
 A straight rack along +x, its pitch line at y = 0. A `spur_gear()` of the

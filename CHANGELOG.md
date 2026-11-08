@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+- `hardware(shape = "ball")` (or `sides = 0`) is a ball of diameter `size`
+  midway between `from` and `to`, which it may leave out: a bulb, a marble
+  or a bead. The 3D view draws it, and verification gives it an envelope.
+  New hardware kinds: `bulb`, `ball`, `tube`, `lens`, `mirror` and
+  `movement`.
+- `measure()` also sets `$area` and `$centroid`, the area of the material
+  its first child cuts and its balance point.
+- `offset_path(points, d, closed)` moves a path sideways with mitred
+  corners: the two edges of a strip along a curve.
+- `train_for(ratio, stages, pinion, wheel)` gives tooth counts for a gear
+  train of 1 to 3 stages nearest a ratio.
+
 ## 0.7.0 (2026-11-03)
 
 Language version 0.3. Programs for 0.2 run as before, except that a

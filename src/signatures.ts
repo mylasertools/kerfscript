@@ -349,7 +349,7 @@ export const SIGNATURES: Signature[] = [
     params: [p('draw', 'Draw the first child too', 'false')],
     children: true,
     section: 'Combining',
-    doc: 'Set $bounds = [x0, y0, x1, y1] of the first child for the children after it',
+    doc: 'Set $bounds = [x0, y0, x1, y1], $area and $centroid = [x, y] of the first child for the children after it',
   },
   {
     name: 'fill_holes',
@@ -508,11 +508,12 @@ export const SIGNATURES: Signature[] = [
     kind: 'module',
     params: [
       p('kind', 'What it is, as "dowel", "screw", "magnet", "elastic" or "paper"', '"dowel"'),
-      p('from', 'One end, [x, y, z]'),
-      p('to', 'The other end, [x, y, z]'),
+      p('from', 'One end, [x, y, z]; a ball sits midway between from and to'),
+      p('to', 'The other end, [x, y, z]; a ball may leave it out'),
       p('size', 'Diameter, or [width, height] for a flat section', '6'),
       named('up', "The direction a [width, height] section's height points"),
-      named('sides', 'Sides of a round section in the 3D view', '24'),
+      named('sides', 'Sides of a round section in the 3D view; 0 makes a ball', '24'),
+      named('shape', '"rod", or "ball" for a bulb, a marble or a bead', '"rod"'),
       named('label', 'The name in the hardware list'),
     ],
     children: true,
@@ -673,6 +674,18 @@ export const SIGNATURES: Signature[] = [
     doc: 'Interpolate between numbers or vectors',
   },
   {
+    name: 'train_for',
+    kind: 'function',
+    params: [
+      p('ratio', 'Turns in for one turn out; under 1 speeds up'),
+      p('stages', 'Pairs of gears, 1 to 3', '2'),
+      p('pinion', 'Fewest and most teeth of the small gears', '[10, 20]'),
+      p('wheel', 'Fewest and most teeth of the big gears', '[20, 80]'),
+    ],
+    section: 'Numbers and vectors',
+    doc: 'Tooth counts for a gear train nearest a ratio: {stages = [[driver, driven], ...], ratio, error}',
+  },
+  {
     name: 'norm',
     kind: 'function',
     params: [p('v')],
@@ -694,6 +707,17 @@ export const SIGNATURES: Signature[] = [
     params: [p('points', 'A list of [x, y] points')],
     section: 'Paths and rotations',
     doc: 'The length of the lines through a list of points',
+  },
+  {
+    name: 'offset_path',
+    kind: 'function',
+    params: [
+      p('points', 'A list of [x, y] points'),
+      p('d', 'How far to move it: to the left going along it, or the right when less than 0'),
+      p('closed', 'The path goes round, its last point joined to its first', 'false'),
+    ],
+    section: 'Paths and rotations',
+    doc: 'The path moved sideways, each corner mitred: the two edges of a strip along a curve',
   },
   {
     name: 'point_at',
