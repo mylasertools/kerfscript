@@ -176,10 +176,16 @@ test('a Geneva pin runs in the slots without touching the wheel', () => {
 
 test('Geneva parts say how to fix sizes that will not work', () => {
   // More slots move the slots' ends away from the axle
-  assert.throws(() => render('use <kerf/gears>\ngeneva_wheel(4, 30, 6, bore = 8);'), /use more slots/);
+  assert.throws(
+    () => render('use <kerf/gears>\ngeneva_wheel(4, 30, 6, bore = 8);'),
+    /use more slots/,
+  );
   render('use <kerf/gears>\ngeneva_wheel(6, 30, 6, bore = 8);');
   // The locking disc checks its own bore, not the wheel's
-  assert.throws(() => render('use <kerf/gears>\ngeneva_lock(6, 30, 10, bore = 5);'), /locking disc is too small/);
+  assert.throws(
+    () => render('use <kerf/gears>\ngeneva_lock(6, 30, 10, bore = 5);'),
+    /locking disc is too small/,
+  );
   render('use <kerf/gears>\ngeneva_wheel(6, 30, 10, bore = 5);');
   assert.throws(() => render('use <kerf/gears>\ngeneva_wheel(6, 30, 16);'), /pin is too thick/);
 });
@@ -209,5 +215,8 @@ test('a pawl on a small ratchet grows long enough to clear the teeth', () => {
   assert.ok(!collides(src(0)));
   // 3 degrees: on a wheel this small, 1 degree moves the face less than the clearance
   assert.ok(collides(src(-3)), 'turning back runs into the pawl');
-  assert.throws(() => render('use <kerf/gears>\npawl(8, 10, 3, length = 6);'), /at least [\d.]+ mm long/);
+  assert.throws(
+    () => render('use <kerf/gears>\npawl(8, 10, 3, length = 6);'),
+    /at least [\d.]+ mm long/,
+  );
 });

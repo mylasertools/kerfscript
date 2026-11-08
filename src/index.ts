@@ -35,7 +35,7 @@ export {
 export type { HardwareItem } from './evaluator.js';
 export { HARDWARE_KINDS, HARDWARE_COLORS, type HardwareKind } from './hardware.js';
 
-export const VERSION = '0.7.0';
+export const VERSION = '0.8.0';
 export const LANGUAGE_VERSION = '0.3';
 export { diffRenders, type DiffEntry } from './diff.js';
 export { instructionsHtml } from './instructions.js';
