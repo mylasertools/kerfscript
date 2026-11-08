@@ -26,7 +26,7 @@ show each module's description when you hover over it.
 | [`kerf/hanging`](#hanging)         | Keyholes, holes and loops for hanging things on a wall         |
 | [`kerf/enclosure`](#enclosures)    | Boxes with a screwed-on lid, cutouts for ports and vents       |
 | [`kerf/calibration`](#calibration) | Test pieces that measure the kerf and how your sheet fits      |
-| [`kerf/gears`](#gears-and-cams)    | Spur gears, racks, lantern gears, cams and tappets             |
+| [`kerf/gears`](#gears-and-cams)    | Gears, racks, cams, Geneva drives, ratchets and pawls          |
 | [`kerf/linkage`](#linkages)        | Where linkage joints are at a crank angle                      |
 | [`kerf/cones`](#cones)             | Cones and cut-off cones cut flat, to roll up                   |
 | [`kerf/lock`](#lock)               | A lock with a key, three layers deep                           |
@@ -489,6 +489,93 @@ The radius for `n` pegs or staves `pitch` apart.
 Cams: an `eccentric()` pushes a follower up and down by twice `offset`; a
 `snail_cam()` lifts it slowly from `r0` to `r1` over a turn and drops it at
 once, as a trip hammer works; `tappets()` lift a lever `n` times a turn.
+
+### `cam(lift, base_r, follower = "knife", roller_d = 0, bore = 6, steps = 180, square = false)`
+
+A cam whose profile comes from a lift curve: `lift` is a function of the
+angle (0 to 360) giving how far the follower rises above the base circle
+of radius `base_r`. The follower rides on the cam's top (+y) and moves
+straight up and down; turned anticlockwise by `a` degrees (`rotate = [0,
+0, a]`) the cam lifts it `lift(a)`. A `"knife"` follower rides the curve
+itself; a `"roller"` of diameter `roller_d` rolls on a profile inside it.
+
+```kerf
+use <kerf/gears>
+
+$fn = 48;
+turn = 0; // the cam's angle
+// A bird that pecks twice, then rests
+peck = function(a) cam_rise(a, 0, 40, 8) - cam_rise(a, 40, 80, 8) + cam_rise(a, 100, 140, 8) - cam_rise(a, 140, 180, 8);
+part("cam", rotate = [0, 0, turn]) cam(peck, 25, "roller", 10);
+part("roller", at = [0, cam_follower(peck, 25, turn, 10), 0]) difference() { circle(d = 10); circle(d = 3); }
+```
+
+### `cam_rise(a, a0, a1, height)`
+
+A smooth (cycloidal) rise of `height` between angles `a0` and `a1`: 0
+before, `height` after. Add and take away rises to make dwells, rises and
+falls.
+
+### `cam_follower(lift, base_r, angle, roller_d = 0)`, `cam_pressure(lift, base_r, roller_d = 0)`
+
+How high the follower's tip, or its roller's centre, stands above the
+cam's axle at `angle`, to place it from the same curve. `cam_pressure()` is
+the steepest pressure angle over a turn: keep it under about 30 degrees,
+with a bigger base circle or a longer rise, or the follower jams.
+
+### `cam_pitch(lift, base_r, roller_d = 0, steps = 180)`
+
+The curve the follower's tip or roller centre follows, in the cam's turn.
+
+### `geneva_wheel(slots, distance, pin_d = 6, bore = 6, clearance = 0.2)`, `geneva_lock(...)`, `geneva_crank(...)`
+
+A Geneva drive: a driver turning all the time steps a wheel on one slot
+each turn and locks it in between, for counters, calendars and carousels
+that stop to show each scene. The driver's axle is at the origin and the
+wheel's `distance` along +x. The wheel and the locking disc lie side by
+side in one plane; the crank above the disc carries a dowel pin of `pin_d`
+that runs in the slots. With many slots the wheel comes close to the
+driver's axle, and `geneva_lock()` says how small the bore must be.
+
+```kerf
+use <kerf/gears>
+
+$fn = 48;
+a = 0; // the driver's turn
+part("wheel", at = [60, 0, 0], rotate = [0, 0, geneva_turn(6, 60, a)]) geneva_wheel(6, 60, 6);
+part("lock", at = [0, 0, 0], rotate = [0, 0, a]) geneva_lock(6, 60, 6);
+part("crank", at = [0, 0, $thickness], rotate = [0, 0, a]) geneva_crank(6, 60, 6);
+```
+
+### `geneva_turn(slots, distance, angle)`
+
+How far the wheel has turned (clockwise) when the driver has turned
+`angle` anticlockwise from its pin pointing at the wheel: `-360 / slots`
+for each whole turn. With `geneva_pin_radius()`, `geneva_wheel_radius()`
+and `geneva_lock_radius()` for the sizes.
+
+### `ratchet(teeth, r, depth, bore = 6, square = false)`, `pawl(teeth, r, depth, length, width = 8, bore = 3, at = 90, clearance = 0.2)`
+
+A ratchet wheel that turns anticlockwise freely, and a pawl that stops it
+turning back: for a crank that winds one way, a counter or a typewriter
+carriage. The pawl is drawn where it works round the wheel's centre, its
+tip on the tooth face nearest `at` degrees, so give it the wheel's
+placement. It turns on a pin at `pawl_pivot()`, and gravity, a rubber band
+or a spring wire keeps it down on the teeth.
+
+```kerf
+use <kerf/gears>
+
+$fn = 32;
+part("wheel", at = [0, 0, 0]) ratchet(12, 30, 5);
+part("pawl", at = [0, 0, 0]) pawl(12, 30, 5);
+```
+
+### `pawl_pivot(teeth, r, depth, length, width = 8, at = 90, clearance = 0.2)`, `pawl_face(teeth, at = 90)`, `pawl_lean(teeth, r, depth)`
+
+Where the pawl's pivot pin goes round the wheel's centre, the angle of the
+tooth face it rests on, and how far it leans out from the wheel's edge to
+clear the teeth as they pass.
 
 ## Linkages
 

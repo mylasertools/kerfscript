@@ -20,6 +20,12 @@
   scored glue tab, and `cone_pattern()` gives its sector.
 - `kerf/sizes`: `part_size()` gives the sizes of bought parts: a music box
   movement, a quartz clock movement and marbles.
+- `kerf/gears`: `cam()` draws a cam from a lift curve for a knife or
+  roller follower, with `cam_rise()` for dwells, rises and falls,
+  `cam_follower()` to place the follower and `cam_pressure()` to check it
+  won't jam. `geneva_wheel()`, `geneva_lock()`, `geneva_crank()` and
+  `geneva_turn()` make a Geneva drive; `ratchet()` and `pawl()` a wheel
+  that turns one way only.
 - `part(material = "red acrylic")` names a part's material without a
   `material()` round it.
 

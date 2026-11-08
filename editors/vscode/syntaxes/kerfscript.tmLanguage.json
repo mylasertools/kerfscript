@@ -158,7 +158,7 @@
         },
         {
           "comment": "Built-in modules",
-          "match": "\\b(rect|square|circle|ellipse|regular_polygon|star|polygon|path|text|line|polyline|arc|translate|rotate|scale|mirror|multmatrix|union|group|difference|intersection|hull|offset|pattern|spline|hatch|paint|measure|fill_holes|close|stroke|outline|part|place|call|step|hardware|material|finger_rect|finger_holes|tslot|living_hinge|children|echo|assert|box|divider|kerf_gauge|slot_gauge|joint_test|slotted_divider|grid_dividers|enclosure|enclosure_cutouts|vents|spur_gear|gear_window|rack|lantern_disc|peg_wheel|eccentric|snail_cam|tappets|cone_flat|world_map|keyhole|keyholes|hanging_hole|hanging_loop|flex_rect|flex_box|flex_panel|narrow_hinge|flex_strip|cam_lock|lock_key|ring_stack|halved_pair|symbol|tabs|slots|tab_rect)\\s*(?=\\()",
+          "match": "\\b(rect|square|circle|ellipse|regular_polygon|star|polygon|path|text|line|polyline|arc|translate|rotate|scale|mirror|multmatrix|union|group|difference|intersection|hull|offset|pattern|spline|hatch|paint|measure|fill_holes|close|stroke|outline|part|place|call|step|hardware|material|finger_rect|finger_holes|tslot|living_hinge|children|echo|assert|box|divider|kerf_gauge|slot_gauge|joint_test|slotted_divider|grid_dividers|enclosure|enclosure_cutouts|vents|spur_gear|gear_window|rack|lantern_disc|peg_wheel|eccentric|snail_cam|tappets|cone_flat|cam|geneva_wheel|geneva_lock|geneva_crank|ratchet|pawl|world_map|keyhole|keyholes|hanging_hole|hanging_loop|flex_rect|flex_box|flex_panel|narrow_hinge|flex_strip|cam_lock|lock_key|ring_stack|halved_pair|symbol|tabs|slots|tab_rect)\\s*(?=\\()",
           "captures": { "1": { "name": "support.function.builtin.kerfscript" } }
         },
         {

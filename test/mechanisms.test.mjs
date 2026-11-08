@@ -130,3 +130,48 @@ test('part(material = ...) names its own material', () => {
     ],
   );
 });
+
+const collides = (src) => render(src).warnings.some((w) => /collide/.test(w));
+
+test('a cam lifts its roller as its lift curve says, all the way round', () => {
+  const lift = 'function(a) cam_rise(a, 0, 90, 8) - cam_rise(a, 180, 300, 8)';
+  for (const a of [0, 45, 120, 200, 330])
+    for (const dz of [0.3, -0.3]) {
+      const src = `use <kerf/gears>\n$fn = 48;\nL = ${lift};
+        part("cam", rotate = [0, 0, ${a}]) cam(L, 25, "roller", 12, steps = 360);
+        part("roller", at = [0, cam_follower(L, 25, ${a}, 12) + ${dz}, 0]) circle(d = 12);`;
+      assert.equal(collides(src), dz < 0, `at ${a} lifted ${dz}`);
+    }
+  const [p] = echo(
+    `use <kerf/gears>\necho(cam_follower(${lift}, 25, 90), cam_pressure(${lift}, 25) < 30);`,
+  );
+  assert.equal(p, '33, true');
+});
+
+test('a Geneva wheel steps one slot a turn and clears its driver', () => {
+  for (const n of [4, 6]) {
+    for (let a = -180; a < 180; a += 15) {
+      const src = `use <kerf/gears>\n$fn = 48; n = ${n}; C = 60; a = ${a};
+        part("wheel", at = [C, 0, 0], rotate = [0, 0, geneva_turn(n, C, a)]) geneva_wheel(n, C, 6);
+        part("lock", rotate = [0, 0, a]) geneva_lock(n, C, 6);`;
+      assert.ok(!collides(src), `${n} slots at ${a}`);
+    }
+    const [turn] = echo(
+      `use <kerf/gears>\necho(geneva_turn(${n}, 60, 0), geneva_turn(${n}, 60, 360));`,
+    );
+    assert.equal(turn, `0, ${-360 / n}`);
+  }
+  assert.throws(() => render('use <kerf/gears>\ngeneva_lock(8, 60, 6);'), /bore of at most 4.5 mm/);
+});
+
+test('a pawl stops its ratchet turning back but lets it turn on', () => {
+  const src = (rot, lift = 0) => `use <kerf/gears>\n$fn = 32;
+    H = pawl_pivot(12, 30, 5);
+    part("wheel", rotate = [0, 0, ${rot}]) ratchet(12, 30, 5);
+    part("pawl", at = [H[0], H[1], 0] - [H[0] * cos(${lift}) - H[1] * sin(${lift}), H[0] * sin(${lift}) + H[1] * cos(${lift}), 0], rotate = [0, 0, ${lift}]) pawl(12, 30, 5);`;
+  assert.ok(!collides(src(0)));
+  assert.ok(collides(src(-1)), 'turning back runs into the pawl');
+  // Turning on, the pawl swings up over the tooth
+  assert.ok(collides(src(15)));
+  assert.ok(!collides(src(15, -8)));
+});

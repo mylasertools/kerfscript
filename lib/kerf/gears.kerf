@@ -149,3 +149,196 @@ module tappets(n, r, w = 10, hub = 14, bore = 6, square = false) {
     if (square) rect([bore, bore], center = true); else circle(d = bore);
   }
 }
+
+// Cams from a lift curve. The follower rides on the cam's top (+y) and
+// moves straight up and down; turned anticlockwise by `a` degrees (rotate =
+// [0, 0, a]), the cam lifts it lift(a) above the base circle. `lift` is a
+// function of the angle, 0 to 360, that comes back to where it started.
+
+// A smooth rise of `height` from angle a0 to a1 (cycloidal: it starts and
+// stops gently): 0 before a0, height after a1. Add and take away rises to
+// make dwells, rises and falls: two pecks then a rest is
+// function(a) cam_rise(a, 0, 40, 8) - cam_rise(a, 40, 80, 8) + cam_rise(a, 100, 140, 8) - cam_rise(a, 140, 180, 8).
+function cam_rise(a, a0, a1, height) =
+  a <= a0 ? 0
+  : a >= a1 ? height
+  : let (u = (a - a0) / (a1 - a0)) height * (u - sin(360 * u) / (2 * PI));
+
+// The cam's pitch curve: where the follower's tip (or its roller's centre)
+// sits, in the cam's own turn, `steps` points round
+function cam_pitch(lift, base_r, roller_d = 0, steps = 180) =
+  [for (i = [0:steps - 1])
+    let (f = i * 360 / steps, a = (450 - f) % 360, r = base_r + roller_d / 2 + lift(a))
+      [r * cos(f), r * sin(f)]];
+
+// How high the follower's tip (or its roller's centre) is above the cam's
+// axle when the cam is turned to `angle`, to place the follower
+function cam_follower(lift, base_r, angle, roller_d = 0) =
+  base_r + roller_d / 2 + lift(((angle % 360) + 360) % 360);
+
+// The steepest pressure angle over a turn, in degrees: how hard the cam
+// pushes the follower sideways. Keep it under about 30, by a bigger base
+// circle or a longer rise.
+function cam_pressure(lift, base_r, roller_d = 0, steps = 360) =
+  max([for (i = [0:steps - 1])
+    let (
+      a = i * 360 / steps,
+      r = base_r + roller_d / 2 + lift(a),
+      slope = (lift((a + 0.5) % 360) - lift((a + 359.5) % 360)) / (PI / 180)
+    )
+      atan(abs(slope) / r)]);
+
+// A cam that lifts a follower lift(a) at angle a, with a hole for its
+// axle. A "knife" follower rides the pitch curve itself; a "roller" one of
+// diameter roller_d rolls on a profile inside it. Check cam_pressure().
+module cam(lift, base_r, follower = "knife", roller_d = 0, bore = 6, steps = 180, square = false) {
+  assert(follower == "knife" || follower == "roller", "follower must be \"knife\" or \"roller\"");
+  assert(follower == "knife" || roller_d > 0, "a roller follower needs roller_d");
+  difference() {
+    if (follower == "roller") offset(r = -roller_d / 2) polygon(cam_pitch(lift, base_r, roller_d, steps));
+    else polygon(cam_pitch(lift, base_r, 0, steps));
+    if (square) rect([bore, bore], center = true); else circle(d = bore);
+  }
+}
+
+// A Geneva drive: a driver turning all the time steps a wheel of `slots`
+// slots on by one slot each turn, and locks it between steps. The driver's
+// axle is at the origin and the wheel's at [distance, 0]. Cut the wheel and
+// the locking disc from the same sheet, side by side in one plane, and the
+// crank above them; a dowel pin of pin_d through the crank's outer hole
+// runs in the wheel's slots.
+
+// The radius of the circle the driver's pin turns on
+function geneva_pin_radius(slots, distance) = distance * sin(180 / slots);
+// The wheel's outer radius
+function geneva_wheel_radius(slots, distance, pin_d) =
+  sqrt(pow(distance * cos(180 / slots), 2) + pow(pin_d / 2, 2));
+// The locking disc's radius
+function geneva_lock_radius(slots, distance, pin_d) = geneva_pin_radius(slots, distance) - pin_d;
+
+// How far the wheel has turned when the driver has turned `angle`
+// anticlockwise from its pin pointing at the wheel: it turns clockwise,
+// 360 / slots each turn of the driver, and stands still between steps
+function geneva_turn(slots, distance, angle) =
+  let (
+    k = floor((angle + 180) / 360),
+    t = angle - 360 * k,
+    rc = geneva_pin_radius(slots, distance),
+    on = 90 - 180 / slots,
+    step = abs(t) <= on ? atan2(-rc * sin(t), distance - rc * cos(t))
+      : t < 0 ? 180 / slots : -180 / slots
+  )
+  step - k * 360 / slots;
+
+// The wheel, centred on the origin, a slot along -x (towards the driver
+// when geneva_turn() is 0)
+module geneva_wheel(slots, distance, pin_d = 6, bore = 6, clearance = 0.2, square = false) {
+  rc = geneva_pin_radius(slots, distance);
+  ro = geneva_wheel_radius(slots, distance, pin_d);
+  rl = geneva_lock_radius(slots, distance, pin_d);
+  w = pin_d + clearance;
+  inner = distance - rc - clearance;
+  assert(rl > bore / 2 + 3, "the locking disc is too small for its axle: make the distance longer or the pin thinner");
+  assert(inner - w / 2 > bore / 2 + 3, "the slots reach the axle: use fewer slots or a smaller bore");
+  difference() {
+    circle(r = ro);
+    for (j = [0:slots - 1]) rotate(180 + j * 360 / slots) {
+      hull() {
+        translate([inner, 0]) circle(d = w);
+        translate([ro + 1, -w / 2]) rect([1, w]);
+      }
+      // The locking arc between this slot and the next
+      rotate(180 / slots) translate([distance, 0]) circle(r = rl + clearance);
+    }
+    if (square) rect([bore, bore], center = true); else circle(d = bore);
+  }
+}
+
+// The locking disc that turns with the driver, its relief facing the pin's
+// side (+x): cut away wherever the wheel's rim passes while the pin is in a
+// slot, so the wheel turns then
+module geneva_lock(slots, distance, pin_d = 6, bore = 6, clearance = 0.2, square = false) {
+  ro = geneva_wheel_radius(slots, distance, pin_d);
+  assert(distance - ro - clearance >= bore / 2 + 2, str("the wheel passes within ", round(10 * (distance - ro - clearance)) / 10, " mm of the driver's axle: use a bore of at most ", floor(20 * (distance - ro - clearance - 2)) / 10, " mm or fewer slots"));
+  difference() {
+    circle(r = geneva_lock_radius(slots, distance, pin_d));
+    // Everywhere the wheel's rim passes while the pin is in a slot
+    on = 90 - 180 / slots;
+    n = max(2, ceil(2 * on / 3));
+    for (i = [0:n - 1]) hull() for (t = [-on + 2 * on * i / n, -on + 2 * on * (i + 1) / n])
+      translate([distance * cos(t), distance * sin(t)]) circle(r = ro + clearance);
+    if (square) rect([bore, bore], center = true); else circle(d = bore);
+  }
+}
+
+// The crank above the locking disc that carries the pin, along +x
+module geneva_crank(slots, distance, pin_d = 6, bore = 6, width = 0, square = false) {
+  rc = geneva_pin_radius(slots, distance);
+  w = width > 0 ? width : max(pin_d, bore) + 8;
+  difference() {
+    hull() {
+      circle(d = w);
+      translate([rc, 0]) circle(d = pin_d + 8);
+    }
+    translate([rc, 0]) circle(d = pin_d);
+    if (square) rect([bore, bore], center = true); else circle(d = bore);
+  }
+}
+
+// A ratchet wheel of `teeth` teeth, radius r at their tips, `depth` deep,
+// centred on the origin with a hole for its axle. It turns anticlockwise
+// freely; a pawl() stops it turning back.
+module ratchet(teeth, r, depth, bore = 6, square = false) {
+  p = 360 / teeth;
+  difference() {
+    polygon([for (k = [0:teeth - 1], j = [0, 1])
+      j == 0 ? [r * cos(k * p), r * sin(k * p)]
+        : [(r - depth) * cos((k + 1) * p), (r - depth) * sin((k + 1) * p)]]);
+    if (square) rect([bore, bore], center = true); else circle(d = bore);
+  }
+}
+
+// The angle of the tooth face a pawl rests on, nearest `at` degrees
+function pawl_face(teeth, at = 90) = round(at / (360 / teeth)) * 360 / teeth;
+
+// How far the pawl leans out from the wheel's edge, in degrees: past the
+// teeth's slope, so it clears them
+function pawl_lean(teeth, r, depth) = atan(depth / ((r - depth / 2) * 2 * PI / teeth)) + 15;
+
+// Where a pawl()'s pivot is, round the wheel's centre
+function pawl_pivot(teeth, r, depth, length = 0, width = 8, at = 90, clearance = 0.2) =
+  let (
+    f = pawl_face(teeth, at),
+    g = pawl_lean(teeth, r, depth),
+    L = length > 0 ? length : r * 0.8,
+    n = [cos(f), sin(f)],
+    tc = [sin(f), -cos(f)],
+    u = cos(g) * tc + sin(g) * n,
+    v = cos(g) * n - sin(g) * tc,
+    T = (r - depth + clearance) * n + clearance * tc
+  )
+  T + (L - width / 2) * u + (width / 2) * v;
+
+// A pawl for a ratchet() of the same sizes, drawn where it works round
+// the wheel's centre: give it the wheel's placement. Its tip rests against
+// the tooth face nearest `at` degrees, and it turns on a pin through the
+// hole at pawl_pivot(). Gravity, a rubber band or a spring wire holds it
+// down on the teeth.
+module pawl(teeth, r, depth, length = 0, width = 8, bore = 3, at = 90, clearance = 0.2) {
+  f = pawl_face(teeth, at);
+  g = pawl_lean(teeth, r, depth);
+  L = length > 0 ? length : r * 0.8;
+  n = [cos(f), sin(f)];
+  tc = [sin(f), -cos(f)];
+  u = cos(g) * tc + sin(g) * n;
+  v = cos(g) * n - sin(g) * tc;
+  T = (r - depth + clearance) * n + clearance * tc;
+  H = pawl_pivot(teeth, r, depth, length, width, at, clearance);
+  difference() {
+    union() {
+      polygon([T, T + (L - width / 2) * u, T + (L - width / 2) * u + width * v, T + width / cos(g) * n]);
+      translate(H) circle(d = width);
+    }
+    translate(H) circle(d = bore);
+  }
+}
