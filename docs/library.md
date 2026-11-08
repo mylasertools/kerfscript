@@ -27,6 +27,8 @@ show each module's description when you hover over it.
 | [`kerf/enclosure`](#enclosures)    | Boxes with a screwed-on lid, cutouts for ports and vents       |
 | [`kerf/calibration`](#calibration) | Test pieces that measure the kerf and how your sheet fits      |
 | [`kerf/gears`](#gears-and-cams)    | Spur gears, racks, lantern gears, cams and tappets             |
+| [`kerf/linkage`](#linkages)        | Where linkage joints are at a crank angle                      |
+| [`kerf/cones`](#cones)             | Cones and cut-off cones cut flat, to roll up                   |
 | [`kerf/lock`](#lock)               | A lock with a key, three layers deep                           |
 | [`kerf/rings`](#rings)             | Round things of stacked rings on a crossed core                |
 | [`kerf/joints`](#joints)           | Two profiles halved into each other: crosses, fonts, domes     |
@@ -488,6 +490,75 @@ Cams: an `eccentric()` pushes a follower up and down by twice `offset`; a
 `snail_cam()` lifts it slowly from `r0` to `r1` over a turn and drops it at
 once, as a trip hammer works; `tappets()` lift a lever `n` times a turn.
 
+## Linkages
+
+`use <kerf/linkage>`
+
+Where the joints of a linkage are at a crank angle, so moving parts are
+placed from the same numbers as the links' lengths: steam engine pistons,
+typebars, walking legs, waving arms. Each takes the linkage drawn flat.
+
+```kerf
+use <kerf/linkage>
+
+$fn = 32;
+angle = 60; // the crank's turn
+j = four_bar(80, 20, 70, 50, angle);
+part("crank", at = [0, 0, 3], rotate = [0, 0, angle]) hull() { circle(d = 10); translate([20, 0]) circle(d = 10); }
+part("rocker", at = [80, 0, 3], rotate = [0, 0, link_angle([80, 0], j[1])])
+  hull() { circle(d = 10); translate([50, 0]) circle(d = 10); }
+```
+
+### `circle_meet(a, ra, b, rb, side = 1)`
+
+Where a circle of radius `ra` round `a` meets one of radius `rb` round `b`:
+the point left of the line from `a` to `b`, or right of it with `side =
+-1`. `undef` when they don't meet. Two links of those lengths from those
+pivots join there.
+
+### `slider_crank(r, l, angle, offset = 0)`, `slider_stroke(r, l, offset = 0)`
+
+A crank of radius `r` round the origin drives a slider along `y = offset`
+through a rod `l` long: `[crank pin, slider pin]` at the crank's `angle`,
+or `undef` where the rod can't reach. `slider_stroke()` is how far the
+slider travels.
+
+### `four_bar(ground, crank, coupler, rocker, angle, side = 1)`, `four_bar_turns(ground, crank, coupler, rocker)`
+
+A four-bar linkage with the crank's pivot at the origin and the rocker's at
+`[ground, 0]`: `[crank end, rocker end]` at the crank's `angle`, or
+`undef` where the links can't close. `four_bar_turns()` is true when the
+crank turns all the way round (Grashof's rule).
+
+### `link_angle(a, b)`
+
+The angle of the line from `a` to `b`, to turn a link along it.
+
+## Cones
+
+`use <kerf/cones>`
+
+Cones and cut-off cones cut flat from paper, card, veneer or thin plastic,
+to roll up: gramophone horns, lampshades, funnels.
+
+```kerf
+use <kerf/cones>
+
+$fn = 64;
+part("shade") cone_flat(60, 25, 70, tab = 8);
+```
+
+### `cone_flat(r1, r2, h, tab = 0, steps = 0)`
+
+The flat pattern of a cone of radius `r1` at one end, `r2` at the other,
+`h` high: a ring sector with its apex at the origin, opening anticlockwise
+from +x. `tab` adds a glue tab along the far edge with its fold scored.
+Equal radii make a cylinder: a rectangle `2 * PI * r1` wide.
+
+### `cone_pattern(r1, r2, h)`
+
+The sector's `[outer radius, inner radius, angle, slant length]`.
+
 ## Lock
 
 `use <kerf/lock>`
@@ -587,6 +658,23 @@ standing; cards `"business"`, `"us business"`, `"credit"`, `"japan"`,
 `"playing"`, `"bridge"`, `"tarot"`, `"postcard"` and `"us postcard"`, and
 photos `"4x6"`, `"5x7"`, `"8x10"`, `"10x15"`, `"13x18"` and the instant
 film sizes, lying down. An unknown name stops with the list of known ones.
+
+### `part_size(name)`
+
+A bought part's sizes as a record: `body = [width, depth, height]`, and
+for a part with a shaft its diameter `shaft`, the `shaft_length` it stands
+out of the body and the `hole` to cut for it. `"music-18"` is an 18-note
+wind-up music box movement (its shaft is the winding key's), and
+`"quartz-clock"` a 56 mm quartz clock movement with the 16.5 mm shaft, for
+dials up to `dial = 8` mm thick. `"marble-16"` and `"marble-25"` are
+marbles. These are common retail sizes, which vary: measure yours.
+
+```kerf
+use <kerf/sizes>
+
+m = part_size("quartz-clock");
+part("dial") difference() { circle(d = 160); circle(d = m.hole); }
+```
 
 ### `landscape(size)`, `portrait(size)`
 

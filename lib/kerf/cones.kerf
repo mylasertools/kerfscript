@@ -1,0 +1,56 @@
+// kerf/cones: cones and cut-off cones cut flat, to roll up from thin sheet.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+//
+// A cone rolled from paper, card, veneer or thin plastic is a ring sector
+// when flat. Gramophone horns, lampshades, funnels and party hats all start
+// as one. The sector's apex is at the origin and it opens from +x
+// anticlockwise; the glue tab runs along its far edge.
+
+// The flat pattern of a cone of radius r1 at one end, r2 at the other and h
+// high: [outer radius, inner radius, angle in degrees, slant length]. A
+// cylinder (r1 == r2) has no apex: it gives [undef, undef, 0, h] and is a
+// rectangle 2 * PI * r1 wide.
+function cone_pattern(r1, r2, h) =
+  let (
+    big = max(r1, r2),
+    small = min(r1, r2),
+    s = sqrt(h * h + pow(big - small, 2))
+  )
+  big == small ? [undef, undef, 0, h]
+  : [s * big / (big - small), s * small / (big - small), 360 * (big - small) / s, s];
+
+// A cone or cut-off cone cut flat: rolled up so the far edge lies on the
+// glue tab, it has radius r1 at one end, r2 at the other, and is h high.
+// `tab` adds a glue tab that wide along the far edge, its fold scored; a
+// cylinder becomes a rectangle with the tab on its right.
+module cone_flat(r1, r2, h, tab = 0, steps = 0) {
+  p = cone_pattern(r1, r2, h);
+  if (is_undef(p[0])) {
+    w = 2 * PI * r1;
+    rect([w, h]);
+    if (tab > 0) {
+      polygon([[w, 0], [w + tab, min(tab, h / 4)], [w + tab, h - min(tab, h / 4)], [w, h]]);
+      score() line([w, 0], [w, h]);
+    }
+  } else {
+    a = p[2];
+    n = steps > 0 ? steps : max(8, ceil(a / 3));
+    arc_pts = function(r) [for (i = [0:n]) [r * cos(a * i / n), r * sin(a * i / n)]];
+    polygon(concat(arc_pts(p[0]), p[1] > 0 ? reverse(arc_pts(p[1])) : [[0, 0]]));
+    if (tab > 0) {
+      // The tab beyond the far edge, its ends cut in so it hides when rolled
+      ux = cos(a);
+      uy = sin(a);
+      nx = -uy;
+      ny = ux;
+      c = min(tab, p[3] / 4);
+      polygon([
+        [p[1] * ux, p[1] * uy],
+        [p[0] * ux, p[0] * uy],
+        [(p[0] - c) * ux + tab * nx, (p[0] - c) * uy + tab * ny],
+        [(p[1] + (p[1] > 0 ? c : tab)) * ux + tab * nx, (p[1] + (p[1] > 0 ? c : tab)) * uy + tab * ny],
+      ]);
+      score() line([p[1] * ux, p[1] * uy], [p[0] * ux, p[0] * uy]);
+    }
+  }
+}

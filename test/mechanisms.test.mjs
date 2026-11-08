@@ -75,3 +75,45 @@ test('train_for finds tooth counts for a ratio', () => {
   assert.throws(() => render('echo(train_for(1000, 1));'), /no train of 1 stages/);
   assert.throws(() => render('echo(train_for(10, 4));'), /1, 2 or 3/);
 });
+
+test('kerf/linkage finds where links meet', () => {
+  const [meet, apart, slider, bar, turns] = echo(`use <kerf/linkage>
+    echo(circle_meet([0, 0], 5, [8, 0], 5), circle_meet([0, 0], 5, [8, 0], 5, -1));
+    echo(circle_meet([0, 0], 1, [8, 0], 1));
+    echo(slider_crank(10, 40, 0), slider_stroke(10, 40));
+    echo(four_bar(40, 10, 40, 30, 0));
+    echo(four_bar_turns(40, 10, 40, 30), four_bar_turns(40, 30, 10, 30));`);
+  assert.equal(meet, '[4, 3], [4, -3]');
+  assert.equal(apart, 'undef');
+  assert.equal(slider, '[[10, 0], [50, 0]], 20');
+  // The coupler and rocker keep their lengths
+  const [bx, by, cx, cy] = bar.match(/-?[\d.e-]+/g).map(Number);
+  near(Math.hypot(cx - bx, cy - by), 40);
+  near(Math.hypot(cx - 40, cy), 30);
+  assert.equal(turns, 'true, false');
+});
+
+test('cone_flat rolls up to its radii', () => {
+  const [p] = echo('use <kerf/cones>\necho(cone_pattern(60, 20, 80));');
+  const [R1, R2, a, s] = p.match(/-?[\d.e-]+/g).map(Number);
+  near((R1 * a * Math.PI) / 180, 2 * Math.PI * 60);
+  near((R2 * a * Math.PI) / 180, 2 * Math.PI * 20);
+  near(s, Math.hypot(80, 40));
+  for (const src of [
+    'cone_flat(60, 20, 80, tab = 8)',
+    'cone_flat(40, 0, 60, tab = 8)',
+    'cone_flat(30, 30, 50, tab = 8)',
+  ]) {
+    const r = render(`use <kerf/cones>\n$fn = 64;\npart("c") ${src};`);
+    assert.deepEqual(r.warnings, [], src);
+    assert.equal(r.parts[0].pieces, 1, src);
+  }
+});
+
+test('part_size gives bought parts by name', () => {
+  assert.deepEqual(
+    echo('use <kerf/sizes>\nm = part_size("Quartz-Clock");\necho(m.body, m.hole);'),
+    ['[56, 56, 16], 8'],
+  );
+  assert.throws(() => render('use <kerf/sizes>\necho(part_size("x"));'), /Unknown part "x"/);
+});

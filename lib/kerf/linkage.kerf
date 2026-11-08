@@ -1,0 +1,54 @@
+// kerf/linkage: where the joints of a linkage are at a crank angle.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+//
+// Each function gives the joint points of a linkage drawn flat, so a part
+// placed on a link and the link's length come from the same numbers. Use
+// them to place moving parts at a drive angle, and to check a linkage closes
+// over a whole turn.
+
+// Where a circle of radius ra round a meets one of radius rb round b: the
+// point left of the line from a to b (side = 1) or right of it (side = -1).
+// undef when the circles don't meet: the links are too short or too long.
+function circle_meet(a, ra, b, rb, side = 1) =
+  let (
+    dx = b[0] - a[0],
+    dy = b[1] - a[1],
+    d = sqrt(dx * dx + dy * dy),
+    along = d > 0 ? (ra * ra - rb * rb + d * d) / (2 * d) : 0,
+    h2 = ra * ra - along * along
+  )
+  d == 0 || h2 < -1e-9 ? undef
+  : let (h = sqrt(max(0, h2)), ux = dx / d, uy = dy / d)
+  [a[0] + along * ux - side * h * uy, a[1] + along * uy + side * h * ux];
+
+// A crank of radius r turning round the origin drives a slider along the
+// line y = offset through a connecting rod of length l. At the crank's
+// angle it gives [crank pin, slider pin]; undef if the rod can't reach.
+function slider_crank(r, l, angle, offset = 0) =
+  let (
+    pin = [r * cos(angle), r * sin(angle)],
+    dy = offset - pin[1]
+  )
+  abs(dy) > l ? undef : [pin, [pin[0] + sqrt(l * l - dy * dy), offset]];
+
+// How far the slider of slider_crank() travels from end to end
+function slider_stroke(r, l, offset = 0) =
+  sqrt(pow(l + r, 2) - offset * offset) - sqrt(pow(l - r, 2) - offset * offset);
+
+// A four-bar linkage: the crank turns round the origin, the rocker round
+// [ground, 0], and the coupler joins their ends. At the crank's angle it
+// gives [crank end, rocker end], the rocker end on the side `side` of the
+// line from the crank end to the rocker's pivot; undef where the links
+// can't close.
+function four_bar(ground, crank, coupler, rocker, angle, side = 1) =
+  let (b = [crank * cos(angle), crank * sin(angle)], c = circle_meet(b, coupler, [ground, 0], rocker, side))
+  is_undef(c) ? undef : [b, c];
+
+// True when the crank of a four-bar linkage turns all the way round
+// (Grashof's rule, with the crank the shortest link)
+function four_bar_turns(ground, crank, coupler, rocker) =
+  let (s = min(ground, crank, coupler, rocker), l = max(ground, crank, coupler, rocker))
+  crank == s && s + l <= ground + crank + coupler + rocker - s - l;
+
+// The angle in degrees of the line from a to b, from +x
+function link_angle(a, b) = atan2(b[1] - a[1], b[0] - a[0]);

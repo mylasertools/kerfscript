@@ -13,6 +13,13 @@
   corners: the two edges of a strip along a curve.
 - `train_for(ratio, stages, pinion, wheel)` gives tooth counts for a gear
   train of 1 to 3 stages nearest a ratio.
+- `kerf/linkage`: `circle_meet()`, `slider_crank()`, `slider_stroke()`,
+  `four_bar()`, `four_bar_turns()` and `link_angle()` give where a
+  linkage's joints are at a crank angle.
+- `kerf/cones`: `cone_flat()` cuts a cone or cut-off cone flat, with a
+  scored glue tab, and `cone_pattern()` gives its sector.
+- `kerf/sizes`: `part_size()` gives the sizes of bought parts: a music box
+  movement, a quartz clock movement and marbles.
 
 ## 0.7.0 (2026-11-03)
 
