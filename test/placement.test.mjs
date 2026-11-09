@@ -743,3 +743,17 @@ part("Wall B", at = [48.5, 100, 3], rotate = [90, 0, -90]) { square([100, 40]); 
   );
   assert.deepEqual(shared(walls(15)), []);
 });
+
+test('curved copies pack in rows, every other one turned', () => {
+  const ribs = `$sheet = [600, 400];
+part("Rib", qty = 24) {
+  pts = [for (i = [0:40]) let (t = i / 40) [40 * sin(t * 360), t * 250]];
+  polygon(concat(pts, [for (i = [40:-1:0]) pts[i] + [14, 0]]));
+}`;
+  const r = render(ribs);
+  assert.equal(r.sheets.length, 1);
+  assert.deepEqual(
+    r.sheets[0].items.map((it) => it.copy).sort((a, b) => a - b),
+    Array.from({ length: 24 }, (_, i) => i + 1),
+  );
+});

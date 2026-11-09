@@ -328,6 +328,12 @@ ones before the rows are packed: the rings of a stacked vase or globe each
 inside the next, washers inside a wheel. A part goes into a hole only
 where its outline, `$gap` all round, fits.
 
+Copies of a curved part are packed in rows, every other one turned 180
+degrees and slid up against the one before, `$gap` clear, when that takes
+much less room than their boxes side by side: S-shaped ribs, crescents and
+L brackets nest into each other, so 24 lamp ribs that took four sheets fit
+on one. Rectangles and other parts that don't nest are packed as before.
+
 ## One file per sheet
 
 A combined SVG stacks all sheets in one preview. For the material example

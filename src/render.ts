@@ -658,8 +658,41 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
         for (let c = 0; c < r.info.qty; c++)
           queue.push({ info: r.info, layers, w, h, copy: r.copy(c), rotated });
       }
-      queue.sort((a, b) => b.h - a.h || b.w - a.w);
-      const packed = nest ? nestInHoles(queue, gap, (k) => mode(k) === 'cut') : queue;
+      const bySize = (a: { w: number; h: number }, b: { w: number; h: number }) =>
+        b.h - a.h || b.w - a.w;
+      // How many sheets the rows below take for a list, to choose a layout
+      const sheetsFor = (list: { w: number; h: number }[]) => {
+        let n = 0,
+          x = margin,
+          y = margin,
+          shelf = 0,
+          any = false;
+        for (const q of list) {
+          if (x > margin && x + q.w > W - margin) {
+            x = margin;
+            y += shelf + gap;
+            shelf = 0;
+          }
+          if (any && y + q.h > H - margin) {
+            n++;
+            [x, y, shelf] = [margin, margin, 0];
+          }
+          any = true;
+          x += q.w + gap;
+          shelf = Math.max(shelf, q.h);
+        }
+        return n + (any ? 1 : 0);
+      };
+      queue.sort(bySize);
+      // Curved copies in rows head to tail, kept only when that takes
+      // fewer sheets
+      const rows = pairHeadToTail(queue, gap, (k) => mode(k) === 'cut', [
+        W - 2 * margin,
+        H - 2 * margin,
+      ]).sort(bySize);
+      const chosen =
+        rows.length < queue.length && sheetsFor(rows) < sheetsFor(queue) ? rows : queue;
+      const packed = nest ? nestInHoles(chosen, gap, (k) => mode(k) === 'cut') : chosen;
       let items: Placed[] = [];
       let x = margin,
         y = margin,
@@ -1219,7 +1252,9 @@ function nestInHoles<
   const out: T[] = [];
   for (const q of queue) {
     let placed = false;
-    for (const f of free) {
+    // A head-to-tail pair carries its twin outside its outline: it isn't
+    // fitted into a hole, though it offers its own
+    for (const f of q.inner?.length ? [] : free) {
       const at = fit(f.region, q);
       if (!at) continue;
       const [px, py] = at;
@@ -1250,6 +1285,194 @@ function nestInHoles<
 }
 
 type Poly2 = [number, number][];
+
+// Copies of one curved part packed in rows, every other one turned 180
+// degrees and slid against the one before, when that takes much less room
+// than boxes side by side: S-shaped ribs, crescents, L brackets. A row is
+// as long as the sheet allows; its copies after the first ride in it as
+// nested items
+function pairHeadToTail<
+  T extends {
+    info: PartInfo;
+    layers: Map<string, Layer>;
+    w: number;
+    h: number;
+    copy: number;
+    rotated: boolean;
+    inner?: Nested[];
+  },
+>(queue: T[], gap: number, isCut: (k: string) => boolean, room: [number, number]): T[] {
+  const byPart = new Map<PartInfo, T[]>();
+  for (const q of queue) byPart.set(q.info, [...(byPart.get(q.info) ?? []), q]);
+  const out: T[] = [];
+  const move = (layers: Map<string, Layer>, m: Matrix) =>
+    transform({ layers, parts: [] }, m).layers;
+  for (const [, list] of byPart) {
+    const first = list[0];
+    const shape = union(
+      [...first.layers]
+        .filter(([k]) => isCut(k))
+        .flatMap(([, l]) => l.regions.filter((r) => area(r) > 0)),
+    );
+    // A part that fills most of its box can't save enough to be worth it
+    const filled = shape.reduce((t, r) => t + area(r), 0) / (first.w * first.h);
+    const row =
+      list.length >= 2 && shape.length && filled < 0.75
+        ? bestRow(shape, first.w, first.h, gap, room)
+        : undefined;
+    if (!row) {
+      out.push(...list);
+      continue;
+    }
+    // Turned 180 degrees within its own box
+    const turned = move(first.layers, [-1, 0, 0, -1, first.w, first.h]);
+    for (let i = 0; i < list.length; i += row.n) {
+      const group = list.slice(i, i + row.n);
+      if (group.length === 1) {
+        out.push(group[0]);
+        continue;
+      }
+      const at = row.at.slice(0, group.length);
+      const x0 = Math.min(...at.map((p) => p[0])),
+        y0 = Math.min(...at.map((p) => p[1]));
+      const w = Math.max(...at.map((p) => p[0] + first.w)) - x0,
+        h = Math.max(...at.map((p) => p[1] + first.h)) - y0;
+      out.push({
+        ...group[0],
+        layers: move(group[0].layers, [1, 0, 0, 1, at[0][0] - x0, at[0][1] - y0]),
+        w,
+        h,
+        inner: group.slice(1).map((b, k) => ({
+          item: { ...b, layers: (k + 1) % 2 ? turned : b.layers } as Nested['item'],
+          dx: at[k + 1][0] - x0,
+          dy: at[k + 1][1] - y0,
+        })),
+      });
+    }
+  }
+  return out;
+}
+
+// Where copies go in a row, every other one turned 180 degrees, each gap
+// clear of the others, for the row that saves most room on two copies;
+// none when it saves too little
+function bestRow(detail: Poly2[], w: number, h: number, gap: number, room: [number, number]) {
+  // Searched with fewer points: each outline simplified, then grown by as
+  // much as it may have lost, so it still holds the part
+  const tol = 0.25;
+  const shape = offset(
+    detail.map((r) => simplify(r, tol)).filter((r) => r.length >= 3),
+    tol,
+    'miter',
+  );
+  const grown = offset(shape, gap, 'miter');
+  const turned = shape.map((p) => p.map(([x, y]): [number, number] => [w - x, h - y]));
+  const moved = (s: Poly2[], [dx, dy]: [number, number]) =>
+    s.map((p) => p.map(([x, y]): [number, number] => [x + dx, y + dy]));
+  const clearOf = (fixed: Poly2[], s: Poly2[]) =>
+    !intersection(fixed, s).some((p) => Math.abs(area(p)) > 1e-3);
+  // The closest place along a line that stays clear, found by halves
+  const slide = (fixed: Poly2[], s: Poly2[], at: (t: number) => [number, number], far: number) => {
+    let [lo, hi] = [0, far];
+    if (!clearOf(fixed, moved(s, at(hi)))) return undefined;
+    if (clearOf(fixed, moved(s, at(lo)))) return at(lo);
+    for (let n = 0; n < 10; n++) {
+      const mid = (lo + hi) / 2;
+      if (clearOf(fixed, moved(s, at(mid)))) hi = mid;
+      else lo = mid;
+    }
+    return at(hi);
+  };
+  let best: { d: [number, number]; across: boolean; area: number } | undefined;
+  for (const across of [false, true])
+    for (let k = -10; k <= 10; k++) {
+      const off = (k / 10) * (across ? w : h);
+      const d = slide(grown, turned, (t) => (across ? [off, t] : [t, off]), (across ? h : w) + gap);
+      if (!d) continue;
+      const pw = Math.max(w, d[0] + w) - Math.min(0, d[0]),
+        ph = Math.max(h, d[1] + h) - Math.min(0, d[1]);
+      if (pw > room[0] || ph > room[1]) continue;
+      if (pw * ph < 0.85 * 2 * w * h && (!best || pw * ph < best.area))
+        best = { d, across, area: pw * ph };
+    }
+  if (!best) return undefined;
+  const { d, across } = best;
+  // The next pair repeats a period on: an upright copy slid on past the
+  // first pair, then checked against everything before it
+  const pair = union([...grown, ...offset(moved(turned, d), gap, 'miter')]);
+  const span = across ? h : w;
+  const period = slide(
+    pair,
+    shape,
+    (t) => (across ? [0, t] : [t, 0]),
+    2 * (span + gap) + Math.abs(across ? d[1] : d[0]),
+  );
+  const at: [number, number][] = [
+    [0, 0],
+    [d[0], d[1]],
+  ];
+  if (period) {
+    const fits = (pts: [number, number][]) =>
+      Math.max(...pts.map((p) => p[0] + w)) - Math.min(...pts.map((p) => p[0])) <= room[0] &&
+      Math.max(...pts.map((p) => p[1] + h)) - Math.min(...pts.map((p) => p[1])) <= room[1];
+    for (let i = 2; i < 500; i++) {
+      const k = Math.floor(i / 2);
+      const p: [number, number] =
+        i % 2 ? [d[0] + k * period[0], d[1] + k * period[1]] : [k * period[0], k * period[1]];
+      if (!fits([...at, p])) break;
+      const mine = moved(i % 2 ? turned : shape, p);
+      const others = union(
+        at
+          .slice(Math.max(0, at.length - 3))
+          .map((q, j, arr) => {
+            const idx = at.length - arr.length + j;
+            return offset(moved(idx % 2 ? turned : shape, q), gap, 'miter');
+          })
+          .flat(),
+      );
+      if (!clearOf(others, mine)) break;
+      at.push(p);
+    }
+  }
+  return { at, n: at.length };
+}
+
+// A closed outline with points dropped while it stays within tol of them
+// (Douglas-Peucker), split in two at the point farthest from the first
+function simplify(ring: Poly2, tol: number): Poly2 {
+  if (ring.length < 8) return ring;
+  const open = (pts: Poly2): Poly2 => {
+    const keep = new Uint8Array(pts.length);
+    keep[0] = keep[pts.length - 1] = 1;
+    const stack: [number, number][] = [[0, pts.length - 1]];
+    while (stack.length) {
+      const [i, j] = stack.pop()!;
+      const [ax, ay] = pts[i],
+        [bx, by] = pts[j];
+      const len = Math.hypot(bx - ax, by - ay);
+      let far = -1,
+        at = -1;
+      for (let k = i + 1; k < j; k++) {
+        const [px, py] = pts[k];
+        const d = len
+          ? Math.abs((bx - ax) * (ay - py) - (ax - px) * (by - ay)) / len
+          : Math.hypot(px - ax, py - ay);
+        if (d > far) [far, at] = [d, k];
+      }
+      if (far > tol) {
+        keep[at] = 1;
+        stack.push([i, at], [at, j]);
+      }
+    }
+    return pts.filter((_, k) => keep[k]);
+  };
+  const d0 = (q: [number, number]) => Math.hypot(q[0] - ring[0][0], q[1] - ring[0][1]);
+  let mid = 1;
+  for (let k = 2; k < ring.length; k++) if (d0(ring[k]) > d0(ring[mid])) mid = k;
+  const a = open(ring.slice(0, mid + 1));
+  const b = open([...ring.slice(mid), ring[0]]);
+  return [...a, ...b.slice(1, -1)];
+}
 
 // A copy's number among its part() call's copies, a stack's layers each
 // counting as one
