@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.9.0 (2026-11-09)
+
+Language version 0.3, as in 0.8.0: programs run as before.
 
 Language:
 
@@ -63,6 +65,9 @@ Fixes:
   naming both files; the later one is still used.
 - A collision is reported at a point inside the overlap, not the middle of
   the two parts' boxes.
+- A line far longer than the area it is clipped to (a part's material, a
+  `difference()`) is clipped where it crosses the area, instead of running
+  on without reaching the step limit.
 
 ## 0.8.0 (2026-11-08)
 
