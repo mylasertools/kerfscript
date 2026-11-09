@@ -174,25 +174,26 @@ module hang_hole(d = 5) {
 
 ## Special variables
 
-| Name              | Default       | Meaning                                                                     |
-| ----------------- | ------------- | --------------------------------------------------------------------------- |
-| `$thickness`      | `3`           | material thickness, used by joinery and stored on parts                     |
-| `$kerf`           | `0`           | beam width; cut outlines are offset by half of it                           |
-| `$material`       | `"material"`  | material name; parts are packed per material and thickness                  |
-| `$sheet`          | `[600, 400]`  | sheet size for packing                                                      |
-| `$gap`            | `3`           | space between packed parts and around the sheet edge                        |
-| `$layout`         | `"pack"`      | `"pack"` packs parts onto sheets, `"none"` keeps your placement             |
-| `$fn` `$fa` `$fs` | `0` `2` `0.2` | curve resolution: fixed segment count, or max angle and max segment length  |
-| `$font`           |               | default font name for `text()`                                              |
-| `$mirrored`       | `false`       | set inside a mirrored part and on the back face: `text()` reads right       |
-| `$scale`          | `1`           | the model's scale: `140cm` is 1400 mm divided by `$scale`                   |
-| `$nest`           | `false`       | pack small parts into the holes of bigger ones                              |
-| `$registration`   | `false`       | print-and-cut marks in three corners of every sheet                         |
-| `$label_parts`    | `false`       | engrave each part's number on its back face, as in the parts list and steps |
-| `$min_width`      | `1.5`         | warn where a part's material is narrower than this; `0` turns it off        |
-| `$bounds`         |               | set by `measure()` for the children after the one it measures               |
-| `$area`           |               | set by `measure()`: the area of material the measured child cuts            |
-| `$centroid`       |               | set by `measure()`: the measured child's balance point `[x, y]`             |
+| Name              | Default       | Meaning                                                                       |
+| ----------------- | ------------- | ----------------------------------------------------------------------------- |
+| `$thickness`      | `3`           | material thickness, used by joinery and stored on parts                       |
+| `$kerf`           | `0`           | beam width; cut outlines are offset by half of it                             |
+| `$material`       | `"material"`  | material name; parts are packed per material and thickness                    |
+| `$sheet`          | `[600, 400]`  | sheet size for packing                                                        |
+| `$gap`            | `3`           | space between packed parts and around the sheet edge                          |
+| `$layout`         | `"pack"`      | `"pack"` packs parts onto sheets, `"none"` keeps your placement               |
+| `$fn` `$fa` `$fs` | `0` `2` `0.2` | curve resolution: fixed segment count, or max angle and max segment length    |
+| `$font`           |               | default font name for `text()`                                                |
+| `$mirrored`       | `false`       | set inside a mirrored part and on the back face: `text()` reads right         |
+| `$scale`          | `1`           | the model's scale: `140cm` is 1400 mm divided by `$scale`                     |
+| `$nest`           | `false`       | pack small parts into the holes of bigger ones                                |
+| `$registration`   | `false`       | print-and-cut marks in three corners of every sheet                           |
+| `$label_parts`    | `false`       | engrave each part's number on its back face, as in the parts list and steps   |
+| `$join_lines`     | `false`       | join lines that meet end to end and order them nearest first, for less travel |
+| `$min_width`      | `1.5`         | warn where a part's material is narrower than this; `0` turns it off          |
+| `$bounds`         |               | set by `measure()` for the children after the one it measures                 |
+| `$area`           |               | set by `measure()`: the area of material the measured child cuts              |
+| `$centroid`       |               | set by `measure()`: the measured child's balance point `[x, y]`               |
 
 ## Layers
 
@@ -363,21 +364,25 @@ playground, the command line and `kerfscript.wasm` have `Atkinson`
 
 ### Combining
 
-| Module                                         | Notes                                                                                                                                   |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `union()` / `group()`                          | joins children                                                                                                                          |
-| `difference()`                                 | removes every later child's area from every layer of the first child                                                                    |
-| `intersection()`                               | keeps the area common to all children; lines of any child are clipped to the others' area, and a child of lines alone leaves only lines |
-| `fill_holes(min_area)`                         | fills holes smaller than `min_area` mm², or all of them                                                                                 |
-| `close(r = 0.5)`                               | closes gaps and notches narrower than `2 r`, keeping the outline                                                                        |
-| `pattern(spacing, stagger = 0)`                | repeats its first child over the area of the others, clipped at the edge                                                                |
-| `hatch(angle = 45, pitch = 5, width)`          | parallel lines across the children's area, or stripes `width` wide                                                                      |
-| `paint(layers)`                                | each child loses the area of every later one; child i goes on `layers[i]`. A child wholly on an area of its own layer warns             |
-| `measure(draw = false)`                        | `$bounds` = `[x0, y0, x1, y1]`, `$area` and `$centroid` = `[x, y]` of the first child, for the children after                           |
-| `hull()`                                       | convex hull; each named part inside gets its own hull                                                                                   |
-| `offset(r)` / `offset(delta, chamfer = false)` | grow (positive) or shrink areas; `r` rounds corners                                                                                     |
-| `stroke(width)`                                | turns lines into areas of that width, for cutting single line art                                                                       |
-| `outline()`                                    | turns areas into their outline lines                                                                                                    |
+| Module                                                 | Notes                                                                                                                                   |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `union()` / `group()`                                  | joins children                                                                                                                          |
+| `difference()`                                         | removes every later child's area from every layer of the first child                                                                    |
+| `intersection()`                                       | keeps the area common to all children; lines of any child are clipped to the others' area, and a child of lines alone leaves only lines |
+| `fill_holes(min_area)`                                 | fills holes smaller than `min_area` mm², or all of them                                                                                 |
+| `close(r = 0.5)`                                       | closes gaps and notches narrower than `2 r`, keeping the outline                                                                        |
+| `pattern(spacing, stagger = 0)`                        | repeats its first child over the area of the others, clipped at the edge                                                                |
+| `hatch(angle = 45, pitch = 5, width)`                  | parallel lines across the children's area, or stripes `width` wide                                                                      |
+| `flow(field, spacing = 2, step, min_length, seed = 1)` | evenly spaced lines following `field(p)` (degrees, a vector, or `undef` to stop) across the children's area; see [Plotting](#plotting)  |
+| `contours(field, levels = 10, interval, cell = 1)`     | lines where `field(p)` crosses each level across the children's area: `levels` evenly spaced ones or a list, or every `interval`        |
+| `occlude()`                                            | children back to front: lines and outlines hide behind later children's areas, fills lose them. Each iteration of a `for` is a child    |
+| `hide()`                                               | inside `occlude()`, an area that hides what is behind it and is not drawn                                                               |
+| `paint(layers)`                                        | each child loses the area of every later one; child i goes on `layers[i]`. A child wholly on an area of its own layer warns             |
+| `measure(draw = false)`                                | `$bounds` = `[x0, y0, x1, y1]`, `$area` and `$centroid` = `[x, y]` of the first child, for the children after                           |
+| `hull()`                                               | convex hull; each named part inside gets its own hull                                                                                   |
+| `offset(r)` / `offset(delta, chamfer = false)`         | grow (positive) or shrink areas; `r` rounds corners                                                                                     |
+| `stroke(width)`                                        | turns lines into areas of that width, for cutting single line art                                                                       |
+| `outline()`                                            | turns areas into their outline lines                                                                                                    |
 
 ### Joinery
 
@@ -396,6 +401,57 @@ playground, the command line and `kerfscript.wasm` have `Atkinson`
 | `assert(condition, message)` | Stop with `message` when `condition` is false                                                                    |
 | `children(index)`            | Render a child passed to the current module; omit `index` to render all children                                 |
 | `call(name, ...)`            | Call the module named by the string `name` with the other arguments and the children: `call(entry.draw, 40, 30)` |
+
+### Plotting
+
+Line art drawn the way pen plotters draw, for score and engrave lines.
+
+`flow(field)` grows lines both ways from seeds until they leave the area,
+the field stops, or they come within half of `spacing` of another line or
+of themselves; new lines start `spacing` to either side of each line, so
+they fill the area evenly. `field` is one angle, or a function of the point
+`p` giving degrees, a vector `[x, y]`, or `undef` where lines stop. Another
+`seed` gives another arrangement.
+
+```kerf
+part("Panel") {
+  rect([120, 80], r = 5);
+  score() flow(function(p) 180 * noise(p / 40, seed = 3, octaves = 2), spacing = 2)
+    offset(-5) rect([120, 80], r = 5);
+}
+```
+
+`contours(field)` samples `field(p)` every `cell` mm across the area and
+draws where it crosses each level, as a map's height lines.
+
+```kerf
+part("Coaster") {
+  circle(d = 90);
+  score() contours(function(p) noise(p / 30, seed = 7, octaves = 3), interval = 0.08)
+    circle(d = 82);
+}
+```
+
+`occlude()` draws its children back to front as if each were opaque. Lines
+and the outlines of line layers are cut where a later child's area covers
+them; filled layers lose that area, as in `paint()`; cut and guide layers
+are unchanged. `hide()` gives a child an area that covers without being
+drawn. Stacked ridgelines, nearest last:
+
+```kerf
+ridge = function(k) [for (x = [0:2:100]) [x, k * 3 + 12 * max(0, noise(x / 15, k / 5))]];
+part("Ridges") {
+  translate([-5, -5]) rect([110, 75]);
+  occlude() for (k = [19:-1:0]) {
+    score() polyline(ridge(k));
+    hide() polygon(concat(ridge(k), [[100, -1], [0, -1]]));
+  }
+}
+```
+
+Set `$join_lines = true` to join lines that meet end to end into one and
+put them in nearest-first order, each started from its end nearer the
+last, so the laser head travels less between them.
 
 ## Built-in functions
 
@@ -468,6 +524,13 @@ A path is a list of `[x, y]` points.
 
 `rands(min, max, count, seed = 1)` returns a list of numbers between the
 bounds. The same seed gives the same sequence.
+
+`noise(x, y = 0, z = 0, seed = 1, octaves = 1)` is smooth gradient noise,
+about -1 to 1, that changes gradually from point to point; `x` may be a
+point `[x, y]` or `[x, y, z]`, as in `noise(p / 30, seed = 4)`. It is 0 at
+whole numbers, so scale the point down for broad shapes. `octaves` adds
+finer layers, each half as strong at twice the detail. Step `z` to get a
+related but different pattern.
 
 ### Text measurements
 

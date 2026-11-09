@@ -1,5 +1,6 @@
 // Copyright (c) 2026 MyLaserTools. SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-MyLaserTools-Commercial
 
+import { joinLines } from './plot.js';
 import {
   bendRuns,
   bentPieces,
@@ -246,6 +247,8 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   // $label_parts: each part's number engraved on its back face, the same
   // number as in the parts list and the steps
   const labelParts = g('$label_parts') === true;
+  // $join_lines: lines that meet end to end become one, taken nearest first
+  const joinAll = g('$join_lines') === true;
   let label = 0;
   if (labelParts && !fonts)
     warnings.push('$label_parts needs a font for the numbers. Pass fonts to render().');
@@ -332,6 +335,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
         if (mode(k) !== 'cut') regions = intersection(regions, area);
         lines = clipLines(lines, area, 'inside');
       }
+      if (joinAll && lines.length > 1 && mode(k) !== 'guide') lines = joinLines(lines);
       if (regions.length || lines.length) layers.set(k, { regions, lines });
     }
     hidden.push(...hiddenFills(p.name, layers, defs));

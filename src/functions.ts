@@ -146,6 +146,67 @@ function seeded(seed: number) {
   };
 }
 
+// Ken Perlin's improved gradient noise in three dimensions, with the
+// lattice shuffled by a seed: smooth, about -1 to 1, 0 at whole numbers
+const perms = new Map<number, Uint8Array>();
+function permutation(seed: number): Uint8Array {
+  let p = perms.get(seed);
+  if (p) return p;
+  const rnd = seeded(seed);
+  const a = Array.from({ length: 256 }, (_, i) => i);
+  for (let i = 255; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  p = new Uint8Array(512);
+  for (let i = 0; i < 512; i++) p[i] = a[i & 255];
+  if (perms.size > 64) perms.clear();
+  perms.set(seed, p);
+  return p;
+}
+const fade = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
+function grad(h: number, x: number, y: number, z: number) {
+  const k = h & 15;
+  const u = k < 8 ? x : y,
+    v = k < 4 ? y : k === 12 || k === 14 ? x : z;
+  return ((k & 1) === 0 ? u : -u) + ((k & 2) === 0 ? v : -v);
+}
+export function perlin(x: number, y: number, z: number, seed: number): number {
+  const p = permutation(seed);
+  const X = Math.floor(x),
+    Y = Math.floor(y),
+    Z = Math.floor(z);
+  x -= X;
+  y -= Y;
+  z -= Z;
+  const xi = X & 255,
+    yi = Y & 255,
+    zi = Z & 255;
+  const u = fade(x),
+    v = fade(y),
+    w = fade(z);
+  const A = p[xi] + yi,
+    AA = p[A] + zi,
+    AB = p[A + 1] + zi,
+    B = p[xi + 1] + yi,
+    BA = p[B] + zi,
+    BB = p[B + 1] + zi;
+  const l = (t: number, a: number, b: number) => a + t * (b - a);
+  return l(
+    w,
+    l(
+      v,
+      l(u, grad(p[AA], x, y, z), grad(p[BA], x - 1, y, z)),
+      l(u, grad(p[AB], x, y - 1, z), grad(p[BB], x - 1, y - 1, z)),
+    ),
+    l(
+      v,
+      l(u, grad(p[AA + 1], x, y, z - 1), grad(p[BA + 1], x - 1, y, z - 1)),
+      l(u, grad(p[AB + 1], x, y - 1, z - 1), grad(p[BB + 1], x - 1, y - 1, z - 1)),
+    ),
+  );
+}
+
 function minmax(a: Value[], pick: (xs: number[]) => number, name: string): Value {
   const xs = a.length === 1 && Array.isArray(a[0]) ? a[0] : a;
   if (!xs.length) return undefined;
@@ -293,6 +354,39 @@ export const FUNCTIONS: Record<string, Builtin> = {
       { length: Math.min(Math.max(0, Math.floor(n)), 1_000_000) },
       () => lo + (hi - lo) * rnd(),
     );
+  }),
+  // Smooth noise at a point: x, y, z or a point [x, y] or [x, y, z].
+  // octaves add finer layers, each half as strong at twice the detail.
+  noise: def('x, y, z, seed, octaves', (a) => {
+    let x: number,
+      y = 0,
+      z = 0;
+    if (Array.isArray(a[0])) {
+      const q = a[0];
+      x = num(q[0], 'noise');
+      y = q[1] === undefined ? 0 : num(q[1], 'noise');
+      z = q[2] === undefined ? 0 : num(q[2], 'noise');
+    } else {
+      x = num(a[0], 'noise');
+      if (a[1] !== undefined) y = num(a[1], 'noise');
+      if (a[2] !== undefined) z = num(a[2], 'noise');
+    }
+    const seed = Math.floor(a[3] === undefined ? 1 : num(a[3], 'noise'));
+    const n = a[4] === undefined ? 1 : Math.floor(num(a[4], 'noise'));
+    if (!(n >= 1 && n <= 8)) throw new Error('noise(): octaves must be 1 to 8');
+    let sum = 0,
+      amp = 1,
+      total = 0,
+      f = 1;
+    for (let i = 0; i < n; i++) {
+      // Finer octaves shifted off the lattice, so they don't all meet 0 there
+      sum +=
+        amp * perlin(x * f + i * 0.3713, y * f + i * 0.6271, z * f + i * 0.1943, seed + i * 7919);
+      total += amp;
+      amp /= 2;
+      f *= 2;
+    }
+    return clean(sum / total);
   }),
   is_num: def('value', (a) => isNum(a[0]) && !Number.isNaN(a[0])),
   is_string: def('value', (a) => typeof a[0] === 'string'),

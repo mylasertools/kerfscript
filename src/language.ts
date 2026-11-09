@@ -149,6 +149,10 @@ const SPECIAL: Record<string, { value?: string; doc: string }> = {
     value: '1.5',
     doc: "Warn where a part's material is narrower than this; `0` turns it off",
   },
+  $join_lines: {
+    value: 'false',
+    doc: 'Join lines that meet end to end into one and order them nearest first, so the laser travels less between them',
+  },
   $mirrored: { doc: 'True inside a mirrored part and on the back face, so `text()` reads right' },
   $bounds: { doc: 'Set by `measure()` for the children after the one it measures' },
   $area: {

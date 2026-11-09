@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+Plotting (line art as pen plotters draw it, for score and engrave lines):
+
+- `noise(x, y, z, seed, octaves)`: smooth gradient noise, or of a point
+  `noise(p / 30)`.
+- `flow(field, spacing, step, min_length, seed)` fills an area with evenly
+  spaced lines that follow a direction field: an angle, or a function of
+  the point giving degrees, a vector, or `undef` where lines stop.
+- `contours(field, levels, interval, cell)` draws where a height field
+  crosses each level across an area.
+- `occlude()` draws its children back to front, each opaque: lines and
+  outlines hide behind later areas, with each `for` iteration a child of
+  its own; `hide()` is an area that covers without being drawn. Stacked
+  ridgelines, landscapes and overlapping shapes score without double lines.
+- `$join_lines = true` joins lines that meet end to end and orders them
+  nearest first, so the laser travels less between them.
+
 ## 0.8.0 (2026-11-08)
 
 Language version 0.3, as in 0.7.0: programs run as before.
