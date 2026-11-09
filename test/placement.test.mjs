@@ -719,3 +719,13 @@ part("Arm", at = [50 + 30 * cos(crank) - 5, 50 + 30 * sin(crank) - 5, 3]) rect([
     (e) => /No setting drives this model/.test(String(e.stderr)),
   );
 });
+
+test('slot_extra sweeps the slots for a hook that drops in', () => {
+  const src = (
+    e,
+  ) => `part("Board", at = [0, 3, 0], rotate = [90, 0, 0], slots = ["Hook"], clearance = 0${e}) square([60, 60]);
+part("Hook", at = [28, 6, 30], rotate = [90, 0, 90]) { square([20, 4]); translate([-6, 0]) square([6.01, 4]); }`;
+  // A 3 x 4 slot, then 3 x 10 grown 6 mm upward
+  assert.equal(render(src('')).parts[0].cutLength, 254);
+  assert.equal(render(src(', slot_extra = [0, 6]')).parts[0].cutLength, 266);
+});

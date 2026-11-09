@@ -2145,6 +2145,9 @@ export class Evaluator {
         const clearance = this.num(this.arg(c.args, 'clearance', -1, 0.1), 'part', 'clearance');
         // bores = ["Crank axle"]: holes where that hardware passes through,
         // with fit = "turn" (the default), "press" or a number of mm
+        const extraArg = this.arg(c.args, 'slot_extra', -1);
+        const slotExtra =
+          extraArg === undefined ? undefined : this.vec2(extraArg, 'slot_extra', false);
         const boresArg = this.arg(c.args, 'bores', -1);
         const bores =
           boresArg === undefined
@@ -2186,6 +2189,7 @@ export class Evaluator {
             ...(bends.length ? { bends } : {}),
             ...(on !== undefined ? { on: toText(on) } : {}),
             ...(slots ? { slots, clearance } : {}),
+            ...(slots && slotExtra ? { slotExtra } : {}),
             ...(bores ? { bores, fit } : {}),
             ...(halving ? { halving, clearance } : {}),
             ...(this.step ? { step: this.step } : {}),

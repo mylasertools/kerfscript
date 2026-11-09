@@ -140,6 +140,10 @@ part("back", at = [0, 55, 3], rotate = [75, 0, 0]) {
 Parts that only touch cut nothing: a wall standing on a shelf without tabs
 leaves it whole.
 
+A hook that goes in through its slot and then drops, as on a pegboard,
+needs a slot taller than its tab: `slot_extra = [0, 6]` sweeps each slot
+6 mm further along the receiving part's own y.
+
 ### Halving joints
 
 Two plates that cross, as the dividers of an egg crate or the ribs and

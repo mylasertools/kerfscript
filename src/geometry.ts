@@ -40,6 +40,9 @@ export interface PartShape {
   // Parts whose tabs pass through this one: slots cut where they meet it
   slots?: string[];
   clearance?: number;
+  // Each slot swept this far in the part's own coordinates, for a part
+  // that goes in through it and then drops (a pegboard hook)
+  slotExtra?: [number, number];
   // Hardware rods passing through it, by label or kind: holes cut where
   // they cross it, `fit` mm wider than the rod (less than 0 for a press fit)
   bores?: string[];

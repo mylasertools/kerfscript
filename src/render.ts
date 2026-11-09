@@ -815,6 +815,23 @@ function namePattern(name: string): (s: string) => boolean {
 
 // Cuts the slots part(..., slots = [...]) asks for, where the named
 // parts' material passes through each placed copy of the part
+// Slots swept along [dx, dy]: each joined to its copy moved that far, as a
+// hook's slot grows upward so it can go in and drop
+function swept(polys: Poly2[], by?: [number, number]): Poly2[] {
+  if (!by || !polys.length || (by[0] === 0 && by[1] === 0)) return polys;
+  const out: Poly2[] = [...polys];
+  for (const p of polys) {
+    const q = p.map(([x, y]): [number, number] => [x + by[0], y + by[1]]);
+    out.push(q);
+    for (let i = 0; i < p.length; i++) {
+      const j = (i + 1) % p.length;
+      const quad: Poly2 = [p[i], p[j], q[j], q[i]];
+      if (Math.abs(area(quad)) > 1e-9) out.push(area(quad) < 0 ? quad.reverse() : quad);
+    }
+  }
+  return union(out, 'nonzero');
+}
+
 // A slot is a hole through the part: no mark is left inside it
 function holed(from: Map<string, Layer>, slot: Poly2[]) {
   const layers = new Map(from);
@@ -902,7 +919,7 @@ function cutSlots(
           outline: cutOf(p),
           ...(p.bends && { bends: p.bends }),
         }).flatMap((me) => {
-          const cut = p.slots ? slotsFor(me, others, p.clearance ?? 0.1) : [];
+          const cut = p.slots ? swept(slotsFor(me, others, p.clearance ?? 0.1), p.slotExtra) : [];
           // A bore is cut where its rod's hole meets the part's material
           for (const h of rods) {
             const hole = boreFor(me, h, p.fit ?? FITS.turn);

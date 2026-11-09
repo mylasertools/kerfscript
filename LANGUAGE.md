@@ -313,6 +313,9 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
     names before it took: `slots = ["*", "!back"]` cuts a slot for every
     part that passes through except the back. A slot clears every layer,
     marks included, and a part that only touches the edge leaves no notch.
+  - `slot_extra = [dx, dy]` sweeps each of its slots that far in this
+    part's own coordinates: a pegboard hook goes in through the slot and
+    drops, so its slot is taller than its tab.
   - `halving = ["name", ...]`: where this part and the named parts cross,
     each takes a slot from opposite sides, meeting halfway along the line
     they cross on, `clearance` wider, so they slide together: an egg-crate

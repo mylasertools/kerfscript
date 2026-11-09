@@ -472,6 +472,10 @@ export const SIGNATURES: Signature[] = [
       named('slots', 'Names of parts whose tabs pass through this one: their slots are cut'),
       named('clearance', 'Added to the slots, in total across each', '0.1'),
       named(
+        'slot_extra',
+        'Each slot swept [dx, dy] further in this part, for a hook that goes in and drops',
+      ),
+      named(
         'halving',
         'Names of parts this one crosses: both take a slot from opposite sides, meeting halfway',
       ),
