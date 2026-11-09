@@ -186,12 +186,15 @@ interface ModDef {
   params: Param[];
   body: Stmt[];
   env: Env;
+  // Where it is defined, to name both places when two libraries define it
+  pos?: Pos;
 }
 
 interface FnDef {
   params: Param[];
   body: Expr;
   env: Env;
+  pos?: Pos;
 }
 
 interface ChildCtx {
@@ -418,8 +421,10 @@ export class Evaluator {
             `${s.kind} ${s.name} hides the built-in ${s.name}(); rename it to use both (${where(s.pos, false)})`,
           );
       }
-      if (s.kind === 'module') env.mods.set(s.name, { params: s.params, body: s.body, env });
-      else if (s.kind === 'function') env.fns.set(s.name, { params: s.params, body: s.body, env });
+      if (s.kind === 'module')
+        env.mods.set(s.name, { params: s.params, body: s.body, env, pos: s.pos });
+      else if (s.kind === 'function')
+        env.fns.set(s.name, { params: s.params, body: s.body, env, pos: s.pos });
       else if (s.kind === 'use' && !s.include) {
         this.enter(this.using, s.path, s.pos, 'use');
         try {
@@ -428,13 +433,32 @@ export class Evaluator {
           this.hoist(body, libEnv);
           for (const ls of body)
             if (ls.kind === 'assign') this.assign(ls.name, this.expr(ls.value, libEnv), libEnv);
-          for (const [k, v] of libEnv.mods) env.mods.set(k, v);
-          for (const [k, v] of libEnv.fns) env.fns.set(k, v);
+          for (const [k, v] of libEnv.mods) {
+            this.clash('module', k, env.mods.get(k), v);
+            env.mods.set(k, v);
+          }
+          for (const [k, v] of libEnv.fns) {
+            this.clash('function', k, env.fns.get(k), v);
+            env.fns.set(k, v);
+          }
         } finally {
           this.using.pop();
         }
       }
     }
+  }
+
+  // Two libraries defining one name: the later replaces the earlier
+  // without a word, so a library can break another just by being used after
+  // it. The same definition reached twice (both use one library) is fine
+  private clashed = new Set<string>();
+  private clash(kind: string, name: string, had: ModDef | FnDef | undefined, now: ModDef | FnDef) {
+    if (!had || had.body === now.body || !had.pos?.file || !now.pos?.file) return;
+    if (had.pos.file === now.pos.file || this.clashed.has(`${kind} ${name}`)) return;
+    this.clashed.add(`${kind} ${name}`);
+    this.warn(
+      `${kind} ${name} is defined in <${had.pos.file}> (line ${had.pos.line}) and in <${now.pos.file}> (line ${now.pos.line}); the one in <${now.pos.file}> is used. Rename one to use both.`,
+    );
   }
 
   // Children shapes already made in a module call, by statement

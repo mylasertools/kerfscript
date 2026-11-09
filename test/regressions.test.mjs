@@ -381,6 +381,24 @@ part("a") { engraved() square(20); translate([5, 5]) square(3); }`);
     assert.deepEqual(render(src).warnings, [], src);
 });
 
+test('two libraries defining one name warn once, naming both', () => {
+  const libs = {
+    'a.kerf': 'module shape() square(5);\nfunction f() = 1;',
+    'b.kerf': 'module shape() circle(5);',
+    'c.kerf': 'use <a.kerf>\nmodule x() shape();',
+  };
+  const resolve = (p) => libs[p];
+  const r = render('use <a.kerf>\nuse <b.kerf>\nuse <c.kerf>\npart("p") shape();', { resolve });
+  assert.deepEqual(r.warnings, [
+    'module shape is defined in <a.kerf> (line 1) and in <b.kerf> (line 1); the one in <b.kerf> is used. Rename one to use both.',
+  ]);
+  // The same library reached twice is one definition
+  assert.deepEqual(
+    render('use <a.kerf>\nuse <c.kerf>\npart("p") shape();', { resolve }).warnings,
+    [],
+  );
+});
+
 test('a fill wholly under a layer stacked above it warns', () => {
   const r = render(`
 layer("glass", mode = "fill", color = "#88aacc");

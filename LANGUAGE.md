@@ -128,6 +128,8 @@ Arguments can be positional or named: `rect([20, 10], r = 2)`.
 A library's own `use <path>` and `include <path>` look next to that
 library first, then where the main program's would: `lib/props.kerf`
 saying `use <finish.kerf>` finds `lib/finish.kerf`.
+When two libraries define a module or function of the same name, the one
+used later replaces the earlier, with a warning naming both.
 
 ### Lengths in real units
 
