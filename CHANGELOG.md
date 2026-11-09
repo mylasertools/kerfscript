@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+Language:
+
+- `assert(c, msg) expr` and `echo(...) expr` check or trace before an
+  expression, so a library function can refuse bad sizes itself; `let` (and
+  a function literal) can follow an operator.
+- `sort(values, key)`, `fold(values, initial, fn)` and `scan(values,
+initial, fn)`; `bounds(points)` and `crossings(points, x | y)` for
+  outlines as point lists.
+- `intersection_for` intersects its iterations, as in OpenSCAD.
+- `part(qty = 0)` makes nothing; `largest(n)` keeps the biggest pieces of the
+  material; `join_islands(width)` joins every piece to the rest.
+- `text(weight = "bold")` and `text(bridge = w)` for cut-out lettering;
+  `symbol(solid = true, bridge)` cuts a pictogram in one piece with its
+  detail engraved.
+
 Plotting (line art as pen plotters draw it, for score and engrave lines):
 
 - `noise(x, y, z, seed, octaves)`: smooth gradient noise, or of a point
@@ -17,6 +32,37 @@ Plotting (line art as pen plotters draw it, for score and engrave lines):
   ridgelines, landscapes and overlapping shapes score without double lines.
 - `$join_lines = true` joins lines that meet end to end and orders them
   nearest first, so the laser travels less between them.
+
+Joints, mechanisms and layout:
+
+- `part(bores = ["Crank axle"], fit = "turn" | "press" | mm)` cuts holes
+  where hardware rods pass through, at any angle.
+- `part(halving = ["Rib*"])`: crossing plates each slotted halfway, from
+  opposite sides.
+- `part(slot_extra = [dx, dy])` sweeps slots for parts that drop in.
+- `kerf check` names two parts whose tabs meet in one slot.
+- A setting marked `// [0:5:360] drive` is the one that moves the model:
+  `kerf check --drive` tries every value, and the playground plays it.
+- Copies of curved parts pack in rows, every other one turned, when that
+  takes fewer sheets (24 S-curved ribs: four sheets to one).
+- `kerf/fit`: `fit(size, mode, anchor)` and `align(anchor)` for drawings of
+  unknown size.
+
+Fixes:
+
+- Slots: an edge lying on a face (a gable wall's top under its roof) is
+  touching, not a slot the length of the contact. The slot spans the part
+  only across from what goes deeper than the touching tolerance, so a tab's
+  flared shoulder is still cut. This removes stray slots from roofs whose
+  walls also tab through them.
+- Sheet items of mirrored copies (`mirror = [false, true]`) keep their copy
+  numbers from the assembly; both used to say copy 1.
+- A module that uses `children(i)` past the last child it was given warns,
+  with the call's line: `m() a(); b();` gives m() one child.
+- Two libraries defining a module or function of the same name warn once,
+  naming both files; the later one is still used.
+- A collision is reported at a point inside the overlap, not the middle of
+  the two parts' boxes.
 
 ## 0.8.0 (2026-11-08)
 

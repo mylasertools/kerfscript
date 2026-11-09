@@ -165,6 +165,15 @@ export const SIGNATURES: Signature[] = [
       named('valign', 'baseline, top, center or bottom', '"baseline"'),
       named('spacing', 'Letter spacing factor', '1'),
       named('fit', 'Shrink the size so the text is no wider than this'),
+      named(
+        'weight',
+        '"bold" thickens the strokes by 3.5% of the size, or a number of mm (less than 0 thins them)',
+        '"regular"',
+      ),
+      named(
+        'bridge',
+        "Join every island (an i's dot, an accent, a stencil's counter) to the rest with a strip this wide",
+      ),
     ],
     section: 'Shapes',
     doc: 'Text as shapes; the font must be available to the renderer',
@@ -414,6 +423,22 @@ export const SIGNATURES: Signature[] = [
     doc: 'Fill the holes in the areas of the children',
   },
   {
+    name: 'join_islands',
+    kind: 'module',
+    params: [p('width', 'How wide each joining strip is', '1')],
+    children: true,
+    section: 'Combining',
+    doc: 'Join every separate piece of the material to the nearest other piece with a strip, until it is one piece',
+  },
+  {
+    name: 'largest',
+    kind: 'module',
+    params: [p('n', 'How many pieces to keep', '1')],
+    children: true,
+    section: 'Combining',
+    doc: 'Keep the n biggest connected pieces of the material, dropping crumbs; marks stay as drawn',
+  },
+  {
     name: 'close',
     kind: 'module',
     params: [p('r', 'Close gaps and notches narrower than twice this', '0.5')],
@@ -517,6 +542,23 @@ export const SIGNATURES: Signature[] = [
       named('on', 'The name of a bent part this one is glued to, to move with it'),
       named('slots', 'Names of parts whose tabs pass through this one: their slots are cut'),
       named('clearance', 'Added to the slots, in total across each', '0.1'),
+      named(
+        'slot_extra',
+        'Each slot swept [dx, dy] further in this part, for a hook that goes in and drops',
+      ),
+      named(
+        'halving',
+        'Names of parts this one crosses: both take a slot from opposite sides, meeting halfway',
+      ),
+      named(
+        'bores',
+        'Labels or kinds of hardware rods passing through this one: holes are cut where they cross it',
+      ),
+      named(
+        'fit',
+        'Room in the bores: "turn" (0.3 mm on the diameter) for a part that turns on its axle, "press" (-0.1 mm) for one held fast, or a number of mm',
+        '"turn"',
+      ),
       named(
         'glue',
         'The name of a part this one is glued flat onto; at and rotate are then on its face',
@@ -775,6 +817,24 @@ export const SIGNATURES: Signature[] = [
     doc: 'The path moved sideways, each corner mitred: the two edges of a strip along a curve',
   },
   {
+    name: 'bounds',
+    kind: 'function',
+    params: [p('points', 'A list of [x, y] points, or of outlines')],
+    section: 'Paths and rotations',
+    doc: '[x0, y0, x1, y1] round the points; undef for none',
+  },
+  {
+    name: 'crossings',
+    kind: 'function',
+    params: [
+      p('points', 'A closed outline of [x, y] points, or a list of outlines'),
+      p('x', 'The vertical line x = this'),
+      p('y', 'Or the horizontal line y = this'),
+    ],
+    section: 'Paths and rotations',
+    doc: 'Where the line crosses the outline: the y (or x) values, smallest first, entering and leaving in turn',
+  },
+  {
     name: 'point_at',
     kind: 'function',
     params: [p('points', 'A list of [x, y] points'), p('s', 'Distance along the path')],
@@ -870,6 +930,38 @@ export const SIGNATURES: Signature[] = [
     params: value,
     section: 'Lists and strings',
     doc: 'A list or string in reverse order',
+  },
+  {
+    name: 'sort',
+    kind: 'function',
+    params: [
+      p('values', 'A list of numbers, strings or lists of them'),
+      p('key', 'A function giving the value to order each item by'),
+    ],
+    section: 'Lists and strings',
+    doc: 'The list in order, smallest first; items with equal keys keep their order',
+  },
+  {
+    name: 'fold',
+    kind: 'function',
+    params: [
+      p('values', 'A list'),
+      p('initial', 'The value to start from'),
+      p('fn', 'A function(acc, item) giving the next value'),
+    ],
+    section: 'Lists and strings',
+    doc: 'The value after fn(acc, item) for each item in turn, from initial: initial for an empty list',
+  },
+  {
+    name: 'scan',
+    kind: 'function',
+    params: [
+      p('values', 'A list'),
+      p('initial', 'The value to start from'),
+      p('fn', 'A function(acc, item) giving the next value'),
+    ],
+    section: 'Lists and strings',
+    doc: 'The value after each item as fold() goes: running totals, one per item',
   },
   {
     name: 'sum',

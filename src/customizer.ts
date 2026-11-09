@@ -14,6 +14,9 @@ export interface Parameter {
   max?: number;
   step?: number;
   options?: { name: string; value: number | string }[];
+  // The setting that drives the model's motion, marked `// [0:5:360] drive`:
+  // the playground plays it, and `kerf check --drive` tries every value
+  drive?: boolean;
   span: [number, number];
 }
 
@@ -84,7 +87,8 @@ export function parameters(source: string): { parameters: Parameter[] } {
       initial: v,
       span: s.span,
     };
-    const m = inline ? /^\[(.*)\]$/.exec(inline.trim()) : null;
+    const m = inline ? /^\[(.*)\](\s+drive)?$/.exec(inline.trim()) : null;
+    if (m?.[2] && p.type === 'number' && typeof v === 'number') p.drive = true;
     if (m) {
       const body = m[1];
       if (

@@ -216,17 +216,76 @@ function spans(regions: Poly[], from: Vec2, dir: Vec2): number[] {
   return hits.sort((p, q) => p - q);
 }
 
-function shared(a: number[], b: number[], eps: number): number {
-  let total = 0;
+// The length two sets of spans along a line share, and the middle and
+// length of the longest shared run, to say where they overlap
+function shared(
+  a: number[],
+  b: number[],
+  eps: number,
+): { total: number; mid: number; run: number } {
+  let total = 0,
+    mid = 0,
+    run = 0;
   let i = 0;
   let j = 0;
   while (i + 1 < a.length && j + 1 < b.length) {
-    const length = Math.min(a[i + 1], b[j + 1]) - Math.max(a[i], b[j]);
-    if (length > eps) total += length;
+    const from = Math.max(a[i], b[j]);
+    const length = Math.min(a[i + 1], b[j + 1]) - from;
+    if (length > eps) {
+      total += length;
+      if (length > run) {
+        run = length;
+        mid = from + length / 2;
+      }
+    }
     if (a[i + 1] < b[j + 1]) i += 2;
     else j += 2;
   }
-  return total;
+  return { total, mid, run };
+}
+
+// Whether a point in the world lies in a part's material
+function holds(part: AssemblyPart, p: Vec3): boolean {
+  const [x, y, z] = apply(invertRigid(part.matrix), p[0], p[1], p[2]);
+  if (z < 0 || z > part.thickness) return false;
+  let inside = false;
+  for (const ring of part.outline)
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [ax, ay] = ring[j],
+        [bx, by] = ring[i];
+      if (ay > y !== by > y && x < ax + ((bx - ax) * (y - ay)) / (by - ay)) inside = !inside;
+    }
+  return inside;
+}
+
+// Where two parts overlap: of the sampled shared runs' middles, the one
+// nearest their centre, weighted by length, so a point inside the overlap
+// and central to it even where the overlap is not convex
+class Witness {
+  private seen: [Vec3, number][] = [];
+  // The centre itself when it lies in both parts, as it does where the
+  // overlap is convex
+  constructor(private parts: AssemblyPart[] = []) {}
+  see(run: number, at: () => Vec3) {
+    if (run > 0) this.seen.push([at(), run]);
+  }
+  get at(): Vec3 {
+    let sum = 0;
+    const c: Vec3 = [0, 0, 0];
+    for (const [p, w] of this.seen) {
+      for (let k = 0; k < 3; k++) c[k] += p[k] * w;
+      sum += w;
+    }
+    for (let k = 0; k < 3; k++) c[k] /= sum;
+    if (this.parts.length && this.parts.every((p) => holds(p, c))) return c;
+    let best = this.seen[0][0],
+      d = Infinity;
+    for (const [p] of this.seen) {
+      const e = Math.hypot(p[0] - c[0], p[1] - c[1], p[2] - c[2]);
+      if (e < d) [best, d] = [p, e];
+    }
+    return best;
+  }
 }
 
 function steps(lo: number, hi: number, eps: number, pitch: number): { at: number[]; size: number } {
@@ -257,7 +316,8 @@ function crossing(
   eps: number,
   pitch: number,
   volume: number,
-): boolean {
+  full = false,
+): Vec3 | undefined {
   const nA = normal(A.matrix);
   const nB = normal(B.matrix);
   const raw = cross(nA, nB);
@@ -291,6 +351,7 @@ function crossing(
       if (d > aHi) aHi = d;
     }
   let total = 0;
+  const w = new Witness([A, B]);
   for (const depth of depths.at) {
     const base = add(oA, nA, depth);
     const b0 = (bLevel - dot(nB, base)) / tilt;
@@ -305,14 +366,13 @@ function crossing(
       const at = add(base, side, along);
       const [fromA, dirA] = localLine(invA, at, line);
       const [fromB, dirB] = localLine(invB, at, line);
-      total +=
-        shared(spans(A.outline, fromA, dirA), spans(B.outline, fromB, dirB), eps) *
-        depths.size *
-        alongs.size;
-      if (total > volume) return true;
+      const s = shared(spans(A.outline, fromA, dirA), spans(B.outline, fromB, dirB), eps);
+      total += s.total * depths.size * alongs.size;
+      w.see(s.run, () => add(at, line, s.mid));
+      if (total > volume && !full) return w.at;
     }
   }
-  return false;
+  return total > volume ? w.at : undefined;
 }
 
 function stacked(
@@ -322,7 +382,8 @@ function stacked(
   eps: number,
   pitch: number,
   volume: number,
-): boolean {
+  full = false,
+): Vec3 | undefined {
   const rel = [0, 1, 2, 3].flatMap((r) =>
     [0, 1, 2, 3].map((c) => {
       let v = 0;
@@ -333,7 +394,9 @@ function stacked(
   const z0 = rel[11];
   const z1 = rel[11] + rel[10] * B.thickness;
   const depth = Math.min(A.thickness, Math.max(z0, z1)) - Math.max(0, Math.min(z0, z1));
-  if (depth <= eps) return false;
+  if (depth <= eps) return undefined;
+  const zMid = Math.max(0, Math.min(z0, z1)) + depth / 2;
+  const w = new Witness([A, B]);
   const moved: Poly[] = B.outline.map((ring) =>
     ring.map(
       ([x, y]) => [rel[0] * x + rel[1] * y + rel[3], rel[4] * x + rel[5] * y + rel[7]] as Vec2,
@@ -344,22 +407,20 @@ function stacked(
   const rows = steps(Math.max(ay0, by0), Math.min(ay1, by1), eps, pitch);
   let across = 0;
   for (const y of rows.at) {
-    across +=
-      shared(spans(A.outline, [0, y], [1, 0]), spans(moved, [0, y], [1, 0]), eps) *
-      rows.size *
-      depth;
-    if (across > volume) return true;
+    const s = shared(spans(A.outline, [0, y], [1, 0]), spans(moved, [0, y], [1, 0]), eps);
+    across += s.total * rows.size * depth;
+    w.see(s.run, () => apply(A.matrix, s.mid, y, zMid));
+    if (across > volume && !full) return w.at;
   }
   const columns = steps(Math.max(ax0, bx0), Math.min(ax1, bx1), eps, pitch);
   let down = 0;
   for (const x of columns.at) {
-    down +=
-      shared(spans(A.outline, [x, 0], [0, 1]), spans(moved, [x, 0], [0, 1]), eps) *
-      columns.size *
-      depth;
-    if (down > volume) return true;
+    const s = shared(spans(A.outline, [x, 0], [0, 1]), spans(moved, [x, 0], [0, 1]), eps);
+    down += s.total * columns.size * depth;
+    w.see(s.run, () => apply(A.matrix, x, s.mid, zMid));
+    if (down > volume && !full) return w.at;
   }
-  return false;
+  return across > volume || down > volume ? w.at : undefined;
 }
 
 export function collisions(
@@ -368,11 +429,12 @@ export function collisions(
   eps = 0.05,
   pitch = 0.25,
   volume = 0.1,
-): { found: [AssemblyPart, AssemblyPart][]; complete: boolean } {
+): { found: [AssemblyPart, AssemblyPart, Vec3][]; complete: boolean } {
   const boxes = parts.map(worldBox);
   const inverses = parts.map((p) => invertRigid(p.matrix));
   const order = parts.map((_, i) => i).sort((i, j) => boxes[i][0][0] - boxes[j][0][0]);
-  const found: [AssemblyPart, AssemblyPart][] = [];
+  // Each pair with a point inside their overlap
+  const found: [AssemblyPart, AssemblyPart, Vec3][] = [];
   let checked = 0;
   for (let i = 0; i < order.length; i++)
     for (let j = i + 1; j < order.length; j++) {
@@ -387,9 +449,25 @@ export function collisions(
       const hit = parallel
         ? stacked(A, B, invA, eps, pitch, volume)
         : crossing(A, B, invA, invB, eps, pitch, volume);
-      if (hit) found.push([A, B]);
+      if (hit) found.push([A, B, hit]);
     }
   return { found, complete: true };
+}
+
+// A point central to where two colliding parts overlap, from sampling the
+// whole overlap (collisions() stops sampling as soon as it is sure)
+export function overlapPoint(
+  a: AssemblyPart,
+  b: AssemblyPart,
+  eps = 0.05,
+  pitch = 0.25,
+  volume = 0.1,
+): Vec3 | undefined {
+  const parallel = Math.hypot(...cross(normal(a.matrix), normal(b.matrix))) < 1e-9;
+  const invA = invertRigid(a.matrix);
+  return parallel
+    ? stacked(a, b, invA, eps, pitch, volume, true)
+    : crossing(a, b, invA, invertRigid(b.matrix), eps, pitch, volume, true);
 }
 
 export function translation(x: number, y: number, z: number): number[] {

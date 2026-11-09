@@ -99,6 +99,8 @@ Options:
   --sweep name=a:step:b   with check: try every value, or name=a,b,c, or
                           settings that go together: w,d=100,80;200,150; repeat to
                           try every combination, and exit 1 if any warns or fails
+  --drive                 with check: try every value of the setting marked
+                          // [0:5:360] drive, the one that moves the model
   -o out.png              a picture of each sheet to look at (not to cut),
   --px 1200               its width in pixels
   --call 'roses(40, 30)'   render or check one call of a library's module
@@ -164,6 +166,8 @@ function main(argv: string[]) {
   let call: string | undefined;
   let px = 1200;
   const sweeps: Record<string, Value>[][] = [];
+  // --drive: every value of the setting marked drive, as a sweep
+  let drive = false;
   for (let i = 1; i < argv.length; i++) {
     const a = argv[i];
     const next = () => argv[++i] ?? fail(`${a} needs a value`);
@@ -199,6 +203,7 @@ function main(argv: string[]) {
     else if (a === '--nest') opts.nest = true;
     else if (a === '--sweep') sweeps.push(sweepValues(next()));
     else if (a === '--params-list') sweeps.push(paramsList(next()));
+    else if (a === '--drive') drive = true;
     else if (a === '--call') call = next();
     else if (a === '--px') {
       px = Number(next());
@@ -223,6 +228,14 @@ function main(argv: string[]) {
   if (cmd === 'params') {
     process.stdout.write(JSON.stringify(parameters(source), null, 2) + '\n');
     return;
+  }
+  if (drive) {
+    const d = parameters(source).parameters.find((p) => p.drive);
+    if (!d) fail('No setting drives this model: mark one as `crank = 0; // [0:5:360] drive`.');
+    const from = d.min ?? 0,
+      to = d.max ?? 360,
+      step = d.step ?? (to - from) / 24;
+    sweeps.push(sweepRange(d.name, `${from}:${step}:${to}`).map((v) => ({ [d.name]: v })));
   }
   // A project's kerf.json can give the laser's sheet for all its designs
   const project = findProject(dirname(resolve(file)));

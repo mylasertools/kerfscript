@@ -10,14 +10,29 @@
 // symbol_names() lists them: "heart", "star", "paw", "tree" and the like.
 // box = "grid" sizes and places it by its icon set's grid (24 x 24 for
 // Material Design Icons) instead, so icons of one set line up as drawn.
-module symbol(name, size = 10, center = true, fill = "nonzero", box = "drawn") {
+// solid = true cuts it as one silhouette, gaps narrower than 2 * close
+// closed and its holes filled, with the drawing's detail engraved on it:
+// a pictogram drawn as separate strokes (a moon and stars, yarn) cut out
+// in one piece. bridge = w also joins pieces too far apart to close, by
+// strips w wide.
+module symbol(name, size = 10, center = true, fill = "nonzero", box = "drawn", solid = false, close = undef, bridge = undef) {
   assert(box == "drawn" || box == "grid", "box is \"drawn\" or \"grid\"");
   s = symbol_entry(name);
   vb = box == "grid" ? s[5] : s[2];
   k = size / max(vb[2], vb[3]);
-  translate(center ? [0, 0] : [vb[2] * k / 2, vb[3] * k / 2])
+  module drawn() translate(center ? [0, 0] : [vb[2] * k / 2, vb[3] * k / 2])
     scale([k, -k]) translate([-vb[0] - vb[2] / 2, -vb[1] - vb[3] / 2])
       path(s[4], fill = fill, close = true);
+  r = is_undef(close) ? size / 30 : close;
+  module silhouette() if (is_undef(bridge)) fill_holes() close(r) drawn();
+  else join_islands(bridge) fill_holes() close(r) drawn();
+  if (solid) {
+    silhouette();
+    engrave() difference() {
+      silhouette();
+      drawn();
+    }
+  } else drawn();
 }
 
 // [width, height] of what a symbol draws when it is `size` across its

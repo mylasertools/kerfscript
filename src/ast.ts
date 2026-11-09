@@ -18,7 +18,9 @@ export type Expr =
   | { kind: 'record'; fields: { name: string; value: Expr; pos: Pos }[]; pos: Pos }
   | { kind: 'call'; callee: Expr; args: Arg[]; pos: Pos }
   | { kind: 'lambda'; params: Param[]; body: Expr; pos: Pos; end?: number }
-  | { kind: 'let'; assigns: Assign[]; body: Expr; pos: Pos; end?: number };
+  | { kind: 'let'; assigns: Assign[]; body: Expr; pos: Pos; end?: number }
+  // assert(...) expr or echo(...) expr: the check, then the expression
+  | { kind: 'chain'; check: Expr; body: Expr; pos: Pos };
 
 export type ListItem =
   | { kind: 'item'; expr: Expr }
@@ -53,7 +55,8 @@ export type Stmt = (
   | { kind: 'module'; name: string; params: Param[]; body: Stmt[]; pos: Pos; namePos?: Pos }
   | { kind: 'function'; name: string; params: Param[]; body: Expr; pos: Pos; namePos?: Pos }
   | { kind: 'call'; name: string; args: Arg[]; children: Stmt[]; modifier: string | null; pos: Pos }
-  | { kind: 'for'; assigns: Assign[]; body: Stmt[]; pos: Pos }
+  // intersection_for keeps what every iteration covers
+  | { kind: 'for'; assigns: Assign[]; body: Stmt[]; pos: Pos; intersect?: boolean }
   | { kind: 'if'; cond: Expr; then: Stmt[]; else: Stmt[]; pos: Pos }
   | { kind: 'let'; assigns: Assign[]; body: Stmt[]; pos: Pos }
   | { kind: 'block'; body: Stmt[]; pos: Pos }

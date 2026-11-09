@@ -7,15 +7,17 @@ import {
   besideAssembly,
   collisions,
   invert,
+  overlapPoint,
   multiply,
   placementMatrix,
   runOf,
   translation,
-  worldBox,
   type AssemblyPart,
   type Mark,
 } from './assembly.js';
 import { slotsFor, type Solid } from './slots.js';
+import { boreFor, FITS } from './bores.js';
+import { halvingFor } from './halving.js';
 import type { RenderAnalysis } from './analysis.js';
 import {
   didYouMean,
@@ -231,7 +233,8 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     );
 
   glueOn(parts, warnings);
-  cutSlots(parts, mode, warnings);
+  cutSlots(parts, mode, warnings, res.hardware);
+  cutHalvings(parts, mode, warnings);
 
   const infos: PartInfo[] = [];
   const analysis: RenderAnalysis | undefined = options.analysis
@@ -241,7 +244,9 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   const riders = new Map<AssemblyPart, string>();
   const loose: AssemblyPart[] = [];
   const stackedCopies = new Set<AssemblyPart>();
-  const ready: { info: PartInfo; layers: Map<string, Layer> }[] = [];
+  // copy(i): the number of its i-th cut copy in the assembly, so a mirrored
+  // copy keeps its own number on the sheet
+  const ready: { info: PartInfo; layers: Map<string, Layer>; copy: (i: number) => number }[] = [];
   const minWidthSet = g('$min_width');
   const minWidth = minWidthSet === undefined ? 1.5 : toNumber(minWidthSet);
   // $label_parts: each part's number engraved on its back face, the same
@@ -484,7 +489,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
           }
         }
     infos.push(info);
-    ready.push({ info, layers });
+    ready.push({ info, layers, copy: (i) => copyNumber(p, i) });
   }
 
   rideOn(assembly, riders, warnings);
@@ -500,17 +505,15 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   // Pieces of one bent part meet only through its hinge
   const clashes = allClashes
     .filter(([a, b]) => pieceOf.get(a) !== pieceOf.get(b))
-    .map(([a, b]) => [pieceOf.get(a) ?? a, pieceOf.get(b) ?? b] as const)
+    .map(([a, b, at]) => [pieceOf.get(a) ?? a, pieceOf.get(b) ?? b, at, a, b] as const)
     .filter(([a, b], i, all) => all.findIndex(([c, d]) => c === a && d === b) === i);
   if (!complete)
     warnings.push(
       `The assembly has more than ${limits.maxCollisionPairs} pairs of touching parts, the limit, so only those were checked for collisions.`,
     );
-  for (const [a, b] of clashes.slice(0, 5)) {
-    // Where: the middle of the space both parts' boxes take up
-    const [la, ha] = worldBox(a),
-      [lb, hb] = worldBox(b);
-    const at = [0, 1, 2].map((k) => round2((Math.max(la[k], lb[k]) + Math.min(ha[k], hb[k])) / 2));
+  for (const [a, b, p, pa, pb] of clashes.slice(0, 5)) {
+    // Where: a point inside the overlap, central to it
+    const at = (overlapPoint(pa, pb) ?? p).map(round2);
     warnings.push(
       `Parts "${a.name}"${a.copy > 1 ? ` (copy ${a.copy})` : ''} and "${b.name}"${b.copy > 1 ? ` (copy ${b.copy})` : ''} collide in the assembly, around [${at.join(', ')}]. Check their edges and where they are placed.`,
     );
@@ -596,7 +599,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       for (let c = 0; c < r.info.qty; c++)
         items.push({
           part: r.info.name,
-          copy: c + 1,
+          copy: r.copy(c),
           layers: moved(r.layers, flipY),
           rotated: false,
         });
@@ -657,10 +660,43 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
           );
         layers = moved(layers, [1, 0, 0, 1, -b[0], -b[1]]);
         for (let c = 0; c < r.info.qty; c++)
-          queue.push({ info: r.info, layers, w, h, copy: c + 1, rotated });
+          queue.push({ info: r.info, layers, w, h, copy: r.copy(c), rotated });
       }
-      queue.sort((a, b) => b.h - a.h || b.w - a.w);
-      const packed = nest ? nestInHoles(queue, gap, (k) => mode(k) === 'cut') : queue;
+      const bySize = (a: { w: number; h: number }, b: { w: number; h: number }) =>
+        b.h - a.h || b.w - a.w;
+      // How many sheets the rows below take for a list, to choose a layout
+      const sheetsFor = (list: { w: number; h: number }[]) => {
+        let n = 0,
+          x = margin,
+          y = margin,
+          shelf = 0,
+          any = false;
+        for (const q of list) {
+          if (x > margin && x + q.w > W - margin) {
+            x = margin;
+            y += shelf + gap;
+            shelf = 0;
+          }
+          if (any && y + q.h > H - margin) {
+            n++;
+            [x, y, shelf] = [margin, margin, 0];
+          }
+          any = true;
+          x += q.w + gap;
+          shelf = Math.max(shelf, q.h);
+        }
+        return n + (any ? 1 : 0);
+      };
+      queue.sort(bySize);
+      // Curved copies in rows head to tail, kept only when that takes
+      // fewer sheets
+      const rows = pairHeadToTail(queue, gap, (k) => mode(k) === 'cut', [
+        W - 2 * margin,
+        H - 2 * margin,
+      ]).sort(bySize);
+      const chosen =
+        rows.length < queue.length && sheetsFor(rows) < sheetsFor(queue) ? rows : queue;
+      const packed = nest ? nestInHoles(chosen, gap, (k) => mode(k) === 'cut') : chosen;
       let items: Placed[] = [];
       let x = margin,
         y = margin,
@@ -816,8 +852,41 @@ function namePattern(name: string): (s: string) => boolean {
 
 // Cuts the slots part(..., slots = [...]) asks for, where the named
 // parts' material passes through each placed copy of the part
-function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: string[]) {
-  if (!parts.some((p) => p.slots)) return;
+// Slots swept along [dx, dy]: each joined to its copy moved that far, as a
+// hook's slot grows upward so it can go in and drop
+function swept(polys: Poly2[], by?: [number, number]): Poly2[] {
+  if (!by || !polys.length || (by[0] === 0 && by[1] === 0)) return polys;
+  const out: Poly2[] = [...polys];
+  for (const p of polys) {
+    const q = p.map(([x, y]): [number, number] => [x + by[0], y + by[1]]);
+    out.push(q);
+    for (let i = 0; i < p.length; i++) {
+      const j = (i + 1) % p.length;
+      const quad: Poly2 = [p[i], p[j], q[j], q[i]];
+      if (Math.abs(area(quad)) > 1e-9) out.push(area(quad) < 0 ? quad.reverse() : quad);
+    }
+  }
+  return union(out, 'nonzero');
+}
+
+// A slot is a hole through the part: no mark is left inside it
+function holed(from: Map<string, Layer>, slot: Poly2[]) {
+  const layers = new Map(from);
+  for (const [k, l] of from)
+    layers.set(k, {
+      regions: difference(l.regions, slot),
+      lines: clipLines(l.lines, slot, 'outside'),
+    });
+  return layers;
+}
+
+function cutSlots(
+  parts: PartShape[],
+  mode: (k: string) => string,
+  warnings: string[],
+  hardware: HardwareItem[] = [],
+) {
+  if (!parts.some((p) => p.slots || p.bores)) return;
   const material = new Map<PartShape, ReturnType<typeof union>>();
   const cutOf = (p: PartShape) => {
     let m = material.get(p);
@@ -843,15 +912,30 @@ function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: str
   const cuts = new Map<PartShape, ReturnType<typeof union>>();
   const byLayer = new Map<PartShape, Poly2[][]>();
   for (const p of parts) {
-    if (!p.slots) continue;
+    if (!p.slots && !p.bores) continue;
     if (!p.placements) {
-      warnings.push(`Part "${p.name}" has slots but no at or rotate, so they can't be found.`);
+      warnings.push(
+        `Part "${p.name}" has ${p.slots ? 'slots' : 'bores'} but no at or rotate, so they can't be found.`,
+      );
       continue;
     }
+    // Rods of hardware by label, or by kind, with the same patterns
+    const rods: HardwareItem[] = [];
+    for (const name of p.bores ?? []) {
+      const out = name.startsWith('!');
+      const match = namePattern(out ? name.slice(1) : name);
+      const found = hardware.filter((h) => match(h.label ?? '') || match(h.kind));
+      if (!found.length && !out)
+        warnings.push(`Part "${p.name}": no hardware "${name}" to bore for.`);
+      for (const h of found)
+        if (out) rods.splice(0, rods.length, ...rods.filter((r) => r !== h));
+        else if (!rods.includes(h)) rods.push(h);
+    }
+    let bored = false;
     // Names, patterns with * (any run of characters), and !name to leave
     // parts out of the patterns before it
     const chosen = new Set<PartShape>();
-    for (const name of p.slots) {
+    for (const name of p.slots ?? []) {
       const out = name.startsWith('!');
       const match = namePattern(out ? name.slice(1) : name);
       const found = parts.filter((q) => q !== p && match(q.name));
@@ -859,7 +943,12 @@ function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: str
         warnings.push(`Part "${p.name}": no part "${name}" to cut slots for.`);
       for (const q of found) out ? chosen.delete(q) : chosen.add(q);
     }
-    const others: Solid[] = [...chosen].flatMap(solids);
+    // Which part each solid is, to name two whose tabs meet in one slot
+    const ownerOf = new Map<Solid, string>();
+    const others: Solid[] = [...chosen].flatMap((q) =>
+      solids(q).map((sd) => (ownerOf.set(sd, q.name), sd)),
+    );
+    const shared = new Set<string>();
     // Per copy; a bent part's runs each cut the slots on their own stretch
     const each = (p.placements ?? []).map((pl) =>
       union(
@@ -872,7 +961,43 @@ function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: str
           outline: cutOf(p),
           ...(p.bends && { bends: p.bends }),
         }).flatMap((me) => {
-          const cut = slotsFor(me, others, p.clearance ?? 0.1);
+          let cut: Poly2[] = [];
+          if (p.slots) {
+            // Each part's slots alone, so tabs of two parts landing in one
+            // place are named; then all of them, with the clearance
+            const own = others.map((o) => slotsFor(me, [o], 0));
+            for (let i = 0; i < own.length; i++)
+              for (let j = i + 1; j < own.length; j++) {
+                const [a, b] = [ownerOf.get(others[i]), ownerOf.get(others[j])];
+                if (!own[i].length || !own[j].length || a === b || !a || !b) continue;
+                const both = intersection(own[i], own[j]);
+                if (both.reduce((t, q) => t + Math.abs(area(q)), 0) > 0.01) {
+                  const xs = both.flat().map((q) => q[0]),
+                    ys = both.flat().map((q) => q[1]);
+                  const [x0, y0, x1, y1] = [
+                    Math.min(...xs),
+                    Math.min(...ys),
+                    Math.max(...xs),
+                    Math.max(...ys),
+                  ];
+                  shared.add(
+                    `Tabs of "${a}" and "${b}" meet in the same slot in "${p.name}", at [${round2(x0)}, ${round2(y0)}] to [${round2(x1)}, ${round2(y1)}] in its coordinates. Move one's tabs along the edge.`,
+                  );
+                }
+              }
+            const all = own.flat();
+            cut = all.length
+              ? swept(offset(union(all), (p.clearance ?? 0.1) / 2, 'miter'), p.slotExtra)
+              : [];
+          }
+          // A bore is cut where its rod's hole meets the part's material
+          for (const h of rods) {
+            const hole = boreFor(me, h, p.fit ?? FITS.turn);
+            if (hole && intersection([hole], me.outline).some((q) => Math.abs(area(q)) > 1e-4)) {
+              cut.push(hole);
+              bored = true;
+            }
+          }
           return p.bends ? intersection(cut, offset(me.outline, 1, 'miter')) : cut;
         }),
       ),
@@ -903,10 +1028,15 @@ function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: str
       warnings.push(
         `Copies of part "${p.name}" meet the parts in slots in different places; they all get every slot. Make them separate parts to cut each its own.`,
       );
+    for (const w of shared) warnings.push(w);
+    if (p.bores && rods.length && !bored)
+      warnings.push(
+        `Part "${p.name}": none of ${p.bores.map((n) => `"${n}"`).join(', ')} pass through it, so it has no bores.`,
+      );
     const slot = union(each.flat());
     if (!slot.length) {
       // A pattern asks for whatever passes through, which may be nothing
-      if (!p.slots.some((n) => n.includes('*')))
+      if (p.slots && !p.slots.some((n) => n.includes('*')))
         warnings.push(
           `Part "${p.name}": none of ${p.slots.map((n) => `"${n}"`).join(', ')} pass through it, so it has no slots.`,
         );
@@ -914,16 +1044,6 @@ function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: str
     }
     cuts.set(p, slot);
   }
-  // A slot is a hole through the part: no mark is left inside it
-  const holed = (from: Map<string, Layer>, slot: Poly2[]) => {
-    const layers = new Map(from);
-    for (const [k, l] of from)
-      layers.set(k, {
-        regions: difference(l.regions, slot),
-        lines: clipLines(l.lines, slot, 'outside'),
-      });
-    return layers;
-  };
   for (const [p, slot] of cuts) p.layers = holed(p.layers, slot);
   // A stack whose layers meet different parts becomes a part per layer
   for (const [p, perLayer] of byLayer) {
@@ -937,6 +1057,87 @@ function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: str
       stack: undefined,
     }));
     parts.splice(parts.indexOf(p), 1, ...split);
+  }
+}
+
+// Halving joints: each part with halving = [...] and every part it names
+// take slots where they cross, from opposite sides, meeting halfway
+function cutHalvings(parts: PartShape[], mode: (k: string) => string, warnings: string[]) {
+  if (!parts.some((p) => p.halving)) return;
+  const cutOf = (p: PartShape) =>
+    union([...p.layers].filter(([k]) => mode(k) === 'cut').flatMap(([, l]) => l.regions));
+  const solids = (p: PartShape): Solid[] => {
+    const outline = cutOf(p);
+    return (p.placements ?? []).map((pl) => ({
+      matrix: placementMatrix(pl),
+      thickness: p.thickness,
+      outline,
+    }));
+  };
+  // Per part, the slots for each copy in its own coordinates
+  const cuts = new Map<PartShape, Poly2[][]>();
+  const add = (p: PartShape, copy: number, polys: Poly2[]) => {
+    const list = cuts.get(p) ?? (p.placements ?? []).map(() => [] as Poly2[]);
+    list[copy].push(...polys);
+    cuts.set(p, list);
+  };
+  for (const p of parts) {
+    if (!p.halving) continue;
+    if (!p.placements) {
+      warnings.push(
+        `Part "${p.name}" has halving but no at or rotate, so the crossings can't be found.`,
+      );
+      continue;
+    }
+    const chosen = new Set<PartShape>();
+    for (const name of p.halving) {
+      const out = name.startsWith('!');
+      const match = namePattern(out ? name.slice(1) : name);
+      const found = parts.filter((q) => q !== p && match(q.name));
+      if (!found.length && !out)
+        warnings.push(`Part "${p.name}": no part "${name}" to halve with.`);
+      for (const q of found) out ? chosen.delete(q) : chosen.add(q);
+    }
+    let crossed = 0,
+      thin = 0;
+    const mine = solids(p);
+    for (const q of chosen) {
+      if (p.bends || q.bends) {
+        warnings.push(`Parts "${p.name}" and "${q.name}": halving joints can't go in a bent part.`);
+        continue;
+      }
+      if (!q.placements) continue;
+      const theirs = solids(q);
+      mine.forEach((a, i) =>
+        theirs.forEach((b, j) => {
+          const h = halvingFor(a, b, p.clearance ?? 0.1);
+          thin += h.thin;
+          if (h.a.length) {
+            crossed++;
+            add(p, i, h.a);
+            add(q, j, h.b);
+          }
+        }),
+      );
+    }
+    if (thin)
+      warnings.push(
+        `Part "${p.name}": ${thin} crossing${thin === 1 ? '' : 's'} too narrow to halve, left whole.`,
+      );
+    if (!crossed && chosen.size && !p.halving.some((n) => n.includes('*')))
+      warnings.push(
+        `Part "${p.name}" crosses none of ${p.halving.map((n) => `"${n}"`).join(', ')}, so it has no halving slots.`,
+      );
+  }
+  for (const [p, perCopy] of cuts) {
+    const each = perCopy.map((c) => union(c));
+    if (
+      each.slice(1).some((r) => xor(each[0], r).reduce((t, q) => t + Math.abs(area(q)), 0) > 1e-3)
+    )
+      warnings.push(
+        `Copies of part "${p.name}" are halved in different places; they all get every slot. Make them separate parts to cut each its own.`,
+      );
+    p.layers = holed(p.layers, union(each.flat()));
   }
 }
 
@@ -1055,7 +1256,9 @@ function nestInHoles<
   const out: T[] = [];
   for (const q of queue) {
     let placed = false;
-    for (const f of free) {
+    // A head-to-tail pair carries its twin outside its outline: it isn't
+    // fitted into a hole, though it offers its own
+    for (const f of q.inner?.length ? [] : free) {
       const at = fit(f.region, q);
       if (!at) continue;
       const [px, py] = at;
@@ -1086,6 +1289,194 @@ function nestInHoles<
 }
 
 type Poly2 = [number, number][];
+
+// Copies of one curved part packed in rows, every other one turned 180
+// degrees and slid against the one before, when that takes much less room
+// than boxes side by side: S-shaped ribs, crescents, L brackets. A row is
+// as long as the sheet allows; its copies after the first ride in it as
+// nested items
+function pairHeadToTail<
+  T extends {
+    info: PartInfo;
+    layers: Map<string, Layer>;
+    w: number;
+    h: number;
+    copy: number;
+    rotated: boolean;
+    inner?: Nested[];
+  },
+>(queue: T[], gap: number, isCut: (k: string) => boolean, room: [number, number]): T[] {
+  const byPart = new Map<PartInfo, T[]>();
+  for (const q of queue) byPart.set(q.info, [...(byPart.get(q.info) ?? []), q]);
+  const out: T[] = [];
+  const move = (layers: Map<string, Layer>, m: Matrix) =>
+    transform({ layers, parts: [] }, m).layers;
+  for (const [, list] of byPart) {
+    const first = list[0];
+    const shape = union(
+      [...first.layers]
+        .filter(([k]) => isCut(k))
+        .flatMap(([, l]) => l.regions.filter((r) => area(r) > 0)),
+    );
+    // A part that fills most of its box can't save enough to be worth it
+    const filled = shape.reduce((t, r) => t + area(r), 0) / (first.w * first.h);
+    const row =
+      list.length >= 2 && shape.length && filled < 0.75
+        ? bestRow(shape, first.w, first.h, gap, room)
+        : undefined;
+    if (!row) {
+      out.push(...list);
+      continue;
+    }
+    // Turned 180 degrees within its own box
+    const turned = move(first.layers, [-1, 0, 0, -1, first.w, first.h]);
+    for (let i = 0; i < list.length; i += row.n) {
+      const group = list.slice(i, i + row.n);
+      if (group.length === 1) {
+        out.push(group[0]);
+        continue;
+      }
+      const at = row.at.slice(0, group.length);
+      const x0 = Math.min(...at.map((p) => p[0])),
+        y0 = Math.min(...at.map((p) => p[1]));
+      const w = Math.max(...at.map((p) => p[0] + first.w)) - x0,
+        h = Math.max(...at.map((p) => p[1] + first.h)) - y0;
+      out.push({
+        ...group[0],
+        layers: move(group[0].layers, [1, 0, 0, 1, at[0][0] - x0, at[0][1] - y0]),
+        w,
+        h,
+        inner: group.slice(1).map((b, k) => ({
+          item: { ...b, layers: (k + 1) % 2 ? turned : b.layers } as Nested['item'],
+          dx: at[k + 1][0] - x0,
+          dy: at[k + 1][1] - y0,
+        })),
+      });
+    }
+  }
+  return out;
+}
+
+// Where copies go in a row, every other one turned 180 degrees, each gap
+// clear of the others, for the row that saves most room on two copies;
+// none when it saves too little
+function bestRow(detail: Poly2[], w: number, h: number, gap: number, room: [number, number]) {
+  // Searched with fewer points: each outline simplified, then grown by as
+  // much as it may have lost, so it still holds the part
+  const tol = 0.25;
+  const shape = offset(
+    detail.map((r) => simplify(r, tol)).filter((r) => r.length >= 3),
+    tol,
+    'miter',
+  );
+  const grown = offset(shape, gap, 'miter');
+  const turned = shape.map((p) => p.map(([x, y]): [number, number] => [w - x, h - y]));
+  const moved = (s: Poly2[], [dx, dy]: [number, number]) =>
+    s.map((p) => p.map(([x, y]): [number, number] => [x + dx, y + dy]));
+  const clearOf = (fixed: Poly2[], s: Poly2[]) =>
+    !intersection(fixed, s).some((p) => Math.abs(area(p)) > 1e-3);
+  // The closest place along a line that stays clear, found by halves
+  const slide = (fixed: Poly2[], s: Poly2[], at: (t: number) => [number, number], far: number) => {
+    let [lo, hi] = [0, far];
+    if (!clearOf(fixed, moved(s, at(hi)))) return undefined;
+    if (clearOf(fixed, moved(s, at(lo)))) return at(lo);
+    for (let n = 0; n < 10; n++) {
+      const mid = (lo + hi) / 2;
+      if (clearOf(fixed, moved(s, at(mid)))) hi = mid;
+      else lo = mid;
+    }
+    return at(hi);
+  };
+  let best: { d: [number, number]; across: boolean; area: number } | undefined;
+  for (const across of [false, true])
+    for (let k = -10; k <= 10; k++) {
+      const off = (k / 10) * (across ? w : h);
+      const d = slide(grown, turned, (t) => (across ? [off, t] : [t, off]), (across ? h : w) + gap);
+      if (!d) continue;
+      const pw = Math.max(w, d[0] + w) - Math.min(0, d[0]),
+        ph = Math.max(h, d[1] + h) - Math.min(0, d[1]);
+      if (pw > room[0] || ph > room[1]) continue;
+      if (pw * ph < 0.85 * 2 * w * h && (!best || pw * ph < best.area))
+        best = { d, across, area: pw * ph };
+    }
+  if (!best) return undefined;
+  const { d, across } = best;
+  // The next pair repeats a period on: an upright copy slid on past the
+  // first pair, then checked against everything before it
+  const pair = union([...grown, ...offset(moved(turned, d), gap, 'miter')]);
+  const span = across ? h : w;
+  const period = slide(
+    pair,
+    shape,
+    (t) => (across ? [0, t] : [t, 0]),
+    2 * (span + gap) + Math.abs(across ? d[1] : d[0]),
+  );
+  const at: [number, number][] = [
+    [0, 0],
+    [d[0], d[1]],
+  ];
+  if (period) {
+    const fits = (pts: [number, number][]) =>
+      Math.max(...pts.map((p) => p[0] + w)) - Math.min(...pts.map((p) => p[0])) <= room[0] &&
+      Math.max(...pts.map((p) => p[1] + h)) - Math.min(...pts.map((p) => p[1])) <= room[1];
+    for (let i = 2; i < 500; i++) {
+      const k = Math.floor(i / 2);
+      const p: [number, number] =
+        i % 2 ? [d[0] + k * period[0], d[1] + k * period[1]] : [k * period[0], k * period[1]];
+      if (!fits([...at, p])) break;
+      const mine = moved(i % 2 ? turned : shape, p);
+      const others = union(
+        at
+          .slice(Math.max(0, at.length - 3))
+          .map((q, j, arr) => {
+            const idx = at.length - arr.length + j;
+            return offset(moved(idx % 2 ? turned : shape, q), gap, 'miter');
+          })
+          .flat(),
+      );
+      if (!clearOf(others, mine)) break;
+      at.push(p);
+    }
+  }
+  return { at, n: at.length };
+}
+
+// A closed outline with points dropped while it stays within tol of them
+// (Douglas-Peucker), split in two at the point farthest from the first
+function simplify(ring: Poly2, tol: number): Poly2 {
+  if (ring.length < 8) return ring;
+  const open = (pts: Poly2): Poly2 => {
+    const keep = new Uint8Array(pts.length);
+    keep[0] = keep[pts.length - 1] = 1;
+    const stack: [number, number][] = [[0, pts.length - 1]];
+    while (stack.length) {
+      const [i, j] = stack.pop()!;
+      const [ax, ay] = pts[i],
+        [bx, by] = pts[j];
+      const len = Math.hypot(bx - ax, by - ay);
+      let far = -1,
+        at = -1;
+      for (let k = i + 1; k < j; k++) {
+        const [px, py] = pts[k];
+        const d = len
+          ? Math.abs((bx - ax) * (ay - py) - (ax - px) * (by - ay)) / len
+          : Math.hypot(px - ax, py - ay);
+        if (d > far) [far, at] = [d, k];
+      }
+      if (far > tol) {
+        keep[at] = 1;
+        stack.push([i, at], [at, j]);
+      }
+    }
+    return pts.filter((_, k) => keep[k]);
+  };
+  const d0 = (q: [number, number]) => Math.hypot(q[0] - ring[0][0], q[1] - ring[0][1]);
+  let mid = 1;
+  for (let k = 2; k < ring.length; k++) if (d0(ring[k]) > d0(ring[mid])) mid = k;
+  const a = open(ring.slice(0, mid + 1));
+  const b = open([...ring.slice(mid), ring[0]]);
+  return [...a, ...b.slice(1, -1)];
+}
 
 // A copy's number among its part() call's copies, a stack's layers each
 // counting as one

@@ -519,6 +519,10 @@ class Walker {
         this.expr(e.body, inner);
         return;
       }
+      case 'chain':
+        this.expr(e.check, scope);
+        this.expr(e.body, scope);
+        return;
     }
   }
 

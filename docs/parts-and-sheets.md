@@ -140,6 +140,55 @@ part("back", at = [0, 55, 3], rotate = [75, 0, 0]) {
 Parts that only touch cut nothing: a wall standing on a shelf without tabs
 leaves it whole.
 
+When tabs of two parts land in the same place in a third, as walls of two
+storeys lining up over a floor, the check names both and where they meet,
+so one can move its tabs along the edge.
+
+A hook that goes in through its slot and then drops, as on a pegboard,
+needs a slot taller than its tab: `slot_extra = [0, 6]` sweeps each slot
+6 mm further along the receiving part's own y.
+
+### Halving joints
+
+Two plates that cross, as the dividers of an egg crate or the ribs and
+rings of a lamp, each take a slot halfway through from opposite sides.
+Give one of them `halving = ["Rib*"]` and both are cut: where they cross,
+each gets a strip as wide as the other plate's section (wider when they
+meet at an angle), `clearance` more, from the middle of the crossing out
+through its own edge. The slots run the way that leaves both parts
+soonest, so a ring is slotted from its inner rim and a rib notched from
+its outer edge, and a slot stops at the first edge it meets, never across
+a hole to the far side.
+
+```kerf
+part("Ring", at = [0, 0, 30], halving = ["Rib"])
+  difference() { circle(r = 55); circle(r = 45); }
+part("Rib", qty = 4, at = [for (a = [0:90:270]) [-1.5 * sin(a), 1.5 * cos(a), 0]],
+     rotate = [for (a = [0:90:270]) [90, 0, a]]) translate([10, 0]) rect([50, 60]);
+```
+
+### Bores for axles and dowels
+
+A mechanism's axles pass through several parts: the frame they turn in, and
+the wheels, cams and cranks fixed on them. Declare the axle once as
+hardware and let each part cut its own hole: `bores = ["Crank axle"]` cuts,
+through this part, the section of the hardware labelled so (or of that
+kind) wherever it passes through in the assembly. An axle at an angle cuts
+the longer hole it needs, and a square or hexagonal rod its own shape.
+
+The fit sets the room round the rod: `fit = "turn"` (the default, 0.3 mm on
+the diameter) for a part that turns on it, `fit = "press"` (0.1 mm under)
+for one held fast, or a number of millimetres. Measure your laser's kerf
+and your dowels with `kerf/calibration`, and adjust.
+
+```kerf
+hardware("dowel", [30, -5, 20], [30, 40, 20], 6, label = "Crank axle");
+part("Side", qty = 2, at = [[0, 3, 0], [0, 33, 0]], rotate = [90, 0, 0],
+     bores = ["Crank axle"]) rect([60, 40]);
+part("Cam", at = [30, 18, 20], rotate = [90, 0, 0], bores = ["Crank axle"],
+     fit = "press") circle(d = 30);
+```
+
 ### Bends
 
 A living hinge bends a part, and the assembled view can show it bent.
@@ -278,6 +327,12 @@ With `$nest = true` (or `--nest`), small parts go into the holes of bigger
 ones before the rows are packed: the rings of a stacked vase or globe each
 inside the next, washers inside a wheel. A part goes into a hole only
 where its outline, `$gap` all round, fits.
+
+Copies of a curved part are packed in rows, every other one turned 180
+degrees and slid up against the one before, `$gap` clear, when that takes
+much less room than their boxes side by side: S-shaped ribs, crescents and
+L brackets nest into each other, so 24 lamp ribs that took four sheets fit
+on one. Rectangles and other parts that don't nest are packed as before.
 
 ## One file per sheet
 

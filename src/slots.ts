@@ -58,8 +58,28 @@ export function crossSection(target: Solid, other: Solid): Poly[] {
     return [];
   const inBand = (lo: number, hi: number) =>
     intersection(other.outline, [ccw(bandOf(lo, hi))]).filter((p) => Math.abs(area(p)) > 1e-6);
-  if (!inBand(at0(EPS), at1(EPS)).length) return [];
-  const pieces = inBand(at0(0), at1(0));
+  const deep = inBand(at0(EPS), at1(EPS));
+  if (!deep.length) return [];
+  // The slot spans the whole slab, but only across from what goes deeper than
+  // EPS: an edge lying on a face (a gable wall's top under its roof, which
+  // rounding can put a hair inside) is touching, not a slot along the
+  // contact, while a shoulder flaring at the face beside a tab is cut
+  const L = Math.abs(at1(0) - at0(0)) + 1;
+  const across = (p: Poly): Poly[] => {
+    const lo = p.map(([u, v]): [number, number] => [u - nx * L, v - ny * L]);
+    const hi = p.map(([u, v]): [number, number] => [u + nx * L, v + ny * L]);
+    const out: Poly[] = [ccw(lo), ccw(hi)];
+    for (let i = 0; i < p.length; i++) {
+      const j = (i + 1) % p.length;
+      const quad: Poly = [lo[i], lo[j], hi[j], hi[i]];
+      if (Math.abs(area(quad)) > 1e-12) out.push(ccw(quad));
+    }
+    return out;
+  };
+  const columns = union(deep.flatMap(across), 'nonzero');
+  const pieces = intersection(inBand(at0(0), at1(0)), columns).filter(
+    (p) => Math.abs(area(p)) > 1e-6,
+  );
   if (!pieces.length) return [];
   const at =
     (w: number) =>
