@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+- Slots: an edge lying on a face (a gable wall's top under its roof) is
+  touching, not a slot the length of the contact. The slot spans the part
+  only across from what goes deeper than the touching tolerance, so a tab's
+  flared shoulder is still cut. This removes stray slots from roofs whose
+  walls also tab through them.
+- Sheet items of mirrored copies (`mirror = [false, true]`) keep their copy
+  numbers from the assembly; both used to say copy 1.
+- A module that uses `children(i)` past the last child it was given warns,
+  with the call's line: `m() a(); b();` gives m() one child.
+- Two libraries defining a module or function of the same name warn once,
+  naming both files; the later one is still used.
+- A collision is reported at a point inside the overlap, not the middle of
+  the two parts' boxes.
+
 ## 0.8.0 (2026-11-08)
 
 Language version 0.3, as in 0.7.0: programs run as before.
