@@ -28,14 +28,6 @@ and operation order.
 
 Six reference models passed these import checks on 28 October 2026.
 Drawing dimensions matched within 0.02 mm, including kerf compensation.
-These results cover file imports; they do not establish a fit for a
-particular machine or material.
-
-## Not checked yet
-
-LightBurn, xTool Studio, xTool Creative Space, RDWorks and LaserGRBL have
-not yet been verified with the reference models. Import handling can differ
-between programs, especially for units, layer colours and fills.
 
 ## Checklist for a new program
 
