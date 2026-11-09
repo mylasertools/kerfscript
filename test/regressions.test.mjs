@@ -364,6 +364,23 @@ part("side", qty = 2, at = [[0, 0, 0], [40, 0, 0]], rotate = [90, 0, 90], mirror
   );
 });
 
+test('a module asking for a child it was not given warns', () => {
+  // Without braces only the first statement is the child; the second stands
+  // on its own and is added to the part as material
+  const r = render(`
+module engraved() { children(0); engrave() children(1); }
+part("a") { engraved() square(20); translate([5, 5]) square(3); }`);
+  assert.equal(r.warnings.length, 1);
+  assert.match(r.warnings[0], /engraved\(\) uses children\(1\) but was given 1 child \(line 3\)/);
+  // Guarded by $children, with no children at all, or braced: no warning
+  for (const src of [
+    'module m() { children(0); if ($children > 1) children(1); } part("a") m() square(20);',
+    'module m() { square(5); children(0); } part("a") m();',
+    'module m() { children(0); children(1); } part("a") m() { square(20); square(3); }',
+  ])
+    assert.deepEqual(render(src).warnings, [], src);
+});
+
 test('a fill wholly under a layer stacked above it warns', () => {
   const r = render(`
 layer("glass", mode = "fill", color = "#88aacc");

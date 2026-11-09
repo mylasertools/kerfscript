@@ -197,6 +197,9 @@ interface FnDef {
 interface ChildCtx {
   stmts: Stmt[];
   env: Env;
+  // The module call that gave them, for messages
+  module?: string;
+  pos?: Pos;
 }
 
 class Env {
@@ -705,7 +708,7 @@ export class Evaluator {
       try {
         const e = new Env(user.env, env);
         this.bindParams(user.params, args, e, user.env, `${s.name}()`);
-        e.children = { stmts: s.children, env };
+        e.children = { stmts: s.children, env, module: s.name, pos: s.pos };
         e.vars.set('$children', this.childStmts(s.children).length);
         return this.block(user.body, e);
       } catch (e) {
@@ -2211,8 +2214,16 @@ export class Evaluator {
         const want = new Set<Stmt>();
         if (idx === undefined) kids.forEach((k) => want.add(k));
         else
-          for (const i of this.iterable(idx, c.args.at))
-            if (kids[toNumber(i)]) want.add(kids[toNumber(i)]);
+          for (const i of this.iterable(idx, c.args.at)) {
+            const k = toNumber(i);
+            if (kids[k]) want.add(kids[k]);
+            // Given one child where it uses two, the module most likely met
+            // `m() a(); b();`, where b() is a statement of its own
+            else if (kids.length && k >= kids.length && ctx.module && ctx.pos)
+              this.warn(
+                `${ctx.module}() uses children(${k}) but was given ${kids.length} child${kids.length === 1 ? '' : 'ren'} (${where(ctx.pos, false)}). A module call takes one statement as its child: put several in braces, ${ctx.module}() { a(); b(); }`,
+              );
+          }
         const out: Shape[] = [];
         // A child used again in the same call, with the same special
         // variables, frame and step, is the same shape: tones() and the

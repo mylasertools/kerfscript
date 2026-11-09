@@ -165,6 +165,9 @@ the render options. `!` is accepted for OpenSCAD files and has no effect.
 Inside a module, `children()` renders all child statements passed by the
 caller. `children(index)` selects one child by its position from 0, or several with a list of positions.
 `$children` is the number of children.
+A call without braces takes exactly one statement as its child: in
+`m() a(); b();` only `a()` is a child, and `b()` stands on its own. A module
+that asks for a child past the last one it was given warns.
 
 ```kerf
 module hang_hole(d = 5) {
