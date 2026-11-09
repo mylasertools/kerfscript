@@ -190,3 +190,14 @@ test('hide() stays hidden inside score() and other layer wrappers', () => {
   assert.equal(ls.length, 2, 'the line, cut in two; no outline of the hidden square');
   assert.ok(ls.every((l) => l.length === 2));
 });
+
+test('hide() areas are never drawn or filled by other modules', () => {
+  const painted = render(`part("p") { rect(30); occlude() {
+    score() line([0, 10], [30, 10]);
+    paint(["engrave"]) hide() translate([10, 5]) rect(10);
+  } }`);
+  assert.equal(painted.sheets[0].items[0].layers.get('engrave'), undefined);
+  assert.equal(lines(painted).length, 2, 'it still hides the line');
+  const hatched = render('part("p") { rect(30); occlude() score() hatch(0, 3) hide() rect(10); }');
+  assert.equal(lines(hatched).length, 0);
+});

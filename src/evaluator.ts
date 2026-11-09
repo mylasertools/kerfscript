@@ -2155,6 +2155,9 @@ export class Evaluator {
             if (!this.layers.has(layer))
               this.layers.set(layer, { name: layer, mode: 'fill', color: '#000000' });
             out.push(regionShape(later.length ? difference(mine, later) : mine, layer));
+            // hide()'s areas go on as they are, for an occlude() around
+            const hidden = k.layers.get(HIDDEN);
+            if (hidden) out.push({ layers: new Map([[HIDDEN, hidden]]), parts: [] });
           } else
             out.push(
               later.length
@@ -2685,7 +2688,9 @@ export class Evaluator {
       const out: Layer = { regions: [], lines: [] };
       for (const s of shapes) {
         if (s.parts.length) throw new Error(`part() can only be the first child of ${fn}()`);
-        for (const l of s.layers.values()) for (const p of l.regions) out.regions.push(p);
+        // hide()'s areas are only for occlude(): never the area of anything
+        for (const [k, l] of s.layers)
+          if (k !== HIDDEN) for (const p of l.regions) out.regions.push(p);
       }
       return out;
     }

@@ -1,5 +1,6 @@
 // Copyright (c) 2026 MyLaserTools. SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-MyLaserTools-Commercial
 
+import { HIDDEN } from './geometry.js';
 import { joinLines } from './plot.js';
 import {
   bendRuns,
@@ -326,7 +327,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     }
     const layers = new Map<string, Layer>();
     for (const [k, l] of p.layers) {
-      if (mode(k) === 'guide' && !options.guides) continue;
+      if (k === HIDDEN || (mode(k) === 'guide' && !options.guides)) continue;
       let regions = union(l.regions);
       let lines = l.lines.filter((x) => x.length >= 2);
       if (mode(k) === 'line' || mode(k) === 'guide') {
