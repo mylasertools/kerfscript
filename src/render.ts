@@ -6,11 +6,11 @@ import {
   besideAssembly,
   collisions,
   invert,
+  overlapPoint,
   multiply,
   placementMatrix,
   runOf,
   translation,
-  worldBox,
   type AssemblyPart,
   type Mark,
 } from './assembly.js';
@@ -498,17 +498,15 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   // Pieces of one bent part meet only through its hinge
   const clashes = allClashes
     .filter(([a, b]) => pieceOf.get(a) !== pieceOf.get(b))
-    .map(([a, b]) => [pieceOf.get(a) ?? a, pieceOf.get(b) ?? b] as const)
+    .map(([a, b, at]) => [pieceOf.get(a) ?? a, pieceOf.get(b) ?? b, at, a, b] as const)
     .filter(([a, b], i, all) => all.findIndex(([c, d]) => c === a && d === b) === i);
   if (!complete)
     warnings.push(
       `The assembly has more than ${limits.maxCollisionPairs} pairs of touching parts, the limit, so only those were checked for collisions.`,
     );
-  for (const [a, b] of clashes.slice(0, 5)) {
-    // Where: the middle of the space both parts' boxes take up
-    const [la, ha] = worldBox(a),
-      [lb, hb] = worldBox(b);
-    const at = [0, 1, 2].map((k) => round2((Math.max(la[k], lb[k]) + Math.min(ha[k], hb[k])) / 2));
+  for (const [a, b, p, pa, pb] of clashes.slice(0, 5)) {
+    // Where: a point inside the overlap, central to it
+    const at = (overlapPoint(pa, pb) ?? p).map(round2);
     warnings.push(
       `Parts "${a.name}"${a.copy > 1 ? ` (copy ${a.copy})` : ''} and "${b.name}"${b.copy > 1 ? ` (copy ${b.copy})` : ''} collide in the assembly, around [${at.join(', ')}]. Check their edges and where they are placed.`,
     );

@@ -159,3 +159,23 @@ test('the collision check stops at the pair limit with a warning', () => {
   assert.equal(r.assembly.length, 60);
   assert.ok(r.warnings.some((w) => /more than 50 pairs/.test(w)));
 });
+
+test('a collision is reported at a point inside the overlap', () => {
+  const at = (src) =>
+    render(src)
+      .warnings.find((w) => /collide/.test(w))
+      .match(/around \[([^\]]*)\]/)[1]
+      .split(', ')
+      .map(Number);
+  // Two L plates overlapping along both arms: the middle of their boxes,
+  // [50, 50], is in neither, so the point must lie in an arm
+  const [x, y, z] = at(
+    'module L() { square([100, 10]); square([10, 100]); } part("a", at = [0, 0, 0]) L(); part("b", at = [0, 0, 1]) L();',
+  );
+  assert.ok((x < 10 || y < 10) && z > 1 && z < 3, `${x}, ${y}, ${z}`);
+  // Walls crossing at a corner: in the corner's 3 x 3 column
+  const [cx, cy, cz] = at(
+    'part("a", at = [0, 3, 0], rotate = [90, 0, 0]) square([60, 40]); part("b", at = [0, 0, 0], rotate = [90, 0, 90]) square([60, 40]);',
+  );
+  assert.ok(cx > 0 && cx < 3 && cy > 0 && cy < 3 && cz > 10 && cz < 30, `${cx}, ${cy}, ${cz}`);
+});
