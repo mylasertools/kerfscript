@@ -1,6 +1,6 @@
 [package]
 name = "kerfscript-desktop"
-version = "0.8.0"
+version = "0.9.0"
 description = "KerfScript: a programming language for laser cutting"
 authors = ["MyLaserTools"]
 license = "AGPL-3.0-only"
