@@ -313,6 +313,12 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
     names before it took: `slots = ["*", "!back"]` cuts a slot for every
     part that passes through except the back. A slot clears every layer,
     marks included, and a part that only touches the edge leaves no notch.
+  - `bores = ["label", ...]`: where the hardware rods with those labels (or
+    kinds) pass through this part, holes are cut the shape of their section,
+    at any angle. `fit = "turn"` (the default) makes them 0.3 mm wider than
+    the rod for a part that turns on it, `"press"` 0.1 mm narrower for one
+    held fast, or give a number of millimetres. Names take `*` and `!` as in
+    `slots`.
 - `place(at, rotate) { ... }` places the parts and hardware inside in the
   assembled view, as part()'s `at` and `rotate` do; their own placements
   are inside it. A library module wrapped in `place()` can be set anywhere.

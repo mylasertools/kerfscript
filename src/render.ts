@@ -15,6 +15,7 @@ import {
   type Mark,
 } from './assembly.js';
 import { slotsFor, type Solid } from './slots.js';
+import { boreFor, FITS } from './bores.js';
 import type { RenderAnalysis } from './analysis.js';
 import {
   didYouMean,
@@ -230,7 +231,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     );
 
   glueOn(parts, warnings);
-  cutSlots(parts, mode, warnings);
+  cutSlots(parts, mode, warnings, res.hardware);
 
   const infos: PartInfo[] = [];
   const analysis: RenderAnalysis | undefined = options.analysis
@@ -812,8 +813,13 @@ function namePattern(name: string): (s: string) => boolean {
 
 // Cuts the slots part(..., slots = [...]) asks for, where the named
 // parts' material passes through each placed copy of the part
-function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: string[]) {
-  if (!parts.some((p) => p.slots)) return;
+function cutSlots(
+  parts: PartShape[],
+  mode: (k: string) => string,
+  warnings: string[],
+  hardware: HardwareItem[] = [],
+) {
+  if (!parts.some((p) => p.slots || p.bores)) return;
   const material = new Map<PartShape, ReturnType<typeof union>>();
   const cutOf = (p: PartShape) => {
     let m = material.get(p);
@@ -839,15 +845,30 @@ function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: str
   const cuts = new Map<PartShape, ReturnType<typeof union>>();
   const byLayer = new Map<PartShape, Poly2[][]>();
   for (const p of parts) {
-    if (!p.slots) continue;
+    if (!p.slots && !p.bores) continue;
     if (!p.placements) {
-      warnings.push(`Part "${p.name}" has slots but no at or rotate, so they can't be found.`);
+      warnings.push(
+        `Part "${p.name}" has ${p.slots ? 'slots' : 'bores'} but no at or rotate, so they can't be found.`,
+      );
       continue;
     }
+    // Rods of hardware by label, or by kind, with the same patterns
+    const rods: HardwareItem[] = [];
+    for (const name of p.bores ?? []) {
+      const out = name.startsWith('!');
+      const match = namePattern(out ? name.slice(1) : name);
+      const found = hardware.filter((h) => match(h.label ?? '') || match(h.kind));
+      if (!found.length && !out)
+        warnings.push(`Part "${p.name}": no hardware "${name}" to bore for.`);
+      for (const h of found)
+        if (out) rods.splice(0, rods.length, ...rods.filter((r) => r !== h));
+        else if (!rods.includes(h)) rods.push(h);
+    }
+    let bored = false;
     // Names, patterns with * (any run of characters), and !name to leave
     // parts out of the patterns before it
     const chosen = new Set<PartShape>();
-    for (const name of p.slots) {
+    for (const name of p.slots ?? []) {
       const out = name.startsWith('!');
       const match = namePattern(out ? name.slice(1) : name);
       const found = parts.filter((q) => q !== p && match(q.name));
@@ -868,7 +889,15 @@ function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: str
           outline: cutOf(p),
           ...(p.bends && { bends: p.bends }),
         }).flatMap((me) => {
-          const cut = slotsFor(me, others, p.clearance ?? 0.1);
+          const cut = p.slots ? slotsFor(me, others, p.clearance ?? 0.1) : [];
+          // A bore is cut where its rod's hole meets the part's material
+          for (const h of rods) {
+            const hole = boreFor(me, h, p.fit ?? FITS.turn);
+            if (hole && intersection([hole], me.outline).some((q) => Math.abs(area(q)) > 1e-4)) {
+              cut.push(hole);
+              bored = true;
+            }
+          }
           return p.bends ? intersection(cut, offset(me.outline, 1, 'miter')) : cut;
         }),
       ),
@@ -899,10 +928,14 @@ function cutSlots(parts: PartShape[], mode: (k: string) => string, warnings: str
       warnings.push(
         `Copies of part "${p.name}" meet the parts in slots in different places; they all get every slot. Make them separate parts to cut each its own.`,
       );
+    if (p.bores && rods.length && !bored)
+      warnings.push(
+        `Part "${p.name}": none of ${p.bores.map((n) => `"${n}"`).join(', ')} pass through it, so it has no bores.`,
+      );
     const slot = union(each.flat());
     if (!slot.length) {
       // A pattern asks for whatever passes through, which may be nothing
-      if (!p.slots.some((n) => n.includes('*')))
+      if (p.slots && !p.slots.some((n) => n.includes('*')))
         warnings.push(
           `Part "${p.name}": none of ${p.slots.map((n) => `"${n}"`).join(', ')} pass through it, so it has no slots.`,
         );

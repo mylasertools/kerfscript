@@ -632,3 +632,29 @@ test('a picture of a long thin sheet stays within the pixel limit', () => {
   assert.ok(w * h <= 16_000_000 && h <= 16_384, `${w} x ${h}`);
   assert.ok(h > w * 50);
 });
+
+test('bores cut holes where hardware rods pass through, with the fit', () => {
+  const r = render(`
+hardware("dowel", [30, -5, 20], [30, 40, 20], 6, label = "Crank axle");
+part("Side", qty = 2, at = [[0, 3, 0], [0, 33, 0]], rotate = [90, 0, 0], bores = ["Crank axle"], fit = "press") square([60, 40]);
+part("Wheel", at = [30, 18, 20], rotate = [90, 0, 0], bores = ["Crank*"]) circle(d = 30, $fn = 64);
+part("Plain", at = [0, 50, 0], rotate = [90, 0, 0], bores = ["dowel"]) square([60, 40]);`);
+  assert.deepEqual(r.warnings, [
+    'Part "Plain": none of "dowel" pass through it, so it has no bores.',
+  ]);
+  const cut = (n) => r.parts.find((p) => p.name === n).cutLength;
+  // 200 round the side and a 5.9 mm hole; the wheel's 30 mm rim and a 6.3 mm hole
+  assert.ok(Math.abs(cut('Side') - (200 + Math.PI * 5.9)) <= 1, String(cut('Side')));
+  assert.ok(Math.abs(cut('Wheel') - Math.PI * (30 + 6.3)) <= 1, String(cut('Wheel')));
+  assert.equal(cut('Plain'), 200);
+  // A square rod cuts a square hole; a slanted one a longer hole
+  const key = render(
+    'hardware("steel", [30, -5, 20], [30, 40, 20], [4, 4], label = "Key"); part("S", at = [0, 3, 0], rotate = [90, 0, 0], bores = "Key", fit = 0) square([60, 40]);',
+  );
+  assert.equal(key.parts[0].cutLength, 216);
+  const slant = render(
+    'hardware("dowel", [30, -5, 20], [30, 40, 50], 6, label = "A"); part("S", at = [0, 3, 0], rotate = [90, 0, 0], bores = "A", fit = 0) square([60, 60]);',
+  );
+  assert.ok(slant.parts[0].cutLength > 240 + Math.PI * 6 + 3);
+  assert.throws(() => render('part("S", bores = "A", fit = "loose") square(5);'), /fit must be/);
+});

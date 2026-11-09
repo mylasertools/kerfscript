@@ -140,6 +140,28 @@ part("back", at = [0, 55, 3], rotate = [75, 0, 0]) {
 Parts that only touch cut nothing: a wall standing on a shelf without tabs
 leaves it whole.
 
+### Bores for axles and dowels
+
+A mechanism's axles pass through several parts: the frame they turn in, and
+the wheels, cams and cranks fixed on them. Declare the axle once as
+hardware and let each part cut its own hole: `bores = ["Crank axle"]` cuts,
+through this part, the section of the hardware labelled so (or of that
+kind) wherever it passes through in the assembly. An axle at an angle cuts
+the longer hole it needs, and a square or hexagonal rod its own shape.
+
+The fit sets the room round the rod: `fit = "turn"` (the default, 0.3 mm on
+the diameter) for a part that turns on it, `fit = "press"` (0.1 mm under)
+for one held fast, or a number of millimetres. Measure your laser's kerf
+and your dowels with `kerf/calibration`, and adjust.
+
+```kerf
+hardware("dowel", [30, -5, 20], [30, 40, 20], 6, label = "Crank axle");
+part("Side", qty = 2, at = [[0, 3, 0], [0, 33, 0]], rotate = [90, 0, 0],
+     bores = ["Crank axle"]) rect([60, 40]);
+part("Cam", at = [30, 18, 20], rotate = [90, 0, 0], bores = ["Crank axle"],
+     fit = "press") circle(d = 30);
+```
+
 ### Bends
 
 A living hinge bends a part, and the assembled view can show it bent.

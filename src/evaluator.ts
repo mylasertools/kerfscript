@@ -43,6 +43,7 @@ import {
   type Vec3,
 } from './assembly.js';
 import { KerfError, where, type Pos } from './lexer.js';
+import { FITS } from './bores.js';
 import { HARDWARE_COLORS, HARDWARE_KINDS } from './hardware.js';
 import { parse } from './parser.js';
 import { signature } from './signatures.js';
@@ -2142,6 +2143,24 @@ export class Evaluator {
                 return v;
               });
         const clearance = this.num(this.arg(c.args, 'clearance', -1, 0.1), 'part', 'clearance');
+        // bores = ["Crank axle"]: holes where that hardware passes through,
+        // with fit = "turn" (the default), "press" or a number of mm
+        const boresArg = this.arg(c.args, 'bores', -1);
+        const bores =
+          boresArg === undefined
+            ? undefined
+            : (Array.isArray(boresArg) ? boresArg : [boresArg]).map((v) => {
+                if (typeof v !== 'string')
+                  throw new Error('bores must be hardware labels or kinds');
+                return v;
+              });
+        const fitArg = this.arg(c.args, 'fit', -1, 'turn');
+        if (
+          typeof fitArg !== 'number' &&
+          !Object.prototype.hasOwnProperty.call(FITS, toText(fitArg))
+        )
+          throw new Error(`fit must be "turn", "press" or a number of mm, got ${show(fitArg)}`);
+        const fit = typeof fitArg === 'number' ? fitArg : FITS[toText(fitArg)];
         const made = (layers: Map<string, Layer>, flip: boolean, copies: number[]): PartShape => {
           const all = copies.length === qty;
           const mine = placements?.filter((_, i) => copies.includes(Math.floor(i / stack) + 1));
@@ -2157,6 +2176,7 @@ export class Evaluator {
             ...(bends.length ? { bends } : {}),
             ...(on !== undefined ? { on: toText(on) } : {}),
             ...(slots ? { slots, clearance } : {}),
+            ...(bores ? { bores, fit } : {}),
             ...(this.step ? { step: this.step } : {}),
             ...(glue !== undefined && { glue: { host: glue, face: face as 'top' | 'bottom' } }),
             ...(flip && { mirrored: true }),

@@ -40,6 +40,10 @@ export interface PartShape {
   // Parts whose tabs pass through this one: slots cut where they meet it
   slots?: string[];
   clearance?: number;
+  // Hardware rods passing through it, by label or kind: holes cut where
+  // they cross it, `fit` mm wider than the rod (less than 0 for a press fit)
+  bores?: string[];
+  fit?: number;
   // The assembly step that adds it, 0 for none
   step?: number;
   // Glued flat on another part's face, placed on it
