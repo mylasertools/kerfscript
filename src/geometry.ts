@@ -407,13 +407,21 @@ export function merge(shapes: Shape[]): Shape {
   return out;
 }
 
+// The layer of hide(): areas occlude() uses and drops
+export const HIDDEN = '\u0000hidden';
+
+// Everything on one layer, except hide()'s areas, which stay hidden
 function allOn(layers: Map<string, Layer>, layer: string): Map<string, Layer> {
   const all: Layer = { regions: [], lines: [] };
-  for (const l of layers.values()) {
+  for (const [k, l] of layers) {
+    if (k === HIDDEN) continue;
     for (const p of l.regions) all.regions.push(p);
     for (const p of l.lines) all.lines.push(p);
   }
-  return new Map([[layer, all]]);
+  const out = new Map([[layer, all]]);
+  const hidden = layers.get(HIDDEN);
+  if (hidden && layer !== HIDDEN) out.set(HIDDEN, hidden);
+  return out;
 }
 
 // Moves everything onto one layer. A whole part can only become a guide:

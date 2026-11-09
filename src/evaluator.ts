@@ -7,6 +7,7 @@ import {
   clipLines,
   difference,
   emptyShape,
+  HIDDEN,
   ellipsePoly,
   fragments,
   hull,
@@ -37,8 +38,7 @@ import { catmullRom } from './functions.js';
 import { contourLines, insideTest, streamlines } from './plot.js';
 
 const RAD = Math.PI / 180;
-// The layer of hide(): areas occlude() uses and drops
-export const HIDDEN = '\u0000hidden';
+
 import {
   IDENTITY4,
   multiply as mul4,
@@ -324,6 +324,8 @@ export class Evaluator {
   readonly limits: Limits;
   private pointCount = 0;
   private itemCount = 0;
+  // Items charged for what the program keeps after a call returns: echoes
+  private retained = 0;
   private copies = 0;
   // The 3D placement place() blocks build up, and the current step
   private frame: number[] = IDENTITY4;
@@ -1125,7 +1127,9 @@ export class Evaluator {
   }
 
   private echo(text: string, at: Pos) {
-    this.charge(Math.ceil(text.length / CHARS_PER_ITEM), at);
+    const n = Math.ceil(text.length / CHARS_PER_ITEM);
+    this.charge(n, at);
+    this.retained += n;
     this.echoes.push(text);
   }
 
@@ -1240,16 +1244,18 @@ export class Evaluator {
     if (!isFn(f))
       throw new Error(`field must be a function of a point, as function(p) ..., got ${show(f)}`);
     // The lists a call builds are gone when it returns a number or a
-    // vector, so they don't count towards the lists the program keeps
+    // vector, so they don't count towards the lists the program keeps;
+    // what it echoes is kept, and stays counted
     return (p) => {
-      const items = this.itemCount;
+      const items = this.itemCount,
+        kept = this.retained;
       const v = this.callFunction(
         f,
         { pos: [p], named: new Map(), all: [{ name: null, value: p }], at },
         env,
         'field',
       );
-      if (!Array.isArray(v) || v.length <= 3) this.itemCount = items;
+      if (!Array.isArray(v) || v.length <= 3) this.itemCount = items + this.retained - kept;
       return v;
     };
   }
@@ -1970,10 +1976,12 @@ export class Evaluator {
           if (!(d > 0)) throw new Error('interval must be more than 0');
           const k0 = Math.ceil(lo / d),
             k1 = Math.floor(hi / d);
-          if (!(k1 - k0 < 10_000))
-            throw new Error(`interval ${d} gives ${k1 - k0 + 1} levels: use a larger interval`);
-          at = [];
-          for (let k = k0; k <= k1; k++) at.push(k * d);
+          if (!Number.isSafeInteger(k0) || !Number.isSafeInteger(k1))
+            throw new Error(`the heights are too large for an interval of ${d}`);
+          const n = Math.max(0, k1 - k0 + 1);
+          if (!(n <= 10_000))
+            throw new Error(`interval ${d} gives ${n} levels: use a larger interval`);
+          at = Array.from({ length: n }, (_, i) => (k0 + i) * d);
         } else if (Array.isArray(levels)) {
           at = levels.map((v) => this.num(v, 'contours', 'levels'));
         } else {
@@ -1981,11 +1989,21 @@ export class Evaluator {
           if (!(n >= 1 && n <= 10_000)) throw new Error('levels must be 1 to 10000');
           at = Array.from({ length: n }, (_, k) => lo + ((hi - lo) * (k + 1)) / (n + 1));
         }
-        this.tick(c.args.at, (at.length * nx * ny) / 100);
+        // Charged level by level, so too many lines stop at the limit
+        // before they are all made
         const lines: Poly[] = [];
-        for (const level of at)
-          for (const l of contourLines(vals, nx, ny, b[0], b[1], cell, level)) lines.push(l);
-        this.spend(lines.reduce((n, l) => n + l.length, 0));
+        let made = 0;
+        for (const level of at) {
+          this.tick(c.args.at, Math.ceil((nx * ny) / 100));
+          const ls = contourLines(vals, nx, ny, b[0], b[1], cell, level);
+          const n = ls.reduce((sum, l) => sum + l.length, 0);
+          if (!((made += n) <= this.limits.maxPoints))
+            throw new Error(
+              `the contour lines have more than ${this.limits.maxPoints} points, the limit: use fewer levels or a larger cell`,
+            );
+          this.spend(n);
+          for (const l of ls) lines.push(l);
+        }
         return lineShape(clipLines(lines, keep, 'inside'));
       },
       // Children back to front, as if each were opaque: the lines and

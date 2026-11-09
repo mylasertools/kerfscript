@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import { render as run } from '../dist/index.js';
 
 // Parts at the sheet's corner, in their own coordinates
-const render = (src) => run(`$gap = 0; ${src}`);
+const render = (src, opts) => run(`$gap = 0; ${src}`, opts);
 
 const lines = (r, name = 'score') =>
   r.sheets[0].items.flatMap((i) => i.layers.get(name)?.lines ?? []);
@@ -146,4 +146,47 @@ test('$join_lines joins lines end to end and takes them nearest first', () => {
       b = ls[i].at(-1);
     assert.ok(Math.hypot(a[0] - e[0], a[1] - e[1]) <= Math.hypot(b[0] - e[0], b[1] - e[1]) + 1e-9);
   }
+});
+
+test('contours stop at the limits, whatever the heights', () => {
+  // A height too large for its interval's steps to count
+  assert.throws(
+    () => render('contours(function(p) 1e16, interval = 1) rect(1);', { maxSteps: 1000 }),
+    /too large/,
+  );
+  assert.doesNotThrow(() => render('contours(function(p) 1e15, interval = 1) rect(1);'));
+  // Many levels: stopped as the points pass the limit, not after
+  assert.throws(
+    () =>
+      render('contours(function(p) p[0] % 2, levels = 10000) rect(20);', {
+        maxSteps: 100_000,
+        limits: { maxPoints: 1000 },
+      }),
+    /more than 1000 points|steps/,
+  );
+});
+
+test('what a field echoes stays counted towards the limit', () => {
+  const s = 'x'.repeat(100);
+  assert.throws(
+    () =>
+      render(
+        `s = "${s}"; contours(function(p) let (e = echo(str(s, p))) p[0], levels = [5]) rect(20);`,
+        { limits: { maxListItems: 1000 } },
+      ),
+    /items in all/,
+  );
+});
+
+test('hide() stays hidden inside score() and other layer wrappers', () => {
+  const r = render(`part("p") {
+    rect([30, 20]);
+    occlude() {
+      score() line([0, 10], [30, 10]);
+      score() hide() translate([10, 5]) rect(10);
+    }
+  }`);
+  const ls = lines(r);
+  assert.equal(ls.length, 2, 'the line, cut in two; no outline of the hidden square');
+  assert.ok(ls.every((l) => l.length === 2));
 });
