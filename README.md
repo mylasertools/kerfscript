@@ -69,8 +69,8 @@ npx @mylasertools/kerfscript render box.kerf -o box.svg -D width=200
 
 That writes all six panels packed on a sheet, kerf compensated, as a
 millimetre SVG with one layer per operation. Output is checked automatically
-in Inkscape; see [docs/compatibility.md](docs/compatibility.md) for what has
-and has not been tested in other laser software.
+in Inkscape; see [docs/compatibility.md](docs/compatibility.md) for import
+settings in laser software.
 
 `kerf/box` is one of the libraries in the
 [standard library](docs/library.md), built into every renderer:
