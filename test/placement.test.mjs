@@ -658,3 +658,32 @@ part("Plain", at = [0, 50, 0], rotate = [90, 0, 0], bores = ["dowel"]) square([6
   assert.ok(slant.parts[0].cutLength > 240 + Math.PI * 6 + 3);
   assert.throws(() => render('part("S", bores = "A", fit = "loose") square(5);'), /fit must be/);
 });
+
+test('halving joints slot both parts from opposite sides, meeting halfway', () => {
+  const egg = render(`
+part("A", at = [0, 1.5, 0], rotate = [90, 0, 0], halving = ["B"], clearance = 0) square([100, 40]);
+part("B", at = [48.5, 50, 0], rotate = [90, 0, -90]) square([100, 40]);`);
+  assert.deepEqual(egg.warnings, []);
+  // Each plate's outline gains the slot's two 20 mm sides
+  assert.deepEqual(
+    egg.parts.map((p) => p.cutLength),
+    [320, 320],
+  );
+  const lamp = render(`
+$fn = 96;
+part("Ring", at = [0, 0, 30], halving = ["Rib"]) difference() { circle(r = 55); circle(r = 45); }
+part("Rib", qty = 4, at = [for (a = [0:90:270]) [-1.5 * sin(a), 1.5 * cos(a), 0]], rotate = [for (a = [0:90:270]) [90, 0, a]]) translate([10, 0]) square([50, 60]);`);
+  assert.deepEqual(lamp.warnings, []);
+  // The ribs are notched 10 mm from their outer edge, the ring 5 mm from its
+  // inner rim at each rib, never on across its hole
+  const rib = lamp.parts.find((p) => p.name === 'Rib');
+  assert.equal(rib.cutLength, 240);
+  const ring = lamp.parts.find((p) => p.name === 'Ring');
+  assert.ok(Math.abs(ring.cutLength - (2 * Math.PI * 100 + 4 * 10)) <= 4, String(ring.cutLength));
+  assert.match(
+    render(
+      'part("A", at = [0, 0, 0], halving = ["B"]) square(10); part("B", at = [50, 0, 0]) square(10);',
+    ).warnings[0],
+    /crosses none of "B"/,
+  );
+});

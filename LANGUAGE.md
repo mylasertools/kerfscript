@@ -313,6 +313,12 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
     names before it took: `slots = ["*", "!back"]` cuts a slot for every
     part that passes through except the back. A slot clears every layer,
     marks included, and a part that only touches the edge leaves no notch.
+  - `halving = ["name", ...]`: where this part and the named parts cross,
+    each takes a slot from opposite sides, meeting halfway along the line
+    they cross on, `clearance` wider, so they slide together: an egg-crate
+    grid, or ribs notched from their outer edge onto rings slotted from
+    their inner rim. The way round that leaves both parts soonest is used,
+    and a slot stops at the part's first edge. Names take `*` and `!`.
   - `bores = ["label", ...]`: where the hardware rods with those labels (or
     kinds) pass through this part, holes are cut the shape of their section,
     at any angle. `fit = "turn"` (the default) makes them 0.3 mm wider than

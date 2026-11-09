@@ -16,6 +16,7 @@ import {
 } from './assembly.js';
 import { slotsFor, type Solid } from './slots.js';
 import { boreFor, FITS } from './bores.js';
+import { halvingFor } from './halving.js';
 import type { RenderAnalysis } from './analysis.js';
 import {
   didYouMean,
@@ -232,6 +233,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
 
   glueOn(parts, warnings);
   cutSlots(parts, mode, warnings, res.hardware);
+  cutHalvings(parts, mode, warnings);
 
   const infos: PartInfo[] = [];
   const analysis: RenderAnalysis | undefined = options.analysis
@@ -813,6 +815,17 @@ function namePattern(name: string): (s: string) => boolean {
 
 // Cuts the slots part(..., slots = [...]) asks for, where the named
 // parts' material passes through each placed copy of the part
+// A slot is a hole through the part: no mark is left inside it
+function holed(from: Map<string, Layer>, slot: Poly2[]) {
+  const layers = new Map(from);
+  for (const [k, l] of from)
+    layers.set(k, {
+      regions: difference(l.regions, slot),
+      lines: clipLines(l.lines, slot, 'outside'),
+    });
+  return layers;
+}
+
 function cutSlots(
   parts: PartShape[],
   mode: (k: string) => string,
@@ -943,16 +956,6 @@ function cutSlots(
     }
     cuts.set(p, slot);
   }
-  // A slot is a hole through the part: no mark is left inside it
-  const holed = (from: Map<string, Layer>, slot: Poly2[]) => {
-    const layers = new Map(from);
-    for (const [k, l] of from)
-      layers.set(k, {
-        regions: difference(l.regions, slot),
-        lines: clipLines(l.lines, slot, 'outside'),
-      });
-    return layers;
-  };
   for (const [p, slot] of cuts) p.layers = holed(p.layers, slot);
   // A stack whose layers meet different parts becomes a part per layer
   for (const [p, perLayer] of byLayer) {
@@ -966,6 +969,87 @@ function cutSlots(
       stack: undefined,
     }));
     parts.splice(parts.indexOf(p), 1, ...split);
+  }
+}
+
+// Halving joints: each part with halving = [...] and every part it names
+// take slots where they cross, from opposite sides, meeting halfway
+function cutHalvings(parts: PartShape[], mode: (k: string) => string, warnings: string[]) {
+  if (!parts.some((p) => p.halving)) return;
+  const cutOf = (p: PartShape) =>
+    union([...p.layers].filter(([k]) => mode(k) === 'cut').flatMap(([, l]) => l.regions));
+  const solids = (p: PartShape): Solid[] => {
+    const outline = cutOf(p);
+    return (p.placements ?? []).map((pl) => ({
+      matrix: placementMatrix(pl),
+      thickness: p.thickness,
+      outline,
+    }));
+  };
+  // Per part, the slots for each copy in its own coordinates
+  const cuts = new Map<PartShape, Poly2[][]>();
+  const add = (p: PartShape, copy: number, polys: Poly2[]) => {
+    const list = cuts.get(p) ?? (p.placements ?? []).map(() => [] as Poly2[]);
+    list[copy].push(...polys);
+    cuts.set(p, list);
+  };
+  for (const p of parts) {
+    if (!p.halving) continue;
+    if (!p.placements) {
+      warnings.push(
+        `Part "${p.name}" has halving but no at or rotate, so the crossings can't be found.`,
+      );
+      continue;
+    }
+    const chosen = new Set<PartShape>();
+    for (const name of p.halving) {
+      const out = name.startsWith('!');
+      const match = namePattern(out ? name.slice(1) : name);
+      const found = parts.filter((q) => q !== p && match(q.name));
+      if (!found.length && !out)
+        warnings.push(`Part "${p.name}": no part "${name}" to halve with.`);
+      for (const q of found) out ? chosen.delete(q) : chosen.add(q);
+    }
+    let crossed = 0,
+      thin = 0;
+    const mine = solids(p);
+    for (const q of chosen) {
+      if (p.bends || q.bends) {
+        warnings.push(`Parts "${p.name}" and "${q.name}": halving joints can't go in a bent part.`);
+        continue;
+      }
+      if (!q.placements) continue;
+      const theirs = solids(q);
+      mine.forEach((a, i) =>
+        theirs.forEach((b, j) => {
+          const h = halvingFor(a, b, p.clearance ?? 0.1);
+          thin += h.thin;
+          if (h.a.length) {
+            crossed++;
+            add(p, i, h.a);
+            add(q, j, h.b);
+          }
+        }),
+      );
+    }
+    if (thin)
+      warnings.push(
+        `Part "${p.name}": ${thin} crossing${thin === 1 ? '' : 's'} too narrow to halve, left whole.`,
+      );
+    if (!crossed && chosen.size && !p.halving.some((n) => n.includes('*')))
+      warnings.push(
+        `Part "${p.name}" crosses none of ${p.halving.map((n) => `"${n}"`).join(', ')}, so it has no halving slots.`,
+      );
+  }
+  for (const [p, perCopy] of cuts) {
+    const each = perCopy.map((c) => union(c));
+    if (
+      each.slice(1).some((r) => xor(each[0], r).reduce((t, q) => t + Math.abs(area(q)), 0) > 1e-3)
+    )
+      warnings.push(
+        `Copies of part "${p.name}" are halved in different places; they all get every slot. Make them separate parts to cut each its own.`,
+      );
+    p.layers = holed(p.layers, union(each.flat()));
   }
 }
 

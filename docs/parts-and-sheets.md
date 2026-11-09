@@ -140,6 +140,25 @@ part("back", at = [0, 55, 3], rotate = [75, 0, 0]) {
 Parts that only touch cut nothing: a wall standing on a shelf without tabs
 leaves it whole.
 
+### Halving joints
+
+Two plates that cross, as the dividers of an egg crate or the ribs and
+rings of a lamp, each take a slot halfway through from opposite sides.
+Give one of them `halving = ["Rib*"]` and both are cut: where they cross,
+each gets a strip as wide as the other plate's section (wider when they
+meet at an angle), `clearance` more, from the middle of the crossing out
+through its own edge. The slots run the way that leaves both parts
+soonest, so a ring is slotted from its inner rim and a rib notched from
+its outer edge, and a slot stops at the first edge it meets, never across
+a hole to the far side.
+
+```kerf
+part("Ring", at = [0, 0, 30], halving = ["Rib"])
+  difference() { circle(r = 55); circle(r = 45); }
+part("Rib", qty = 4, at = [for (a = [0:90:270]) [-1.5 * sin(a), 1.5 * cos(a), 0]],
+     rotate = [for (a = [0:90:270]) [90, 0, a]]) translate([10, 0]) rect([50, 60]);
+```
+
 ### Bores for axles and dowels
 
 A mechanism's axles pass through several parts: the frame they turn in, and

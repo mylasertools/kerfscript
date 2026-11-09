@@ -2154,6 +2154,16 @@ export class Evaluator {
                   throw new Error('bores must be hardware labels or kinds');
                 return v;
               });
+        // halving = ["Rib*"]: where this part crosses those, each takes a
+        // slot from opposite sides meeting halfway
+        const halvingArg = this.arg(c.args, 'halving', -1);
+        const halving =
+          halvingArg === undefined
+            ? undefined
+            : (Array.isArray(halvingArg) ? halvingArg : [halvingArg]).map((v) => {
+                if (typeof v !== 'string') throw new Error('halving must be part names');
+                return v;
+              });
         const fitArg = this.arg(c.args, 'fit', -1, 'turn');
         if (
           typeof fitArg !== 'number' &&
@@ -2177,6 +2187,7 @@ export class Evaluator {
             ...(on !== undefined ? { on: toText(on) } : {}),
             ...(slots ? { slots, clearance } : {}),
             ...(bores ? { bores, fit } : {}),
+            ...(halving ? { halving, clearance } : {}),
             ...(this.step ? { step: this.step } : {}),
             ...(glue !== undefined && { glue: { host: glue, face: face as 'top' | 'bottom' } }),
             ...(flip && { mirrored: true }),
