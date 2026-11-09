@@ -55,6 +55,24 @@ A `//` comment immediately above a variable supplies its caption. Keep the
 file's introductory comment separate with a blank line so it does not
 become the first setting's caption.
 
+## The setting that moves the model
+
+A model with moving parts usually has one number that drives them: a crank
+angle, a lid's opening, the time of day. Mark it with `drive` after its
+range:
+
+```kerf
+crank = 0; // [0:5:360] drive
+
+part("Wheel", at = [0, 0, 0]) circle(d = 60);
+part("Crank", at = [0, 0, 3], rotate = [0, 0, crank]) rect([30, 8], center = true);
+```
+
+The playground gives it a Play button that steps it round its range, and
+`kerf check model.kerf --drive` builds the model at every step and reports
+any position that warns (parts colliding, a slot that misses), as
+`--sweep crank=0:5:360` would. `kerf params` lists it with `"drive": true`.
+
 ## Changing settings without editing the file
 
 The CLI accepts values with `-D` or a JSON file with `--params`:

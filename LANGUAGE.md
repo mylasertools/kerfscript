@@ -90,7 +90,20 @@ produce an error at the source line.
 In conditions, `false`, `0`, `""`, `[]` and `undef` count as false.
 
 Use `let (a = 1, b = a + 1) expr` to define names for one expression.
-Each binding can use the ones before it.
+Each binding can use the ones before it. A `let` can follow an operator,
+as in `ok && let (d = b - a) d > 0`; its expression reaches as far right as
+it can.
+
+`assert(condition, message) expr` checks before it works out `expr`, which
+a failed assertion never reaches, and `echo(...) expr` prints on the way.
+Checks chain, so a function can refuse bad arguments itself:
+
+```kerf
+function slot_width(t, clearance) =
+  assert(t > 0, "Thickness must be positive")
+  assert(clearance >= 0, "Clearance must not be negative")
+  t + clearance;
+```
 
 ### List comprehensions
 
@@ -117,6 +130,7 @@ module name(a, b = 2) { ... }         // module (makes shapes)
 name(args) child;                     // module call with one child
 name(args) { child; child; }          // module call with a block of children
 for (i = range_or_list, j = ...) ...  // repeats, combined as a union
+intersection_for (i = ...) ...        // repeats, keeping what every one covers
 if (cond) ... else ...
 let (a = 1) ...
 use <path>                            // import modules and functions
@@ -128,6 +142,8 @@ Arguments can be positional or named: `rect([20, 10], r = 2)`.
 A library's own `use <path>` and `include <path>` look next to that
 library first, then where the main program's would: `lib/props.kerf`
 saying `use <finish.kerf>` finds `lib/finish.kerf`.
+When two libraries define a module or function of the same name, the one
+used later replaces the earlier, with a warning naming both.
 
 ### Lengths in real units
 
@@ -165,6 +181,9 @@ the render options. `!` is accepted for OpenSCAD files and has no effect.
 Inside a module, `children()` renders all child statements passed by the
 caller. `children(index)` selects one child by its position from 0, or several with a list of positions.
 `$children` is the number of children.
+A call without braces takes exactly one statement as its child: in
+`m() a(); b();` only `a()` is a child, and `b()` stands on its own. A module
+that asks for a child past the last one it was given warns.
 
 ```kerf
 module hang_hole(d = 5) {
@@ -259,8 +278,10 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
   `$thickness`, `$kerf` and `$material` where it is called. `at = [x, y, z]`
   and `rotate = [x, y, z]` (degrees) place the part in the assembled view:
   rotated first, then moved, with its thickness along +Z. A part with copies
-  takes one placement or a list with one per copy. `render()` returns the
-  placed parts as `assembly` and warns when two of them collide.
+  takes one placement or a list with one per copy. `qty = 0` makes nothing,
+  so `part(qty = len(list), at = list)` needs no guard for an empty list.
+  `render()` returns the placed parts as `assembly` and warns when two of
+  them collide.
   `rotate = orient(x, z)` turns the part's own x and z axes onto two
   directions; `euler(rotation(a) * rotation(b))` turns by `b`, then by `a`.
 - More about a part, all named:
@@ -292,6 +313,21 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
     names before it took: `slots = ["*", "!back"]` cuts a slot for every
     part that passes through except the back. A slot clears every layer,
     marks included, and a part that only touches the edge leaves no notch.
+  - `slot_extra = [dx, dy]` sweeps each of its slots that far in this
+    part's own coordinates: a pegboard hook goes in through the slot and
+    drops, so its slot is taller than its tab.
+  - `halving = ["name", ...]`: where this part and the named parts cross,
+    each takes a slot from opposite sides, meeting halfway along the line
+    they cross on, `clearance` wider, so they slide together: an egg-crate
+    grid, or ribs notched from their outer edge onto rings slotted from
+    their inner rim. The way round that leaves both parts soonest is used,
+    and a slot stops at the part's first edge. Names take `*` and `!`.
+  - `bores = ["label", ...]`: where the hardware rods with those labels (or
+    kinds) pass through this part, holes are cut the shape of their section,
+    at any angle. `fit = "turn"` (the default) makes them 0.3 mm wider than
+    the rod for a part that turns on it, `"press"` 0.1 mm narrower for one
+    held fast, or give a number of millimetres. Names take `*` and `!` as in
+    `slots`.
 - `place(at, rotate) { ... }` places the parts and hardware inside in the
   assembled view, as part()'s `at` and `rotate` do; their own placements
   are inside it. A library module wrapped in `place()` can be set anywhere.
@@ -327,22 +363,24 @@ export examples.
 
 ### Shapes
 
-| Module                                                     | Notes                                                                        |
-| ---------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `rect(size, center = false, r = 0)`                        | `size` is a number or `[w, h]`; `r` rounds the corners. `square` is an alias |
-| `circle(r)` or `circle(d = ...)`                           |                                                                              |
-| `ellipse([rx, ry])`                                        |                                                                              |
-| `regular_polygon(n, r)`                                    | corner radius `r`                                                            |
-| `star(n, r, inner)`                                        |                                                                              |
-| `polygon(points, paths)`                                   | even-odd fill, `paths` lists point indexes per outline                       |
-| `path(d, fill = "evenodd", close = false)`                 | SVG path data; closed subpaths become shapes, open ones lines unless `close` |
-| `text(text, size = 10, font, halign, valign, spacing = 1)` | `halign`: left, center, right; `valign`: baseline, top, center, bottom       |
-| `text(text, size, fit = width)`                            | no wider than `fit`: the size shrinks to fit, never above `size` if given    |
-| `line(from, to)`                                           | a line, not an area                                                          |
-| `line(from, to, width)`                                    | a strip `width` wide between the points, an area                             |
-| `spline(points, width, steps = 8, closed = false)`         | a smooth curve through the points; with `width`, an area along it            |
-| `polyline(points, closed = false)`                         |                                                                              |
-| `arc(r, start = 0, end = 90)`                              | arc line, angles in degrees                                                  |
+| Module                                                     | Notes                                                                                                                               |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `rect(size, center = false, r = 0)`                        | `size` is a number or `[w, h]`; `r` rounds the corners. `square` is an alias                                                        |
+| `circle(r)` or `circle(d = ...)`                           |                                                                                                                                     |
+| `ellipse([rx, ry])`                                        |                                                                                                                                     |
+| `regular_polygon(n, r)`                                    | corner radius `r`                                                                                                                   |
+| `star(n, r, inner)`                                        |                                                                                                                                     |
+| `polygon(points, paths)`                                   | even-odd fill, `paths` lists point indexes per outline                                                                              |
+| `path(d, fill = "evenodd", close = false)`                 | SVG path data; closed subpaths become shapes, open ones lines unless `close`                                                        |
+| `text(text, size = 10, font, halign, valign, spacing = 1)` | `halign`: left, center, right; `valign`: baseline, top, center, bottom                                                              |
+| `text(text, size, fit = width)`                            | no wider than `fit`: the size shrinks to fit, never above `size` if given                                                           |
+| `text(text, size, weight = "bold")`                        | strokes thickened by 3.5% of the size, or by a number of mm (less than 0 thins)                                                     |
+| `text(text, size, bridge = w)`                             | every island (an i's dot, an accent, a stencil's counter) joined to the rest by a strip `w` wide, for cut-out and stencil lettering |
+| `line(from, to)`                                           | a line, not an area                                                                                                                 |
+| `line(from, to, width)`                                    | a strip `width` wide between the points, an area                                                                                    |
+| `spline(points, width, steps = 8, closed = false)`         | a smooth curve through the points; with `width`, an area along it                                                                   |
+| `polyline(points, closed = false)`                         |                                                                                                                                     |
+| `arc(r, start = 0, end = 90)`                              | arc line, angles in degrees                                                                                                         |
 
 Supply geometry as children of a shape-processing module, for example
 `translate([10, 0]) circle(d = 5);`. Fonts used by `text()` must be supplied
@@ -369,6 +407,8 @@ playground, the command line and `kerfscript.wasm` have `Atkinson`
 | `difference()`                                 | removes every later child's area from every layer of the first child                                                                    |
 | `intersection()`                               | keeps the area common to all children; lines of any child are clipped to the others' area, and a child of lines alone leaves only lines |
 | `fill_holes(min_area)`                         | fills holes smaller than `min_area` mm², or all of them                                                                                 |
+| `join_islands(width = 1)`                      | joins every separate piece of the material to the nearest other piece with a strip `width` wide, until it is one piece                  |
+| `largest(n = 1)`                               | keeps the `n` biggest connected pieces of the material, dropping crumbs; marks stay as drawn                                            |
 | `close(r = 0.5)`                               | closes gaps and notches narrower than `2 r`, keeping the outline                                                                        |
 | `pattern(spacing, stagger = 0)`                | repeats its first child over the area of the others, clipped at the edge                                                                |
 | `hatch(angle = 45, pitch = 5, width)`          | parallel lines across the children's area, or stripes `width` wide                                                                      |
@@ -426,37 +466,42 @@ arguments.
 
 A path is a list of `[x, y]` points.
 
-| Function                                           | Result                                                               |
-| -------------------------------------------------- | -------------------------------------------------------------------- |
-| `path_length(points)`                              | Length along the path                                                |
-| `point_at(points, s)`                              | The point `s` along the path; past either end it carries on straight |
-| `heading_at(points, s)`                            | The path's direction `s` along it, in degrees from +x                |
-| `offset_path(points, d, closed = false)`           | The path moved `d` to its left (right for `d < 0`), corners mitred   |
-| `path_points(d, tolerance)`                        | The points of SVG path data, a list of points for each subpath       |
-| `rotation(angles)`                                 | The 3 × 3 matrix of `[x, y, z]` degrees as `part()` turns; use `*`   |
-| `euler(matrix)`                                    | The `[x, y, z]` angles of a rotation matrix, for `rotate`            |
-| `orient(x, z = [0, 0, 1])`                         | The angles that turn a part's own x and z axes onto two directions   |
-| `spline_points(points, steps = 8, closed = false)` | The points of the smooth curve `spline()` draws                      |
+| Function                                             | Result                                                                                                                 |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `path_length(points)`                                | Length along the path                                                                                                  |
+| `point_at(points, s)`                                | The point `s` along the path; past either end it carries on straight                                                   |
+| `heading_at(points, s)`                              | The path's direction `s` along it, in degrees from +x                                                                  |
+| `offset_path(points, d, closed = false)`             | The path moved `d` to its left (right for `d < 0`), corners mitred                                                     |
+| `path_points(d, tolerance)`                          | The points of SVG path data, a list of points for each subpath                                                         |
+| `rotation(angles)`                                   | The 3 × 3 matrix of `[x, y, z]` degrees as `part()` turns; use `*`                                                     |
+| `euler(matrix)`                                      | The `[x, y, z]` angles of a rotation matrix, for `rotate`                                                              |
+| `orient(x, z = [0, 0, 1])`                           | The angles that turn a part's own x and z axes onto two directions                                                     |
+| `spline_points(points, steps = 8, closed = false)`   | The points of the smooth curve `spline()` draws                                                                        |
+| `bounds(points)`                                     | `[x0, y0, x1, y1]` round a list of points, or of outlines                                                              |
+| `crossings(points, x)` or `crossings(points, y = v)` | Where a vertical (or horizontal) line crosses a closed outline, or a list of them: the y (or x) values, smallest first |
 
 ### Lists and strings
 
-| Function                       | Result                                                                                       |
-| ------------------------------ | -------------------------------------------------------------------------------------------- |
-| `len(value)`                   | Number of items in a list, characters in a string or fields in a record                      |
-| `keys(record)`                 | A record's field names, in the order they were written                                       |
-| `merge(a, b)`                  | A record with the fields of both, `b`'s winning                                              |
-| `concat(...)`                  | Join lists and individual values into one list                                               |
-| `reverse(value)`               | Reverse a list or string                                                                     |
-| `sum(values)`                  | Sum a list of numbers                                                                        |
-| `slice(value, start = 0, end)` | Extract part of a list or string; `end` is exclusive and defaults to its length              |
-| `str(...)`                     | Convert values to text and join them                                                         |
-| `chr(...)`, `ord(text)`        | Convert Unicode code points to text, or read the first character's code point                |
-| `upper(text)`, `lower(text)`   | Change letter case                                                                           |
-| `split(text, separator = " ")` | Split text into a list of strings                                                            |
-| `join(values, separator = "")` | Join values into a string                                                                    |
-| `search(value, list)`          | Index of the first equal item, or `undef` if absent; also searches characters in strings     |
-| `contains(value, item)`        | Whether a list contains an item or a string contains a substring                             |
-| `lookup(x, table)`             | Interpolate in a table of `[x, y]` pairs; use the nearest endpoint outside the table's range |
+| Function                       | Result                                                                                                                            |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `len(value)`                   | Number of items in a list, characters in a string or fields in a record                                                           |
+| `keys(record)`                 | A record's field names, in the order they were written                                                                            |
+| `merge(a, b)`                  | A record with the fields of both, `b`'s winning                                                                                   |
+| `concat(...)`                  | Join lists and individual values into one list                                                                                    |
+| `reverse(value)`               | Reverse a list or string                                                                                                          |
+| `sort(values, key)`            | The list smallest first: numbers, strings, or lists item by item; ordered by `key(item)` if given, equal keys keeping their order |
+| `fold(values, initial, fn)`    | The value after `fn(acc, item)` for each item in turn, from `initial`                                                             |
+| `scan(values, initial, fn)`    | The value after each item as `fold()` goes: running totals, `[]` for an empty list                                                |
+| `sum(values)`                  | Sum a list of numbers                                                                                                             |
+| `slice(value, start = 0, end)` | Extract part of a list or string; `end` is exclusive and defaults to its length                                                   |
+| `str(...)`                     | Convert values to text and join them                                                                                              |
+| `chr(...)`, `ord(text)`        | Convert Unicode code points to text, or read the first character's code point                                                     |
+| `upper(text)`, `lower(text)`   | Change letter case                                                                                                                |
+| `split(text, separator = " ")` | Split text into a list of strings                                                                                                 |
+| `join(values, separator = "")` | Join values into a string                                                                                                         |
+| `search(value, list)`          | Index of the first equal item, or `undef` if absent; also searches characters in strings                                          |
+| `contains(value, item)`        | Whether a list contains an item or a string contains a substring                                                                  |
+| `lookup(x, table)`             | Interpolate in a table of `[x, y]` pairs; use the nearest endpoint outside the table's range                                      |
 
 ### Types
 

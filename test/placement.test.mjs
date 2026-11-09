@@ -580,10 +580,10 @@ test('each layer of a stack cuts only the slots that pass through it', () => {
   assert.equal(same.parts.find((p) => p.name === 'top').stack, 2);
 });
 
-test('a slot covers a shoulder that flares just inside the receiving face', () => {
+test('a slot covers a shoulder that flares into the receiving face', () => {
   const r = render(`
     part("stage", at = [-20, -20, 0], slots = ["limb"], clearance = 0) rect([40, 40]);
-    part("limb", at = [0, 1.5, 0.008], rotate = [90, 0, 0]) {
+    part("limb", at = [0, 1.5, 0.05], rotate = [90, 0, 0]) {
       translate([-2, -10]) rect([4, 13]);
       difference() {
         translate([-4, -2]) rect([8, 2]);
@@ -592,6 +592,32 @@ test('a slot covers a shoulder that flares just inside the receiving face', () =
     }`);
   // 160 round the stage, and 2 x (8 + 3) round the slot: the flare's full width
   assert.equal(r.parts.find((p) => p.name === 'stage').cutLength, 182);
+});
+
+test('an edge lying on a face is not slotted along the contact', () => {
+  // The wall's top rests a hair inside the roof, as rounding leaves it under
+  // a sloped roof; only its tab goes through. 200 round the roof, 2 x (4 + 3)
+  // round the tab's slot, nothing along the 40 mm contact
+  for (const top of [10.0001, 10.009]) {
+    const r = render(`
+      part("roof", at = [-30, -20, 10], slots = ["wall"], clearance = 0) rect([60, 40]);
+      part("wall", at = [0, 1.5, 0], rotate = [90, 0, 0]) {
+        translate([-20, 0]) rect([40, ${top}]);
+        translate([-2, 0]) rect([4, 13]);
+      }`);
+    assert.equal(r.parts.find((p) => p.name === 'roof').cutLength, 214, `top at ${top}`);
+  }
+  // A gable wall under a roof sloped at 35 degrees, its top a hair inside the
+  // roof's underside, cuts the same roof as one lowered 0.2 mm
+  const roof = (ease) =>
+    render(`
+      a = 35;
+      part("roof", at = [-30, 0, 0], rotate = [a, 0, 0], slots = ["wall"], clearance = 0) rect([60, 40]);
+      part("wall", at = [-1.5, 0, 0], rotate = orient([0, 1, 0], [1, 0, 0])) {
+        polygon([[0, -20], [30, -20], [30, 30 * tan(a) + ${ease}], [0, ${ease}]]);
+        translate([10, -20]) rect([4, 34 * tan(a) + 25]);
+      }`).parts.find((p) => p.name === 'roof').cutLength;
+  assert.equal(roof(0.005), roof(-0.2));
 });
 
 test('a picture of a long thin sheet stays within the pixel limit', () => {
@@ -605,4 +631,129 @@ test('a picture of a long thin sheet stays within the pixel limit', () => {
     h = png.readUInt32BE(20);
   assert.ok(w * h <= 16_000_000 && h <= 16_384, `${w} x ${h}`);
   assert.ok(h > w * 50);
+});
+
+test('bores cut holes where hardware rods pass through, with the fit', () => {
+  const r = render(`
+hardware("dowel", [30, -5, 20], [30, 40, 20], 6, label = "Crank axle");
+part("Side", qty = 2, at = [[0, 3, 0], [0, 33, 0]], rotate = [90, 0, 0], bores = ["Crank axle"], fit = "press") square([60, 40]);
+part("Wheel", at = [30, 18, 20], rotate = [90, 0, 0], bores = ["Crank*"]) circle(d = 30, $fn = 64);
+part("Plain", at = [0, 50, 0], rotate = [90, 0, 0], bores = ["dowel"]) square([60, 40]);`);
+  assert.deepEqual(r.warnings, [
+    'Part "Plain": none of "dowel" pass through it, so it has no bores.',
+  ]);
+  const cut = (n) => r.parts.find((p) => p.name === n).cutLength;
+  // 200 round the side and a 5.9 mm hole; the wheel's 30 mm rim and a 6.3 mm hole
+  assert.ok(Math.abs(cut('Side') - (200 + Math.PI * 5.9)) <= 1, String(cut('Side')));
+  assert.ok(Math.abs(cut('Wheel') - Math.PI * (30 + 6.3)) <= 1, String(cut('Wheel')));
+  assert.equal(cut('Plain'), 200);
+  // A square rod cuts a square hole; a slanted one a longer hole
+  const key = render(
+    'hardware("steel", [30, -5, 20], [30, 40, 20], [4, 4], label = "Key"); part("S", at = [0, 3, 0], rotate = [90, 0, 0], bores = "Key", fit = 0) square([60, 40]);',
+  );
+  assert.equal(key.parts[0].cutLength, 216);
+  const slant = render(
+    'hardware("dowel", [30, -5, 20], [30, 40, 50], 6, label = "A"); part("S", at = [0, 3, 0], rotate = [90, 0, 0], bores = "A", fit = 0) square([60, 60]);',
+  );
+  assert.ok(slant.parts[0].cutLength > 240 + Math.PI * 6 + 3);
+  assert.throws(() => render('part("S", bores = "A", fit = "loose") square(5);'), /fit must be/);
+});
+
+test('halving joints slot both parts from opposite sides, meeting halfway', () => {
+  const egg = render(`
+part("A", at = [0, 1.5, 0], rotate = [90, 0, 0], halving = ["B"], clearance = 0) square([100, 40]);
+part("B", at = [48.5, 50, 0], rotate = [90, 0, -90]) square([100, 40]);`);
+  assert.deepEqual(egg.warnings, []);
+  // Each plate's outline gains the slot's two 20 mm sides
+  assert.deepEqual(
+    egg.parts.map((p) => p.cutLength),
+    [320, 320],
+  );
+  const lamp = render(`
+$fn = 96;
+part("Ring", at = [0, 0, 30], halving = ["Rib"]) difference() { circle(r = 55); circle(r = 45); }
+part("Rib", qty = 4, at = [for (a = [0:90:270]) [-1.5 * sin(a), 1.5 * cos(a), 0]], rotate = [for (a = [0:90:270]) [90, 0, a]]) translate([10, 0]) square([50, 60]);`);
+  assert.deepEqual(lamp.warnings, []);
+  // The ribs are notched 10 mm from their outer edge, the ring 5 mm from its
+  // inner rim at each rib, never on across its hole
+  const rib = lamp.parts.find((p) => p.name === 'Rib');
+  assert.equal(rib.cutLength, 240);
+  const ring = lamp.parts.find((p) => p.name === 'Ring');
+  assert.ok(Math.abs(ring.cutLength - (2 * Math.PI * 100 + 4 * 10)) <= 4, String(ring.cutLength));
+  assert.match(
+    render(
+      'part("A", at = [0, 0, 0], halving = ["B"]) square(10); part("B", at = [50, 0, 0]) square(10);',
+    ).warnings[0],
+    /crosses none of "B"/,
+  );
+});
+
+test('kerf check --drive tries every position of the driving setting', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'kerf-'));
+  // The arm sweeps round and runs into the post at 90 degrees
+  writeFileSync(
+    join(dir, 'arm.kerf'),
+    `crank = 0; // [0:90:270] drive
+part("Base", at = [0, 0, 0]) rect([100, 100]);
+part("Post", at = [45, 75, 3]) rect([10, 10]);
+part("Arm", at = [50 + 30 * cos(crank) - 5, 50 + 30 * sin(crank) - 5, 3]) rect([10, 10]);
+`,
+  );
+  let out = '';
+  try {
+    execFileSync('node', ['dist/cli.js', 'check', join(dir, 'arm.kerf'), '--drive'], {
+      encoding: 'utf8',
+    });
+  } catch (e) {
+    out = e.stdout;
+  }
+  assert.match(out, /crank=0: ok/);
+  assert.match(out, /crank=90: 1 warning\n.*"Post" and "Arm" collide/);
+  assert.match(out, /3 of 4 clean/);
+  writeFileSync(join(dir, 'still.kerf'), 'rect(10);');
+  assert.throws(
+    () =>
+      execFileSync('node', ['dist/cli.js', 'check', join(dir, 'still.kerf'), '--drive'], {
+        stdio: 'pipe',
+      }),
+    (e) => /No setting drives this model/.test(String(e.stderr)),
+  );
+});
+
+test('slot_extra sweeps the slots for a hook that drops in', () => {
+  const src = (
+    e,
+  ) => `part("Board", at = [0, 3, 0], rotate = [90, 0, 0], slots = ["Hook"], clearance = 0${e}) square([60, 60]);
+part("Hook", at = [28, 6, 30], rotate = [90, 0, 90]) { square([20, 4]); translate([-6, 0]) square([6.01, 4]); }`;
+  // A 3 x 4 slot, then 3 x 10 grown 6 mm upward
+  assert.equal(render(src('')).parts[0].cutLength, 254);
+  assert.equal(render(src(', slot_extra = [0, 6]')).parts[0].cutLength, 266);
+});
+
+test('tabs of two parts in one slot are named', () => {
+  const walls = (x) => `
+part("Floor", at = [0, 0, 0], slots = ["Wall*"]) square([100, 100]);
+part("Wall A", at = [0, 51.5, 3], rotate = [90, 0, 0]) { square([100, 40]); translate([${x}, -3]) square([10, 3.01]); }
+part("Wall B", at = [48.5, 100, 3], rotate = [90, 0, -90]) { square([100, 40]); translate([${x}, -3]) square([10, 3.01]); }`;
+  const shared = (src) => render(src).warnings.filter((w) => /same slot/.test(w));
+  assert.equal(shared(walls(45)).length, 1);
+  assert.match(
+    shared(walls(45))[0],
+    /Tabs of "Wall A" and "Wall B" meet in the same slot in "Floor"/,
+  );
+  assert.deepEqual(shared(walls(15)), []);
+});
+
+test('curved copies pack in rows, every other one turned', () => {
+  const ribs = `$sheet = [600, 400];
+part("Rib", qty = 24) {
+  pts = [for (i = [0:40]) let (t = i / 40) [40 * sin(t * 360), t * 250]];
+  polygon(concat(pts, [for (i = [40:-1:0]) pts[i] + [14, 0]]));
+}`;
+  const r = render(ribs);
+  assert.equal(r.sheets.length, 1);
+  assert.deepEqual(
+    r.sheets[0].items.map((it) => it.copy).sort((a, b) => a - b),
+    Array.from({ length: 24 }, (_, i) => i + 1),
+  );
 });

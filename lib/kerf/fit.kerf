@@ -1,0 +1,64 @@
+// kerf/fit: drawings scaled to a size and placed by a point of their box.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+//
+// For any drawing whose size you don't know beforehand: an imported SVG
+// path, a silhouette, a symbol, a line of text. Each measures its children
+// and moves or scales them, keeping their layers, so cut, score and
+// engrave stay together. They are for drawings, not for parts: scaling a
+// part would scale its joints and leave its thickness.
+
+// The fractions of a box an anchor names, [0, 0] the bottom left and
+// [1, 1] the top right: "center", "left", "right", "top", "bottom",
+// "top-left", "top-right", "bottom-left", "bottom-right", or [fx, fy]
+function anchor_point(anchor) =
+  is_list(anchor) ? anchor
+  : let (
+    a = lower(anchor),
+    fx = contains(a, "left") ? 0 : contains(a, "right") ? 1 : 0.5,
+    fy = contains(a, "bottom") ? 0 : contains(a, "top") ? 1 : 0.5
+  )
+  assert(
+    len([for (w = split(a, "-")) if (w != "center" && w != "left" && w != "right" && w != "top" && w != "bottom") w]) == 0,
+    str("Unknown anchor \"", anchor, "\": use center, left, right, top, bottom or a corner such as top-left")
+  )
+  [fx, fy];
+
+// The children moved so the point of their box that `anchor` names is at
+// the origin: align("bottom-left") puts their box's corner there, and
+// align() centres them.
+module align(anchor = "center") {
+  f = anchor_point(anchor);
+  measure() {
+    children();
+    if (!is_undef($bounds))
+      translate([-($bounds[0] + f[0] * ($bounds[2] - $bounds[0])), -($bounds[1] + f[1] * ($bounds[3] - $bounds[1]))])
+        children();
+  }
+}
+
+// The children scaled to `size` = [w, h] (or one number for a square):
+// mode = "contain" keeps their proportions and fits them inside, "stretch"
+// fills the size exactly. A drawing with no width or no height (a line)
+// is scaled by the other side. They are then placed by `anchor` as
+// align() does, the box's bottom left at the origin by default.
+module fit(size, mode = "contain", anchor = "bottom-left") {
+  s = is_list(size) ? size : [size, size];
+  assert(s[0] > 0 && s[1] > 0, "fit(): size must be more than 0");
+  assert(mode == "contain" || mode == "stretch", "fit(): mode is \"contain\" or \"stretch\"");
+  f = anchor_point(anchor);
+  measure() {
+    children();
+    if (!is_undef($bounds)) {
+      w = $bounds[2] - $bounds[0];
+      h = $bounds[3] - $bounds[1];
+      kx = w > 0 ? s[0] / w : undef;
+      ky = h > 0 ? s[1] / h : undef;
+      k = mode == "stretch"
+        ? [is_undef(kx) ? 1 : kx, is_undef(ky) ? 1 : ky]
+        : let (one = is_undef(kx) ? ky : is_undef(ky) ? kx : min(kx, ky)) [one, one];
+      if (!is_undef(k[0]))
+        translate([-f[0] * w * k[0], -f[1] * h * k[1]])
+          scale(k) translate([-$bounds[0], -$bounds[1]]) children();
+    }
+  }
+}

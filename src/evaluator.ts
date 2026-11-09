@@ -19,6 +19,7 @@ import {
   merge,
   offset,
   pieces,
+  joinIslands,
   regionShape,
   retag,
   roundedRect,
@@ -43,6 +44,7 @@ import {
   type Vec3,
 } from './assembly.js';
 import { KerfError, where, type Pos } from './lexer.js';
+import { FITS } from './bores.js';
 import { HARDWARE_COLORS, HARDWARE_KINDS } from './hardware.js';
 import { parse } from './parser.js';
 import { signature } from './signatures.js';
@@ -186,17 +188,23 @@ interface ModDef {
   params: Param[];
   body: Stmt[];
   env: Env;
+  // Where it is defined, to name both places when two libraries define it
+  pos?: Pos;
 }
 
 interface FnDef {
   params: Param[];
   body: Expr;
   env: Env;
+  pos?: Pos;
 }
 
 interface ChildCtx {
   stmts: Stmt[];
   env: Env;
+  // The module call that gave them, for messages
+  module?: string;
+  pos?: Pos;
 }
 
 class Env {
@@ -415,8 +423,10 @@ export class Evaluator {
             `${s.kind} ${s.name} hides the built-in ${s.name}(); rename it to use both (${where(s.pos, false)})`,
           );
       }
-      if (s.kind === 'module') env.mods.set(s.name, { params: s.params, body: s.body, env });
-      else if (s.kind === 'function') env.fns.set(s.name, { params: s.params, body: s.body, env });
+      if (s.kind === 'module')
+        env.mods.set(s.name, { params: s.params, body: s.body, env, pos: s.pos });
+      else if (s.kind === 'function')
+        env.fns.set(s.name, { params: s.params, body: s.body, env, pos: s.pos });
       else if (s.kind === 'use' && !s.include) {
         this.enter(this.using, s.path, s.pos, 'use');
         try {
@@ -425,13 +435,32 @@ export class Evaluator {
           this.hoist(body, libEnv);
           for (const ls of body)
             if (ls.kind === 'assign') this.assign(ls.name, this.expr(ls.value, libEnv), libEnv);
-          for (const [k, v] of libEnv.mods) env.mods.set(k, v);
-          for (const [k, v] of libEnv.fns) env.fns.set(k, v);
+          for (const [k, v] of libEnv.mods) {
+            this.clash('module', k, env.mods.get(k), v);
+            env.mods.set(k, v);
+          }
+          for (const [k, v] of libEnv.fns) {
+            this.clash('function', k, env.fns.get(k), v);
+            env.fns.set(k, v);
+          }
         } finally {
           this.using.pop();
         }
       }
     }
+  }
+
+  // Two libraries defining one name: the later replaces the earlier
+  // without a word, so a library can break another just by being used after
+  // it. The same definition reached twice (both use one library) is fine
+  private clashed = new Set<string>();
+  private clash(kind: string, name: string, had: ModDef | FnDef | undefined, now: ModDef | FnDef) {
+    if (!had || had.body === now.body || !had.pos?.file || !now.pos?.file) return;
+    if (had.pos.file === now.pos.file || this.clashed.has(`${kind} ${name}`)) return;
+    this.clashed.add(`${kind} ${name}`);
+    this.warn(
+      `${kind} ${name} is defined in <${had.pos.file}> (line ${had.pos.line}) and in <${now.pos.file}> (line ${now.pos.line}); the one in <${now.pos.file}> is used. Rename one to use both.`,
+    );
   }
 
   // Children shapes already made in a module call, by statement
@@ -572,7 +601,16 @@ export class Evaluator {
       case 'for': {
         const shapes: Shape[] = [];
         this.loop(s.assigns, env, (e) => shapes.push(this.block(s.body, e)));
-        return merge(shapes);
+        if (!s.intersect) return merge(shapes);
+        // As intersection() with one child per iteration: none is empty,
+        // one is that iteration
+        return this.builtins.intersection({
+          args: { pos: [], named: new Map(), all: [], at: s.pos },
+          env,
+          children: () => merge(shapes),
+          childList: () => shapes,
+          childSeq: () => shapes,
+        } as BuiltinCtx);
       }
       case 'call':
         if (s.modifier === '*') return null;
@@ -705,7 +743,7 @@ export class Evaluator {
       try {
         const e = new Env(user.env, env);
         this.bindParams(user.params, args, e, user.env, `${s.name}()`);
-        e.children = { stmts: s.children, env };
+        e.children = { stmts: s.children, env, module: s.name, pos: s.pos };
         e.vars.set('$children', this.childStmts(s.children).length);
         return this.block(user.body, e);
       } catch (e) {
@@ -914,6 +952,9 @@ export class Evaluator {
         this.bindSeq(x.assigns, e);
         return this.expr(x.body, e);
       }
+      case 'chain':
+        this.expr(x.check, env);
+        return this.expr(x.body, env);
     }
   }
 
@@ -988,6 +1029,20 @@ export class Evaluator {
             maxLength: this.limits.maxListLength,
             step: (n?: number) => this.tick(x.pos, n),
             given: args.pos.length + b.params.filter((p) => args.named.has(p)).length,
+            apply: (fn: Value, xs: Value[]) => {
+              if (!isFn(fn)) throw new Error(`${name}() needs a function, got ${typeName(fn)}`);
+              return this.callFunction(
+                fn,
+                {
+                  pos: xs,
+                  named: new Map(),
+                  all: xs.map((value) => ({ name: null, value })),
+                  at: x.pos,
+                },
+                env,
+                'function',
+              );
+            },
           };
           const bound = bindArgs(b, args.pos, args.named);
           // Built-ins that go through their arguments take a step per item
@@ -1548,11 +1603,20 @@ export class Evaluator {
             `the text is more than ${this.limits.maxTextLength} characters, the limit for one text()`,
           );
         this.tick(c.args.at, shown.text.length);
-        const glyphs = textRegions(
-          this.opts.fonts,
-          shown.text,
-          this.textOpts(c.args, c.env, shown.text),
-        );
+        const topts = this.textOpts(c.args, c.env, shown.text);
+        let glyphs = textRegions(this.opts.fonts, shown.text, topts);
+        // weight = "bold" thickens the strokes by a share of the size, or a
+        // number of mm (less than 0 thins them); bridge = w joins every
+        // island (an i's dot, an accent, a stencil's counter) to the rest
+        const weightArg = this.arg(c.args, 'weight', -1);
+        const bridgeArg = this.arg(c.args, 'bridge', -1);
+        if (weightArg !== undefined && weightArg !== 'regular') {
+          const grow =
+            weightArg === 'bold' ? 0.035 * topts.size : this.num(weightArg, 'text', 'weight');
+          if (grow) glyphs = offset(union(glyphs), grow, 'round');
+        }
+        if (bridgeArg !== undefined)
+          glyphs = joinIslands(glyphs, this.num(bridgeArg, 'text', 'bridge'));
         // In a mirrored part the text is drawn mirrored, to read the right
         // way round once the part is
         // Flipped within its own width, so it stays where it was put
@@ -1902,6 +1966,51 @@ export class Evaluator {
           lines: l.lines,
         }));
       },
+      // Every island of the material joined to the rest by a strip w wide
+      join_islands: (c) => {
+        const w = this.num(this.arg(c.args, 'width', 0, 1), 'join_islands', 'width');
+        if (!(w > 0)) throw new Error('join_islands(): width must be more than 0');
+        const shape = c.children();
+        const each = (from: Map<string, Layer>) =>
+          new Map(
+            [...from].map(([k, l]): [string, Layer] => [
+              k,
+              (this.layers.get(k)?.mode ?? 'cut') === 'cut'
+                ? { regions: joinIslands(l.regions, w), lines: l.lines }
+                : l,
+            ]),
+          );
+        return {
+          layers: each(shape.layers),
+          parts: shape.parts.map((p) => ({ ...p, layers: each(p.layers) })),
+        };
+      },
+      // The n biggest connected pieces of the material, so a trimmed or
+      // generated outline can drop the crumbs it leaves; marks stay as drawn
+      largest: (c) => {
+        const n = Math.floor(this.num(this.arg(c.args, 'n', 0, 1), 'largest', 'n'));
+        if (!(n >= 1)) throw new Error('largest(): n must be 1 or more');
+        const keep = (regions: Poly[]) =>
+          pieces(regions)
+            .map((g) => ({ g, a: g.reduce((s, r) => s + area(r), 0) }))
+            .sort((p, q) => q.a - p.a)
+            .slice(0, n)
+            .flatMap(({ g }) => g);
+        const shape = c.children();
+        const each = (from: Map<string, Layer>) =>
+          new Map(
+            [...from].map(([k, l]): [string, Layer] => [
+              k,
+              (this.layers.get(k)?.mode ?? 'cut') === 'cut'
+                ? { regions: keep(l.regions), lines: l.lines }
+                : l,
+            ]),
+          );
+        return {
+          layers: each(shape.layers),
+          parts: shape.parts.map((p) => ({ ...p, layers: each(p.layers) })),
+        };
+      },
       // Closes gaps and notches narrower than 2 r, keeping the outline
       close: (c) => {
         const r = this.num(this.arg(c.args, 'r', 0, 0.5), 'close', 'r');
@@ -1973,7 +2082,12 @@ export class Evaluator {
       },
       part: (c) => {
         const name = toText(this.arg(c.args, 'name', 0, 'part'));
-        const qty = Math.max(1, Math.floor(toNumber(this.arg(c.args, 'qty', 1, 1)) || 1));
+        // A number of copies; anything else, as undef, is one as before
+        const qtyArg = this.arg(c.args, 'qty', 1, 1);
+        const qty = typeof qtyArg === 'number' ? Math.floor(qtyArg) : 1;
+        if (!(qty >= 0)) throw new Error(`qty must be 0 or more, got ${show(qtyArg)}`);
+        // qty = 0 makes nothing, so a list that comes out empty needs no guard
+        if (qty === 0) return { layers: new Map(), parts: [] };
         const stackArg = this.arg(c.args, 'stack', -1);
         const stack = stackArg === undefined ? 1 : Math.floor(this.num(stackArg, 'part', 'stack'));
         if (!(stack >= 1)) throw new Error('stack must be 1 or more');
@@ -2058,6 +2172,37 @@ export class Evaluator {
                 return v;
               });
         const clearance = this.num(this.arg(c.args, 'clearance', -1, 0.1), 'part', 'clearance');
+        // bores = ["Crank axle"]: holes where that hardware passes through,
+        // with fit = "turn" (the default), "press" or a number of mm
+        const extraArg = this.arg(c.args, 'slot_extra', -1);
+        const slotExtra =
+          extraArg === undefined ? undefined : this.vec2(extraArg, 'slot_extra', false);
+        const boresArg = this.arg(c.args, 'bores', -1);
+        const bores =
+          boresArg === undefined
+            ? undefined
+            : (Array.isArray(boresArg) ? boresArg : [boresArg]).map((v) => {
+                if (typeof v !== 'string')
+                  throw new Error('bores must be hardware labels or kinds');
+                return v;
+              });
+        // halving = ["Rib*"]: where this part crosses those, each takes a
+        // slot from opposite sides meeting halfway
+        const halvingArg = this.arg(c.args, 'halving', -1);
+        const halving =
+          halvingArg === undefined
+            ? undefined
+            : (Array.isArray(halvingArg) ? halvingArg : [halvingArg]).map((v) => {
+                if (typeof v !== 'string') throw new Error('halving must be part names');
+                return v;
+              });
+        const fitArg = this.arg(c.args, 'fit', -1, 'turn');
+        if (
+          typeof fitArg !== 'number' &&
+          !Object.prototype.hasOwnProperty.call(FITS, toText(fitArg))
+        )
+          throw new Error(`fit must be "turn", "press" or a number of mm, got ${show(fitArg)}`);
+        const fit = typeof fitArg === 'number' ? fitArg : FITS[toText(fitArg)];
         const made = (layers: Map<string, Layer>, flip: boolean, copies: number[]): PartShape => {
           const all = copies.length === qty;
           const mine = placements?.filter((_, i) => copies.includes(Math.floor(i / stack) + 1));
@@ -2073,6 +2218,9 @@ export class Evaluator {
             ...(bends.length ? { bends } : {}),
             ...(on !== undefined ? { on: toText(on) } : {}),
             ...(slots ? { slots, clearance } : {}),
+            ...(slots && slotExtra ? { slotExtra } : {}),
+            ...(bores ? { bores, fit } : {}),
+            ...(halving ? { halving, clearance } : {}),
             ...(this.step ? { step: this.step } : {}),
             ...(glue !== undefined && { glue: { host: glue, face: face as 'top' | 'bottom' } }),
             ...(flip && { mirrored: true }),
@@ -2211,8 +2359,16 @@ export class Evaluator {
         const want = new Set<Stmt>();
         if (idx === undefined) kids.forEach((k) => want.add(k));
         else
-          for (const i of this.iterable(idx, c.args.at))
-            if (kids[toNumber(i)]) want.add(kids[toNumber(i)]);
+          for (const i of this.iterable(idx, c.args.at)) {
+            const k = toNumber(i);
+            if (kids[k]) want.add(kids[k]);
+            // Given one child where it uses two, the module most likely met
+            // `m() a(); b();`, where b() is a statement of its own
+            else if (kids.length && k >= kids.length && ctx.module && ctx.pos)
+              this.warn(
+                `${ctx.module}() uses children(${k}) but was given ${kids.length} child${kids.length === 1 ? '' : 'ren'} (${where(ctx.pos, false)}). A module call takes one statement as its child: put several in braces, ${ctx.module}() { a(); b(); }`,
+              );
+          }
         const out: Shape[] = [];
         // A child used again in the same call, with the same special
         // variables, frame and step, is the same shape: tones() and the

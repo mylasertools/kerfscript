@@ -120,6 +120,7 @@ installed libraries by themselves.
 | `--nest`               | Pack small parts into the holes of bigger ones                                       |
 | `--stats`              | With `check`: points in the files, by part and layer                                 |
 | `--sweep name=a:s:b`   | With `check`: try every value from a to b in steps of s, or `name=a,b,c`             |
+| `--drive`              | With `check`: try every value of the setting marked `drive` (see the customizer)     |
 | `-o out.png`, `--px n` | A picture of each sheet, `n` pixels wide (1200), to look at rather than cut          |
 | `--call 'm(1, 2)'`     | Run one call of the file's modules instead of its program; `-D` sets variables first |
 | `--params-list file`   | With `check`: try each set of settings in a JSON list of objects                     |

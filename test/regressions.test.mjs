@@ -343,9 +343,59 @@ part("side", qty = 2, at = [[0, 0, 0], [40, 0, 0]], rotate = [90, 0, 90], mirror
   // The mirrored one's apex is at x = -5
   const xs = r.assembly[1].outline.flat().map(([x]) => x);
   assert.equal(Math.min(...xs), -30);
+  // On the sheet too each copy keeps its number, packed or laid out as drawn,
+  // so a sheet item pairs with its own placement in the assembly
+  for (const opts of [{}, { layout: 'none' }]) {
+    const s = render(
+      `part("side", qty = 3, at = [[0, 0, 0], [40, 0, 0], [80, 0, 0]], mirror = [true, false, true]) polygon([[0, 0], [30, 0], [5, 20]]);`,
+      opts,
+    );
+    assert.deepEqual(
+      s.sheets
+        .flatMap((sh) => sh.items)
+        .map((it) => it.copy)
+        .sort(),
+      [1, 2, 3],
+    );
+  }
   assert.throws(
     () => render('part("x", qty = 2, mirror = [true]) square(3);'),
     /mirror needs one true or false per copy/,
+  );
+});
+
+test('a module asking for a child it was not given warns', () => {
+  // Without braces only the first statement is the child; the second stands
+  // on its own and is added to the part as material
+  const r = render(`
+module engraved() { children(0); engrave() children(1); }
+part("a") { engraved() square(20); translate([5, 5]) square(3); }`);
+  assert.equal(r.warnings.length, 1);
+  assert.match(r.warnings[0], /engraved\(\) uses children\(1\) but was given 1 child \(line 3\)/);
+  // Guarded by $children, with no children at all, or braced: no warning
+  for (const src of [
+    'module m() { children(0); if ($children > 1) children(1); } part("a") m() square(20);',
+    'module m() { square(5); children(0); } part("a") m();',
+    'module m() { children(0); children(1); } part("a") m() { square(20); square(3); }',
+  ])
+    assert.deepEqual(render(src).warnings, [], src);
+});
+
+test('two libraries defining one name warn once, naming both', () => {
+  const libs = {
+    'a.kerf': 'module shape() square(5);\nfunction f() = 1;',
+    'b.kerf': 'module shape() circle(5);',
+    'c.kerf': 'use <a.kerf>\nmodule x() shape();',
+  };
+  const resolve = (p) => libs[p];
+  const r = render('use <a.kerf>\nuse <b.kerf>\nuse <c.kerf>\npart("p") shape();', { resolve });
+  assert.deepEqual(r.warnings, [
+    'module shape is defined in <a.kerf> (line 1) and in <b.kerf> (line 1); the one in <b.kerf> is used. Rename one to use both.',
+  ]);
+  // The same library reached twice is one definition
+  assert.deepEqual(
+    render('use <a.kerf>\nuse <c.kerf>\npart("p") shape();', { resolve }).warnings,
+    [],
   );
 });
 
