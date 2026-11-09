@@ -906,7 +906,12 @@ function cutSlots(
         warnings.push(`Part "${p.name}": no part "${name}" to cut slots for.`);
       for (const q of found) out ? chosen.delete(q) : chosen.add(q);
     }
-    const others: Solid[] = [...chosen].flatMap(solids);
+    // Which part each solid is, to name two whose tabs meet in one slot
+    const ownerOf = new Map<Solid, string>();
+    const others: Solid[] = [...chosen].flatMap((q) =>
+      solids(q).map((sd) => (ownerOf.set(sd, q.name), sd)),
+    );
+    const shared = new Set<string>();
     // Per copy; a bent part's runs each cut the slots on their own stretch
     const each = (p.placements ?? []).map((pl) =>
       union(
@@ -919,7 +924,35 @@ function cutSlots(
           outline: cutOf(p),
           ...(p.bends && { bends: p.bends }),
         }).flatMap((me) => {
-          const cut = p.slots ? swept(slotsFor(me, others, p.clearance ?? 0.1), p.slotExtra) : [];
+          let cut: Poly2[] = [];
+          if (p.slots) {
+            // Each part's slots alone, so tabs of two parts landing in one
+            // place are named; then all of them, with the clearance
+            const own = others.map((o) => slotsFor(me, [o], 0));
+            for (let i = 0; i < own.length; i++)
+              for (let j = i + 1; j < own.length; j++) {
+                const [a, b] = [ownerOf.get(others[i]), ownerOf.get(others[j])];
+                if (!own[i].length || !own[j].length || a === b || !a || !b) continue;
+                const both = intersection(own[i], own[j]);
+                if (both.reduce((t, q) => t + Math.abs(area(q)), 0) > 0.01) {
+                  const xs = both.flat().map((q) => q[0]),
+                    ys = both.flat().map((q) => q[1]);
+                  const [x0, y0, x1, y1] = [
+                    Math.min(...xs),
+                    Math.min(...ys),
+                    Math.max(...xs),
+                    Math.max(...ys),
+                  ];
+                  shared.add(
+                    `Tabs of "${a}" and "${b}" meet in the same slot in "${p.name}", at [${round2(x0)}, ${round2(y0)}] to [${round2(x1)}, ${round2(y1)}] in its coordinates. Move one's tabs along the edge.`,
+                  );
+                }
+              }
+            const all = own.flat();
+            cut = all.length
+              ? swept(offset(union(all), (p.clearance ?? 0.1) / 2, 'miter'), p.slotExtra)
+              : [];
+          }
           // A bore is cut where its rod's hole meets the part's material
           for (const h of rods) {
             const hole = boreFor(me, h, p.fit ?? FITS.turn);
@@ -958,6 +991,7 @@ function cutSlots(
       warnings.push(
         `Copies of part "${p.name}" meet the parts in slots in different places; they all get every slot. Make them separate parts to cut each its own.`,
       );
+    for (const w of shared) warnings.push(w);
     if (p.bores && rods.length && !bored)
       warnings.push(
         `Part "${p.name}": none of ${p.bores.map((n) => `"${n}"`).join(', ')} pass through it, so it has no bores.`,

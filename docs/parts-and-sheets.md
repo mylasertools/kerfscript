@@ -140,6 +140,10 @@ part("back", at = [0, 55, 3], rotate = [75, 0, 0]) {
 Parts that only touch cut nothing: a wall standing on a shelf without tabs
 leaves it whole.
 
+When tabs of two parts land in the same place in a third, as walls of two
+storeys lining up over a floor, the check names both and where they meet,
+so one can move its tabs along the edge.
+
 A hook that goes in through its slot and then drops, as on a pegboard,
 needs a slot taller than its tab: `slot_extra = [0, 6]` sweeps each slot
 6 mm further along the receiving part's own y.

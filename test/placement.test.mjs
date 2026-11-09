@@ -729,3 +729,17 @@ part("Hook", at = [28, 6, 30], rotate = [90, 0, 90]) { square([20, 4]); translat
   assert.equal(render(src('')).parts[0].cutLength, 254);
   assert.equal(render(src(', slot_extra = [0, 6]')).parts[0].cutLength, 266);
 });
+
+test('tabs of two parts in one slot are named', () => {
+  const walls = (x) => `
+part("Floor", at = [0, 0, 0], slots = ["Wall*"]) square([100, 100]);
+part("Wall A", at = [0, 51.5, 3], rotate = [90, 0, 0]) { square([100, 40]); translate([${x}, -3]) square([10, 3.01]); }
+part("Wall B", at = [48.5, 100, 3], rotate = [90, 0, -90]) { square([100, 40]); translate([${x}, -3]) square([10, 3.01]); }`;
+  const shared = (src) => render(src).warnings.filter((w) => /same slot/.test(w));
+  assert.equal(shared(walls(45)).length, 1);
+  assert.match(
+    shared(walls(45))[0],
+    /Tabs of "Wall A" and "Wall B" meet in the same slot in "Floor"/,
+  );
+  assert.deepEqual(shared(walls(15)), []);
+});
