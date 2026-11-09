@@ -220,3 +220,29 @@ test('a pawl on a small ratchet grows long enough to clear the teeth', () => {
     /at least [\d.]+ mm long/,
   );
 });
+
+test('kerf/fit scales and places drawings by their box', () => {
+  const box = (src) => {
+    const r = render(`use <kerf/fit>\npart("a") ${src}`);
+    assert.deepEqual(r.warnings, []);
+    return [r.parts[0].width, r.parts[0].height];
+  };
+  assert.deepEqual(box('fit([40, 40]) translate([100, 50]) square([20, 10]);'), [40, 20]);
+  assert.deepEqual(
+    box('fit([40, 40], mode = "stretch") translate([100, 50]) square([20, 10]);'),
+    [40, 40],
+  );
+  const at = (src) =>
+    render(`use <kerf/fit>\npart("a") { square(1); measure() { ${src}; echo($bounds); } }`)
+      .echoes[0];
+  assert.equal(at('align("top-right") translate([50, 50]) square([10, 4])'), '[-10, -4, 0, 0]');
+  assert.equal(at('align() translate([50, 50]) square([10, 4])'), '[-5, -2, 5, 2]');
+  assert.equal(
+    at('fit(20, anchor = "center") translate([7, 7]) square([10, 4])'),
+    '[-10, -4, 10, 4]',
+  );
+  assert.throws(
+    () => render('use <kerf/fit>\npart("a") align("middle") square(3);'),
+    /Unknown anchor/,
+  );
+});

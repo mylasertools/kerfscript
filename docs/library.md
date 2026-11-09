@@ -32,6 +32,7 @@ show each module's description when you hover over it.
 | [`kerf/lock`](#lock)               | A lock with a key, three layers deep                           |
 | [`kerf/rings`](#rings)             | Round things of stacked rings on a crossed core                |
 | [`kerf/joints`](#joints)           | Two profiles halved into each other: crosses, fonts, domes     |
+| [`kerf/fit`](#fit-and-align)       | Drawings scaled to a size and placed by a point of their box   |
 | [`kerf/sizes`](#sizes)             | Paper, card and photo sizes                                    |
 | [`kerf/symbols`](#symbols)         | 867 pictograms by name                                         |
 | [`kerf/geo`](#maps)                | The world's land, for maps and globes                          |
@@ -731,6 +732,40 @@ floor on the front, x positions (3 mm wide) or `[x, width]` pairs, and
 `side_feet` the side's (the same unless given); give the floor `slots`
 naming both parts. The strips beside both slots must keep `$min_width`,
 and a foot may not run into the front's slot: either stops with where.
+
+## Fit and align
+
+`use <kerf/fit>`
+
+For a drawing whose size you don't know beforehand, such as an imported
+SVG path, a silhouette or a symbol, these measure their children and
+scale or move them, keeping every layer together. They are for drawings,
+not parts: scaling a part would scale its joints but not its thickness.
+
+```kerf
+use <kerf/fit>
+
+part("tag") {
+  rect([60, 40], r = 4);
+  engrave() translate([30, 20]) fit([44, 24], anchor = "center")
+    path("M0 0 L40 0 L50 30 L20 45 Z");
+}
+```
+
+### `fit(size, mode = "contain", anchor = "bottom-left")`
+
+The children scaled to `size` (`[w, h]`, or one number for a square).
+`mode = "contain"` keeps their proportions and fits them inside;
+`"stretch"` fills the size exactly. A drawing with no width or no height,
+a straight line, is scaled by its other side. The result is placed by
+`anchor`, as `align()` does.
+
+### `align(anchor = "center")`, `anchor_point(anchor)`
+
+The children moved so the point of their box that `anchor` names is at
+the origin: `"center"`, `"left"`, `"right"`, `"top"`, `"bottom"`,
+`"top-left"`, `"top-right"`, `"bottom-left"`, `"bottom-right"`, or
+`[fx, fy]` as fractions of the box. `anchor_point()` gives those fractions.
 
 ## Sizes
 
