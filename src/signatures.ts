@@ -360,6 +360,14 @@ export const SIGNATURES: Signature[] = [
     doc: 'Fill the holes in the areas of the children',
   },
   {
+    name: 'largest',
+    kind: 'module',
+    params: [p('n', 'How many pieces to keep', '1')],
+    children: true,
+    section: 'Combining',
+    doc: 'Keep the n biggest connected pieces of the material, dropping crumbs; marks stay as drawn',
+  },
+  {
     name: 'close',
     kind: 'module',
     params: [p('r', 'Close gaps and notches narrower than twice this', '0.5')],
@@ -721,6 +729,24 @@ export const SIGNATURES: Signature[] = [
     doc: 'The path moved sideways, each corner mitred: the two edges of a strip along a curve',
   },
   {
+    name: 'bounds',
+    kind: 'function',
+    params: [p('points', 'A list of [x, y] points, or of outlines')],
+    section: 'Paths and rotations',
+    doc: '[x0, y0, x1, y1] round the points; undef for none',
+  },
+  {
+    name: 'crossings',
+    kind: 'function',
+    params: [
+      p('points', 'A closed outline of [x, y] points, or a list of outlines'),
+      p('x', 'The vertical line x = this'),
+      p('y', 'Or the horizontal line y = this'),
+    ],
+    section: 'Paths and rotations',
+    doc: 'Where the line crosses the outline: the y (or x) values, smallest first, entering and leaving in turn',
+  },
+  {
     name: 'point_at',
     kind: 'function',
     params: [p('points', 'A list of [x, y] points'), p('s', 'Distance along the path')],
@@ -816,6 +842,38 @@ export const SIGNATURES: Signature[] = [
     params: value,
     section: 'Lists and strings',
     doc: 'A list or string in reverse order',
+  },
+  {
+    name: 'sort',
+    kind: 'function',
+    params: [
+      p('values', 'A list of numbers, strings or lists of them'),
+      p('key', 'A function giving the value to order each item by'),
+    ],
+    section: 'Lists and strings',
+    doc: 'The list in order, smallest first; items with equal keys keep their order',
+  },
+  {
+    name: 'fold',
+    kind: 'function',
+    params: [
+      p('values', 'A list'),
+      p('initial', 'The value to start from'),
+      p('fn', 'A function(acc, item) giving the next value'),
+    ],
+    section: 'Lists and strings',
+    doc: 'The value after fn(acc, item) for each item in turn, from initial: initial for an empty list',
+  },
+  {
+    name: 'scan',
+    kind: 'function',
+    params: [
+      p('values', 'A list'),
+      p('initial', 'The value to start from'),
+      p('fn', 'A function(acc, item) giving the next value'),
+    ],
+    section: 'Lists and strings',
+    doc: 'The value after each item as fold() goes: running totals, one per item',
   },
   {
     name: 'sum',

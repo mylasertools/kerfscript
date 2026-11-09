@@ -131,6 +131,12 @@ class Parser {
       const assigns = this.assigns();
       return [{ kind: 'for', assigns, body: this.body(), pos: t.pos }];
     }
+    // As OpenSCAD's: intersects the iterations, where for joins them
+    if (this.isK('intersection_for') && this.isP('(', 1)) {
+      this.next();
+      const assigns = this.assigns();
+      return [{ kind: 'for', assigns, body: this.body(), pos: t.pos, intersect: true }];
+    }
     if (this.isK('if')) {
       this.next();
       this.expectP('(');
@@ -245,6 +251,20 @@ class Parser {
       const body = this.expr();
       return { kind: 'let', assigns, body, pos: t.pos, end: this.last() };
     }
+    // assert(c, msg) expr and echo(...) expr: check or trace, then the
+    // expression, which a failed assertion never reaches
+    if (this.at('id') && (t.value === 'assert' || t.value === 'echo') && this.isP('(', 1)) {
+      const save = this.i;
+      this.next();
+      const check: Expr = {
+        kind: 'call',
+        callee: { kind: 'var', name: t.value, pos: t.pos },
+        args: this.args(),
+        pos: t.pos,
+      };
+      if (this.startsValue()) return { kind: 'chain', check, body: this.expr(), pos: t.pos };
+      this.i = save;
+    }
     const cond = this.binary(0);
     if (this.isP('?')) {
       this.next();
@@ -276,7 +296,18 @@ class Parser {
     return left;
   }
 
+  // Whether the next token can begin a value: after assert(...) it makes a
+  // chain, where an operator or a closing bracket ends the call
+  private startsValue(): boolean {
+    const t = this.peek();
+    if (t.type === 'num' || t.type === 'str' || t.type === 'id') return true;
+    return this.isP('[') || this.isP('(') || this.isP('{') || this.isP('!') || this.isP('-');
+  }
+
   unary(): Expr {
+    // let and function literals after an operator, as at the start: their
+    // body reaches as far right as it can
+    if ((this.isK('let') || this.isK('function')) && this.isP('(', 1)) return this.expr();
     if (this.isP('-') || this.isP('!') || this.isP('+')) {
       const op = this.next();
       return { kind: 'unary', op: op.value, arg: this.unary(), pos: op.pos };

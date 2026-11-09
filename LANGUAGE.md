@@ -90,7 +90,20 @@ produce an error at the source line.
 In conditions, `false`, `0`, `""`, `[]` and `undef` count as false.
 
 Use `let (a = 1, b = a + 1) expr` to define names for one expression.
-Each binding can use the ones before it.
+Each binding can use the ones before it. A `let` can follow an operator,
+as in `ok && let (d = b - a) d > 0`; its expression reaches as far right as
+it can.
+
+`assert(condition, message) expr` checks before it works out `expr`, which
+a failed assertion never reaches, and `echo(...) expr` prints on the way.
+Checks chain, so a function can refuse bad arguments itself:
+
+```kerf
+function slot_width(t, clearance) =
+  assert(t > 0, "Thickness must be positive")
+  assert(clearance >= 0, "Clearance must not be negative")
+  t + clearance;
+```
 
 ### List comprehensions
 
@@ -117,6 +130,7 @@ module name(a, b = 2) { ... }         // module (makes shapes)
 name(args) child;                     // module call with one child
 name(args) { child; child; }          // module call with a block of children
 for (i = range_or_list, j = ...) ...  // repeats, combined as a union
+intersection_for (i = ...) ...        // repeats, keeping what every one covers
 if (cond) ... else ...
 let (a = 1) ...
 use <path>                            // import modules and functions
@@ -264,8 +278,10 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
   `$thickness`, `$kerf` and `$material` where it is called. `at = [x, y, z]`
   and `rotate = [x, y, z]` (degrees) place the part in the assembled view:
   rotated first, then moved, with its thickness along +Z. A part with copies
-  takes one placement or a list with one per copy. `render()` returns the
-  placed parts as `assembly` and warns when two of them collide.
+  takes one placement or a list with one per copy. `qty = 0` makes nothing,
+  so `part(qty = len(list), at = list)` needs no guard for an empty list.
+  `render()` returns the placed parts as `assembly` and warns when two of
+  them collide.
   `rotate = orient(x, z)` turns the part's own x and z axes onto two
   directions; `euler(rotation(a) * rotation(b))` turns by `b`, then by `a`.
 - More about a part, all named:
@@ -374,6 +390,7 @@ playground, the command line and `kerfscript.wasm` have `Atkinson`
 | `difference()`                                 | removes every later child's area from every layer of the first child                                                                    |
 | `intersection()`                               | keeps the area common to all children; lines of any child are clipped to the others' area, and a child of lines alone leaves only lines |
 | `fill_holes(min_area)`                         | fills holes smaller than `min_area` mm², or all of them                                                                                 |
+| `largest(n = 1)`                               | keeps the `n` biggest connected pieces of the material, dropping crumbs; marks stay as drawn                                            |
 | `close(r = 0.5)`                               | closes gaps and notches narrower than `2 r`, keeping the outline                                                                        |
 | `pattern(spacing, stagger = 0)`                | repeats its first child over the area of the others, clipped at the edge                                                                |
 | `hatch(angle = 45, pitch = 5, width)`          | parallel lines across the children's area, or stripes `width` wide                                                                      |
@@ -431,37 +448,42 @@ arguments.
 
 A path is a list of `[x, y]` points.
 
-| Function                                           | Result                                                               |
-| -------------------------------------------------- | -------------------------------------------------------------------- |
-| `path_length(points)`                              | Length along the path                                                |
-| `point_at(points, s)`                              | The point `s` along the path; past either end it carries on straight |
-| `heading_at(points, s)`                            | The path's direction `s` along it, in degrees from +x                |
-| `offset_path(points, d, closed = false)`           | The path moved `d` to its left (right for `d < 0`), corners mitred   |
-| `path_points(d, tolerance)`                        | The points of SVG path data, a list of points for each subpath       |
-| `rotation(angles)`                                 | The 3 × 3 matrix of `[x, y, z]` degrees as `part()` turns; use `*`   |
-| `euler(matrix)`                                    | The `[x, y, z]` angles of a rotation matrix, for `rotate`            |
-| `orient(x, z = [0, 0, 1])`                         | The angles that turn a part's own x and z axes onto two directions   |
-| `spline_points(points, steps = 8, closed = false)` | The points of the smooth curve `spline()` draws                      |
+| Function                                             | Result                                                                                                                 |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `path_length(points)`                                | Length along the path                                                                                                  |
+| `point_at(points, s)`                                | The point `s` along the path; past either end it carries on straight                                                   |
+| `heading_at(points, s)`                              | The path's direction `s` along it, in degrees from +x                                                                  |
+| `offset_path(points, d, closed = false)`             | The path moved `d` to its left (right for `d < 0`), corners mitred                                                     |
+| `path_points(d, tolerance)`                          | The points of SVG path data, a list of points for each subpath                                                         |
+| `rotation(angles)`                                   | The 3 × 3 matrix of `[x, y, z]` degrees as `part()` turns; use `*`                                                     |
+| `euler(matrix)`                                      | The `[x, y, z]` angles of a rotation matrix, for `rotate`                                                              |
+| `orient(x, z = [0, 0, 1])`                           | The angles that turn a part's own x and z axes onto two directions                                                     |
+| `spline_points(points, steps = 8, closed = false)`   | The points of the smooth curve `spline()` draws                                                                        |
+| `bounds(points)`                                     | `[x0, y0, x1, y1]` round a list of points, or of outlines                                                              |
+| `crossings(points, x)` or `crossings(points, y = v)` | Where a vertical (or horizontal) line crosses a closed outline, or a list of them: the y (or x) values, smallest first |
 
 ### Lists and strings
 
-| Function                       | Result                                                                                       |
-| ------------------------------ | -------------------------------------------------------------------------------------------- |
-| `len(value)`                   | Number of items in a list, characters in a string or fields in a record                      |
-| `keys(record)`                 | A record's field names, in the order they were written                                       |
-| `merge(a, b)`                  | A record with the fields of both, `b`'s winning                                              |
-| `concat(...)`                  | Join lists and individual values into one list                                               |
-| `reverse(value)`               | Reverse a list or string                                                                     |
-| `sum(values)`                  | Sum a list of numbers                                                                        |
-| `slice(value, start = 0, end)` | Extract part of a list or string; `end` is exclusive and defaults to its length              |
-| `str(...)`                     | Convert values to text and join them                                                         |
-| `chr(...)`, `ord(text)`        | Convert Unicode code points to text, or read the first character's code point                |
-| `upper(text)`, `lower(text)`   | Change letter case                                                                           |
-| `split(text, separator = " ")` | Split text into a list of strings                                                            |
-| `join(values, separator = "")` | Join values into a string                                                                    |
-| `search(value, list)`          | Index of the first equal item, or `undef` if absent; also searches characters in strings     |
-| `contains(value, item)`        | Whether a list contains an item or a string contains a substring                             |
-| `lookup(x, table)`             | Interpolate in a table of `[x, y]` pairs; use the nearest endpoint outside the table's range |
+| Function                       | Result                                                                                                                            |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `len(value)`                   | Number of items in a list, characters in a string or fields in a record                                                           |
+| `keys(record)`                 | A record's field names, in the order they were written                                                                            |
+| `merge(a, b)`                  | A record with the fields of both, `b`'s winning                                                                                   |
+| `concat(...)`                  | Join lists and individual values into one list                                                                                    |
+| `reverse(value)`               | Reverse a list or string                                                                                                          |
+| `sort(values, key)`            | The list smallest first: numbers, strings, or lists item by item; ordered by `key(item)` if given, equal keys keeping their order |
+| `fold(values, initial, fn)`    | The value after `fn(acc, item)` for each item in turn, from `initial`                                                             |
+| `scan(values, initial, fn)`    | The value after each item as `fold()` goes: running totals, `[]` for an empty list                                                |
+| `sum(values)`                  | Sum a list of numbers                                                                                                             |
+| `slice(value, start = 0, end)` | Extract part of a list or string; `end` is exclusive and defaults to its length                                                   |
+| `str(...)`                     | Convert values to text and join them                                                                                              |
+| `chr(...)`, `ord(text)`        | Convert Unicode code points to text, or read the first character's code point                                                     |
+| `upper(text)`, `lower(text)`   | Change letter case                                                                                                                |
+| `split(text, separator = " ")` | Split text into a list of strings                                                                                                 |
+| `join(values, separator = "")` | Join values into a string                                                                                                         |
+| `search(value, list)`          | Index of the first equal item, or `undef` if absent; also searches characters in strings                                          |
+| `contains(value, item)`        | Whether a list contains an item or a string contains a substring                                                                  |
+| `lookup(x, table)`             | Interpolate in a table of `[x, y]` pairs; use the nearest endpoint outside the table's range                                      |
 
 ### Types
 

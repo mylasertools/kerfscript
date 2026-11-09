@@ -39,6 +39,7 @@ const KEYWORDS = new Set([
   'for',
   'let',
   'each',
+  'intersection_for',
   'use',
   'include',
 ]);
@@ -51,7 +52,7 @@ export const BUILTINS = new Set(
   (
     'rect square circle ellipse regular_polygon star polygon path text line polyline arc ' +
     'translate rotate scale mirror multmatrix union group difference intersection hull offset ' +
-    'pattern spline hatch paint measure fill_holes close stroke outline part place call step ' +
+    'pattern spline hatch paint measure fill_holes largest close stroke outline part place call step ' +
     'hardware material finger_rect finger_holes tslot living_hinge children echo assert box ' +
     'divider kerf_gauge slot_gauge joint_test slotted_divider grid_dividers enclosure ' +
     'enclosure_cutouts vents spur_gear gear_window rack lantern_disc peg_wheel eccentric ' +
@@ -59,7 +60,7 @@ export const BUILTINS = new Set(
     'flex_box flex_panel narrow_hinge flex_strip cam_lock lock_key ring_stack halved_pair symbol tabs ' +
     'slots tab_rect abs sign floor ceil round sqrt exp ln log sin cos tan asin acos atan ' +
     'atan2 pow min max clamp lerp norm cross path_length point_at heading_at offset_path train_for path_points ' +
-    'spline_points rotation euler orient len keys merge concat reverse sum slice str chr ord ' +
+    'spline_points rotation euler orient len keys merge concat reverse sort fold scan bounds crossings sum slice str chr ord ' +
     'upper lower split join search contains lookup is_num is_string is_bool is_list is_undef ' +
     'is_function is_record type_of rands text_width text_metrics finger_count'
   ).split(' '),

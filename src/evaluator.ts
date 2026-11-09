@@ -599,7 +599,16 @@ export class Evaluator {
       case 'for': {
         const shapes: Shape[] = [];
         this.loop(s.assigns, env, (e) => shapes.push(this.block(s.body, e)));
-        return merge(shapes);
+        if (!s.intersect) return merge(shapes);
+        // As intersection() with one child per iteration: none is empty,
+        // one is that iteration
+        return this.builtins.intersection({
+          args: { pos: [], named: new Map(), all: [], at: s.pos },
+          env,
+          children: () => merge(shapes),
+          childList: () => shapes,
+          childSeq: () => shapes,
+        } as BuiltinCtx);
       }
       case 'call':
         if (s.modifier === '*') return null;
@@ -941,6 +950,9 @@ export class Evaluator {
         this.bindSeq(x.assigns, e);
         return this.expr(x.body, e);
       }
+      case 'chain':
+        this.expr(x.check, env);
+        return this.expr(x.body, env);
     }
   }
 
@@ -1015,6 +1027,20 @@ export class Evaluator {
             maxLength: this.limits.maxListLength,
             step: (n?: number) => this.tick(x.pos, n),
             given: args.pos.length + b.params.filter((p) => args.named.has(p)).length,
+            apply: (fn: Value, xs: Value[]) => {
+              if (!isFn(fn)) throw new Error(`${name}() needs a function, got ${typeName(fn)}`);
+              return this.callFunction(
+                fn,
+                {
+                  pos: xs,
+                  named: new Map(),
+                  all: xs.map((value) => ({ name: null, value })),
+                  at: x.pos,
+                },
+                env,
+                'function',
+              );
+            },
           };
           const bound = bindArgs(b, args.pos, args.named);
           // Built-ins that go through their arguments take a step per item
@@ -1929,6 +1955,32 @@ export class Evaluator {
           lines: l.lines,
         }));
       },
+      // The n biggest connected pieces of the material, so a trimmed or
+      // generated outline can drop the crumbs it leaves; marks stay as drawn
+      largest: (c) => {
+        const n = Math.floor(this.num(this.arg(c.args, 'n', 0, 1), 'largest', 'n'));
+        if (!(n >= 1)) throw new Error('largest(): n must be 1 or more');
+        const keep = (regions: Poly[]) =>
+          pieces(regions)
+            .map((g) => ({ g, a: g.reduce((s, r) => s + area(r), 0) }))
+            .sort((p, q) => q.a - p.a)
+            .slice(0, n)
+            .flatMap(({ g }) => g);
+        const shape = c.children();
+        const each = (from: Map<string, Layer>) =>
+          new Map(
+            [...from].map(([k, l]): [string, Layer] => [
+              k,
+              (this.layers.get(k)?.mode ?? 'cut') === 'cut'
+                ? { regions: keep(l.regions), lines: l.lines }
+                : l,
+            ]),
+          );
+        return {
+          layers: each(shape.layers),
+          parts: shape.parts.map((p) => ({ ...p, layers: each(p.layers) })),
+        };
+      },
       // Closes gaps and notches narrower than 2 r, keeping the outline
       close: (c) => {
         const r = this.num(this.arg(c.args, 'r', 0, 0.5), 'close', 'r');
@@ -2000,7 +2052,12 @@ export class Evaluator {
       },
       part: (c) => {
         const name = toText(this.arg(c.args, 'name', 0, 'part'));
-        const qty = Math.max(1, Math.floor(toNumber(this.arg(c.args, 'qty', 1, 1)) || 1));
+        // A number of copies; anything else, as undef, is one as before
+        const qtyArg = this.arg(c.args, 'qty', 1, 1);
+        const qty = typeof qtyArg === 'number' ? Math.floor(qtyArg) : 1;
+        if (!(qty >= 0)) throw new Error(`qty must be 0 or more, got ${show(qtyArg)}`);
+        // qty = 0 makes nothing, so a list that comes out empty needs no guard
+        if (qty === 0) return { layers: new Map(), parts: [] };
         const stackArg = this.arg(c.args, 'stack', -1);
         const stack = stackArg === undefined ? 1 : Math.floor(this.num(stackArg, 'part', 'stack'));
         if (!(stack >= 1)) throw new Error('stack must be 1 or more');

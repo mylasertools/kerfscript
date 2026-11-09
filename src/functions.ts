@@ -23,6 +23,47 @@ export interface FnCtx {
   maxLength: number;
   step: (n?: number) => void;
   given: number;
+  // Calls a function value with these arguments
+  apply: (fn: Value, args: Value[]) => Value;
+}
+
+// Order for sort(): numbers, then strings, each among themselves, and lists
+// item by item
+function order(a: Value, b: Value, fn: string): number {
+  if (typeof a === 'number' && typeof b === 'number') return a - b;
+  if (typeof a === 'string' && typeof b === 'string') return a < b ? -1 : a > b ? 1 : 0;
+  if (Array.isArray(a) && Array.isArray(b)) {
+    for (let i = 0; i < Math.min(a.length, b.length); i++) {
+      const o = order(a[i], b[i], fn);
+      if (o) return o;
+    }
+    return a.length - b.length;
+  }
+  throw new Error(
+    `${fn}() can only order numbers, strings or lists of them, not ${typeName(a)} and ${typeName(b)}`,
+  );
+}
+
+// A list of points, or of outlines (lists of points), as one list of points
+function pointList(v: Value, fn: string, c: FnCtx): [number, number][] {
+  const xs = list(v, fn, c);
+  const flat =
+    xs.length && Array.isArray(xs[0]) && Array.isArray((xs[0] as Value[])[0])
+      ? xs.flatMap((r) => list(r, fn, c))
+      : xs;
+  return flat.map((p) => {
+    if (!Array.isArray(p) || p.length < 2)
+      throw new Error(`${fn}() needs points [x, y], got ${typeName(p)}`);
+    return [num(p[0], fn), num(p[1], fn)];
+  });
+}
+
+// The outlines in a value: one outline (a list of points) or a list of them
+function outlines(v: Value, fn: string, c: FnCtx): [number, number][][] {
+  const xs = list(v, fn, c);
+  if (xs.length && Array.isArray(xs[0]) && Array.isArray((xs[0] as Value[])[0]))
+    return xs.map((r) => pointList(r, fn, c));
+  return [pointList(xs, fn, c)];
 }
 
 type Run = (args: Value[], c: FnCtx) => Value;
@@ -231,6 +272,57 @@ export const FUNCTIONS: Record<string, Builtin> = {
       ? [...a[0]].reverse().join('')
       : [...list(a[0], 'reverse', c)].reverse(),
   ),
+  // The list in order, smallest first; with key, ordered by key(item).
+  // Items with equal keys keep their order
+  sort: def('values, key', (a, c) => {
+    const xs = list(a[0], 'sort', c);
+    const key = a[1];
+    const keyed = xs.map((x) => [key === undefined ? x : c.apply(key, [x]), x] as const);
+    c.step(Math.ceil(xs.length * Math.log2(xs.length + 1)));
+    return keyed.sort((p, q) => order(p[0], q[0], 'sort')).map(([, x]) => x);
+  }),
+  // The accumulator after fn(acc, item) for each item in turn, from initial
+  fold: def('values, initial, fn', (a, c) => {
+    let acc = a[1];
+    for (const x of list(a[0], 'fold', c)) acc = c.apply(a[2], [acc, x]);
+    return acc;
+  }),
+  // The accumulator after each item, as fold() goes: running totals
+  scan: def('values, initial, fn', (a, c) => {
+    let acc = a[1];
+    return list(a[0], 'scan', c).map((x) => (acc = c.apply(a[2], [acc, x])));
+  }),
+  // [x0, y0, x1, y1] round a list of points, or of outlines
+  bounds: def('points', (a, c) => {
+    const ps = pointList(a[0], 'bounds', c);
+    if (!ps.length) return undefined;
+    let [x0, y0, x1, y1] = [Infinity, Infinity, -Infinity, -Infinity];
+    for (const [x, y] of ps) {
+      x0 = Math.min(x0, x);
+      y0 = Math.min(y0, y);
+      x1 = Math.max(x1, x);
+      y1 = Math.max(y1, y);
+    }
+    return [x0, y0, x1, y1];
+  }),
+  // Where the line x = value (or y = value) crosses a closed outline, or a
+  // list of them: the y (or x) values, smallest first, entering and leaving
+  // in turn
+  crossings: def('points, x, y', (a, c) => {
+    if ((a[1] === undefined) === (a[2] === undefined))
+      throw new Error('crossings() needs one of x or y');
+    const across = a[1] === undefined;
+    const at = num(across ? a[2] : a[1], 'crossings');
+    const out: number[] = [];
+    for (const ring of outlines(a[0], 'crossings', c))
+      for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const [pu, pv] = across ? [ring[j][1], ring[j][0]] : ring[j];
+        const [qu, qv] = across ? [ring[i][1], ring[i][0]] : ring[i];
+        // Half-open, so a line through a corner counts it once
+        if (pu > at !== qu > at) out.push(pv + ((qv - pv) * (at - pu)) / (qu - pu));
+      }
+    return out.sort((p, q) => p - q);
+  }),
   sum: def('values', (a, c) => list(a[0], 'sum', c).reduce((s: number, x) => s + num(x, 'sum'), 0)),
   slice: def('value, start, end', (a, c) => {
     const xs = typeof a[0] === 'string' ? [...a[0]] : list(a[0], 'slice', c);
