@@ -104,3 +104,18 @@ test('intersection_for keeps what every iteration covers', () => {
     1,
   );
 });
+
+test('a setting marked drive is the one that moves the model', async () => {
+  const { parameters } = await import('../dist/index.js');
+  const ps = parameters(
+    'crank = 0; // [0:5:360] drive\nsize = 4; // [1:10]\nname = "a"; // [a, b] drive\nsquare(size);',
+  ).parameters;
+  assert.deepEqual(
+    ps.map((p) => [p.name, !!p.drive, p.min, p.step, p.max]),
+    [
+      ['crank', true, 0, 5, 360],
+      ['size', false, 1, undefined, 10],
+      ['name', false, undefined, undefined, undefined],
+    ],
+  );
+});

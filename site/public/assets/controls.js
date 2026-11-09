@@ -103,6 +103,31 @@ export function buildControls(container, params, values, onChange) {
         set(p.name, Number(range.value));
       });
       title.append(out);
+      // The setting that drives the model (// [0:5:360] drive) plays: it
+      // steps round its range, the model following, until stopped
+      if (p.drive) {
+        const play = el('button', { type: 'button', class: 'play', text: 'Play' });
+        let timer;
+        const stop = () => {
+          clearInterval(timer);
+          timer = undefined;
+          play.textContent = 'Play';
+        };
+        play.addEventListener('click', () => {
+          if (timer) return stop();
+          play.textContent = 'Stop';
+          const step = Number(p.step ?? (p.max - p.min) / 24) || 1;
+          timer = setInterval(() => {
+            if (!range.isConnected) return stop();
+            let v = Number(range.value) + step;
+            if (v > p.max + 1e-9) v = p.min;
+            range.value = String(v);
+            out.textContent = range.value;
+            set(p.name, v);
+          }, 150);
+        });
+        title.append(play);
+      }
       row.append(title, range);
     } else {
       const input = el('input', { id, type: 'number', value, step: p.step ?? 'any' });

@@ -687,3 +687,35 @@ part("Rib", qty = 4, at = [for (a = [0:90:270]) [-1.5 * sin(a), 1.5 * cos(a), 0]
     /crosses none of "B"/,
   );
 });
+
+test('kerf check --drive tries every position of the driving setting', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'kerf-'));
+  // The arm sweeps round and runs into the post at 90 degrees
+  writeFileSync(
+    join(dir, 'arm.kerf'),
+    `crank = 0; // [0:90:270] drive
+part("Base", at = [0, 0, 0]) rect([100, 100]);
+part("Post", at = [45, 75, 3]) rect([10, 10]);
+part("Arm", at = [50 + 30 * cos(crank) - 5, 50 + 30 * sin(crank) - 5, 3]) rect([10, 10]);
+`,
+  );
+  let out = '';
+  try {
+    execFileSync('node', ['dist/cli.js', 'check', join(dir, 'arm.kerf'), '--drive'], {
+      encoding: 'utf8',
+    });
+  } catch (e) {
+    out = e.stdout;
+  }
+  assert.match(out, /crank=0: ok/);
+  assert.match(out, /crank=90: 1 warning\n.*"Post" and "Arm" collide/);
+  assert.match(out, /3 of 4 clean/);
+  writeFileSync(join(dir, 'still.kerf'), 'rect(10);');
+  assert.throws(
+    () =>
+      execFileSync('node', ['dist/cli.js', 'check', join(dir, 'still.kerf'), '--drive'], {
+        stdio: 'pipe',
+      }),
+    (e) => /No setting drives this model/.test(String(e.stderr)),
+  );
+});
