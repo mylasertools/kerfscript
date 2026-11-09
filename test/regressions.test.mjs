@@ -343,6 +343,21 @@ part("side", qty = 2, at = [[0, 0, 0], [40, 0, 0]], rotate = [90, 0, 90], mirror
   // The mirrored one's apex is at x = -5
   const xs = r.assembly[1].outline.flat().map(([x]) => x);
   assert.equal(Math.min(...xs), -30);
+  // On the sheet too each copy keeps its number, packed or laid out as drawn,
+  // so a sheet item pairs with its own placement in the assembly
+  for (const opts of [{}, { layout: 'none' }]) {
+    const s = render(
+      `part("side", qty = 3, at = [[0, 0, 0], [40, 0, 0], [80, 0, 0]], mirror = [true, false, true]) polygon([[0, 0], [30, 0], [5, 20]]);`,
+      opts,
+    );
+    assert.deepEqual(
+      s.sheets
+        .flatMap((sh) => sh.items)
+        .map((it) => it.copy)
+        .sort(),
+      [1, 2, 3],
+    );
+  }
   assert.throws(
     () => render('part("x", qty = 2, mirror = [true]) square(3);'),
     /mirror needs one true or false per copy/,

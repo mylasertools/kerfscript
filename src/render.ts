@@ -240,7 +240,9 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   const riders = new Map<AssemblyPart, string>();
   const loose: AssemblyPart[] = [];
   const stackedCopies = new Set<AssemblyPart>();
-  const ready: { info: PartInfo; layers: Map<string, Layer> }[] = [];
+  // copy(i): the number of its i-th cut copy in the assembly, so a mirrored
+  // copy keeps its own number on the sheet
+  const ready: { info: PartInfo; layers: Map<string, Layer>; copy: (i: number) => number }[] = [];
   const minWidthSet = g('$min_width');
   const minWidth = minWidthSet === undefined ? 1.5 : toNumber(minWidthSet);
   // $label_parts: each part's number engraved on its back face, the same
@@ -480,7 +482,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
           }
         }
     infos.push(info);
-    ready.push({ info, layers });
+    ready.push({ info, layers, copy: (i) => copyNumber(p, i) });
   }
 
   rideOn(assembly, riders, warnings);
@@ -592,7 +594,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       for (let c = 0; c < r.info.qty; c++)
         items.push({
           part: r.info.name,
-          copy: c + 1,
+          copy: r.copy(c),
           layers: moved(r.layers, flipY),
           rotated: false,
         });
@@ -653,7 +655,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
           );
         layers = moved(layers, [1, 0, 0, 1, -b[0], -b[1]]);
         for (let c = 0; c < r.info.qty; c++)
-          queue.push({ info: r.info, layers, w, h, copy: c + 1, rotated });
+          queue.push({ info: r.info, layers, w, h, copy: r.copy(c), rotated });
       }
       queue.sort((a, b) => b.h - a.h || b.w - a.w);
       const packed = nest ? nestInHoles(queue, gap, (k) => mode(k) === 'cut') : queue;
