@@ -580,10 +580,10 @@ test('each layer of a stack cuts only the slots that pass through it', () => {
   assert.equal(same.parts.find((p) => p.name === 'top').stack, 2);
 });
 
-test('a slot covers a shoulder that flares just inside the receiving face', () => {
+test('a slot covers a shoulder that flares into the receiving face', () => {
   const r = render(`
     part("stage", at = [-20, -20, 0], slots = ["limb"], clearance = 0) rect([40, 40]);
-    part("limb", at = [0, 1.5, 0.008], rotate = [90, 0, 0]) {
+    part("limb", at = [0, 1.5, 0.05], rotate = [90, 0, 0]) {
       translate([-2, -10]) rect([4, 13]);
       difference() {
         translate([-4, -2]) rect([8, 2]);
@@ -592,6 +592,32 @@ test('a slot covers a shoulder that flares just inside the receiving face', () =
     }`);
   // 160 round the stage, and 2 x (8 + 3) round the slot: the flare's full width
   assert.equal(r.parts.find((p) => p.name === 'stage').cutLength, 182);
+});
+
+test('an edge lying on a face is not slotted along the contact', () => {
+  // The wall's top rests a hair inside the roof, as rounding leaves it under
+  // a sloped roof; only its tab goes through. 200 round the roof, 2 x (4 + 3)
+  // round the tab's slot, nothing along the 40 mm contact
+  for (const top of [10.0001, 10.009]) {
+    const r = render(`
+      part("roof", at = [-30, -20, 10], slots = ["wall"], clearance = 0) rect([60, 40]);
+      part("wall", at = [0, 1.5, 0], rotate = [90, 0, 0]) {
+        translate([-20, 0]) rect([40, ${top}]);
+        translate([-2, 0]) rect([4, 13]);
+      }`);
+    assert.equal(r.parts.find((p) => p.name === 'roof').cutLength, 214, `top at ${top}`);
+  }
+  // A gable wall under a roof sloped at 35 degrees, its top a hair inside the
+  // roof's underside, cuts the same roof as one lowered 0.2 mm
+  const roof = (ease) =>
+    render(`
+      a = 35;
+      part("roof", at = [-30, 0, 0], rotate = [a, 0, 0], slots = ["wall"], clearance = 0) rect([60, 40]);
+      part("wall", at = [-1.5, 0, 0], rotate = orient([0, 1, 0], [1, 0, 0])) {
+        polygon([[0, -20], [30, -20], [30, 30 * tan(a) + ${ease}], [0, ${ease}]]);
+        translate([10, -20]) rect([4, 34 * tan(a) + 25]);
+      }`).parts.find((p) => p.name === 'roof').cutLength;
+  assert.equal(roof(0.005), roof(-0.2));
 });
 
 test('a picture of a long thin sheet stays within the pixel limit', () => {
