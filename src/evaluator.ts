@@ -7,6 +7,7 @@ import {
   clipLines,
   difference,
   emptyShape,
+  HIDDEN,
   ellipsePoly,
   fragments,
   hull,
@@ -35,6 +36,10 @@ import {
 } from './geometry.js';
 import { fingerCount, fingerHoles, fingerRect, livingHinge, tslot, type Edge } from './joinery.js';
 import { catmullRom } from './functions.js';
+import { contourLines, insideTest, streamlines } from './plot.js';
+
+const RAD = Math.PI / 180;
+
 import {
   IDENTITY4,
   multiply as mul4,
@@ -302,6 +307,8 @@ interface BuiltinCtx {
   // The children one at a time, calling after() with each before the next
   // runs, so a built-in can set special variables for the ones after
   childSeq: (after: (i: number, s: Shape) => void) => Shape[];
+  // The children with a for loop's iterations each one child
+  childItems: () => Shape[];
 }
 
 export interface EvalResult {
@@ -319,10 +326,14 @@ export const STDLIB: Record<string, string> = LIBRARIES;
 export class Evaluator {
   private steps = 0;
   private depth = 0;
+  // occlude() calls whose children are being made, for hide()
+  private occluding = 0;
   private maxSteps: number;
   readonly limits: Limits;
   private pointCount = 0;
   private itemCount = 0;
+  // Items charged for what the program keeps after a call returns: echoes
+  private retained = 0;
   private copies = 0;
   // The 3D placement place() blocks build up, and the current step
   private frame: number[] = IDENTITY4;
@@ -610,6 +621,7 @@ export class Evaluator {
           children: () => merge(shapes),
           childList: () => shapes,
           childSeq: () => shapes,
+          childItems: () => shapes,
         } as BuiltinCtx);
       }
       case 'call':
@@ -774,6 +786,21 @@ export class Evaluator {
         this.hoist(s.children, e);
         const out: Shape[] = [];
         for (const st of s.children) {
+          const r = this.stmt(st, e);
+          if (kids.includes(st)) out.push(r ?? emptyShape());
+        }
+        return out;
+      },
+      childItems: () => {
+        const e = childEnv();
+        this.hoist(s.children, e);
+        const out: Shape[] = [];
+        for (const st of s.children) {
+          if (kids.includes(st) && st.kind === 'for' && !st.intersect) {
+            this.tick(st.pos);
+            this.loop(st.assigns, e, (ie) => out.push(this.block(st.body, ie)));
+            continue;
+          }
           const r = this.stmt(st, e);
           if (kids.includes(st)) out.push(r ?? emptyShape());
         }
@@ -1156,7 +1183,9 @@ export class Evaluator {
   }
 
   private echo(text: string, at: Pos) {
-    this.charge(Math.ceil(text.length / CHARS_PER_ITEM), at);
+    const n = Math.ceil(text.length / CHARS_PER_ITEM);
+    this.charge(n, at);
+    this.retained += n;
     this.echoes.push(text);
   }
 
@@ -1264,6 +1293,27 @@ export class Evaluator {
       '^': 'raise',
     };
     throw new KerfError(`Can't ${verb[op] ?? op} ${typeName(a)} and ${typeName(b)}`, at);
+  }
+
+  // A function value as a field: called with the point [x, y]
+  private fieldFn(f: Value, fn: string, env: Env, at: Pos): (p: Pt) => Value {
+    if (!isFn(f))
+      throw new Error(`field must be a function of a point, as function(p) ..., got ${show(f)}`);
+    // The lists a call builds are gone when it returns a number or a
+    // vector, so they don't count towards the lists the program keeps;
+    // what it echoes is kept, and stays counted
+    return (p) => {
+      const items = this.itemCount,
+        kept = this.retained;
+      const v = this.callFunction(
+        f,
+        { pos: [p], named: new Map(), all: [{ name: null, value: p }], at },
+        env,
+        'field',
+      );
+      if (!Array.isArray(v) || v.length <= 3) this.itemCount = items + this.retained - kept;
+      return v;
+    };
   }
 
   private arg(a: Args, name: string, index: number, def?: Value): Value {
@@ -1888,6 +1938,196 @@ export class Evaluator {
         if (!(w > 0)) throw new Error('width must be more than 0');
         return regionShape(intersection(union(strokeLines(lines, w).map((p) => p)), keep));
       },
+      // Evenly spaced lines following a direction field across the area of
+      // the children: field(p) gives the direction at p, in degrees or as
+      // a vector, or undef where lines stop
+      flow: (c) => {
+        const field = this.arg(c.args, 'field', 0);
+        const spacing = this.num(this.arg(c.args, 'spacing', 1, 2), 'flow', 'spacing');
+        if (!(spacing > 0)) throw new Error('spacing must be more than 0');
+        const step = this.num(
+          this.arg(c.args, 'step', 2, Math.min(0.5, spacing / 4)),
+          'flow',
+          'step',
+        );
+        if (!(step > 0 && step <= spacing))
+          throw new Error('step must be more than 0 and at most the spacing');
+        const minLength = this.num(
+          this.arg(c.args, 'min_length', -1, 2 * spacing),
+          'flow',
+          'min_length',
+        );
+        const seed = this.num(this.arg(c.args, 'seed', -1, 1), 'flow', 'seed');
+        const keep = union(flat([c.children()], 'flow').regions);
+        const box = bounds(keep);
+        if (!box) return emptyShape();
+        const angle = (deg: number): Pt => [Math.cos(deg * RAD), Math.sin(deg * RAD)];
+        let dir: (p: Pt) => Pt | null;
+        if (typeof field === 'number') {
+          const v = angle(field);
+          dir = () => v;
+        } else {
+          const f = this.fieldFn(field, 'flow', c.env, c.args.at);
+          dir = (p) => {
+            const v = f(p);
+            if (v === undefined) return null;
+            if (typeof v === 'number' && Number.isFinite(v)) return angle(v);
+            if (
+              Array.isArray(v) &&
+              typeof v[0] === 'number' &&
+              typeof v[1] === 'number' &&
+              Number.isFinite(v[0]) &&
+              Number.isFinite(v[1])
+            ) {
+              const l = Math.hypot(v[0], v[1]);
+              return l > 1e-12 ? [v[0] / l, v[1] / l] : null;
+            }
+            throw new Error(`field() must give an angle, a vector [x, y] or undef, got ${show(v)}`);
+          };
+        }
+        const cells = ((box[2] - box[0]) / spacing) * ((box[3] - box[1]) / spacing);
+        if (!(cells <= this.limits.maxPoints / 10))
+          throw new Error('spacing is too small for the area');
+        const lines = streamlines({
+          spacing,
+          step,
+          minLength,
+          seed,
+          box,
+          inside: insideTest(keep),
+          dir,
+          tick: () => this.tick(c.args.at),
+          maxPoints: this.limits.maxPoints,
+        });
+        return lineShape(clipLines(lines, keep, 'inside'));
+      },
+      // Contour lines of a height field across the area of the children:
+      // where field(p) crosses each level
+      contours: (c) => {
+        const field = this.arg(c.args, 'field', 0);
+        const f = this.fieldFn(field, 'contours', c.env, c.args.at);
+        const levels = this.arg(c.args, 'levels', 1, 10);
+        const interval = this.arg(c.args, 'interval', -1);
+        const cell = this.num(this.arg(c.args, 'cell', -1, 1), 'contours', 'cell');
+        if (!(cell > 0)) throw new Error('cell must be more than 0');
+        const keep = union(flat([c.children()], 'contours').regions);
+        const b = bounds(keep);
+        if (!b) return emptyShape();
+        const nx = Math.ceil((b[2] - b[0]) / cell) + 1,
+          ny = Math.ceil((b[3] - b[1]) / cell) + 1;
+        if (!(nx * ny <= this.limits.maxPoints / 2))
+          throw new Error(
+            `a cell of ${cell} samples the area at ${nx * ny} points, more than the limit of ${this.limits.maxPoints / 2}: use a larger cell`,
+          );
+        const vals = new Float64Array(nx * ny);
+        let lo = Infinity,
+          hi = -Infinity;
+        for (let j = 0; j < ny; j++)
+          for (let i = 0; i < nx; i++) {
+            const v = f([b[0] + i * cell, b[1] + j * cell]);
+            if (v === undefined) {
+              vals[j * nx + i] = NaN;
+              continue;
+            }
+            if (typeof v !== 'number' || !Number.isFinite(v))
+              throw new Error(`field() must give a number or undef, got ${show(v)}`);
+            vals[j * nx + i] = v;
+            lo = Math.min(lo, v);
+            hi = Math.max(hi, v);
+          }
+        if (!(lo <= hi)) return emptyShape();
+        let at: number[];
+        if (interval !== undefined) {
+          const d = this.num(interval, 'contours', 'interval');
+          if (!(d > 0)) throw new Error('interval must be more than 0');
+          const k0 = Math.ceil(lo / d),
+            k1 = Math.floor(hi / d);
+          if (!Number.isSafeInteger(k0) || !Number.isSafeInteger(k1))
+            throw new Error(`the heights are too large for an interval of ${d}`);
+          const n = Math.max(0, k1 - k0 + 1);
+          if (!(n <= 10_000))
+            throw new Error(`interval ${d} gives ${n} levels: use a larger interval`);
+          at = Array.from({ length: n }, (_, i) => (k0 + i) * d);
+        } else if (Array.isArray(levels)) {
+          at = levels.map((v) => this.num(v, 'contours', 'levels'));
+        } else {
+          const n = Math.floor(this.num(levels, 'contours', 'levels'));
+          if (!(n >= 1 && n <= 10_000)) throw new Error('levels must be 1 to 10000');
+          at = Array.from({ length: n }, (_, k) => lo + ((hi - lo) * (k + 1)) / (n + 1));
+        }
+        // Charged level by level, so too many lines stop at the limit
+        // before they are all made
+        const lines: Poly[] = [];
+        let made = 0;
+        for (const level of at) {
+          this.tick(c.args.at, Math.ceil((nx * ny) / 100));
+          const ls = contourLines(vals, nx, ny, b[0], b[1], cell, level);
+          const n = ls.reduce((sum, l) => sum + l.length, 0);
+          if (!((made += n) <= this.limits.maxPoints))
+            throw new Error(
+              `the contour lines have more than ${this.limits.maxPoints} points, the limit: use fewer levels or a larger cell`,
+            );
+          this.spend(n);
+          for (const l of ls) lines.push(l);
+        }
+        return lineShape(clipLines(lines, keep, 'inside'));
+      },
+      // Children back to front, as if each were opaque: the lines and
+      // outlines of each are hidden where a later child's area covers
+      // them, and filled layers lose that area; hide() is an area that
+      // covers but is not drawn
+      occlude: (c) => {
+        let kids: Shape[];
+        this.occluding++;
+        try {
+          kids = c.childItems();
+        } finally {
+          this.occluding--;
+        }
+        const mode = (k: string) => this.layers.get(k)?.mode ?? 'cut';
+        const out: Shape[] = [];
+        let above: Poly[] = [];
+        for (let i = kids.length - 1; i >= 0; i--) {
+          const k = kids[i];
+          if (k.parts.length) throw new Error('part() cannot go inside occlude()');
+          const layers = new Map<string, Layer>();
+          for (const [name, l] of k.layers) {
+            if (name === HIDDEN) continue;
+            const m = mode(name);
+            if (!above.length || m === 'cut' || m === 'guide') layers.set(name, l);
+            else if (m === 'line')
+              layers.set(name, {
+                regions: [],
+                lines: clipLines(
+                  [...l.lines, ...union(l.regions).map((r) => [...r, r[0]])],
+                  above,
+                  'outside',
+                ),
+              });
+            else
+              layers.set(name, {
+                regions: difference(l.regions, above),
+                lines: clipLines(l.lines, above, 'outside'),
+              });
+          }
+          out.push({ layers, parts: [] });
+          const mine = [...k.layers]
+            .filter(([name]) => mode(name) !== 'guide')
+            .flatMap(([, l]) => l.regions);
+          if (mine.length) above = union([...above, ...mine]);
+        }
+        return merge(out.reverse());
+      },
+      // An area that hides what is behind it in occlude(), not drawn
+      hide: (c) => {
+        if (!this.occluding) {
+          this.warn(
+            `hide() only works inside occlude(); it draws nothing (${where(c.args.at, false)})`,
+          );
+          return emptyShape();
+        }
+        return regionShape(union(flat([c.children()], 'hide').regions), HIDDEN);
+      },
       // Painter's order: each child loses the area of every child after it.
       // With layers, child i goes on layers[i] ("" leaves it out: a bare
       // area that still covers the ones before it); without, each keeps
@@ -1916,6 +2156,9 @@ export class Evaluator {
             if (!this.layers.has(layer))
               this.layers.set(layer, { name: layer, mode: 'fill', color: '#000000' });
             out.push(regionShape(later.length ? difference(mine, later) : mine, layer));
+            // hide()'s areas go on as they are, for an occlude() around
+            const hidden = k.layers.get(HIDDEN);
+            if (hidden) out.push({ layers: new Map([[HIDDEN, hidden]]), parts: [] });
           } else
             out.push(
               later.length
@@ -2446,7 +2689,9 @@ export class Evaluator {
       const out: Layer = { regions: [], lines: [] };
       for (const s of shapes) {
         if (s.parts.length) throw new Error(`part() can only be the first child of ${fn}()`);
-        for (const l of s.layers.values()) for (const p of l.regions) out.regions.push(p);
+        // hide()'s areas are only for occlude(): never the area of anything
+        for (const [k, l] of s.layers)
+          if (k !== HIDDEN) for (const p of l.regions) out.regions.push(p);
       }
       return out;
     }
