@@ -185,8 +185,29 @@ export function clipLines(lines: Poly[], region: Poly[], keep: 'inside' | 'outsi
     }
     for (let y = cell(Math.min(a[1], b[1])); y <= cell(Math.max(a[1], b[1])); y++) add(rows, y, i);
   });
-  const near = (a: Pt, b: Pt): Set<number> => {
+  const near = (from: Pt, to: Pt): Set<number> => {
     const out = new Set<number>();
+    // Only the part of the segment over the region's box, a cell wider all
+    // round, can meet an edge: a line far longer than the region is
+    // looked at only where it crosses it
+    let t0 = 0,
+      t1 = 1;
+    for (const k of [0, 1]) {
+      const d = to[k] - from[k],
+        lo = box[k] - size,
+        hi = box[k + 2] + size;
+      if (d === 0) {
+        if (from[k] < lo || from[k] > hi) return out;
+        continue;
+      }
+      const ta = (lo - from[k]) / d,
+        tb = (hi - from[k]) / d;
+      t0 = Math.max(t0, Math.min(ta, tb));
+      t1 = Math.min(t1, Math.max(ta, tb));
+    }
+    if (!(t0 <= t1)) return out;
+    const a: Pt = [from[0] + (to[0] - from[0]) * t0, from[1] + (to[1] - from[1]) * t0];
+    const b: Pt = [from[0] + (to[0] - from[0]) * t1, from[1] + (to[1] - from[1]) * t1];
     const n = Math.max(1, Math.ceil((Math.hypot(b[0] - a[0], b[1] - a[1]) / size) * 2));
     for (let k = 0; k <= n; k++) {
       const x = a[0] + ((b[0] - a[0]) * k) / n,
@@ -254,8 +275,11 @@ export function clipLines(lines: Poly[], region: Poly[], keep: 'inside' | 'outsi
         }
       }
       ts.sort((x, y) => x - y);
+      // Pieces shorter than Clipper's resolution are dropped, by length,
+      // so a short piece of a very long segment is kept
+      const len = Math.hypot(dx, dy);
       for (let j = 1; j < ts.length; j++) {
-        if (ts[j] - ts[j - 1] < 1e-12) continue;
+        if ((ts[j] - ts[j - 1]) * len < 1e-9 || ts[j] - ts[j - 1] < 1e-300) continue;
         const p0: Pt = [r4(s[0] + dx * ts[j - 1]), r4(s[1] + dy * ts[j - 1])];
         const p1: Pt = [r4(s[0] + dx * ts[j]), r4(s[1] + dy * ts[j])];
         const tm = (ts[j - 1] + ts[j]) / 2;

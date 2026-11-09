@@ -1950,7 +1950,8 @@ export class Evaluator {
           'flow',
           'step',
         );
-        if (!(step > 0)) throw new Error('step must be more than 0');
+        if (!(step > 0 && step <= spacing))
+          throw new Error('step must be more than 0 and at most the spacing');
         const minLength = this.num(
           this.arg(c.args, 'min_length', -1, 2 * spacing),
           'flow',

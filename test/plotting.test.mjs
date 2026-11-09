@@ -201,3 +201,21 @@ test('hide() areas are never drawn or filled by other modules', () => {
   const hatched = render('part("p") { rect(30); occlude() score() hatch(0, 3) hide() rect(10); }');
   assert.equal(lines(hatched).length, 0);
 });
+
+test('a long step or a long line stops at the limits instead of running on', () => {
+  assert.throws(
+    () => render('flow(0, spacing = 2, step = 1e200) rect(10);', { maxSteps: 1000 }),
+    /at most the spacing/,
+  );
+  // Clipping looks at a line only where it crosses the area
+  const far = render('part("p") { rect(10); score() line([0, 5], [1e200, 5]); }', {
+    maxSteps: 1000,
+  });
+  assert.deepEqual(lines(far), [
+    [
+      [0, 5],
+      [10, 5],
+    ],
+  ]);
+  assert.ok(render('difference() { line([0, 0], [1e200, 0]); translate([5, -5]) rect(10); }'));
+});
