@@ -19,6 +19,7 @@ import {
   merge,
   offset,
   pieces,
+  joinIslands,
   regionShape,
   retag,
   roundedRect,
@@ -1602,11 +1603,20 @@ export class Evaluator {
             `the text is more than ${this.limits.maxTextLength} characters, the limit for one text()`,
           );
         this.tick(c.args.at, shown.text.length);
-        const glyphs = textRegions(
-          this.opts.fonts,
-          shown.text,
-          this.textOpts(c.args, c.env, shown.text),
-        );
+        const topts = this.textOpts(c.args, c.env, shown.text);
+        let glyphs = textRegions(this.opts.fonts, shown.text, topts);
+        // weight = "bold" thickens the strokes by a share of the size, or a
+        // number of mm (less than 0 thins them); bridge = w joins every
+        // island (an i's dot, an accent, a stencil's counter) to the rest
+        const weightArg = this.arg(c.args, 'weight', -1);
+        const bridgeArg = this.arg(c.args, 'bridge', -1);
+        if (weightArg !== undefined && weightArg !== 'regular') {
+          const grow =
+            weightArg === 'bold' ? 0.035 * topts.size : this.num(weightArg, 'text', 'weight');
+          if (grow) glyphs = offset(union(glyphs), grow, 'round');
+        }
+        if (bridgeArg !== undefined)
+          glyphs = joinIslands(glyphs, this.num(bridgeArg, 'text', 'bridge'));
         // In a mirrored part the text is drawn mirrored, to read the right
         // way round once the part is
         // Flipped within its own width, so it stays where it was put
@@ -1955,6 +1965,25 @@ export class Evaluator {
           regions: union(l.regions).filter((p) => !(area(p) < 0 && -area(p) < limit)),
           lines: l.lines,
         }));
+      },
+      // Every island of the material joined to the rest by a strip w wide
+      join_islands: (c) => {
+        const w = this.num(this.arg(c.args, 'width', 0, 1), 'join_islands', 'width');
+        if (!(w > 0)) throw new Error('join_islands(): width must be more than 0');
+        const shape = c.children();
+        const each = (from: Map<string, Layer>) =>
+          new Map(
+            [...from].map(([k, l]): [string, Layer] => [
+              k,
+              (this.layers.get(k)?.mode ?? 'cut') === 'cut'
+                ? { regions: joinIslands(l.regions, w), lines: l.lines }
+                : l,
+            ]),
+          );
+        return {
+          layers: each(shape.layers),
+          parts: shape.parts.map((p) => ({ ...p, layers: each(p.layers) })),
+        };
       },
       // The n biggest connected pieces of the material, so a trimmed or
       // generated outline can drop the crumbs it leaves; marks stay as drawn

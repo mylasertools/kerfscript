@@ -363,22 +363,24 @@ export examples.
 
 ### Shapes
 
-| Module                                                     | Notes                                                                        |
-| ---------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `rect(size, center = false, r = 0)`                        | `size` is a number or `[w, h]`; `r` rounds the corners. `square` is an alias |
-| `circle(r)` or `circle(d = ...)`                           |                                                                              |
-| `ellipse([rx, ry])`                                        |                                                                              |
-| `regular_polygon(n, r)`                                    | corner radius `r`                                                            |
-| `star(n, r, inner)`                                        |                                                                              |
-| `polygon(points, paths)`                                   | even-odd fill, `paths` lists point indexes per outline                       |
-| `path(d, fill = "evenodd", close = false)`                 | SVG path data; closed subpaths become shapes, open ones lines unless `close` |
-| `text(text, size = 10, font, halign, valign, spacing = 1)` | `halign`: left, center, right; `valign`: baseline, top, center, bottom       |
-| `text(text, size, fit = width)`                            | no wider than `fit`: the size shrinks to fit, never above `size` if given    |
-| `line(from, to)`                                           | a line, not an area                                                          |
-| `line(from, to, width)`                                    | a strip `width` wide between the points, an area                             |
-| `spline(points, width, steps = 8, closed = false)`         | a smooth curve through the points; with `width`, an area along it            |
-| `polyline(points, closed = false)`                         |                                                                              |
-| `arc(r, start = 0, end = 90)`                              | arc line, angles in degrees                                                  |
+| Module                                                     | Notes                                                                                                                               |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `rect(size, center = false, r = 0)`                        | `size` is a number or `[w, h]`; `r` rounds the corners. `square` is an alias                                                        |
+| `circle(r)` or `circle(d = ...)`                           |                                                                                                                                     |
+| `ellipse([rx, ry])`                                        |                                                                                                                                     |
+| `regular_polygon(n, r)`                                    | corner radius `r`                                                                                                                   |
+| `star(n, r, inner)`                                        |                                                                                                                                     |
+| `polygon(points, paths)`                                   | even-odd fill, `paths` lists point indexes per outline                                                                              |
+| `path(d, fill = "evenodd", close = false)`                 | SVG path data; closed subpaths become shapes, open ones lines unless `close`                                                        |
+| `text(text, size = 10, font, halign, valign, spacing = 1)` | `halign`: left, center, right; `valign`: baseline, top, center, bottom                                                              |
+| `text(text, size, fit = width)`                            | no wider than `fit`: the size shrinks to fit, never above `size` if given                                                           |
+| `text(text, size, weight = "bold")`                        | strokes thickened by 3.5% of the size, or by a number of mm (less than 0 thins)                                                     |
+| `text(text, size, bridge = w)`                             | every island (an i's dot, an accent, a stencil's counter) joined to the rest by a strip `w` wide, for cut-out and stencil lettering |
+| `line(from, to)`                                           | a line, not an area                                                                                                                 |
+| `line(from, to, width)`                                    | a strip `width` wide between the points, an area                                                                                    |
+| `spline(points, width, steps = 8, closed = false)`         | a smooth curve through the points; with `width`, an area along it                                                                   |
+| `polyline(points, closed = false)`                         |                                                                                                                                     |
+| `arc(r, start = 0, end = 90)`                              | arc line, angles in degrees                                                                                                         |
 
 Supply geometry as children of a shape-processing module, for example
 `translate([10, 0]) circle(d = 5);`. Fonts used by `text()` must be supplied
@@ -405,6 +407,7 @@ playground, the command line and `kerfscript.wasm` have `Atkinson`
 | `difference()`                                 | removes every later child's area from every layer of the first child                                                                    |
 | `intersection()`                               | keeps the area common to all children; lines of any child are clipped to the others' area, and a child of lines alone leaves only lines |
 | `fill_holes(min_area)`                         | fills holes smaller than `min_area` mm², or all of them                                                                                 |
+| `join_islands(width = 1)`                      | joins every separate piece of the material to the nearest other piece with a strip `width` wide, until it is one piece                  |
 | `largest(n = 1)`                               | keeps the `n` biggest connected pieces of the material, dropping crumbs; marks stay as drawn                                            |
 | `close(r = 0.5)`                               | closes gaps and notches narrower than `2 r`, keeping the outline                                                                        |
 | `pattern(spacing, stagger = 0)`                | repeats its first child over the area of the others, clipped at the edge                                                                |

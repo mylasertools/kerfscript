@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { render } from '../dist/index.js';
+import { readFileSync } from 'node:fs';
+import { render as plain } from '../dist/index.js';
+
+const fonts = {
+  Atkinson: readFileSync(new URL('../fonts/AtkinsonHyperlegible-Regular.ttf', import.meta.url)),
+};
+const render = (src, opts = {}) => plain(src, { fonts, ...opts });
 
 const echo = (src) => render(`${src} square(1);`).echoes;
 
@@ -118,4 +124,26 @@ test('a setting marked drive is the one that moves the model', async () => {
       ['name', false, undefined, undefined, undefined],
     ],
   );
+});
+
+test('bridged and bold text and solid symbols cut as one piece', () => {
+  const pieces = (src) => render(src).parts.map((p) => p.pieces);
+  assert.deepEqual(
+    pieces(`
+part("Plain") text("Jiří", size = 14);
+part("Bridged") text("Jiří", size = 14, bridge = 1.2);
+part("Bold") text("Jiří", size = 14, weight = "bold", bridge = 1.2);
+part("Stencil") join_islands(1.5) difference() { translate([-3, -4]) square([60, 22]); text("OBA", size = 14); }`),
+    [7, 1, 1, 1],
+  );
+  // Bold is wider by twice the growth
+  const w = (src) => render(src).parts[0].width;
+  assert.ok(
+    Math.abs(w('text("H", size = 20, weight = "bold");') - w('text("H", size = 20);') - 1.4) < 0.05,
+  );
+  const sym = (o) =>
+    render(`use <kerf/symbols> part("s") symbol("cold-night-wild-outdoors-nature", 40${o});`)
+      .parts[0];
+  assert.equal(sym('').pieces, 2);
+  assert.equal(sym(', solid = true, bridge = 2').pieces, 1);
 });

@@ -527,3 +527,62 @@ export function roundedRect(w: number, h: number, r: number, segs: (r: number) =
     }
   return out;
 }
+
+// Every island of material joined to the nearest other piece by a strip w
+// wide, until it is all one piece: a dot over an i, an accent, the middle of
+// a stencil O. Each strip runs from an island's nearest point, a little
+// into both sides
+export function joinIslands(regions: Poly[], w: number): Poly[] {
+  let cur = union(regions);
+  for (let round = 0; round < 100; round++) {
+    const groups = pieces(cur);
+    if (groups.length <= 1) return cur;
+    const size = (g: Poly[]) => g.reduce((t, r) => t + area(r), 0);
+    groups.sort((a, b) => size(b) - size(a));
+    const bridges: Poly[] = [];
+    for (let i = 1; i < groups.length; i++) {
+      let best = Infinity;
+      let from: Pt = [0, 0],
+        to: Pt = [0, 0];
+      for (const [px, py] of groups[i][0])
+        for (let j = 0; j < groups.length; j++) {
+          if (j === i) continue;
+          for (const ring of groups[j])
+            for (let k = 0, l = ring.length - 1; k < ring.length; l = k++) {
+              const [ax, ay] = ring[l],
+                [bx, by] = ring[k];
+              const dx = bx - ax,
+                dy = by - ay;
+              const len2 = dx * dx + dy * dy;
+              const f = len2
+                ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2))
+                : 0;
+              const qx = ax + f * dx,
+                qy = ay + f * dy;
+              const d = Math.hypot(px - qx, py - qy);
+              if (d < best) [best, from, to] = [d, [px, py], [qx, qy]];
+            }
+        }
+      if (!Number.isFinite(best)) continue;
+      // Along the gap, w wide, reaching w / 2 into both pieces
+      let ux = to[0] - from[0],
+        uy = to[1] - from[1];
+      const n = Math.hypot(ux, uy);
+      if (n < 1e-9) [ux, uy] = [0, 1];
+      else [ux, uy] = [ux / n, uy / n];
+      const [nx, ny] = [-uy * (w / 2), ux * (w / 2)];
+      const a: Pt = [from[0] - ux * (w / 2), from[1] - uy * (w / 2)];
+      const b: Pt = [to[0] + ux * (w / 2), to[1] + uy * (w / 2)];
+      const strip: Poly = [
+        [a[0] - nx, a[1] - ny],
+        [b[0] - nx, b[1] - ny],
+        [b[0] + nx, b[1] + ny],
+        [a[0] + nx, a[1] + ny],
+      ];
+      bridges.push(area(strip) < 0 ? strip.reverse() : strip);
+    }
+    if (!bridges.length) return cur;
+    cur = union([...cur, ...bridges]);
+  }
+  return cur;
+}

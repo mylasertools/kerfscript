@@ -795,13 +795,19 @@ part("tag") {
 }
 ```
 
-### `symbol(name, size = 10, center = true, fill = "nonzero", box = "drawn")`
+### `symbol(name, size = 10, center = true, fill = "nonzero", box = "drawn", solid = false, close, bridge)`
 
 The symbol `size` mm across the longer side of what it draws, centred on
 the origin, or with its bottom left corner there. With `box = "grid"`,
 `size` and the centre are those of the icon set's own grid (24 x 24 for
 Material Design Icons), so icons from one set keep their sizes and places
 relative to each other: paw prints in a trail, an icon swapped for another.
+
+To cut a pictogram out rather than engrave it, `solid = true` gives one
+silhouette, with gaps narrower than `2 * close` (default `size / 30`)
+closed and holes filled, and the drawing's own detail engraved on it.
+`bridge = w` also joins pieces too far apart to close, such as a moon
+beside a mountain, with strips `w` wide.
 
 ### `symbol_names(category)`, `symbol_size(name, size = 10, box = "drawn")`, `symbol_source(name)`, `symbol_entry(name)`
 

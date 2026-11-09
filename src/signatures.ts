@@ -165,6 +165,15 @@ export const SIGNATURES: Signature[] = [
       named('valign', 'baseline, top, center or bottom', '"baseline"'),
       named('spacing', 'Letter spacing factor', '1'),
       named('fit', 'Shrink the size so the text is no wider than this'),
+      named(
+        'weight',
+        '"bold" thickens the strokes by 3.5% of the size, or a number of mm (less than 0 thins them)',
+        '"regular"',
+      ),
+      named(
+        'bridge',
+        "Join every island (an i's dot, an accent, a stencil's counter) to the rest with a strip this wide",
+      ),
     ],
     section: 'Shapes',
     doc: 'Text as shapes; the font must be available to the renderer',
@@ -358,6 +367,14 @@ export const SIGNATURES: Signature[] = [
     children: true,
     section: 'Combining',
     doc: 'Fill the holes in the areas of the children',
+  },
+  {
+    name: 'join_islands',
+    kind: 'module',
+    params: [p('width', 'How wide each joining strip is', '1')],
+    children: true,
+    section: 'Combining',
+    doc: 'Join every separate piece of the material to the nearest other piece with a strip, until it is one piece',
   },
   {
     name: 'largest',
