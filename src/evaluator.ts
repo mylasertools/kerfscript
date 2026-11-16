@@ -267,7 +267,22 @@ interface Args {
 const sentence = (hint: string) => (hint ? `.${hint}` : '');
 
 // Functions the evaluator runs itself rather than through FUNCTIONS
-const SPECIAL = ['echo', 'assert', 'text_width', 'text_metrics', 'finger_count'];
+// A call nested deeper than the interpreter allows: a recursion that never
+// ends, or one that goes once round a long list
+const tooDeep = (kind: 'module' | 'function', name: string) =>
+  kind === 'module'
+    ? `Recursion too deep in module ${name}(): check that it stops`
+    : `Recursion too deep in ${name}(): check that it stops, or use fold(), scan() or a list comprehension to go through a long list`;
+
+// OpenSCAD modules that run as their children, with why
+const PASSED_THROUGH: Record<string, string> = {
+  color:
+    'its children are drawn as they are. Use cut(), score(), engrave() or layer() to choose how they are cut.',
+  linear_extrude:
+    'its children are drawn flat, as the part outline. A part takes its height from $thickness.',
+};
+
+const SPECIAL = ['echo', 'assert', 'text_width', 'text_metrics', 'text_size', 'finger_count'];
 
 // ` Did you mean "x"?` for the known name closest to a mistyped one
 export function didYouMean(name: string, known: Iterable<string>): string {
@@ -391,7 +406,10 @@ export class Evaluator {
   private tick(pos?: Pos, n = 1) {
     // Written so that a count that is not a number stops the program too
     if (!((this.steps += n) <= this.maxSteps))
-      throw new KerfError(`Stopped after ${this.maxSteps} steps. Is there an endless loop?`, pos);
+      throw new KerfError(
+        `Stopped after ${this.maxSteps} steps. Is there an endless loop, or more work than one program may do (a long list, a fine spacing)?`,
+        pos,
+      );
   }
 
   private load(path: string, at: Pos): Program {
@@ -747,11 +765,7 @@ export class Evaluator {
     const args = this.evalArgs(s.args, env, s.pos);
     const user = env.mod(s.name);
     if (user) {
-      if (++this.depth > 1000)
-        throw new KerfError(
-          `Recursion too deep in module ${s.name}(): it calls itself without stopping`,
-          s.pos,
-        );
+      if (++this.depth > 1000) throw new KerfError(tooDeep('module', s.name), s.pos);
       try {
         const e = new Env(user.env, env);
         this.bindParams(user.params, args, e, user.env, `${s.name}()`);
@@ -765,11 +779,15 @@ export class Evaluator {
       }
     }
     const b = own(this.builtins, s.name);
+    // OpenSCAD's color() and linear_extrude() pass their children through,
+    // so the 2D part of an OpenSCAD file runs as it is
+    const passed = own(PASSED_THROUGH, s.name);
+    if (!b && passed) {
+      this.warn(`${s.name}() is ignored: ${passed} (${where(s.pos, false)})`);
+      return s.children.length ? this.block(s.children, new Env(env, env)) : emptyShape();
+    }
     if (!b) {
-      const hint =
-        s.name === 'color'
-          ? ' Use layer(), cut(), score() or engrave() instead.'
-          : didYouMean(s.name, [...env.names('mods'), ...Object.keys(this.builtins)]);
+      const hint = didYouMean(s.name, [...env.names('mods'), ...Object.keys(this.builtins)]);
       throw new KerfError(`Unknown module ${s.name}().${hint}`, s.pos);
     }
     this.checkArgs(s.name, args);
@@ -852,11 +870,7 @@ export class Evaluator {
   }
 
   callFunction(f: FnDef | Closure, args: Args, caller: Env, name: string): Value {
-    if (++this.depth > 2000)
-      throw new KerfError(
-        `Recursion too deep in ${name}(): it calls itself without stopping`,
-        args.at,
-      );
+    if (++this.depth > 2000) throw new KerfError(tooDeep('function', name), args.at);
     try {
       this.tick(args.at);
       const defEnv = (isFn(f as Value) ? (f as Closure).scope : (f as FnDef).env) as Env;
@@ -877,10 +891,7 @@ export class Evaluator {
   private inCall(e: unknown, kind: 'module' | 'function', name: string, at: Pos): unknown {
     // Not a regular expression: with the stack this full, compiling one fails too
     if (e instanceof Error && !(e instanceof KerfError) && e.message.includes('call stack'))
-      return new KerfError(
-        `Recursion too deep in ${kind === 'module' ? 'module ' : ''}${name}(): it calls itself without stopping`,
-        at,
-      );
+      return new KerfError(tooDeep(kind, name), at);
     if (e instanceof KerfError) e.addFrame(kind, name, at);
     return e;
   }
@@ -1157,11 +1168,23 @@ export class Evaluator {
       this.assert(a);
       return { handled: true, value: true };
     }
-    if (name === 'text_width' || name === 'text_metrics') {
+    if (name === 'text_width' || name === 'text_metrics' || name === 'text_size') {
       const a = this.evalArgs(x.args, env, x.pos);
       this.checkArgs(name, a);
       const m = this.measure(a, env);
       if (name === 'text_width') return { handled: true, value: m.advance };
+      if (name === 'text_size') {
+        const fields = new Map<string, Value>([
+          ['width', m.advance],
+          ['height', m.bounds[1][1] - m.bounds[0][1]],
+          ['bounds', m.bounds as Value],
+          ['cap', m.cap],
+          ['ascent', m.ascent],
+          ['descent', m.descent],
+          ['size', m.size],
+        ]);
+        return { handled: true, value: { type: 'record', fields } };
+      }
       return {
         handled: true,
         value: [m.advance, m.bounds as Value, m.ascent, m.descent],
@@ -1443,7 +1466,8 @@ export class Evaluator {
     // Laying out text takes a step for each character
     this.tick(a.at, shown.text.length);
     try {
-      return textMetrics(this.opts.fonts, shown.text, this.textOpts(a, env, shown.text));
+      const o = this.textOpts(a, env, shown.text);
+      return { ...textMetrics(this.opts.fonts, shown.text, o), size: o.size };
     } catch (e) {
       if (e instanceof KerfError) throw e;
       throw new KerfError((e as Error).message, a.at);
@@ -1458,15 +1482,29 @@ export class Evaluator {
       valign: toText(this.arg(a, 'valign', -1, 'baseline')),
       spacing: toNumber(this.arg(a, 'spacing', -1, 1)),
     };
-    // fit = width: no wider than that, and no bigger than size if given
+    // fit = width, or [width, cap height]: no wider than the width, capitals
+    // no taller than the height, and no bigger than size if given
     const fit = this.arg(a, 'fit', -1);
     if (fit !== undefined && shown !== undefined && this.opts.fonts) {
-      const w = this.num(fit, 'text', 'fit');
-      if (!(w > 0)) throw new Error('fit must be a width more than 0');
-      const one = textMetrics(this.opts.fonts, shown, { ...o, size: 1 }).advance;
-      if (one > 0) {
+      const [w, h] = Array.isArray(fit) ? [fit[0], fit[1]] : [fit, undefined];
+      const limit = (v: Value, what: string) => {
+        if (v === undefined) return undefined;
+        const n = this.num(v, 'text', 'fit');
+        if (!(n > 0)) throw new Error(`fit must be a ${what} more than 0`);
+        return n;
+      };
+      const fw = limit(w, 'width');
+      const fh = limit(h, 'height');
+      if (Array.isArray(fit) && (fit.length !== 2 || (fw === undefined && fh === undefined)))
+        throw new Error('fit must be a width, or [width, height] with either one undef');
+      const one = textMetrics(this.opts.fonts, shown, { ...o, size: 1 });
+      const sizes = [
+        ...(fw !== undefined && one.advance > 0 ? [fw / one.advance] : []),
+        ...(fh !== undefined && one.cap > 0 ? [fh / one.cap] : []),
+      ];
+      if (sizes.length) {
         const given = this.arg(a, 'size', 1);
-        o.size = given === undefined ? w / one : Math.min(o.size, w / one);
+        o.size = Math.min(...sizes, ...(given === undefined ? [] : [o.size]));
       }
     }
     return o;
@@ -1547,7 +1585,12 @@ export class Evaluator {
         return regionShape([ellipsePoly(r, r, this.segs(c.env)(r))]);
       },
       ellipse: (c) => {
-        const [rx, ry] = this.vec2(this.arg(c.args, 'r', 0, 1), 'r');
+        // d = [width, height] or one diameter, instead of the radii
+        const d = this.arg(c.args, 'd', -1);
+        const [rx, ry] =
+          d !== undefined
+            ? this.vec2(d, 'd').map((v) => v / 2)
+            : this.vec2(this.arg(c.args, 'r', 0, 1), 'r');
         return regionShape([ellipsePoly(rx, ry, this.segs(c.env)(Math.max(rx, ry)))]);
       },
       regular_polygon: (c) => {

@@ -174,7 +174,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       e instanceof RangeError
         ? new KerfError(
             /call stack/i.test(e.message)
-              ? 'Recursion too deep: the program calls itself without stopping'
+              ? 'Recursion too deep: check that it stops, or use fold(), scan() or a list comprehension to go through a long list'
               : 'A value grew too large. Is a list or string doubling without end?',
           )
         : e;

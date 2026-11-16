@@ -368,13 +368,14 @@ export examples.
 | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `rect(size, center = false, r = 0)`                        | `size` is a number or `[w, h]`; `r` rounds the corners. `square` is an alias                                                        |
 | `circle(r)` or `circle(d = ...)`                           |                                                                                                                                     |
-| `ellipse([rx, ry])`                                        |                                                                                                                                     |
+| `ellipse([rx, ry])` or `ellipse(d = [w, h])`               | radii, or the width and height                                                                                                      |
 | `regular_polygon(n, r)`                                    | corner radius `r`                                                                                                                   |
 | `star(n, r, inner)`                                        |                                                                                                                                     |
 | `polygon(points, paths)`                                   | even-odd fill, `paths` lists point indexes per outline                                                                              |
 | `path(d, fill = "evenodd", close = false)`                 | SVG path data; closed subpaths become shapes, open ones lines unless `close`                                                        |
-| `text(text, size = 10, font, halign, valign, spacing = 1)` | `halign`: left, center, right; `valign`: baseline, top, center, bottom                                                              |
+| `text(text, size = 10, font, halign, valign, spacing = 1)` | `halign`: left, center, right; `valign`: baseline, top, center, bottom, or cap (capitals centred on y = 0)                          |
 | `text(text, size, fit = width)`                            | no wider than `fit`: the size shrinks to fit, never above `size` if given                                                           |
+| `text(text, size, fit = [w, h])`                           | no wider than `w`, capitals no taller than `h`; either may be `undef`                                                               |
 | `text(text, size, weight = "bold")`                        | strokes thickened by 3.5% of the size, or by a number of mm (less than 0 thins)                                                     |
 | `text(text, size, bridge = w)`                             | every island (an i's dot, an accent, a stencil's counter) joined to the rest by a strip `w` wide, for cut-out and stencil lettering |
 | `line(from, to)`                                           | a line, not an area                                                                                                                 |
@@ -581,11 +582,18 @@ related but different pattern.
 
 `text_width(text, size, font)` returns the advance width, including glyph
 spacing. `text_metrics(text, size, font)` returns
-`[advance, [[x0, y0], [x1, y1]], ascent, descent]`.
+`[advance, [[x0, y0], [x1, y1]], ascent, descent]`. `text_size(text, size,
+font)` returns the same as a record, with the capital height and the size
+used: `width`, `height`, `bounds`, `cap`, `ascent`, `descent` and `size`.
 
-With `fit = width` they measure the text at the size `text()` would fit it to.
+```kerf
+m = text_size("Anna", fit = [80, 20]);
+echo(m.size, m.cap); // the size that fits, and capitals 20 mm tall
+```
 
-Both require the font to be available to the renderer, just like `text()`.
+With `fit` they measure the text at the size `text()` would fit it to.
+
+All three require the font to be available to the renderer, just like `text()`.
 
 ### Joint dimensions
 

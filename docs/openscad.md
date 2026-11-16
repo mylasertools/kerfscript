@@ -23,15 +23,15 @@ See the [language reference](../LANGUAGE.md) for supported arguments.
 
 ## Different
 
-| Feature     | OpenSCAD                                                     | KerfScript                                                 |
-| ----------- | ------------------------------------------------------------ | ---------------------------------------------------------- |
-| Geometry    | 3D and 2D                                                    | 2D parts for laser cutting                                 |
-| Output      | 3D formats and 2D exports                                    | SVG and DXF with operation layers                          |
-| Assignments | The last assignment in a scope applies throughout that scope | Assignments take effect in order                           |
-| Type errors | Many produce `undef` and a warning                           | Stop evaluation with an error                              |
-| `color()`   | Sets a shape's colour                                        | Use `cut()`, `score()`, `engrave()` or `layer()`           |
-| Fonts       | Looks up system fonts                                        | Uses fonts supplied by the application or CLI              |
-| Libraries   | Can load local files                                         | Loads the standard library and sources allowed by the host |
+| Feature     | OpenSCAD                                                     | KerfScript                                                               |
+| ----------- | ------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| Geometry    | 3D and 2D                                                    | 2D parts for laser cutting                                               |
+| Output      | 3D formats and 2D exports                                    | SVG and DXF with operation layers                                        |
+| Assignments | The last assignment in a scope applies throughout that scope | Assignments take effect in order                                         |
+| Type errors | Many produce `undef` and a warning                           | Stop evaluation with an error                                            |
+| `color()`   | Sets a shape's colour                                        | Ignored with a warning; use `cut()`, `score()`, `engrave()` or `layer()` |
+| Fonts       | Looks up system fonts                                        | Uses fonts supplied by the application or CLI                            |
+| Libraries   | Can load local files                                         | Loads the standard library and sources allowed by the host               |
 
 Assignment order is especially important when adapting a design. A value
 assigned later in a KerfScript program does not change earlier geometry.
@@ -39,11 +39,13 @@ assigned later in a KerfScript program does not change earlier geometry.
 ## Not in KerfScript
 
 KerfScript does not support `cube`, `sphere`, `cylinder`, `polyhedron`,
-`linear_extrude`, `rotate_extrude` or `projection`. It also does not support
-`minkowski`, `resize`, `color`, `import`, `surface` or `render`.
+`rotate_extrude` or `projection`. It also does not support `minkowski`,
+`resize`, `import`, `surface` or `render`. Calls to these modules produce an
+error.
 
-Calls to these modules produce an error. For a design based on an extruded
-2D outline, start with that outline and remove the extrusion.
+`color()` and `linear_extrude()` run as their children, with a warning, so
+the 2D part of an OpenSCAD file runs as it is: `linear_extrude(3) shape();`
+cuts `shape()` as a flat part, whose thickness comes from `$thickness`.
 
 ## Only in KerfScript
 

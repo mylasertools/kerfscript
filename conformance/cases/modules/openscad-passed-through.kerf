@@ -1,0 +1,6 @@
+// OpenSCAD's color() and linear_extrude() run as their children, with a warning
+// => warning: color() is ignored: its children are drawn as they are. Use cut(), score(), engrave() or layer() to choose how they are cut. (line 5)
+// => warning: linear_extrude() is ignored: its children are drawn flat, as the part outline. A part takes its height from $thickness. (line 6)
+// => part: "part" size=20x10
+color("red") rect(10);
+linear_extrude(3) rect([20, 5]);

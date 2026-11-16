@@ -69,9 +69,13 @@ const text = (name: string, doc: string): Signature => ({
     p('size', 'Font size in millimetres', '10'),
     p('font', 'Font name', '$font'),
     named('halign', 'left, center or right', '"left"'),
-    named('valign', 'baseline, top, center or bottom', '"baseline"'),
+    named(
+      'valign',
+      'baseline, top, center, bottom, or cap (capitals centred on y = 0)',
+      '"baseline"',
+    ),
     named('spacing', 'Letter spacing factor', '1'),
-    named('fit', 'Measure at the size that fits this width'),
+    named('fit', 'Measure at the size that fits this width, or [width, cap height]'),
   ],
   section: 'Text measurements',
   doc,
@@ -111,7 +115,10 @@ export const SIGNATURES: Signature[] = [
   {
     name: 'ellipse',
     kind: 'module',
-    params: [p('r', '[rx, ry], or one radius for both', '1')],
+    params: [
+      p('r', '[rx, ry], or one radius for both', '1'),
+      named('d', '[width, height], or one diameter for both, instead of r'),
+    ],
     section: 'Shapes',
     doc: 'An ellipse centred on the origin',
   },
@@ -162,9 +169,16 @@ export const SIGNATURES: Signature[] = [
       p('size', 'Font size in millimetres', '10'),
       p('font', 'Font name', '$font'),
       named('halign', 'left, center or right', '"left"'),
-      named('valign', 'baseline, top, center or bottom', '"baseline"'),
+      named(
+        'valign',
+        'baseline, top, center, bottom, or cap (capitals centred on y = 0)',
+        '"baseline"',
+      ),
       named('spacing', 'Letter spacing factor', '1'),
-      named('fit', 'Shrink the size so the text is no wider than this'),
+      named(
+        'fit',
+        'Shrink the size so the text is no wider than this, or fits [width, cap height]',
+      ),
       named(
         'weight',
         '"bold" thickens the strokes by 3.5% of the size, or a number of mm (less than 0 thins them)',
@@ -1093,6 +1107,10 @@ export const SIGNATURES: Signature[] = [
   // Text and joints
   text('text_width', 'The advance width of the text, including spacing'),
   text('text_metrics', 'The text as [advance, [[x0, y0], [x1, y1]], ascent, descent]'),
+  text(
+    'text_size',
+    'The text as a record: width (advance), height, bounds, cap (capital height), ascent, descent and size',
+  ),
   {
     name: 'finger_count',
     kind: 'function',

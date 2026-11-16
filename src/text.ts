@@ -13,6 +13,17 @@ interface OtFont {
   ascender: number;
   descender: number;
   unitsPerEm: number;
+  tables?: { os2?: { sCapHeight?: number } };
+}
+
+// The height of a capital letter: the font's own figure, or the height of H
+function capHeight(font: OtFont, size: number): number {
+  const c = font.tables?.os2?.sCapHeight;
+  if (c && c > 0) return (c / font.unitsPerEm) * size;
+  const b = bounds(
+    outlines(font, 'H', { size, font: '', halign: 'left', valign: 'baseline', spacing: 1 }).polys,
+  );
+  return b ? b[3] : (font.ascender / font.unitsPerEm) * size;
 }
 
 export class FontBook {
@@ -110,7 +121,9 @@ export function textRegions(book: FontBook, text: string, o: TextOptions): Poly[
         ? -(b[1] + b[3]) / 2
         : o.valign === 'bottom'
           ? -b[1]
-          : 0;
+          : o.valign === 'cap'
+            ? -capHeight(font, o.size) / 2
+            : 0;
   return polys.map((p) => p.map(([x, y]): [number, number] => [x + dx, y + dy]));
 }
 
@@ -128,5 +141,6 @@ export function textMetrics(book: FontBook, text: string, o: TextOptions) {
     ],
     ascent: (font.ascender / font.unitsPerEm) * o.size,
     descent: (font.descender / font.unitsPerEm) * o.size,
+    cap: capHeight(font, o.size),
   };
 }

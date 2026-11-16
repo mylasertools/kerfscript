@@ -41,6 +41,38 @@ test('text(fit) shrinks text to a width, never above its size', () => {
   assert.ok(w('text("HI", size = 5, fit = 200);') < 20);
 });
 
+test('text(fit = [w, h]) limits the width and the capital height', () => {
+  const part = (src) => render(`part("t") ${src}`, font).parts[0];
+  const tall = part('text("ANNA", fit = [200, 20]);');
+  assert.ok(Math.abs(tall.height - 20) < 0.5, `capitals 20 mm tall, got ${tall.height}`);
+  assert.ok(tall.width < 200);
+  const wide = part('text("ALEXANDRINA", fit = [60, 20]);');
+  assert.ok(Math.abs(wide.width - 60) < 3, `60 mm wide, got ${wide.width}`);
+  assert.ok(wide.height < 20);
+  assert.ok(part('text("BO", size = 10, fit = [undef, 50]);').height < 11, 'never above size');
+  assert.throws(() => render('text("A", fit = [undef, undef]);', font), /fit must be/);
+});
+
+test('valign = "cap" centres the capitals on y = 0', () => {
+  const r = render('m = text_size("H", 10); echo(m.cap);', font);
+  const cap = Number(r.echoes[0]);
+  const p = render('part("t") text("H", 10, valign = "cap");', font).parts[0];
+  assert.ok(Math.abs(p.height - cap) < 0.05);
+  const b = render('measure() { text("H", 10, valign = "cap"); echo($bounds); }', font);
+  const [, y0, , y1] = JSON.parse(b.echoes[0]);
+  assert.ok(Math.abs(y0 + y1) < 0.05, `centred, got ${y0} to ${y1}`);
+});
+
+test('text_size() names its measurements', () => {
+  const r = render(
+    'm = text_size("Hello", 10); echo(m.width == text_width("Hello", 10), m.bounds == text_metrics("Hello", 10)[1], m.size, m.cap > 0, m.cap < m.ascent);',
+    font,
+  );
+  assert.deepEqual(r.echoes, ['true, true, 10, true, true']);
+  const f = render('echo(text_size("ANNA", fit = [200, 20]).cap);', font);
+  assert.ok(Math.abs(Number(f.echoes[0]) - 20) < 1e-6);
+});
+
 test('close() joins shapes a hair apart, path(close) closes open subpaths', () => {
   assert.equal(
     render('close(0.5) { rect(10); translate([10.4, 0]) rect(10); }').parts[0].pieces,

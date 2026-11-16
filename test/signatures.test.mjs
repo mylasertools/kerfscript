@@ -100,7 +100,7 @@ test('every built-in function is in the table, with its parameters', () => {
       assert.ok(sig && sig.kind !== 'module', `${name}() is not a function in the table`);
     }
   const measured = reads(method('measure'));
-  for (const name of ['text_width', 'text_metrics'])
+  for (const name of ['text_width', 'text_metrics', 'text_size'])
     assert.deepEqual(
       signature(name)
         .params.map((p) => p.name)
