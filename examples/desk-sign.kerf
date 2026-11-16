@@ -1,0 +1,92 @@
+// Desk sign: a name and a line under it on a plate that stands on a desk,
+// leaning back in a base, or hangs on a wall. The stand comes from
+// kerf/stand, so its tabs and slots match at any lean and thickness. The
+// stand's settings show only when the sign stands, the wall's only when it
+// hangs.
+
+use <kerf/stand>
+use <kerf/shapes>
+
+/* [Sign] */
+// Name on the sign
+name = "Ada Lovelace";
+// Line under the name, leave empty for none
+title = "Analytical Engines"; // 30
+// Width of the plate
+width = 200; // [120:10:320]
+// Height of the plate
+height = 70; // [45:5:140]
+// Shape of the plate
+plate = "rounded"; // [rounded:Rounded corners, banner:Banner, capsule:Round ends]
+// Where it goes
+mount = "stand"; // [stand:On a desk, wall:On a wall]
+
+/* [Stand] */
+// How far the sign leans back, in degrees
+lean = 12; // [0:2:30] when mount == "stand"
+// Depth of the base
+depth = 50; // [35:5:90] when mount == "stand"
+// Room in the slots for the tabs
+clearance = 0.15; // [0:0.05:0.4] when mount == "stand"
+
+/* [Wall] */
+// Hanging holes
+holes = 2; // [1:One in the middle, 2:One near each end] when mount == "wall"
+// Hole diameter
+hole = 4; // [3:0.5:6] when mount == "wall"
+
+/* [Material] */
+// Sheet thickness
+$thickness = 3; // [2:0.5:6]
+// Beam width
+$kerf = 0.15; // [0:0.01:0.3]
+
+/* [Hidden] */
+$material = "walnut";
+$fn = 64;
+
+w = width;
+h = height;
+// The plate's straight bottom edge, where the tabs go: a capsule's runs
+// between its round ends
+edge = plate == "capsule" ? w - h : w;
+from = (w - edge) / 2;
+// How far in from the ends the holes and the lettering keep
+inset = plate == "banner" ? h / 3 : plate == "capsule" ? h / 2 : 8;
+
+// The plate with its bottom left corner at the origin
+module blank() {
+  translate([w / 2, h / 2]) {
+    if (plate == "banner") banner([w, h]);
+    else if (plate == "capsule") capsule([w, h]);
+    else rect([w, h], center = true, r = min(8, h / 6));
+  }
+}
+
+module lettering() {
+  room = w - 2 * inset - 8;
+  two = title != "";
+  engrave() {
+    translate([w / 2, two ? h * 0.6 : h / 2])
+      text(name, fit = [room, h * (two ? 0.3 : 0.38)], halign = "center", valign = "cap");
+    if (two)
+      translate([w / 2, h * 0.25])
+        text(title, fit = [room * 0.85, h * 0.11], halign = "center", valign = "cap");
+  }
+}
+
+if (mount == "stand")
+  stand(edge, depth = depth, lean = lean, clearance = clearance, margin = from + 10)
+    translate([-from, 0]) {
+      blank();
+      lettering();
+    }
+else
+  part("Sign") {
+    difference() {
+      blank();
+      for (x = holes == 1 ? [w / 2] : [inset + 6, w - inset - 6])
+        translate([x, h - max(10, h * 0.16)]) circle(d = hole);
+    }
+    lettering();
+  }

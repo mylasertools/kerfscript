@@ -212,6 +212,16 @@
     "tags": ["text", "lists", "parts"]
   },
   {
+    "file": "shape-tags",
+    "title": "Shape tags",
+    "tags": ["text", "library", "engrave", "score"]
+  },
+  {
+    "file": "desk-sign",
+    "title": "Desk sign, standing or hung",
+    "tags": ["text", "library", "tabs", "display"]
+  },
+  {
     "file": "slot-desk-sign",
     "title": "SLOT desk sign",
     "tags": ["first project", "joinery", "text"]
