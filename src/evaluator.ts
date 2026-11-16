@@ -503,7 +503,8 @@ export class Evaluator {
   private childCache = new WeakMap<object, Map<Stmt, { key: string; shape: Shape | null }>>();
 
   // What a child may depend on besides its own code: the special
-  // variables it can see, the place() frame and the step
+  // variables it can see, the place() frame, the step and how the layers
+  // are defined
   private childKey(env: Env): string {
     const seen = new Map<string, Value>();
     const walk = (e: Env | undefined, depth: number) => {
@@ -544,7 +545,9 @@ export class Evaluator {
       n += t.length;
     }
     const text = out.join('');
-    return `${this.frame.join(',')}|${this.step}|${this.stepFolded}|${text}`;
+    // The layers as they are defined now: a child made under other layer
+    // modes (occlude() and paint() follow them) is not the same shape
+    return `${this.frame.join(',')}|${this.step}|${this.stepFolded}|${this.layerDefs}|${text}`;
   }
 
   // A count of the things a statement can make besides its shape
@@ -1787,11 +1790,16 @@ export class Evaluator {
         // clipped to the others, as difference() cuts one
         const area = (s: Shape) =>
           freeArea(s) || s.parts.some((p) => [...p.layers.values()].some((l) => l.regions.length));
+        // A child's area, its parts' included (hide()'s areas never count)
+        const regionsOf = (s: Shape) =>
+          [s.layers, ...s.parts.map((p) => p.layers)].flatMap((m) =>
+            [...m].flatMap(([k, l]) => (k === HIDDEN ? [] : l.regions)),
+          );
         const keepOf = (skip: Shape) => {
           let keep: Poly[] | undefined;
           for (const r of kids) {
-            if (r === skip || !freeArea(r)) continue;
-            const u = union(flat([r], 'intersection').regions);
+            if (r === skip || !area(r)) continue;
+            const u = union(regionsOf(r));
             keep = keep ? intersection(keep, u) : u;
           }
           return keep;
@@ -1818,7 +1826,20 @@ export class Evaluator {
                 regions: [],
                 lines: k ? clipLines(l.lines, k, 'inside') : l.lines,
               });
-          if (lines.size) out = merge([out, { layers: lines, parts: [] }]);
+          if (!lines.size) continue;
+          // With one part as the first child, the lines are the part's
+          const only = out.parts.length === 1 && !freeArea(first) ? out.parts[0] : undefined;
+          if (only) {
+            const layers = new Map(only.layers);
+            for (const [name, l] of lines) {
+              const had = layers.get(name);
+              layers.set(name, {
+                regions: had?.regions ?? [],
+                lines: [...(had?.lines ?? []), ...l.lines],
+              });
+            }
+            out = { layers: out.layers, parts: [{ ...only, layers }] };
+          } else out = merge([out, { layers: lines, parts: [] }]);
         }
         // A part that had material and has none left is lost: say so
         first.parts.forEach((p, i) => {
@@ -1826,7 +1847,7 @@ export class Evaluator {
           const left = [...(out.parts[i]?.layers.values() ?? [])].some((l) => l.regions.length);
           if (had && !left)
             this.warn(
-              `intersection() leaves part "${p.name}" with nothing to cut: its other children cover none of it (${where(c.args.at, false)})`,
+              `intersection() leaves part "${p.name}" with nothing to cut: ${allArea ? 'its other children cover none of it' : 'a child of lines alone leaves no area; to clip lines to the part, put the intersection() inside it'} (${where(c.args.at, false)})`,
             );
         });
         return out;
