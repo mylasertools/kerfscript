@@ -1781,11 +1781,15 @@ export class Evaluator {
         if (!kids.length) return emptyShape();
         // Children that only draw lines don't limit the area: their lines
         // are clipped to the others, in whichever order they come
-        const area = (s: Shape) => [...s.layers.values()].some((l) => l.regions.length);
+        const freeArea = (s: Shape) => [...s.layers.values()].some((l) => l.regions.length);
+        // A part's own shapes count too: a part as the first child is
+        // clipped to the others, as difference() cuts one
+        const area = (s: Shape) =>
+          freeArea(s) || s.parts.some((p) => [...p.layers.values()].some((l) => l.regions.length));
         const keepOf = (skip: Shape) => {
           let keep: Poly[] | undefined;
           for (const r of kids) {
-            if (r === skip || !area(r)) continue;
+            if (r === skip || !freeArea(r)) continue;
             const u = union(flat([r], 'intersection').regions);
             keep = keep ? intersection(keep, u) : u;
           }
@@ -1815,6 +1819,15 @@ export class Evaluator {
               });
           if (lines.size) out = merge([out, { layers: lines, parts: [] }]);
         }
+        // A part that had material and has none left is lost: say so
+        first.parts.forEach((p, i) => {
+          const had = [...p.layers.values()].some((l) => l.regions.length);
+          const left = [...(out.parts[i]?.layers.values() ?? [])].some((l) => l.regions.length);
+          if (had && !left)
+            this.warn(
+              `intersection() leaves part "${p.name}" with nothing to cut: its other children cover none of it (${where(c.args.at, false)})`,
+            );
+        });
         return out;
       },
       // One hull for the shapes outside parts, and one inside each part
@@ -2206,7 +2219,7 @@ export class Evaluator {
           if (layer !== undefined) {
             if (!this.layers.has(layer))
               this.layers.set(layer, { name: layer, mode: 'fill', color: '#000000' });
-              this.layerDefs++;
+            this.layerDefs++;
             out.push(regionShape(later.length ? difference(mine, later) : mine, layer));
             // hide()'s areas go on as they are, for an occlude() around
             const hidden = k.layers.get(HIDDEN);
