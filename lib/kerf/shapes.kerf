@@ -74,18 +74,26 @@ function egg_points(size = [16, 20], taper = 0.2) =
   assert(taper >= 0 && taper < 1, "egg(): taper is from 0 up to 1")
   shape_fill([for (i = [0:n - 1]) let (a = 360 * i / n) [cos(a) * (1 - taper * sin(a)), sin(a)]], s);
 
-// A lens (a leaf, a petal, an eye): two arcs meeting in a point at the
-// top and the bottom
+// A lens (a leaf, a petal, an eye): two arcs meeting in a point at each
+// end of its longer side, the top and bottom of a tall one, the left and
+// right of a wide one
 module lens(size = [10, 20]) polygon(lens_points(size));
 
 // The outline of lens(), as points
 function lens_points(size = [10, 20]) =
+  let (s = shape_size(size, "lens"))
+  // A wide lens is a tall one turned a quarter turn, so its arcs stay less
+  // than half circles and its ends pointed
+  s[0] > s[1] ? [for (p = shape_tall_lens([s[1], s[0]])) [p[1], -p[0]]] : shape_tall_lens(s);
+
+// A lens with its points at the top and the bottom, no wider than tall
+function shape_tall_lens(s) =
   let (
-    s = shape_size(size, "lens"),
     g = s[0] / 2,
     R = g / 2 + s[1] * s[1] / (8 * g),
-    t = asin(s[1] / 2 / R),
-    n = max(4, ceil(shape_steps(PI * (s[0] + s[1]) / 2) / 2))
+    t = asin(min(1, s[1] / 2 / R)),
+    // even, so a point falls on the widest place
+    n = 2 * max(2, ceil(shape_steps(PI * (s[0] + s[1]) / 2) / 4))
   )
   concat(shape_arc([g - R, 0], R, -t, t, n), [for (p = shape_arc([R - g, 0], R, 180 - t, 180 + t, n)) if (abs(p[1]) < s[1] / 2 - 1e-9) p]);
 

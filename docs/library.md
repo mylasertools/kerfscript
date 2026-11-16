@@ -857,7 +857,7 @@ on a list of points. `heart_points(40)` is the outline of `heart(40)`.
 | `heart(size = 20)`                          | a heart: two round lobes, a dip between them and a point at the bottom                          |
 | `teardrop(size = [14, 20])`                 | round at the bottom, a point at the top; taller than it is wide                                 |
 | `egg(size = [16, 20], taper = 0.2)`         | an egg on its broad end; `taper` 0 is an ellipse                                                |
-| `lens(size = [10, 20])`                     | two arcs meeting in a point at the top and the bottom: a leaf, a petal, an eye                  |
+| `lens(size = [10, 20])`                     | two arcs meeting in a point at each end of its longer side: a leaf, a petal, an eye             |
 | `crescent(d = 20, thickness)`               | a crescent moon `d` across, open to the right, `thickness` (`d / 4`) at its widest              |
 | `capsule(size = [30, 10])`                  | a rectangle with round ends                                                                     |
 | `diamond(size = [14, 20])`                  | a rhombus touching the middle of each side of its box                                           |
@@ -885,7 +885,7 @@ The library's helpers are there for your own shapes too:
 checks it, `shape_steps(length)` is the number of points for a curve about
 `length` mm long, `shape_fill(points, size)` scales points to fill a box
 centred on the origin, `shape_centre(points)` centres them, and
-`shape_arc(c, r, a0, a1, n)` gives `n + 1` points along an arc.
+`shape_arc(c, r, a0, a1, n)` gives `n + 1` points along an arc. `shape_tall_lens([w, h])` is a lens pointed at the top and the bottom, as `lens()` draws one no wider than it is tall.
 
 ## Sizes
 
