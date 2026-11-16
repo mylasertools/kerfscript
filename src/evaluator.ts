@@ -354,6 +354,9 @@ export class Evaluator {
   // Items charged for what the program keeps after a call returns: echoes
   private retained = 0;
   private copies = 0;
+  // Layer definitions made or changed, so a child that makes one is not
+  // taken from the cache of children, which would skip it
+  private layerDefs = 0;
   // The 3D placement place() blocks build up, and the current step
   private frame: number[] = IDENTITY4;
   private step = 0;
@@ -546,7 +549,7 @@ export class Evaluator {
 
   // A count of the things a statement can make besides its shape
   private effects(): string {
-    return `${this.echoes.length},${this.hardware.length},${this.stepNames.length},${this.warnings.length},${this.copies}`;
+    return `${this.echoes.length},${this.hardware.length},${this.stepNames.length},${this.warnings.length},${this.copies},${this.layerDefs}`;
   }
 
   // The first length with a unit read before the program set $scale
@@ -1537,6 +1540,7 @@ export class Evaluator {
     if (!known) {
       const def = this.layers.get(name) ?? { name, mode: 'line' as const, color: '#00aa00' };
       this.layers.set(back, { ...def, name: back, side: 'back' });
+      this.layerDefs++;
     }
     return back;
   }
@@ -2202,6 +2206,7 @@ export class Evaluator {
           if (layer !== undefined) {
             if (!this.layers.has(layer))
               this.layers.set(layer, { name: layer, mode: 'fill', color: '#000000' });
+              this.layerDefs++;
             out.push(regionShape(later.length ? difference(mine, later) : mine, layer));
             // hide()'s areas go on as they are, for an occlude() around
             const hidden = k.layers.get(HIDDEN);
@@ -2354,6 +2359,7 @@ export class Evaluator {
           const b = bleed === undefined ? known?.bleed : this.num(bleed, 'layer', 'bleed');
           if (b !== undefined && !(b >= 0)) throw new Error('bleed must be 0 or more');
           if (b && m === 'cut') throw new Error('a cut layer has no bleed');
+          this.layerDefs++;
           this.layers.set(name, {
             name,
             mode: m,
