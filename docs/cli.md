@@ -120,6 +120,7 @@ installed libraries by themselves.
 | `--nest`               | Pack small parts into the holes of bigger ones                                                  |
 | `--stats`              | With `check`: points in the files, by part and layer                                            |
 | `--sweep name=a:s:b`   | With `check`: try every value from a to b in steps of s, or `name=a,b,c`                        |
+| `--settings`           | With `check`: what each setting changes across its range; exit 1 if one changes nothing         |
 | `--drive`              | With `check`: try every value of the setting marked `drive` (see the customizer)                |
 | `-o out.png`, `--px n` | A picture of each sheet, `n` pixels wide (1200), to look at rather than cut                     |
 | `-o out.glb`           | The model in 3D: `.glb` to view, `.3mf` to print in colour, `.stl`; see [3D files](3d-files.md) |

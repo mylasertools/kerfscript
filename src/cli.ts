@@ -1,5 +1,6 @@
 // Copyright (c) 2026 MyLaserTools. SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-MyLaserTools-Commercial
 
+import { effectsText, settingEffects } from './effects.js';
 import { toModel, type ModelFormat } from './export/model.js';
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, join, resolve } from 'node:path';
@@ -107,6 +108,8 @@ Options:
   --sweep name=a:step:b   with check: try every value, or name=a,b,c, or
                           settings that go together: w,d=100,80;200,150; repeat to
                           try every combination, and exit 1 if any warns or fails
+  --settings              with check: what each setting changes, tried across
+                          its range; exit 1 if one changes nothing
   --drive                 with check: try every value of the setting marked
                           // [0:5:360] drive, the one that moves the model
   -o out.png              a picture of each sheet to look at (not to cut),
@@ -179,6 +182,8 @@ function main(argv: string[]) {
   const sweeps: Record<string, Value>[][] = [];
   // --drive: every value of the setting marked drive, as a sweep
   let drive = false;
+  // --settings: what each setting changes
+  let settings = false;
   for (let i = 1; i < argv.length; i++) {
     const a = argv[i];
     const next = () => argv[++i] ?? fail(`${a} needs a value`);
@@ -215,6 +220,7 @@ function main(argv: string[]) {
     else if (a === '--sweep') sweeps.push(sweepValues(next()));
     else if (a === '--params-list') sweeps.push(paramsList(next()));
     else if (a === '--drive') drive = true;
+    else if (a === '--settings') settings = true;
     else if (a === '--call') call = next();
     else if (a === '--flat') flat = true;
     // --print: flat, the marks a few printed layers high
@@ -265,6 +271,21 @@ function main(argv: string[]) {
     } catch (e) {
       fail((e as Error).message);
     }
+  }
+  if (settings) {
+    if (cmd !== 'check') fail('--settings goes with kerf check');
+    const { lines, idle } = effectsText(
+      settingEffects(source, {
+        ...opts,
+        ...(defaultSheet && { defaultSheet }),
+        params,
+        fonts: withBuiltinFont(fonts),
+        resolve: resolveLib,
+      }),
+    );
+    for (const l of lines) process.stdout.write(l + '\n');
+    if (idle) process.exitCode = 1;
+    return;
   }
   if (sweeps.length) {
     if (cmd !== 'check') fail('--sweep and --params-list go with kerf check');

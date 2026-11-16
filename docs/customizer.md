@@ -99,6 +99,32 @@ shows. `kerf params` lists the condition as `"when"`, and in JavaScript
 `shown(parameter, values, parameters)` says whether a setting applies to
 the values chosen so far.
 
+## Settings that do nothing
+
+A setting whose slider moves nothing confuses the people using the design.
+`kerf check --settings` tries each setting across its range, the others as
+they are, and says what it changes:
+
+```text
+$ kerf check sign.kerf --settings
+Each setting tried across its range, the others as they are:
+name: changes the files
+band: changes the files
+  from 50 to 60 it changes nothing
+notes: changes nothing at "for the shop", "for th", "pohs eht rof"
+lift: changes only the assembled view, not the files
+mount: changes the files
+  "wall" and "hook" give the same result
+clearance: not tried, as it applies only when mount == "stand"
+```
+
+A range is tried at its ends and three points between, a menu at every
+choice, a checkbox both ways and text shorter and changed. "Changes
+nothing" makes the command exit with 1; a range where nothing changes, or
+choices that give the same result, are pointed out without failing. The
+setting marked `drive` and settings whose `when` doesn't hold are left out.
+In JavaScript, `settingEffects(source, options)` gives the same as a list.
+
 ## Changing settings without editing the file
 
 The CLI accepts values with `-D` or a JSON file with `--params`:

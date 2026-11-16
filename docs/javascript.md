@@ -138,6 +138,23 @@ const settings = parameters(source).parameters;
 const visible = settings.filter((p) => shown(p, { mount: 'stand' }, settings));
 ```
 
+## settingEffects()
+
+What each setting changes, as `kerf check --settings` reports it:
+
+```js
+import { settingEffects } from '@mylasertools/kerfscript';
+
+for (const e of settingEffects(source)) console.log(e.name, e.effect, e.same);
+```
+
+Each entry has `name`, the values `tried` and `effect`: `"files"`,
+`"view"` (only the assembled view, steps or hardware), `"nothing"` or
+`"skipped"` with a `reason`. `same` lists runs of a range, or groups of
+choices, that give the same result, and `errors` the values the program
+stops at. Pass render options as the second argument and how many values
+of a range to try as the third (5).
+
 ## toModel()
 
 Write the model in 3D, as [3D files](3d-files.md) describes:
