@@ -4,6 +4,7 @@ import { HIDDEN } from './geometry.js';
 import { joinLines } from './plot.js';
 import {
   bendRuns,
+  bendSpans,
   bentPieces,
   besideAssembly,
   collisions,
@@ -308,10 +309,10 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
           hi = Math.max(hi, x);
         }
       // The material's points are rounded to 0.0001 mm
-      for (const b of p.bends)
-        if (b.x0 < lo - 1e-3 || b.x1 > hi + 1e-3)
+      for (const [x0, x1] of bendSpans(p.bends))
+        if (x0 < lo - 1e-3 || x1 > hi + 1e-3)
           warnings.push(
-            `Part "${p.name}" bends from x = ${fmt(b.x0)} to ${fmt(b.x1)}, beyond the part (x = ${fmt(lo)} to ${fmt(hi)}); only the part itself bends.`,
+            `Part "${p.name}" bends from x = ${fmt(x0)} to ${fmt(x1)}, beyond the part (x = ${fmt(lo)} to ${fmt(hi)}); only the part itself bends.`,
           );
     }
     if (numbering && material.length) {

@@ -2546,7 +2546,10 @@ export class Evaluator {
             material: toText(this.dyn(c.env, '$material') ?? 'material'),
             ...(mine ? { placements: mine } : {}),
             ...(stack > 1 ? { stack } : {}),
-            ...(bends.length ? { bends } : {}),
+            // A mirrored copy bends as the mirror image of the part
+            ...(bends.length
+              ? { bends: flip ? bends.map((b) => ({ ...b, mirrored: true })) : bends }
+              : {}),
             ...(on !== undefined ? { on: toText(on) } : {}),
             ...(slots ? { slots, clearance } : {}),
             ...(slots && slotExtra ? { slotExtra } : {}),

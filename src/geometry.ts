@@ -64,6 +64,9 @@ export interface Bend {
   x0: number;
   x1: number;
   angle: number;
+  // On a copy cut mirrored: x0 and x1 are where the unmirrored part bends,
+  // and the copy bends as its mirror image, the end at -x folding
+  mirrored?: boolean;
 }
 
 export interface Shape {

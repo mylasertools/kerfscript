@@ -99,7 +99,8 @@ place(at = [20, 10, 30], rotate = [0, 0, 90]) box([80, 60, 40], name = "crate");
   as wrapping it in `material(name = "red acrylic")` would.
 - `mirror = true` cuts the part mirrored left to right. A lopsided end
   plate's other half is the same part mirrored, and its engraving still
-  reads the right way round.
+  reads the right way round. A mirrored copy of a bent part bends as its
+  mirror image: give `bend` as for the part itself.
 - `glue = "top plate", face = "top"` lays a part on another part's face,
   its `at` and `rotate` measured on that face. Move the plate, and what is
   glued on it moves too. A stack glued under a part (`face = "bottom"`)

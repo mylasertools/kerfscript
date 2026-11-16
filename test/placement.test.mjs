@@ -806,3 +806,33 @@ test('each copy of a mirrored rider rides its own host copy', () => {
   assert.ok(Math.abs(tabs[1].matrix[3] - tabs[0].matrix[3] - 200) < 1e-6);
   assert.ok(Math.abs(tabs[1].matrix[11] - tabs[0].matrix[11]) < 1e-6);
 });
+
+test('a mirrored copy of a bent part bends as its mirror image', async () => {
+  const { meshBodies } = await import('../dist/index.js');
+  const r = render(
+    'part("cover", qty = 2, at = [[0, 0, 0], [300, 0, 0]], mirror = [false, true], bend = [50, 60, 90]) rect([120, 40]);\n' +
+      'part("tab", qty = 2, at = [[80, 10, 3], [220, 10, 3]], mirror = [false, true], on = "cover") rect([20, 20]);',
+  );
+  assert.deepEqual(r.warnings, []);
+  const box = (name, copy) => {
+    const b = meshBodies(r).find((x) => x.name === name && x.copy === copy);
+    const lo = [Infinity, Infinity, Infinity];
+    const hi = [-Infinity, -Infinity, -Infinity];
+    b.positions.forEach((v, i) => {
+      lo[i % 3] = Math.min(lo[i % 3], v);
+      hi[i % 3] = Math.max(hi[i % 3], v);
+    });
+    return { lo, hi };
+  };
+  for (const name of ['cover', 'tab']) {
+    const a = box(name, 1);
+    const m = box(name, 2);
+    // Reflected about x = 150, the same in y and z
+    assert.ok(Math.abs(300 - a.hi[0] - m.lo[0]) < 1e-6, name);
+    assert.ok(Math.abs(300 - a.lo[0] - m.hi[0]) < 1e-6, name);
+    for (const k of [1, 2]) {
+      assert.ok(Math.abs(a.lo[k] - m.lo[k]) < 1e-6, name);
+      assert.ok(Math.abs(a.hi[k] - m.hi[k]) < 1e-6, name);
+    }
+  }
+});

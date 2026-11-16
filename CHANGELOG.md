@@ -30,6 +30,8 @@ Fixes:
 - Parts riding a bent part (`on = "host"`) have their slots, bores and
   halvings cut where they ride.
 - `sort()` counts its comparisons against the step limit.
+- A mirrored copy of a bent part bends as its mirror image, and the copies
+  of a mirrored rider each ride their own host.
 - Children that define a layer are evaluated each time they are used.
 - Shaft capture fails when a part on the shaft can slide off over a bearing
   and its retainer.
