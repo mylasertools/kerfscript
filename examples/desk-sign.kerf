@@ -14,7 +14,7 @@ name = "Ada Lovelace";
 title = "Analytical Engines"; // 30
 // Width of the plate
 width = 200; // [120:10:320]
-// Height of the plate
+// Height of the plate (round ends keep to 0.6 of the width, a banner to 0.8)
 height = 70; // [45:5:140]
 // Shape of the plate
 plate = "rounded"; // [rounded:Rounded corners, banner:Banner, capsule:Round ends]
@@ -46,7 +46,10 @@ $material = "walnut";
 $fn = 64;
 
 w = width;
-h = height;
+// A plate with round ends needs a straight run along its bottom for the
+// stand and room between its ends for the name; a banner, room between its
+// notches
+h = min(height, plate == "capsule" ? w * 0.6 : plate == "banner" ? w * 0.8 : height);
 // The plate's straight bottom edge, where the tabs go: a capsule's runs
 // between its round ends
 edge = plate == "capsule" ? w - h : w;
