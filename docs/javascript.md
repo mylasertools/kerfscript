@@ -127,6 +127,52 @@ if (width) {
 Read the settings again after editing the source; the offsets refer to the
 string passed to `parameters()`.
 
+A setting whose comment ends with a `when` condition (see the
+[customizer](customizer.md)) has it as `when`. `shown()` says whether it
+applies to the values chosen so far, the others at their initial values:
+
+```js
+import { parameters, shown } from '@mylasertools/kerfscript';
+
+const settings = parameters(source).parameters;
+const visible = settings.filter((p) => shown(p, { mount: 'stand' }, settings));
+```
+
+## settingEffects()
+
+What each setting changes, as `kerf check --settings` reports it:
+
+```js
+import { settingEffects } from '@mylasertools/kerfscript';
+
+for (const e of settingEffects(source)) console.log(e.name, e.effect, e.same);
+```
+
+Each entry has `name`, the values `tried` and `effect`: `"files"`,
+`"view"` (only the assembled view, steps or hardware), `"nothing"`,
+`"failed"` (the program stops at all values but one, or all of them) or
+`"skipped"` with a `reason`. `same` lists runs of a range, or groups of
+choices, that give the same result, and `errors` the values the program
+stops at. Pass render options as the second argument and how many values
+of a range to try as the third (5).
+
+## toModel()
+
+Write the model in 3D, as [3D files](3d-files.md) describes:
+
+```js
+import { render, toModel } from '@mylasertools/kerfscript';
+
+const glb = toModel(render(source), 'glb');
+const print = toModel(render(source), '3mf', { layout: 'flat', markHeight: 0.6 });
+```
+
+The format is `"glb"`, `"3mf"` or `"stl"`, and the result a `Uint8Array`.
+`meshBodies(result, options)` gives the solid bodies (positions and
+triangles in millimetres, z up) for a viewer of your own; `toGlb()`,
+`to3mf()` and `toStl()` write a list of them. `result.flat` lists every copy
+of every part flat at its own origin, placed or not.
+
 ## format()
 
 `format(source)` returns the program with its layout set, as `kerf fmt`

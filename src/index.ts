@@ -7,7 +7,7 @@ export {
   type PartInfo,
   type Sheet,
 } from './render.js';
-export { parameters, type Parameter } from './customizer.js';
+export { parameters, shown, type Parameter } from './customizer.js';
 export { parse } from './parser.js';
 export { tokenize, KerfError, type TraceFrame } from './lexer.js';
 export { formatError, type FormatOptions } from './diagnostics.js';
@@ -35,7 +35,7 @@ export {
 export type { HardwareItem } from './evaluator.js';
 export { HARDWARE_KINDS, HARDWARE_COLORS, type HardwareKind } from './hardware.js';
 
-export const VERSION = '0.9.0';
+export const VERSION = '0.10.0';
 export const LANGUAGE_VERSION = '0.3';
 export { diffRenders, type DiffEntry } from './diff.js';
 export { instructionsHtml } from './instructions.js';
@@ -51,3 +51,7 @@ export {
 export type * from './verify/types.js';
 export { triage, triageText, type TriageGroup } from './verify/summary.js';
 export type { RenderAnalysis } from './analysis.js';
+export { meshBodies, materialColor, type Body, type MeshOptions } from './export/mesh.js';
+export { toModel, toGlb, to3mf, toStl, type ModelFormat } from './export/model.js';
+export { triangulate } from './export/triangulate.js';
+export { settingEffects, effectsText, type SettingEffect } from './effects.js';

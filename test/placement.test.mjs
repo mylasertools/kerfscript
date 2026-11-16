@@ -757,3 +757,82 @@ part("Rib", qty = 24) {
     Array.from({ length: 24 }, (_, i) => i + 1),
   );
 });
+
+test('a part riding a bent part has its bores cut where it rides', () => {
+  const base = 'part("cover", at = [0, 0, 0], bend = [50, 60, 90]) rect([120, 40]);\n';
+  const rider = (extra) => `part("tab", at = [80, 10, 3], on = "cover"${extra}) rect([20, 20]);\n`;
+  const m = render(base + rider('')).assembly.find((a) => a.name === 'tab').matrix;
+  const at = (x, y, z) =>
+    [0, 1, 2].map((k) => m[k * 4] * x + m[k * 4 + 1] * y + m[k * 4 + 2] * z + m[k * 4 + 3]);
+  // A pin square through the tab's middle, where the tab ends up
+  const c = at(10, 10, 1.5);
+  const u = at(10, 10, 2.5).map((v, k) => v - c[k]);
+  const pin = `hardware("steel", [${c.map((v, k) => v - u[k] * 10)}], [${c.map((v, k) => v + u[k] * 10)}], 4, label = "pin");\n`;
+  const r = render(base + rider(', bores = ["pin"]') + pin);
+  assert.deepEqual(r.warnings, []);
+  assert.equal(r.assembly.find((a) => a.name === 'tab').outline.length, 2);
+});
+
+test('a tapered tab leaning through a sheet cuts only what passes through it', () => {
+  // A triangle, point down, leaning 45 degrees through a 3 mm base: the slot
+  // is the shadow of the triangle's part inside the base, nothing more
+  const r = render(
+    '$thickness = 3;\npart("base", at = [0, 0, 0], slots = ["tab"], clearance = 0) translate([-40, -40]) square([100, 100]);\n' +
+      'part("tab", at = [0, 10, 3], rotate = [45, 0, 0]) polygon([[0, 20], [20, 20], [10, -6]]);',
+    { kerf: 0 },
+  );
+  const area = (p) =>
+    Math.abs(
+      p.reduce(
+        (s, [x, y], i) => s + x * p[(i + 1) % p.length][1] - p[(i + 1) % p.length][0] * y,
+        0,
+      ),
+    ) / 2;
+  const base = r.assembly.find((a) => a.name === 'base');
+  const slot = base.outline.filter((ring) => ring.every(([x, y]) => x > -39 && y > -39));
+  // Exact: the tab's middle plane crosses the base between local y where z
+  // runs 0 to 3 on each face; a convex shape, 16.9 mm² by sampling
+  const total = slot.reduce((s, h) => s + area(h), 0);
+  assert.ok(total > 16.8 && total < 17.3, `slot ${total} mm²`);
+});
+
+test('each copy of a mirrored rider rides its own host copy', () => {
+  const r = render(
+    'part("cover", qty = 2, at = [[0, 0, 0], [200, 0, 0]], bend = [50, 60, 90]) rect([120, 40]);\n' +
+      'part("tab", qty = 2, at = [[80, 10, 3], [280, 10, 3]], mirror = [false, true], on = "cover") rect([20, 20]);',
+  );
+  const tabs = r.assembly.filter((a) => a.name === 'tab').sort((a, b) => a.copy - b.copy);
+  // Both stand up on their own cover's folded end, 200 mm apart
+  assert.ok(Math.abs(tabs[1].matrix[3] - tabs[0].matrix[3] - 200) < 1e-6);
+  assert.ok(Math.abs(tabs[1].matrix[11] - tabs[0].matrix[11]) < 1e-6);
+});
+
+test('a mirrored copy of a bent part bends as its mirror image', async () => {
+  const { meshBodies } = await import('../dist/index.js');
+  const r = render(
+    'part("cover", qty = 2, at = [[0, 0, 0], [300, 0, 0]], mirror = [false, true], bend = [50, 60, 90]) rect([120, 40]);\n' +
+      'part("tab", qty = 2, at = [[80, 10, 3], [220, 10, 3]], mirror = [false, true], on = "cover") rect([20, 20]);',
+  );
+  assert.deepEqual(r.warnings, []);
+  const box = (name, copy) => {
+    const b = meshBodies(r).find((x) => x.name === name && x.copy === copy);
+    const lo = [Infinity, Infinity, Infinity];
+    const hi = [-Infinity, -Infinity, -Infinity];
+    b.positions.forEach((v, i) => {
+      lo[i % 3] = Math.min(lo[i % 3], v);
+      hi[i % 3] = Math.max(hi[i % 3], v);
+    });
+    return { lo, hi };
+  };
+  for (const name of ['cover', 'tab']) {
+    const a = box(name, 1);
+    const m = box(name, 2);
+    // Reflected about x = 150, the same in y and z
+    assert.ok(Math.abs(300 - a.hi[0] - m.lo[0]) < 1e-6, name);
+    assert.ok(Math.abs(300 - a.lo[0] - m.hi[0]) < 1e-6, name);
+    for (const k of [1, 2]) {
+      assert.ok(Math.abs(a.lo[k] - m.lo[k]) < 1e-6, name);
+      assert.ok(Math.abs(a.hi[k] - m.hi[k]) < 1e-6, name);
+    }
+  }
+});

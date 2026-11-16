@@ -1,0 +1,3 @@
+// ellipse(d = [w, h]) takes the width and height, as circle(d) does
+// => part: "part" size=30x10
+ellipse(d = [30, 10]);

@@ -158,16 +158,20 @@ export const DEFAULT_LIMITS: Limits = {
 // The path of `use <path>` beside the file that says it, when that file
 // is a library in a folder: "lib/props" using "finish" gives "lib/finish"
 export function besideFile(from: string | undefined, path: string): string | undefined {
-  if (!from || own(STDLIB, from) !== undefined || path.startsWith('/')) return undefined;
-  const slash = from.lastIndexOf('/');
+  if (!from || own(STDLIB, from) !== undefined) return undefined;
+  // Windows paths as forward slashes; C:/ is absolute as / is
+  const f = from.split('\\').join('/');
+  const rel = path.split('\\').join('/');
+  if (rel.startsWith('/') || /^[A-Za-z]:\//.test(rel)) return undefined;
+  const slash = f.lastIndexOf('/');
   if (slash < 0) return undefined;
-  const parts = [...from.slice(0, slash).split('/'), ...path.split('/')];
+  const parts = [...f.slice(0, slash).split('/'), ...rel.split('/')];
   const out: string[] = [];
   for (const p of parts) {
     if (p === '..' && out.length && out[out.length - 1] !== '..') out.pop();
     else if (p !== '.' && p !== '') out.push(p);
   }
-  return (from.startsWith('/') ? '/' : '') + out.join('/');
+  return (f.startsWith('/') ? '/' : '') + out.join('/');
 }
 
 const SHAPE_COST = 100;
@@ -267,7 +271,22 @@ interface Args {
 const sentence = (hint: string) => (hint ? `.${hint}` : '');
 
 // Functions the evaluator runs itself rather than through FUNCTIONS
-const SPECIAL = ['echo', 'assert', 'text_width', 'text_metrics', 'finger_count'];
+// A call nested deeper than the interpreter allows: a recursion that never
+// ends, or one that goes once round a long list
+const tooDeep = (kind: 'module' | 'function', name: string) =>
+  kind === 'module'
+    ? `Recursion too deep in module ${name}(): check that it stops`
+    : `Recursion too deep in ${name}(): check that it stops, or use fold(), scan() or a list comprehension to go through a long list`;
+
+// OpenSCAD modules that run as their children, with why
+const PASSED_THROUGH: Record<string, string> = {
+  color:
+    'its children are drawn as they are. Use cut(), score(), engrave() or layer() to choose how they are cut.',
+  linear_extrude:
+    'its children are drawn flat, as the part outline. A part takes its height from $thickness.',
+};
+
+const SPECIAL = ['echo', 'assert', 'text_width', 'text_metrics', 'text_size', 'finger_count'];
 
 // ` Did you mean "x"?` for the known name closest to a mistyped one
 export function didYouMean(name: string, known: Iterable<string>): string {
@@ -335,6 +354,9 @@ export class Evaluator {
   // Items charged for what the program keeps after a call returns: echoes
   private retained = 0;
   private copies = 0;
+  // Layer definitions made or changed, so a child that makes one is not
+  // taken from the cache of children, which would skip it
+  private layerDefs = 0;
   // The 3D placement place() blocks build up, and the current step
   private frame: number[] = IDENTITY4;
   private step = 0;
@@ -391,7 +413,10 @@ export class Evaluator {
   private tick(pos?: Pos, n = 1) {
     // Written so that a count that is not a number stops the program too
     if (!((this.steps += n) <= this.maxSteps))
-      throw new KerfError(`Stopped after ${this.maxSteps} steps. Is there an endless loop?`, pos);
+      throw new KerfError(
+        `Stopped after ${this.maxSteps} steps. Is there an endless loop, or more work than one program may do (a long list, a fine spacing)?`,
+        pos,
+      );
   }
 
   private load(path: string, at: Pos): Program {
@@ -478,7 +503,8 @@ export class Evaluator {
   private childCache = new WeakMap<object, Map<Stmt, { key: string; shape: Shape | null }>>();
 
   // What a child may depend on besides its own code: the special
-  // variables it can see, the place() frame and the step
+  // variables it can see, the place() frame, the step and how the layers
+  // are defined
   private childKey(env: Env): string {
     const seen = new Map<string, Value>();
     const walk = (e: Env | undefined, depth: number) => {
@@ -519,12 +545,14 @@ export class Evaluator {
       n += t.length;
     }
     const text = out.join('');
-    return `${this.frame.join(',')}|${this.step}|${this.stepFolded}|${text}`;
+    // The layers as they are defined now: a child made under other layer
+    // modes (occlude() and paint() follow them) is not the same shape
+    return `${this.frame.join(',')}|${this.step}|${this.stepFolded}|${this.layerDefs}|${text}`;
   }
 
   // A count of the things a statement can make besides its shape
   private effects(): string {
-    return `${this.echoes.length},${this.hardware.length},${this.stepNames.length},${this.warnings.length},${this.copies}`;
+    return `${this.echoes.length},${this.hardware.length},${this.stepNames.length},${this.warnings.length},${this.copies},${this.layerDefs}`;
   }
 
   // The first length with a unit read before the program set $scale
@@ -683,6 +711,9 @@ export class Evaluator {
 
   private bindParams(params: Param[], args: Args, env: Env, defEnv: Env, what: string) {
     const names = params.map((p) => p.name);
+    // Special variables passed in come first, so defaults that read them,
+    // as w = $thickness, see the values given
+    for (const [k, v] of args.named) if (k.startsWith('$')) env.vars.set(k, v);
     params.forEach((p, i) => {
       let v: Value;
       if (args.named.has(p.name)) v = args.named.get(p.name);
@@ -690,10 +721,8 @@ export class Evaluator {
       else v = p.default ? this.expr(p.default, env) : undefined;
       env.vars.set(p.name, v);
     });
-    for (const k of args.named.keys()) {
-      if (k.startsWith('$')) env.vars.set(k, args.named.get(k));
-      else if (!names.includes(k)) this.unknownArg(what, k, args.at, names);
-    }
+    for (const k of args.named.keys())
+      if (!k.startsWith('$') && !names.includes(k)) this.unknownArg(what, k, args.at, names);
     this.checkCount(what, params.length, args);
     void defEnv;
   }
@@ -747,11 +776,7 @@ export class Evaluator {
     const args = this.evalArgs(s.args, env, s.pos);
     const user = env.mod(s.name);
     if (user) {
-      if (++this.depth > 1000)
-        throw new KerfError(
-          `Recursion too deep in module ${s.name}(): it calls itself without stopping`,
-          s.pos,
-        );
+      if (++this.depth > 1000) throw new KerfError(tooDeep('module', s.name), s.pos);
       try {
         const e = new Env(user.env, env);
         this.bindParams(user.params, args, e, user.env, `${s.name}()`);
@@ -765,11 +790,15 @@ export class Evaluator {
       }
     }
     const b = own(this.builtins, s.name);
+    // OpenSCAD's color() and linear_extrude() pass their children through,
+    // so the 2D part of an OpenSCAD file runs as it is
+    const passed = own(PASSED_THROUGH, s.name);
+    if (!b && passed) {
+      this.warn(`${s.name}() is ignored: ${passed} (${where(s.pos, false)})`);
+      return s.children.length ? this.block(s.children, new Env(env, env)) : emptyShape();
+    }
     if (!b) {
-      const hint =
-        s.name === 'color'
-          ? ' Use layer(), cut(), score() or engrave() instead.'
-          : didYouMean(s.name, [...env.names('mods'), ...Object.keys(this.builtins)]);
+      const hint = didYouMean(s.name, [...env.names('mods'), ...Object.keys(this.builtins)]);
       throw new KerfError(`Unknown module ${s.name}().${hint}`, s.pos);
     }
     this.checkArgs(s.name, args);
@@ -852,11 +881,7 @@ export class Evaluator {
   }
 
   callFunction(f: FnDef | Closure, args: Args, caller: Env, name: string): Value {
-    if (++this.depth > 2000)
-      throw new KerfError(
-        `Recursion too deep in ${name}(): it calls itself without stopping`,
-        args.at,
-      );
+    if (++this.depth > 2000) throw new KerfError(tooDeep('function', name), args.at);
     try {
       this.tick(args.at);
       const defEnv = (isFn(f as Value) ? (f as Closure).scope : (f as FnDef).env) as Env;
@@ -877,10 +902,7 @@ export class Evaluator {
   private inCall(e: unknown, kind: 'module' | 'function', name: string, at: Pos): unknown {
     // Not a regular expression: with the stack this full, compiling one fails too
     if (e instanceof Error && !(e instanceof KerfError) && e.message.includes('call stack'))
-      return new KerfError(
-        `Recursion too deep in ${kind === 'module' ? 'module ' : ''}${name}(): it calls itself without stopping`,
-        at,
-      );
+      return new KerfError(tooDeep(kind, name), at);
     if (e instanceof KerfError) e.addFrame(kind, name, at);
     return e;
   }
@@ -1157,11 +1179,23 @@ export class Evaluator {
       this.assert(a);
       return { handled: true, value: true };
     }
-    if (name === 'text_width' || name === 'text_metrics') {
+    if (name === 'text_width' || name === 'text_metrics' || name === 'text_size') {
       const a = this.evalArgs(x.args, env, x.pos);
       this.checkArgs(name, a);
       const m = this.measure(a, env);
       if (name === 'text_width') return { handled: true, value: m.advance };
+      if (name === 'text_size') {
+        const fields = new Map<string, Value>([
+          ['width', m.advance],
+          ['height', m.bounds[1][1] - m.bounds[0][1]],
+          ['bounds', m.bounds as Value],
+          ['cap', m.cap],
+          ['ascent', m.ascent],
+          ['descent', m.descent],
+          ['size', m.size],
+        ]);
+        return { handled: true, value: { type: 'record', fields } };
+      }
       return {
         handled: true,
         value: [m.advance, m.bounds as Value, m.ascent, m.descent],
@@ -1443,7 +1477,8 @@ export class Evaluator {
     // Laying out text takes a step for each character
     this.tick(a.at, shown.text.length);
     try {
-      return textMetrics(this.opts.fonts, shown.text, this.textOpts(a, env, shown.text));
+      const o = this.textOpts(a, env, shown.text);
+      return { ...textMetrics(this.opts.fonts, shown.text, o), size: o.size };
     } catch (e) {
       if (e instanceof KerfError) throw e;
       throw new KerfError((e as Error).message, a.at);
@@ -1458,15 +1493,29 @@ export class Evaluator {
       valign: toText(this.arg(a, 'valign', -1, 'baseline')),
       spacing: toNumber(this.arg(a, 'spacing', -1, 1)),
     };
-    // fit = width: no wider than that, and no bigger than size if given
+    // fit = width, or [width, cap height]: no wider than the width, capitals
+    // no taller than the height, and no bigger than size if given
     const fit = this.arg(a, 'fit', -1);
     if (fit !== undefined && shown !== undefined && this.opts.fonts) {
-      const w = this.num(fit, 'text', 'fit');
-      if (!(w > 0)) throw new Error('fit must be a width more than 0');
-      const one = textMetrics(this.opts.fonts, shown, { ...o, size: 1 }).advance;
-      if (one > 0) {
+      const [w, h] = Array.isArray(fit) ? [fit[0], fit[1]] : [fit, undefined];
+      const limit = (v: Value, what: string) => {
+        if (v === undefined) return undefined;
+        const n = this.num(v, 'text', 'fit');
+        if (!(n > 0)) throw new Error(`fit must be a ${what} more than 0`);
+        return n;
+      };
+      const fw = limit(w, 'width');
+      const fh = limit(h, 'height');
+      if (Array.isArray(fit) && (fit.length !== 2 || (fw === undefined && fh === undefined)))
+        throw new Error('fit must be a width, or [width, height] with either one undef');
+      const one = textMetrics(this.opts.fonts, shown, { ...o, size: 1 });
+      const sizes = [
+        ...(fw !== undefined && one.advance > 0 ? [fw / one.advance] : []),
+        ...(fh !== undefined && one.cap > 0 ? [fh / one.cap] : []),
+      ];
+      if (sizes.length) {
         const given = this.arg(a, 'size', 1);
-        o.size = given === undefined ? w / one : Math.min(o.size, w / one);
+        o.size = Math.min(...sizes, ...(given === undefined ? [] : [o.size]));
       }
     }
     return o;
@@ -1495,6 +1544,7 @@ export class Evaluator {
     if (!known) {
       const def = this.layers.get(name) ?? { name, mode: 'line' as const, color: '#00aa00' };
       this.layers.set(back, { ...def, name: back, side: 'back' });
+      this.layerDefs++;
     }
     return back;
   }
@@ -1547,7 +1597,12 @@ export class Evaluator {
         return regionShape([ellipsePoly(r, r, this.segs(c.env)(r))]);
       },
       ellipse: (c) => {
-        const [rx, ry] = this.vec2(this.arg(c.args, 'r', 0, 1), 'r');
+        // d = [width, height] or one diameter, instead of the radii
+        const d = this.arg(c.args, 'd', -1);
+        const [rx, ry] =
+          d !== undefined
+            ? this.vec2(d, 'd').map((v) => v / 2)
+            : this.vec2(this.arg(c.args, 'r', 0, 1), 'r');
         return regionShape([ellipsePoly(rx, ry, this.segs(c.env)(Math.max(rx, ry)))]);
       },
       regular_polygon: (c) => {
@@ -1730,12 +1785,21 @@ export class Evaluator {
         if (!kids.length) return emptyShape();
         // Children that only draw lines don't limit the area: their lines
         // are clipped to the others, in whichever order they come
-        const area = (s: Shape) => [...s.layers.values()].some((l) => l.regions.length);
+        const freeArea = (s: Shape) => [...s.layers.values()].some((l) => l.regions.length);
+        // A part's own shapes count too: a part as the first child is
+        // clipped to the others, as difference() cuts one
+        const area = (s: Shape) =>
+          freeArea(s) || s.parts.some((p) => [...p.layers.values()].some((l) => l.regions.length));
+        // A child's area, its parts' included (hide()'s areas never count)
+        const regionsOf = (s: Shape) =>
+          [s.layers, ...s.parts.map((p) => p.layers)].flatMap((m) =>
+            [...m].flatMap(([k, l]) => (k === HIDDEN ? [] : l.regions)),
+          );
         const keepOf = (skip: Shape) => {
           let keep: Poly[] | undefined;
           for (const r of kids) {
             if (r === skip || !area(r)) continue;
-            const u = union(flat([r], 'intersection').regions);
+            const u = union(regionsOf(r));
             keep = keep ? intersection(keep, u) : u;
           }
           return keep;
@@ -1762,8 +1826,30 @@ export class Evaluator {
                 regions: [],
                 lines: k ? clipLines(l.lines, k, 'inside') : l.lines,
               });
-          if (lines.size) out = merge([out, { layers: lines, parts: [] }]);
+          if (!lines.size) continue;
+          // With one part as the first child, the lines are the part's
+          const only = out.parts.length === 1 && !freeArea(first) ? out.parts[0] : undefined;
+          if (only) {
+            const layers = new Map(only.layers);
+            for (const [name, l] of lines) {
+              const had = layers.get(name);
+              layers.set(name, {
+                regions: had?.regions ?? [],
+                lines: [...(had?.lines ?? []), ...l.lines],
+              });
+            }
+            out = { layers: out.layers, parts: [{ ...only, layers }] };
+          } else out = merge([out, { layers: lines, parts: [] }]);
         }
+        // A part that had material and has none left is lost: say so
+        first.parts.forEach((p, i) => {
+          const had = [...p.layers.values()].some((l) => l.regions.length);
+          const left = [...(out.parts[i]?.layers.values() ?? [])].some((l) => l.regions.length);
+          if (had && !left)
+            this.warn(
+              `intersection() leaves part "${p.name}" with nothing to cut: ${allArea ? 'its other children cover none of it' : 'a child of lines alone leaves no area; to clip lines to the part, put the intersection() inside it'} (${where(c.args.at, false)})`,
+            );
+        });
         return out;
       },
       // One hull for the shapes outside parts, and one inside each part
@@ -2155,6 +2241,7 @@ export class Evaluator {
           if (layer !== undefined) {
             if (!this.layers.has(layer))
               this.layers.set(layer, { name: layer, mode: 'fill', color: '#000000' });
+            this.layerDefs++;
             out.push(regionShape(later.length ? difference(mine, later) : mine, layer));
             // hide()'s areas go on as they are, for an occlude() around
             const hidden = k.layers.get(HIDDEN);
@@ -2307,6 +2394,7 @@ export class Evaluator {
           const b = bleed === undefined ? known?.bleed : this.num(bleed, 'layer', 'bleed');
           if (b !== undefined && !(b >= 0)) throw new Error('bleed must be 0 or more');
           if (b && m === 'cut') throw new Error('a cut layer has no bleed');
+          this.layerDefs++;
           this.layers.set(name, {
             name,
             mode: m,
@@ -2458,7 +2546,10 @@ export class Evaluator {
             material: toText(this.dyn(c.env, '$material') ?? 'material'),
             ...(mine ? { placements: mine } : {}),
             ...(stack > 1 ? { stack } : {}),
-            ...(bends.length ? { bends } : {}),
+            // A mirrored copy bends as the mirror image of the part
+            ...(bends.length
+              ? { bends: flip ? bends.map((b) => ({ ...b, mirrored: true })) : bends }
+              : {}),
             ...(on !== undefined ? { on: toText(on) } : {}),
             ...(slots ? { slots, clearance } : {}),
             ...(slots && slotExtra ? { slotExtra } : {}),

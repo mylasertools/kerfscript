@@ -211,3 +211,14 @@ test('a child used again in one call is made once, so it counts once', () => {
   // Six children used 21 times: made once each, the work stays under 15000
   render(tones, { limits: { maxPoints: 1500 } });
 });
+
+test('sort() counts each comparison, so lists that share their parts meet the step limit', () => {
+  const src =
+    'function grow(l, k) = k == 0 ? l : grow([l, l], k - 1);\na = grow([0], 40);\necho(len(sort([a, grow([0], 40)])));';
+  const t = Date.now();
+  assert.throws(() => render(src, { maxSteps: 1000 }), /Stopped after 1000 steps/);
+  assert.ok(Date.now() - t < 2000);
+  assert.deepEqual(render('echo(sort([[2, 1], [1, 9], [1, 2]]));').echoes, [
+    '[[1, 2], [1, 9], [2, 1]]',
+  ]);
+});

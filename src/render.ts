@@ -4,6 +4,7 @@ import { HIDDEN } from './geometry.js';
 import { joinLines } from './plot.js';
 import {
   bendRuns,
+  bendSpans,
   bentPieces,
   besideAssembly,
   collisions,
@@ -46,6 +47,7 @@ import {
 } from './geometry.js';
 import { KerfError } from './lexer.js';
 import { parse } from './parser.js';
+import { parameters } from './customizer.js';
 import { FontBook, textRegions, type FontSource } from './text.js';
 import { checkSetting, fmt, toNumber, toText, type Value } from './values.js';
 
@@ -125,6 +127,9 @@ export interface RenderResult {
   svg: string;
   parts: PartInfo[];
   assembly: AssemblyPart[];
+  /** Every copy of every part, flat at its own origin, placed or not: for
+   * laying the parts out, or exporting them flat */
+  flat: AssemblyPart[];
   layers: LayerDef[];
   warnings: string[];
   echoes: string[];
@@ -174,7 +179,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       e instanceof RangeError
         ? new KerfError(
             /call stack/i.test(e.message)
-              ? 'Recursion too deep: the program calls itself without stopping'
+              ? 'Recursion too deep: check that it stops, or use fold(), scan() or a list comprehension to go through a long list'
               : 'A value grew too large. Is a list or string doubling without end?',
           )
         : e;
@@ -206,6 +211,16 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       material: toText(g('$material') ?? 'material'),
     });
   if (!parts.length) warnings.push('Nothing to cut: the program made no shapes.');
+  // A setting's `when` condition that can't be used: the setting always shows
+  try {
+    for (const p of parameters(source).parameters)
+      if (p.whenProblem)
+        warnings.push(
+          `Setting ${p.name} is always shown: ${p.whenProblem} (line ${source.slice(0, p.span[0]).split('\n').length})`,
+        );
+  } catch {
+    // The program ran, so it parses; settings are only checked as extra
+  }
   // Slots, glue and riders find parts by name, so one name for two
   // different parts is ambiguous; identical copies are fine
   const shapeOf = (p: PartShape) =>
@@ -234,6 +249,9 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     );
 
   glueOn(parts, warnings);
+  // Parts riding on a bent part move with it before any joint is worked
+  // out, so slots, bores and halvings are cut where they end up
+  rideFirst(parts, mode, warnings);
   cutSlots(parts, mode, warnings, res.hardware);
   cutHalvings(parts, mode, warnings);
 
@@ -242,8 +260,8 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     ? { schemaVersion: 1, relations: true, parts: [] }
     : undefined;
   const assembly: AssemblyPart[] = [];
-  const riders = new Map<AssemblyPart, string>();
   const loose: AssemblyPart[] = [];
+  const flatParts: AssemblyPart[] = [];
   const stackedCopies = new Set<AssemblyPart>();
   // copy(i): the number of its i-th cut copy in the assembly, so a mirrored
   // copy keeps its own number on the sheet
@@ -291,10 +309,10 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
           hi = Math.max(hi, x);
         }
       // The material's points are rounded to 0.0001 mm
-      for (const b of p.bends)
-        if (b.x0 < lo - 1e-3 || b.x1 > hi + 1e-3)
+      for (const [x0, x1] of bendSpans(p.bends))
+        if (x0 < lo - 1e-3 || x1 > hi + 1e-3)
           warnings.push(
-            `Part "${p.name}" bends from x = ${fmt(b.x0)} to ${fmt(b.x1)}, beyond the part (x = ${fmt(lo)} to ${fmt(hi)}); only the part itself bends.`,
+            `Part "${p.name}" bends from x = ${fmt(x0)} to ${fmt(x1)}, beyond the part (x = ${fmt(lo)} to ${fmt(hi)}); only the part itself bends.`,
           );
     }
     if (numbering && material.length) {
@@ -378,6 +396,13 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
         outline: material,
         ...(marks.length && { marks }),
       };
+      for (let i = 0; i < (p.placements?.length ?? p.qty); i++)
+        flatParts.push({
+          ...flat,
+          copy: copyNumber(p, i),
+          matrix: placementMatrix({ at: [0, 0, 0], rotate: [0, 0, 0] }),
+          placed: false,
+        });
       if (p.placements) {
         const seen = new Set<string>();
         p.placements.forEach((placement, i) => {
@@ -391,7 +416,6 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
             ...(p.stack && { stack: p.stack }),
           };
           assembly.push(part);
-          if (p.on !== undefined) riders.set(part, p.on);
           const key = part.matrix.map((v) => v.toFixed(6)).join(',');
           if (seen.has(key)) stackedCopies.add(part);
           seen.add(key);
@@ -493,7 +517,6 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     ready.push({ info, layers, copy: (i) => copyNumber(p, i) });
   }
 
-  rideOn(assembly, riders, warnings);
   const pieceOf = new Map<AssemblyPart, AssemblyPart>();
   const solids = assembly
     .filter((part) => !stackedCopies.has(part))
@@ -830,6 +853,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     svg,
     parts: infos,
     assembly,
+    flat: flatParts,
     layers: [...layerList, ...backList],
     warnings,
     echoes: res.echoes,
@@ -1144,38 +1168,58 @@ function cutHalvings(parts: PartShape[], mode: (k: string) => string, warnings: 
 
 // Parts glued onto a bent part, given by on = "name", move with the run
 // of it they sit on
-function rideOn(assembly: AssemblyPart[], riders: Map<AssemblyPart, string>, warnings: string[]) {
-  const counts = new Map<string, number>();
-  for (const [r, host] of riders) {
-    const hosts = assembly.filter((a) => a.name === host && a.placed);
+// Moves each part with `on = "host"` with the straight run of the bent host
+// it sits on: its placements become the ridden ones
+function rideFirst(parts: PartShape[], mode: (k: string) => string, warnings: string[]) {
+  const warned = new Set<string>();
+  for (const r of parts) {
+    if (r.on === undefined || !r.placements?.length) continue;
+    const host = r.on;
+    const hosts = parts
+      .filter((q) => q.name === host && q.placements?.length)
+      .flatMap((q) =>
+        q.placements!.map((pl, i) => ({ q, m: placementMatrix(pl), copy: copyNumber(q, i) })),
+      );
+    // All copies of this rider, a mirrored copy being a part of its own
+    const copies = parts
+      .filter((q) => q.name === r.name && q.on === host)
+      .reduce((n, q) => n + (q.placements?.length ?? 0), 0);
     if (!hosts.length) {
-      if (!counts.has(host))
+      if (!warned.has(host))
         warnings.push(`Part "${r.name}" is on "${host}", which is not a placed part.`);
-      counts.set(host, 0);
+      warned.add(host);
       continue;
     }
-    const mine = [...riders].filter(([q, h]) => q.name === r.name && h === host).length;
-    const h = hosts.length === mine ? hosts[r.copy - 1] : hosts[0];
-    if (!h?.bends?.length) continue;
+    // The middle of the rider's material, to find the run it sits on
     let [x0, y0, x1, y1] = [Infinity, Infinity, -Infinity, -Infinity];
-    for (const ring of r.outline)
-      for (const [x, y] of ring) {
-        x0 = Math.min(x0, x);
-        y0 = Math.min(y0, y);
-        x1 = Math.max(x1, x);
-        y1 = Math.max(y1, y);
-      }
-    const m = r.matrix;
+    for (const [k, l] of r.layers)
+      if (mode(k) === 'cut')
+        for (const ring of l.regions)
+          for (const [x, y] of ring) {
+            x0 = Math.min(x0, x);
+            y0 = Math.min(y0, y);
+            x1 = Math.max(x1, x);
+            y1 = Math.max(y1, y);
+          }
+    if (!(x1 >= x0)) continue;
     const [cx, cy, cz] = [(x0 + x1) / 2, (y0 + y1) / 2, r.thickness / 2];
-    const world = [
-      m[0] * cx + m[1] * cy + m[2] * cz + m[3],
-      m[4] * cx + m[5] * cy + m[6] * cz + m[7],
-      m[8] * cx + m[9] * cy + m[10] * cz + m[11],
-    ];
-    const inv = invert(h.matrix);
-    const lx = inv[0] * world[0] + inv[1] * world[1] + inv[2] * world[2] + inv[3];
-    const run = bendRuns(h.bends, h.thickness)[runOf(h.bends, lx)];
-    r.matrix = multiply(h.matrix, multiply(run, multiply(inv, r.matrix)));
+    r.placements = r.placements.map((pl, i) => {
+      // Rider copy k on host copy k when there are as many of each, or all
+      // on the first
+      const mine = copyNumber(r, i);
+      const h = (hosts.length === copies && hosts.find((x) => x.copy === mine)) || hosts[0];
+      if (!h.q.bends?.length) return pl;
+      const m = placementMatrix(pl);
+      const world = [
+        m[0] * cx + m[1] * cy + m[2] * cz + m[3],
+        m[4] * cx + m[5] * cy + m[6] * cz + m[7],
+        m[8] * cx + m[9] * cy + m[10] * cz + m[11],
+      ];
+      const inv = invert(h.m);
+      const lx = inv[0] * world[0] + inv[1] * world[1] + inv[2] * world[2] + inv[3];
+      const run = bendRuns(h.q.bends, h.q.thickness)[runOf(h.q.bends, lx)];
+      return { ...pl, matrix: multiply(h.m, multiply(run, multiply(inv, m))) };
+    });
   }
 }
 

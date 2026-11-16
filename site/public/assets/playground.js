@@ -76,6 +76,8 @@ let ready = null;
 let mode = 'material';
 let shown = -1;
 let paramKey = '';
+// The settings' controls, to refresh what shows when the code changes
+let controls;
 let errorLine = 0;
 let timer = 0;
 // Counts updates, scheduled or started, so one that waited knows it is out of date
@@ -240,10 +242,13 @@ function updateSettings() {
       p.step,
       p.options,
       p.type,
+      p.when,
       Array.isArray(p.initial) && p.initial.length,
     ]),
   );
   if (key === paramKey) {
+    // Settings shown or hidden by `when` follow the values in the code
+    controls?.refresh(Object.fromEntries(params.map((p) => [p.name, p.initial])));
     for (const p of params) {
       const control = settings.querySelector(`#ctl-${CSS.escape(p.name)}`);
       if (!control || document.activeElement === control) continue;
@@ -263,7 +268,7 @@ function updateSettings() {
   }
   paramKey = key;
   const values = Object.fromEntries(params.map((p) => [p.name, p.initial]));
-  buildControls(settings, params, values, (name, value) => {
+  controls = buildControls(settings, params, values, (name, value) => {
     const next = setInSource(input.value, name, value);
     if (next === input.value) return;
     input.value = next;

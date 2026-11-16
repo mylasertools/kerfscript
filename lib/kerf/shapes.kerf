@@ -1,0 +1,324 @@
+// kerf/shapes: basic shapes by name, sized to a box.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+//
+// Hearts, teardrops, clouds, shields, banners, arrows and the other shapes
+// that signs, tags, ornaments and boxes are made of. Each takes its size as
+// [w, h] (or one number for both) and is centred on the origin, as circle()
+// and ellipse() are; arrows and chevrons point along x, the others stand
+// upright. A shape with one outline also has a _points() function giving
+// that outline, counter-clockwise, for offset_path(), flex_strip() and
+// anything else that works on points. Curves follow $fn when it is set,
+// and otherwise take about a point per millimetre.
+
+use <kerf/fit>
+
+// [w, h] from a number or a pair, checked
+function shape_size(size, what) =
+  let (s = is_list(size) ? size : [size, size])
+  assert(
+    len(s) == 2 && is_num(s[0]) && is_num(s[1]) && s[0] > 0 && s[1] > 0,
+    str(what, "(): size must be more than 0, as a number or [w, h]")
+  )
+  s;
+
+// How many points a curve about `length` mm long is drawn with
+function shape_steps(length) = $fn > 0 ? max(3, $fn) : clamp(ceil(length), 32, 200);
+
+// The points scaled to fill the box [w, h], centred on the origin
+function shape_fill(points, s) =
+  let (b = bounds(points), c = [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2], kx = s[0] / (b[2] - b[0]), ky = s[1] / (b[3] - b[1]))
+  [for (p = points) [(p[0] - c[0]) * kx, (p[1] - c[1]) * ky]];
+
+// The points moved so their box is centred on the origin
+function shape_centre(points) =
+  let (b = bounds(points), c = [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2])
+  [for (p = points) p - c];
+
+// Points along an arc round `c` of radius r, from angle a0 to a1, the first
+// and last included
+function shape_arc(c, r, a0, a1, n) = [for (i = [0:n]) let (a = a0 + (a1 - a0) * i / n) c + r * [cos(a), sin(a)]];
+
+// A heart: two round lobes meeting in a dip, and a point at the bottom
+module heart(size = 20) polygon(heart_points(size));
+
+// The outline of heart(), as points
+function heart_points(size = 20) =
+  let (s = shape_size(size, "heart"), n = shape_steps(1.7 * (s[0] + s[1])))
+  shape_fill([for (i = [0:n - 1]) let (a = -360 * i / n) [16 * pow(sin(a), 3), 13 * cos(a) - 5 * cos(2 * a) - 2 * cos(3 * a) - cos(4 * a)]], s);
+
+// A drop: round at the bottom, coming to a point at the top. It must be
+// taller than it is wide.
+module teardrop(size = [14, 20]) polygon(teardrop_points(size));
+
+// The outline of teardrop(), as points
+function teardrop_points(size = [14, 20]) =
+  let (
+    s = shape_size(size, "teardrop"),
+    r = s[0] / 2,
+    d = s[1] - r
+  )
+  assert(s[1] > s[0], "teardrop(): make it taller than it is wide")
+  let (
+    t = acos(r / d),
+    n = shape_steps(PI * s[0])
+  )
+  [for (p = concat([[0, s[1]]], shape_arc([0, r], r, 90 + t, 450 - t, n))) p - [0, s[1] / 2]];
+
+// An egg standing on its broad end; `taper` is how much narrower the top
+// is, 0 for an ellipse
+module egg(size = [16, 20], taper = 0.2) polygon(egg_points(size, taper));
+
+// The outline of egg(), as points
+function egg_points(size = [16, 20], taper = 0.2) =
+  let (s = shape_size(size, "egg"), n = shape_steps(1.6 * (s[0] + s[1])))
+  assert(taper >= 0 && taper < 1, "egg(): taper is from 0 up to 1")
+  shape_fill([for (i = [0:n - 1]) let (a = 360 * i / n) [cos(a) * (1 - taper * sin(a)), sin(a)]], s);
+
+// A lens (a leaf, a petal, an eye): two arcs meeting in a point at each
+// end of its longer side, the top and bottom of a tall one, the left and
+// right of a wide one
+module lens(size = [10, 20]) polygon(lens_points(size));
+
+// The outline of lens(), as points
+function lens_points(size = [10, 20]) =
+  let (s = shape_size(size, "lens"))
+  // A wide lens is a tall one turned a quarter turn, so its arcs stay less
+  // than half circles and its ends pointed
+  s[0] > s[1] ? [for (p = shape_tall_lens([s[1], s[0]])) [p[1], -p[0]]] : shape_tall_lens(s);
+
+// A lens with its points at the top and the bottom, no wider than tall
+function shape_tall_lens(s) =
+  let (
+    g = s[0] / 2,
+    R = g / 2 + s[1] * s[1] / (8 * g),
+    t = asin(min(1, s[1] / 2 / R)),
+    // even, so a point falls on the widest place
+    n = 2 * max(2, ceil(shape_steps(PI * (s[0] + s[1]) / 2) / 4))
+  )
+  concat(shape_arc([g - R, 0], R, -t, t, n), [for (p = shape_arc([R - g, 0], R, 180 - t, 180 + t, n)) if (abs(p[1]) < s[1] / 2 - 1e-9) p]);
+
+// A crescent moon `d` across, open to the right, `thickness` at its widest
+module crescent(d = 20, thickness) polygon(crescent_points(d, thickness));
+
+// The outline of crescent(), as points
+function crescent_points(d = 20, thickness) =
+  let (
+    R = d / 2,
+    t = is_undef(thickness) ? d / 4 : thickness
+  )
+  assert(is_num(d) && d > 0, "crescent(): d must be more than 0")
+  assert(t > 0 && t < d, "crescent(): thickness must be more than 0 and less than d")
+  let (
+    Y = sqrt(R * R - t * t / 4),
+    a = atan2(Y, t / 2),
+    b = atan2(Y, -t / 2),
+    n = shape_steps(PI * d)
+  )
+  shape_centre(concat(
+    shape_arc([0, 0], R, a, 360 - a, n),
+    [for (i = [1:n - 1]) let (q = 360 - b - (360 - 2 * b) * i / n) [t, 0] + R * [cos(q), sin(q)]]
+  ));
+
+// A rectangle with round ends (a stadium, a pill)
+module capsule(size = [30, 10]) polygon(capsule_points(size));
+
+// The outline of capsule(), as points
+function capsule_points(size = [30, 10]) =
+  let (
+    s = shape_size(size, "capsule"),
+    r = min(s) / 2,
+    c = s[0] >= s[1] ? [s[0] / 2 - r, 0] : [0, s[1] / 2 - r],
+    a = s[0] >= s[1] ? -90 : 0,
+    n = ceil(shape_steps(PI * r * 2) / 2)
+  )
+  concat(shape_arc(c, r, a, a + 180, n), shape_arc(-c, r, a + 180, a + 360, n));
+
+// A diamond (a rhombus) touching the middle of each side of its box
+module diamond(size = [14, 20]) polygon(diamond_points(size));
+
+// The outline of diamond(), as points
+function diamond_points(size = [14, 20]) =
+  let (s = shape_size(size, "diamond") / 2) [[0, -s[1]], [s[0], 0], [0, s[1]], [-s[0], 0]];
+
+// A regular polygon with `n` corners `r` from its centre, as
+// regular_polygon(n, r), each rounded with radius `round`
+module rounded_polygon(n = 6, r = 10, round = 2) polygon(rounded_polygon_points(n, r, round));
+
+// The outline of rounded_polygon(), as points
+function rounded_polygon_points(n = 6, r = 10, round = 2) =
+  assert(is_num(n) && n >= 3, "rounded_polygon(): n must be 3 or more")
+  assert(r > 0, "rounded_polygon(): r must be more than 0")
+  assert(round >= 0 && round < r * cos(180 / n), "rounded_polygon(): round must be less than the distance to a side")
+  let (
+    k = floor(n),
+    c = r - round / cos(180 / k),
+    m = round > 0 ? max(2, ceil(shape_steps(2 * PI * round) / k)) : 0
+  )
+  [for (i = [0:k - 1]) let (a = 360 * i / k)
+    each (round > 0 ? shape_arc(c * [cos(a), sin(a)], round, a - 180 / k, a + 180 / k, m) : [r * [cos(a), sin(a)]])];
+
+// A shield: a flat top, straight sides, curving in to a point at the
+// bottom. `point` is how much of the height the curved part takes.
+module shield(size = [16, 20], point = 0.55) polygon(shield_points(size, point));
+
+// The outline of shield(), as points
+function shield_points(size = [16, 20], point = 0.55) =
+  let (s = shape_size(size, "shield"), w = s[0] / 2, top = s[1] / 2)
+  assert(point > 0 && point <= 1, "shield(): point is more than 0, up to 1")
+  let (
+    yk = top - s[1] * (1 - point),
+    n = shape_steps(s[1] * point),
+    side = function(u) [w * (1 - u * u), yk - (yk + top) * u]
+  )
+  concat(
+    [[-w, top]],
+    [for (i = [0:n]) let (p = side(i / n)) [-p[0], p[1]]],
+    [for (i = [n - 1:-1:0]) side(i / n)],
+    [[w, top]]
+  );
+
+// An arrow pointing along x: `size` is its length and the head's width,
+// `shaft` the shaft's width and `head` the head's length
+module arrow(size = [30, 14], shaft, head) polygon(arrow_points(size, shaft, head));
+
+// The outline of arrow(), as points
+function arrow_points(size = [30, 14], shaft, head) =
+  let (
+    s = shape_size(size, "arrow"),
+    L = s[0] / 2,
+    W = s[1] / 2,
+    sw = is_undef(shaft) ? s[1] / 3 : shaft,
+    hl = is_undef(head) ? min(s[0] / 2, s[1]) : head
+  )
+  assert(sw > 0 && sw <= s[1], "arrow(): shaft must be more than 0 and no wider than the head")
+  assert(hl > 0 && hl <= s[0], "arrow(): head must be more than 0 and no longer than the arrow")
+  [[-L, -sw / 2], [L - hl, -sw / 2], [L - hl, -W], [L, 0], [L - hl, W], [L - hl, sw / 2], [-L, sw / 2]];
+
+// A chevron (>) pointing along x, `thickness` across each arm along x
+module chevron(size = [12, 20], thickness) polygon(chevron_points(size, thickness));
+
+// The outline of chevron(), as points
+function chevron_points(size = [12, 20], thickness) =
+  let (
+    s = shape_size(size, "chevron"),
+    w = s[0] / 2,
+    h = s[1] / 2,
+    t = is_undef(thickness) ? s[0] / 2 : thickness
+  )
+  assert(t > 0 && t < s[0], "chevron(): thickness must be more than 0 and less than the width")
+  [[-w, -h], [-w + t, -h], [w, 0], [-w + t, h], [-w, h], [w - t, 0]];
+
+// A banner with a V cut `notch` deep into each end
+module banner(size = [60, 16], notch) polygon(banner_points(size, notch));
+
+// The outline of banner(), as points
+function banner_points(size = [60, 16], notch) =
+  let (
+    s = shape_size(size, "banner"),
+    w = s[0] / 2,
+    h = s[1] / 2,
+    v = is_undef(notch) ? s[1] / 3 : notch
+  )
+  assert(v >= 0 && v < s[0] / 2, "banner(): notch must be less than half the width")
+  [[-w, -h], [w, -h], [w - v, 0], [w, h], [-w, h], [-w + v, 0]];
+
+// A house: walls and a pitched roof `roof` tall
+module house(size = [20, 24], roof) polygon(house_points(size, roof));
+
+// The outline of house(), as points
+function house_points(size = [20, 24], roof) =
+  let (
+    s = shape_size(size, "house"),
+    w = s[0] / 2,
+    h = s[1] / 2,
+    rf = is_undef(roof) ? s[0] / 2 : roof
+  )
+  assert(rf > 0 && rf < s[1], "house(): roof must be more than 0 and less than the height")
+  [[-w, -h], [w, -h], [w, h - rf], [0, h], [-w, h - rf]];
+
+// A gift or luggage tag: its left end's corners cut off by `cut`, with a
+// hole `hole` across near that end (0 for none)
+module tag(size = [50, 25], cut, hole) {
+  s = shape_size(size, "tag");
+  hd = is_undef(hole) ? s[1] / 4 : hole;
+  difference() {
+    polygon(tag_points(size, cut));
+    if (hd > 0) translate([-s[0] / 2 + s[1] / 3, 0]) circle(d = hd);
+  }
+}
+
+// The outline of tag(), without its hole, as points
+function tag_points(size = [50, 25], cut) =
+  let (
+    s = shape_size(size, "tag"),
+    w = s[0] / 2,
+    h = s[1] / 2,
+    c = is_undef(cut) ? s[1] / 4 : cut
+  )
+  assert(c >= 0 && c < min(s[0], s[1] / 2), "tag(): cut must be less than half the height")
+  [[-w + c, -h], [w, -h], [w, h], [-w + c, h], [-w, h - c], [-w, -h + c]];
+
+// A ring `d` across, its band `width` wide
+module ring(d = 20, width = 3) {
+  assert(is_num(d) && d > 0, "ring(): d must be more than 0");
+  assert(width > 0 && width < d / 2, "ring(): width must be more than 0 and less than half of d");
+  difference() {
+    circle(d = d);
+    circle(d = d - 2 * width);
+  }
+}
+
+// A circle `d` across with `n` round scallops round its edge
+module scalloped(d = 30, n = 16) {
+  assert(is_num(d) && d > 0, "scalloped(): d must be more than 0");
+  assert(n >= 3, "scalloped(): n must be 3 or more");
+  k = sin(180 / n);
+  rb = d / 2 / (1 + k);
+  union() {
+    circle(r = rb);
+    for (i = [0:n - 1]) rotate(360 * i / n) translate([rb, 0]) circle(r = rb * k);
+  }
+}
+
+// A flower `d` across with `petals` petals round a round middle `center`
+// of d across
+module flower(d = 30, petals = 6, center = 0.35) {
+  assert(is_num(d) && d > 0, "flower(): d must be more than 0");
+  assert(petals >= 3, "flower(): petals must be 3 or more");
+  assert(center > 0 && center < 1, "flower(): center is a part of d, more than 0 and less than 1");
+  pl = d / 2 * (1 - center / 3);
+  rc = d / 2 - pl / 2;
+  pw = min(pl, 2.2 * rc * sin(180 / petals));
+  union() {
+    circle(d = d * center);
+    for (i = [0:petals - 1]) rotate(90 + 360 * i / petals) translate([rc, 0]) ellipse(d = [pl, pw]);
+  }
+}
+
+// A cloud: a flat bottom with `puffs` round puffs along the top
+module cloud(size = [40, 24], puffs = 3) {
+  s = shape_size(size, "cloud");
+  assert(puffs >= 1, "cloud(): puffs must be 1 or more");
+  fit(s, mode = "stretch", anchor = "center") union() {
+    translate([0.08, 0]) rect([0.84, 0.3], r = 0.15);
+    for (i = [0:puffs - 1]) let (f = (i + 0.5) / puffs, rise = sin(180 * f), r = (0.3 + 0.2 * rise) / max(1, puffs / 2.2))
+      translate([0.12 + 0.76 * f, 0.18 + 0.32 * rise]) circle(r = r, $fn = shape_steps(150));
+    translate([0.12, 0.17]) circle(r = 0.12, $fn = shape_steps(80));
+    translate([0.88, 0.17]) circle(r = 0.12, $fn = shape_steps(80));
+  }
+}
+
+// A speech bubble: a rounded box with a tail `tail` long at its bottom
+// left (mirror() it for the right). The tail is part of `size`.
+module speech_bubble(size = [40, 30], r, tail) {
+  s = shape_size(size, "speech_bubble");
+  th = is_undef(tail) ? s[1] / 4 : tail;
+  assert(th > 0 && th < s[1] / 2, "speech_bubble(): tail must be more than 0 and less than half the height");
+  rr = is_undef(r) ? min(s[0], s[1] - th) / 5 : r;
+  bh = s[1] - th;
+  yb = -s[1] / 2 + th;
+  union() {
+    translate([-s[0] / 2, yb]) rect([s[0], bh], r = rr);
+    polygon([[-s[0] * 0.3, yb + min(bh / 2, rr + 1)], [-s[0] * 0.3 + s[0] / 5, yb + min(bh / 2, rr + 1)], [-s[0] * 0.38, -s[1] / 2]]);
+  }
+}

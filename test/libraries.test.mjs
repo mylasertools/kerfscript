@@ -557,3 +557,19 @@ test('GitHub sources match in any case of owner and repository, but not of the r
   );
   assert.deepEqual(Object.keys(lock.libraries), ['desk', 'feet', 'shelf']);
 });
+
+test('use <...> takes a Windows path, and that library finds its own beside it', () => {
+  const files = {
+    'C:/Designs/My lib/a': 'use <b>\nmodule a() b();',
+    'C:/Designs/My lib/b': 'module b() rect(12);',
+  };
+  const asked = [];
+  const r = render('use <C:\\Designs\\My lib\\a>\npart("x") a();', {
+    resolve: (p) => {
+      asked.push(p);
+      return files[p.split('\\').join('/')];
+    },
+  });
+  assert.equal(r.parts[0].width, 12);
+  assert.ok(asked.includes('C:/Designs/My lib/b'), asked.join(' | '));
+});

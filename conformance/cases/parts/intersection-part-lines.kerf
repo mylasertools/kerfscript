@@ -1,0 +1,8 @@
+// Lines intersected with a part are clipped to it and stay in it
+// => warning: intersection() leaves part "P" with nothing to cut: a child of lines alone leaves no area; to clip lines to the part, put the intersection() inside it (line 5)
+// => part: "P" size=10x0
+// => layer: "score" length=10
+intersection() {
+  part("P") square(10);
+  score() line([0, 5], [20, 5]);
+}

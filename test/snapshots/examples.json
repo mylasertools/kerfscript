@@ -3001,6 +3001,49 @@
   ],
   "warnings": []
  },
+ "desk-sign.kerf": {
+  "parts": [
+   {
+    "name": "Sign",
+    "qty": 1,
+    "size": [
+     200,
+     73.07
+    ],
+    "pieces": 1,
+    "cut": 551,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "walnut"
+   },
+   {
+    "name": "Sign stand",
+    "qty": 1,
+    "size": [
+     220,
+     50
+    ],
+    "pieces": 1,
+    "cut": 766,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "walnut"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 1259.29,
+    "length": 0
+   },
+   "cut": {
+    "area": 24967.92,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
  "drawer-organizer.kerf": {
   "parts": [
    {
@@ -8151,7 +8194,7 @@
    },
    "cut": {
     "area": 15015.19,
-    "length": 1238.26
+    "length": 1238.27
    }
   },
   "echoes": [],
@@ -9246,6 +9289,79 @@
   "layers": {
    "cut": {
     "area": 103736.22,
+    "length": 0
+   }
+  },
+  "echoes": [],
+  "warnings": []
+ },
+ "shape-tags.kerf": {
+  "parts": [
+   {
+    "name": "Mila",
+    "qty": 1,
+    "size": [
+     80,
+     72
+    ],
+    "pieces": 1,
+    "cut": 270,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Theo",
+    "qty": 1,
+    "size": [
+     80,
+     72
+    ],
+    "pieces": 1,
+    "cut": 270,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Grandma",
+    "qty": 1,
+    "size": [
+     80,
+     72
+    ],
+    "pieces": 1,
+    "cut": 270,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Oliver",
+    "qty": 1,
+    "size": [
+     80,
+     72
+    ],
+    "pieces": 1,
+    "cut": 270,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   }
+  ],
+  "sheets": 1,
+  "layers": {
+   "engrave": {
+    "area": 504.76,
+    "length": 0
+   },
+   "score": {
+    "area": 0,
+    "length": 920.29
+   },
+   "cut": {
+    "area": 14039.12,
     "length": 0
    }
   },
@@ -13073,7 +13189,7 @@
     "length": 7006.02
    },
    "cut": {
-    "area": 542204.73,
+    "area": 542204.72,
     "length": 0
    },
    "engrave": {

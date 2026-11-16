@@ -73,6 +73,62 @@ The playground gives it a Play button that steps it round its range, and
 any position that warns (parts colliding, a slot that misses), as
 `--sweep crank=0:5:360` would. `kerf params` lists it with `"drive": true`.
 
+## Settings that apply only sometimes
+
+A setting that matters only with certain other choices can say so with
+`when` and a condition at the end of its comment, after its range or
+choices or on its own. The playground and the desktop app show it only
+while the condition holds, and hide a group when none of its settings
+show:
+
+```kerf
+mount = "wall"; // [wall:On a wall, stand:On a stand]
+// Room for the stand's tabs in their slots
+clearance = 0.15; // [0:0.05:0.5] when mount == "stand"
+// Hole for a nail
+hole = 5; // when mount == "wall"
+
+rect([120, 80], r = 6);
+```
+
+The condition can use the other settings by name, numbers, strings,
+`true` and `false`, comparisons, `&&`, `||`, `!`, arithmetic, `? :` and
+`[i]` indexing. A condition that names something other than a setting, or
+calls a function, is reported as a warning, and the setting then always
+shows. `kerf params` lists the condition as `"when"`, and in JavaScript
+`shown(parameter, values, parameters)` says whether a setting applies to
+the values chosen so far.
+
+## Settings that do nothing
+
+A setting whose slider moves nothing confuses the people using the design.
+`kerf check --settings` tries each setting across its range, the others as
+they are, and says what it changes:
+
+```text
+$ kerf check sign.kerf --settings
+Each setting tried across its range, the others as they are:
+name: changes the files
+band: changes the files
+  from 50 to 60 it changes nothing
+notes: changes nothing at "for the shop", "for th", "pohs eht rof"
+lift: changes only the assembled view, not the files
+mount: changes the files
+  "wall" and "hook" give the same result
+clearance: not tried, as it applies only when mount == "stand"
+```
+
+A range is tried at its ends and three points between, a menu at every
+choice, a checkbox both ways and text shorter and changed. The files, the
+sheets' material and thickness and the parts list count as what is cut;
+each part's shape, marks and place as the assembled view. A setting that
+changes nothing, or that the program stops at for all values but one, makes
+the command exit with 1, with the errors listed; a range where nothing
+changes, or choices that give the same result, are pointed out without
+failing. The
+setting marked `drive` and settings whose `when` doesn't hold are left out.
+In JavaScript, `settingEffects(source, options)` gives the same as a list.
+
 ## Changing settings without editing the file
 
 The CLI accepts values with `-D` or a JSON file with `--params`:

@@ -1,0 +1,6 @@
+// intersection() clips a part that is its first child to the other children
+// => part: "P" size=10x10
+intersection() {
+  part("P") square(20);
+  square(10);
+}

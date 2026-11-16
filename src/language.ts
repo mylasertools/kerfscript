@@ -987,7 +987,7 @@ export function complete(
 ): { from: number; to: number; items: Completion[] } {
   const src = a.source;
   const line = src.slice(src.lastIndexOf('\n', offset - 1) + 1, offset);
-  const lib = /\b(?:use|include)\s*<([A-Za-z0-9_./-]*)$/.exec(line);
+  const lib = /\b(?:use|include)\s*<([A-Za-z0-9_./\\: -]*)$/.exec(line);
   if (lib) {
     const items = [...new Set(a.available)].map(
       (path): Completion => ({

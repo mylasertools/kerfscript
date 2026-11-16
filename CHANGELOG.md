@@ -1,5 +1,93 @@
 # Changelog
 
+## 0.10.0 (2026-11-16)
+
+Language version 0.3, as in 0.9.0: programs run as before, except that
+`color()` and `linear_extrude()` now warn instead of stopping.
+
+Changes to the output of existing programs, each a fix (see Fixes below):
+
+- Slots for parts that pass through at an angle are cut to what passes
+  through the sheet, so they can be narrower than before; check the fit of
+  angled tabs, tapered ones especially.
+- `intersection()` with a part as its first child clips the part instead of
+  emptying it.
+- A default such as `w = $thickness` takes the `$thickness` passed with the
+  call.
+- Parts riding a bent part, and mirrored copies of bent parts, are placed,
+  slotted and bored where they end up.
+- SVG import reads units on shapes and keeps a viewBox's proportions.
+
+Language:
+
+- `text(fit = [w, h])` keeps text no wider than `w` and its capitals no
+  taller than `h`; `valign = "cap"` centres the capitals on y = 0.
+- `text_size()` gives a text's measurements as a record: `width`, `height`,
+  `bounds`, `cap`, `ascent`, `descent` and the `size` used.
+- `ellipse(d = [w, h])` takes the width and height, as `circle(d)` does.
+- `color()` and `linear_extrude()` run as their children with a warning, so
+  the 2D part of an OpenSCAD file runs unchanged.
+- Recursion and step-limit errors say what to check, instead of assuming an
+  endless loop.
+- `use <...>` takes a Windows path, as `use <C:\Designs\lib\feet>`, and
+  paths with spaces; a library named that way finds the libraries beside it.
+
+Fixes:
+
+- `intersection()` clips a part that is its first child to the other
+  children, and warns when it leaves a part nothing to cut.
+- A module's or function's defaults see the special variables passed with
+  the call: `w = $thickness` called with `$thickness = 6` is 6.
+- Slots for parts at an angle cut only what passes through the sheet: a
+  tapered tab no longer cuts its wider part into the slot.
+- Parts riding a bent part (`on = "host"`) have their slots, bores and
+  halvings cut where they ride.
+- `sort()` counts its comparisons against the step limit.
+- A mirrored copy of a bent part bends as its mirror image, and the copies
+  of a mirrored rider each ride their own host.
+- Children that define a layer are evaluated each time they are used.
+- Shaft capture fails when a part on the shaft can slide off over a bearing
+  and its retainer.
+- SVG import: lengths on shapes keep their units (`width="40mm"`), and a
+  viewBox keeps its proportions as `preserveAspectRatio` says, centred by
+  default.
+
+3D files:
+
+- `kerf render model.kerf -o model.glb` writes the model in 3D: `.glb` to view
+  or render, `.3mf` to 3D print in colour, `.stl` as one mesh. Each part is a
+  closed solid as thick as its sheet, where the assembly puts it, bent on its
+  living hinges; engraving and scoring are thin coloured bodies on its faces,
+  and hardware rods and balls. `--flat` lays the parts side by side, front
+  face up, for printing; `--mark-height` sets how far the marks stand off,
+  and `--print` is `--flat` with the marks 0.6 mm high.
+- In JavaScript, `toModel(result, "glb" | "3mf" | "stl", options)`, with
+  `meshBodies()` for the solid bodies and `result.flat` for every part flat.
+
+Libraries:
+
+- `kerf/shapes`: `heart`, `teardrop`, `egg`, `lens`, `crescent`, `capsule`,
+  `diamond`, `rounded_polygon`, `shield`, `arrow`, `chevron`, `banner`,
+  `house`, `tag`, `ring`, `scalloped`, `flower`, `cloud` and
+  `speech_bubble`, each sized to a box and centred; shapes with one outline
+  also give it as points, `heart_points()` and the like.
+- `kerf/stand`: `stand()` stands a sign or a photo in a base, upright or
+  leaning back, with `stand_tabs()` and `stand_slots()` for a base of your
+  own.
+
+Customizer:
+
+- `kerf check --settings` tries each setting across its range and says what
+  it changes: the files, only the assembled view, or nothing. It points out
+  where a slider stops changing anything and menu choices that give the same
+  result, and exits with 1 when a setting changes nothing or the program
+  stops at its values.
+  `settingEffects()` gives the same in JavaScript.
+- A setting can end its comment with `when` and a condition on the other
+  settings, `// [0:0.05:0.5] when mount == "stand"`: the playground and the
+  desktop app show it only while the condition holds. `shown()` evaluates
+  it in JavaScript.
+
 ## 0.9.0 (2026-11-09)
 
 Language version 0.3, as in 0.8.0: programs run as before.

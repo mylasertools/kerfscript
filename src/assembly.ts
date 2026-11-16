@@ -498,17 +498,35 @@ export function sortedBends(bends: Bend[]): Bend[] {
   return [...bends].sort((a, b) => a.x0 - b.x0);
 }
 
+// A mirrored copy's bends are the unmirrored part's: it bends as the mirror
+// image of that part, left to right
+const isMirrored = (bends: Bend[]) => bends.length > 0 && bends.every((b) => b.mirrored);
+const MIRROR_X = [-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+const flipX = (m: number[]) => multiply(MIRROR_X, multiply(m, MIRROR_X));
+/** Where each bend lies along the part's own x, as [from, to] */
+export function bendSpans(bends: Bend[]): [number, number][] {
+  return sortedBends(bends).map((b) => (b.mirrored ? [-b.x1, -b.x0] : [b.x0, b.x1]));
+}
+
 // The matrices for the flat runs between bends, in the part's own
 // coordinates: the first is the identity, the run after bend k is the
 // product of the first k bends
 export function bendRuns(bends: Bend[], t: number): number[][] {
   const out = [translation(0, 0, 0)];
   for (const b of sortedBends(bends)) out.push(multiply(out[out.length - 1], bendAt(b, t)));
-  return out;
+  return isMirrored(bends) ? out.map(flipX) : out;
 }
 
 // Where a point of a bent part goes, in the part's own coordinates
 export function bendPoint(bends: Bend[], t: number, p: Vec3): Vec3 {
+  if (isMirrored(bends)) {
+    const q = bendPoint(
+      bends.map(({ mirrored: _, ...b }) => b),
+      t,
+      [-p[0], p[1], p[2]],
+    );
+    return [-q[0], q[1], q[2]];
+  }
   const list = sortedBends(bends);
   const runs = bendRuns(list, t);
   for (let k = list.length - 1; k >= 0; k--) {
@@ -525,7 +543,8 @@ export function bendPoint(bends: Bend[], t: number, p: Vec3): Vec3 {
 
 // Which flat run a point along x is on
 export function runOf(bends: Bend[], x: number): number {
-  return sortedBends(bends).filter((b) => (b.x0 + b.x1) / 2 < x).length;
+  const at = isMirrored(bends) ? -x : x;
+  return sortedBends(bends).filter((b) => (b.x0 + b.x1) / 2 < at).length;
 }
 
 // A bent part as rigid pieces, the hinges left out, to check for
@@ -533,13 +552,16 @@ export function runOf(bends: Bend[], x: number): number {
 export function bentPieces(p: AssemblyPart): AssemblyPart[] {
   if (!p.bends?.length) return [p];
   const list = sortedBends(p.bends);
-  const runs = bendRuns(list, p.thickness);
+  const runs = bendRuns(p.bends, p.thickness);
+  const flip = isMirrored(p.bends);
   const BIG = 1e7;
   const out: AssemblyPart[] = [];
   for (let k = 0; k <= list.length; k++) {
-    const from = k === 0 ? -BIG : list[k - 1].x1;
-    const to = k === list.length ? BIG : list[k].x0;
-    if (!(to > from)) continue;
+    const a = k === 0 ? -BIG : list[k - 1].x1;
+    const b = k === list.length ? BIG : list[k].x0;
+    if (!(b > a)) continue;
+    // A mirrored copy's runs lie at -x
+    const [from, to] = flip ? [-b, -a] : [a, b];
     const band: Poly = [
       [from, -BIG],
       [to, -BIG],
@@ -571,8 +593,8 @@ export function meshPieces(regions: Poly[], bends?: Bend[], step = 2): Poly[][] 
       lo = Math.min(lo, x);
       hi = Math.max(hi, x);
     }
-  const spans = sortedBends(bends)
-    .map((b) => [Math.max(b.x0, lo), Math.min(b.x1, hi)])
+  const spans = bendSpans(bends)
+    .map(([a, b]) => [Math.max(a, lo), Math.min(b, hi)])
     .filter(([a, b]) => b > a);
   const total = spans.reduce((t, [a, b]) => t + (b - a), 0);
   const width = Math.max(step, total / MAX_BENT_BANDS);

@@ -53,3 +53,73 @@ test('a vector control keeps numbers the code changed since it was made', () => 
   second.listeners.input();
   assert.deepEqual(changes.at(-1), [30, 40]);
 });
+
+test('a setting marked when shows only while its condition holds', async () => {
+  const { parameters } = await import('../dist/index.js');
+  const params = parameters(
+    'mount = "wall"; // [wall, stand]\nclearance = 0.2; // [0:0.05:1] when mount == "stand"\n/* [Stand] */\nfeet = 2; // [1:4] when mount == "stand"',
+  ).parameters;
+  const container = new Node('div');
+  const values = {};
+  buildControls(container, params, values, () => {});
+  const rows = container.all('div').filter((d) => d.attrs.class === 'control');
+  const [, clearance, feet] = rows;
+  const stand = container.all('fieldset')[1];
+  assert.equal(clearance.hidden, true);
+  assert.equal(feet.hidden, true);
+  assert.equal(stand.hidden, true, 'a group with nothing shown is hidden');
+  const select = container.all('select')[0];
+  select.value = 'stand';
+  select.listeners.change();
+  assert.equal(clearance.hidden, false);
+  assert.equal(stand.hidden, false);
+});
+
+test('settings shown by when follow values the code changes', async () => {
+  const { parameters } = await import('../dist/index.js');
+  const params = parameters(
+    'mount = "wall"; // [wall, stand]\nclearance = 0.2; // [0:0.05:1] when mount == "stand"',
+  ).parameters;
+  const container = new Node('div');
+  const controls = buildControls(container, params, {}, () => {});
+  const clearance = container.all('div').filter((d) => d.attrs.class === 'control')[1];
+  assert.equal(clearance.hidden, true);
+  controls.refresh({ mount: 'stand', clearance: 0.2 });
+  assert.equal(clearance.hidden, false);
+  controls.refresh({ mount: 'wall', clearance: 0.2 });
+  assert.equal(clearance.hidden, true);
+});
+
+test('a when condition runs as the language runs it', async () => {
+  const { parameters, shown, render } = await import('../dist/index.js');
+  const src =
+    'name = "Anna"; // [Anna, Bo]\nsize = -5; // [-10:10]\nlabel = "kiwi";\n' +
+    'a = 1; // when name[0] == "A"\nb = 1; // when +size < 0\nc = 1; // when label < "m"\nd = 1; // when size < "x"';
+  const params = parameters(src).parameters;
+  const by = (n) => params.find((p) => p.name === n);
+  const lang = (cond, values = {}) =>
+    render(
+      Object.entries({ name: '"Anna"', size: -5, label: '"kiwi"', ...values })
+        .map(([k, v]) => `${k} = ${v};`)
+        .join('\n') + `\necho((${cond}) ? 1 : 0);`,
+    ).echoes[0] === '1';
+  assert.equal(shown(by('a'), {}, params), lang('name[0] == "A"'));
+  assert.equal(shown(by('a'), { name: 'Bo' }, params), false);
+  assert.equal(shown(by('b'), {}, params), lang('+size < 0'));
+  assert.equal(shown(by('b'), {}, params), true);
+  assert.equal(shown(by('c'), {}, params), true);
+  assert.equal(shown(by('c'), { label: 'pear' }, params), false);
+  // A condition the language can't work out (a number against text) shows
+  assert.equal(shown(by('d'), {}, params), true);
+});
+
+test('a comment that only begins with "when" stays a comment', async () => {
+  const { parameters, render } = await import('../dist/index.js');
+  const src = 'lid = 5; // when the lid is closed\nsize = 3; // [1:5] when lid >\nrect(10);';
+  const [lid, size] = parameters(src).parameters;
+  assert.equal(lid.when, undefined);
+  assert.equal(lid.whenProblem, undefined);
+  // After [...] it is meant as a condition, so a broken one is reported
+  assert.match(size.whenProblem, /not an expression/);
+  assert.equal(render(src).warnings.length, 1);
+});

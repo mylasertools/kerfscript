@@ -21,6 +21,7 @@ show each module's description when you hover over it.
 | ---------------------------------- | -------------------------------------------------------------- |
 | [`kerf/box`](#boxes)               | Finger-jointed boxes and dividers that slide into them         |
 | [`kerf/tabs`](#tabs-and-slots)     | Tabs on one panel and the slots in another that they go into   |
+| [`kerf/stand`](#stands)            | A sign or photo standing in a base, upright or leaning back    |
 | [`kerf/hinge`](#living-hinges)     | Living hinges that bend flat sheet, and a box with round sides |
 | [`kerf/dividers`](#dividers)       | Dividers that slot into each other like an egg crate           |
 | [`kerf/hanging`](#hanging)         | Keyholes, holes and loops for hanging things on a wall         |
@@ -33,6 +34,7 @@ show each module's description when you hover over it.
 | [`kerf/rings`](#rings)             | Round things of stacked rings on a crossed core                |
 | [`kerf/joints`](#joints)           | Two profiles halved into each other: crosses, fonts, domes     |
 | [`kerf/fit`](#fit-and-align)       | Drawings scaled to a size and placed by a point of their box   |
+| [`kerf/shapes`](#shapes)           | Hearts, teardrops, clouds, shields, banners, tags and more     |
 | [`kerf/sizes`](#sizes)             | Paper, card and photo sizes                                    |
 | [`kerf/symbols`](#symbols)         | 867 pictograms by name                                         |
 | [`kerf/geo`](#maps)                | The world's land, for maps and globes                          |
@@ -40,6 +42,17 @@ show each module's description when you hover over it.
 Sizes are in millimetres. Joints use `$thickness`, the sheet thickness, so
 set it to what you measure. Each section has an example in the gallery that
 you can open in the playground.
+
+### Before you draw it yourself
+
+| To                                                 | Use                                                     |
+| -------------------------------------------------- | ------------------------------------------------------- |
+| Draw a heart, a teardrop, a cloud, a banner or tag | [`kerf/shapes`](#shapes)                                |
+| Draw a pictogram: a paw, a tree, a star, a house   | `symbol("paw", size)` from [`kerf/symbols`](#symbols)   |
+| Scale a drawing to a box, or place it by a corner  | `fit()` and `align()` from [`kerf/fit`](#fit-and-align) |
+| Close small gaps between shapes                    | `close(r)`, in place of `offset(delta = -r) offset(r)`  |
+| Fit text to a width or a height                    | `text(fit = [w, h])`, and `text_size()` to measure it   |
+| Stand a sign or a photo up                         | `stand()` from [`kerf/stand`](#stands)                  |
 
 ## Boxes
 
@@ -125,6 +138,50 @@ is `true` or `false` for all four, or `[bottom, right, top, left]`.
 
 The centres of the tabs along an edge, for placing anything else that
 lines up with them.
+
+## Stands
+
+`use <kerf/stand>`
+
+A panel (a sign, a photo frame, a calendar) standing in a base, its tabs
+through slots in the base, upright or leaning back. `stand()` makes both
+parts and puts them together; the tabs and slots always match, at any
+lean and `$thickness`.
+
+```kerf
+use <kerf/stand>
+
+stand(160, depth = 45, lean = 10) {
+  rect([160, 90], r = 6);
+  engrave() translate([80, 45]) text("OPEN", fit = [120, 40], halign = "center", valign = "cap");
+}
+```
+
+### `stand(width, depth = 40, count, tab, lean = 0, margin = 10, back, r = 3, clearance = 0.1, name = "Sign")`
+
+The children draw the panel, its bottom edge on y = 0 from x = 0 to
+`width`; `stand()` adds the tabs. The base is `depth` deep, `margin` wider
+than the panel on each side, with corners rounded to `r`. The panel leans
+back by `lean` degrees (up to 45), its back face meeting the base `back`
+from the front (half way by default). The parts are `name` and
+`"name stand"`.
+
+| Parameter   | Default                         | Meaning                              |
+| ----------- | ------------------------------- | ------------------------------------ |
+| `count`     | one for every 50 mm, at least 1 | Number of tabs                       |
+| `tab`       | half the space between tabs     | Width of each tab                    |
+| `clearance` | `0.1`                           | Added to each slot's width and depth |
+
+### `stand_tabs(width, count, tab, lean = 0)`
+
+The tabs for the bottom edge of a panel, x from 0 to `width`, hanging below
+y = 0 far enough to go through a base `$thickness` thick at that lean.
+
+### `stand_slots(width, count, tab, lean = 0, clearance = 0.1)`
+
+The slots for `stand_tabs()` with the same `width`, `count`, `tab` and
+`lean`, for a base of your own: x from 0 to `width`, for a panel whose back
+face meets the top of the base on y = 0, leaning back towards +y.
 
 ## Living hinges
 
@@ -766,6 +823,69 @@ The children moved so the point of their box that `anchor` names is at
 the origin: `"center"`, `"left"`, `"right"`, `"top"`, `"bottom"`,
 `"top-left"`, `"top-right"`, `"bottom-left"`, `"bottom-right"`, or
 `[fx, fy]` as fractions of the box. `anchor_point()` gives those fractions.
+
+## Shapes
+
+`use <kerf/shapes>`
+
+Basic shapes by name, each sized to a box: `size` is `[w, h]`, or one
+number for both, and the shape is centred on the origin as `circle()` and
+`ellipse()` are. Arrows and chevrons point along x; the others stand
+upright. Curves follow `$fn` when it is set, and otherwise take about a
+point per millimetre.
+
+```kerf
+use <kerf/shapes>
+
+part("gift tag") {
+  tag([70, 36]);
+  engrave() translate([8, 0]) heart([16, 14]);
+}
+part("sign", at = [0, 50, 0]) {
+  banner([120, 30]);
+  engrave() text("WELCOME", fit = [80, 12], halign = "center", valign = "cap");
+}
+```
+
+A shape with one outline also has a `_points()` function that gives the
+outline as points, counter-clockwise, with the same arguments: for
+`offset_path()`, `flex_strip()`, `point_at()` and anything else that works
+on a list of points. `heart_points(40)` is the outline of `heart(40)`.
+
+| Shape                                       | Draws                                                                                           |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `heart(size = 20)`                          | a heart: two round lobes, a dip between them and a point at the bottom                          |
+| `teardrop(size = [14, 20])`                 | round at the bottom, a point at the top; taller than it is wide                                 |
+| `egg(size = [16, 20], taper = 0.2)`         | an egg on its broad end; `taper` 0 is an ellipse                                                |
+| `lens(size = [10, 20])`                     | two arcs meeting in a point at each end of its longer side: a leaf, a petal, an eye             |
+| `crescent(d = 20, thickness)`               | a crescent moon `d` across, open to the right, `thickness` (`d / 4`) at its widest              |
+| `capsule(size = [30, 10])`                  | a rectangle with round ends                                                                     |
+| `diamond(size = [14, 20])`                  | a rhombus touching the middle of each side of its box                                           |
+| `rounded_polygon(n = 6, r = 10, round = 2)` | `regular_polygon(n, r)` with each corner rounded to radius `round`                              |
+| `shield(size = [16, 20], point = 0.55)`     | a flat top and straight sides curving in to a point; `point` is the curve's part of `h`         |
+| `arrow(size = [30, 14], shaft, head)`       | an arrow `size[0]` long with a head `size[1]` wide; `shaft` is `h / 3`, `head` `h`              |
+| `chevron(size = [12, 20], thickness)`       | a chevron (>), each arm `thickness` (`w / 2`) across along x                                    |
+| `banner(size = [60, 16], notch)`            | a banner with a V `notch` (`h / 3`) deep cut into each end                                      |
+| `house(size = [20, 24], roof)`              | walls and a pitched roof `roof` (`w / 2`) tall                                                  |
+| `tag(size = [50, 25], cut, hole)`           | a tag with its left corners cut off by `cut` (`h / 4`) and a hole `hole` (`h / 4`) across       |
+| `ring(d = 20, width = 3)`                   | a ring `d` across with a band `width` wide                                                      |
+| `scalloped(d = 30, n = 16)`                 | a circle `d` across with `n` round scallops round its edge                                      |
+| `flower(d = 30, petals = 6, center = 0.35)` | petals round a round middle `center` of `d` across                                              |
+| `cloud(size = [40, 24], puffs = 3)`         | a flat bottom with `puffs` round puffs along the top                                            |
+| `speech_bubble(size = [40, 30], r, tail)`   | a rounded box with a tail `tail` (`h / 4`) long at its bottom left; `mirror()` it for the right |
+
+The outlines: `heart_points()`, `teardrop_points()`, `egg_points()`,
+`lens_points()`, `crescent_points()`, `capsule_points()`,
+`diamond_points()`, `rounded_polygon_points()`, `shield_points()`,
+`arrow_points()`, `chevron_points()`, `banner_points()`, `house_points()`
+and `tag_points()` (without the hole).
+
+The library's helpers are there for your own shapes too:
+`shape_size(size, what)` turns a number or `[w, h]` into `[w, h]` and
+checks it, `shape_steps(length)` is the number of points for a curve about
+`length` mm long, `shape_fill(points, size)` scales points to fill a box
+centred on the origin, `shape_centre(points)` centres them, and
+`shape_arc(c, r, a0, a1, n)` gives `n + 1` points along an arc. `shape_tall_lens([w, h])` is a lens pointed at the top and the bottom, as `lens()` draws one no wider than it is tall.
 
 ## Sizes
 

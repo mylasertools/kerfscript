@@ -220,10 +220,11 @@ export function tokenize(src: string, file?: string): { tokens: Token[]; comment
       tokens.push({ type: 'str', value: out, pos: p, end: i });
       continue;
     }
-    if (c === '<' && /^<[A-Za-z0-9_./-]+>/.test(src.slice(i))) {
+    // A library path: a name, or a file's path, a Windows one included
+    if (c === '<' && /^<[A-Za-z0-9_./\\: -]+>/.test(src.slice(i))) {
       const prev = tokens[tokens.length - 1];
       if (prev && prev.type === 'id' && (prev.value === 'use' || prev.value === 'include')) {
-        const m = /^<([A-Za-z0-9_./-]+)>/.exec(src.slice(i))!;
+        const m = /^<([A-Za-z0-9_./\\: -]+)>/.exec(src.slice(i))!;
         tokens.push({ type: 'str', value: m[1], pos: p, end: i + m[0].length });
         advance(m[0].length);
         continue;

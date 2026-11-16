@@ -370,3 +370,23 @@ test('reads broken drawings as far as browsers do', () => {
   r = importSvg(drawing(`<defs>${defs}</defs>${box}<use href="#l8"/>`));
   noted(r, /more than 20,000 times/);
 });
+
+test('shape lengths keep their units, and a viewBox keeps its proportions', () => {
+  const size = (svg) =>
+    render(importSvg(`<svg xmlns="http://www.w3.org/2000/svg" ${svg}</svg>`).source).parts.map(
+      (p) => [p.width, p.height],
+    )[0];
+  const box = '<rect x="10mm" y="10mm" width="40mm" height="20mm" fill="none" stroke="red"/>';
+  assert.deepEqual(size(`width="100mm" height="100mm">${box}`), [40, 20]);
+  const circle = '<circle cx="50" cy="50" r="20" fill="none" stroke="red"/>';
+  const page = 'width="200mm" height="100mm" viewBox="0 0 100 100"';
+  assert.deepEqual(size(`${page}>${circle}`), [40, 40]);
+  assert.deepEqual(size(`${page} preserveAspectRatio="none">${circle}`), [80, 40]);
+  assert.deepEqual(size(`${page} preserveAspectRatio="xMinYMin slice">${circle}`), [80, 80]);
+  assert.deepEqual(
+    size(
+      'width="100mm" height="50mm" viewBox="0 0 100 50"><rect width="50%" height="50%" fill="none" stroke="red"/>',
+    ),
+    [50, 25],
+  );
+});

@@ -2,7 +2,7 @@
 
 // Builds form controls from KerfScript customizer parameters.
 
-import { parameters } from './kerfscript.js';
+import { parameters, shown } from './kerfscript.js';
 
 const el = (tag, attrs = {}, ...kids) => {
   const node = document.createElement(tag);
@@ -21,13 +21,24 @@ const label = (name) => name.replace(/_+/g, ' ').replace(/^./, (c) => c.toUpperC
 // browser gives "" for "-" or "1e"), so the code keeps its last number
 const typed = (input) => (input.value.trim() === '' ? NaN : Number(input.value));
 
+// Returns { refresh(values) } to show and hide settings for values set from
+// outside the controls, as by editing the code
 export function buildControls(container, params, values, onChange) {
   container.replaceChildren();
   let group = null;
   let box = container;
+  // Settings marked `when ...` show only while their condition holds, and
+  // a group only while one of its settings shows
+  const rows = [];
+  const update = () => {
+    for (const r of rows) r.row.hidden = !shown(r.p, values, params);
+    for (const set of new Set(rows.map((r) => r.box)))
+      if (set !== container) set.hidden = rows.every((r) => r.box !== set || r.row.hidden);
+  };
   const set = (name, value) => {
     values[name] = value;
     onChange(name, value);
+    update();
   };
   for (const p of params) {
     if (p.group !== group) {
@@ -138,7 +149,17 @@ export function buildControls(container, params, values, onChange) {
       row.append(title, input);
     }
     box.append(row);
+    rows.push({ p, row, box });
   }
+  update();
+  // When the code changes the values without changing the settings, the
+  // caller passes them here so what shows follows them
+  return {
+    refresh(next) {
+      Object.assign(values, next);
+      update();
+    },
+  };
 }
 
 // Writes a value back into its top-level assignment, so code and controls

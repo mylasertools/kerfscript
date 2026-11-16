@@ -261,6 +261,9 @@ interface AxialPart {
   lo: number;
   hi: number;
   hole: Interval;
+  // How far the part reaches from the axis at its farthest: a bore wider
+  // than twice this passes over it
+  reach: number;
 }
 interface Axis {
   start: Vec3;
@@ -332,7 +335,16 @@ function bore(a: Axis, p: SnapshotPart): AxialPart | string {
   const max = Math.max(...hole.map((p) => Math.hypot(p[0] - at[0], p[1] - at[1])));
   const z0 = axial(a, apply(p.matrix, [0, 0, 0])),
     z1 = axial(a, apply(p.matrix, [0, 0, p.thickness]));
-  return { part: p, lo: Math.min(z0, z1), hi: Math.max(z0, z1), hole: [2 * min, 2 * max] };
+  const reach = Math.max(
+    ...p.regions.flatMap((ring) => ring.map((q) => Math.hypot(q[0] - at[0], q[1] - at[1]))),
+  );
+  return {
+    part: p,
+    lo: Math.min(z0, z1),
+    hi: Math.max(z0, z1),
+    hole: [2 * min, 2 * max],
+    reach,
+  };
 }
 
 export function capturedShaft(
@@ -410,6 +422,33 @@ export function capturedShaft(
     .map((o) => ({ ...o, at: o.h && coaxial(a, o.h) ? range(a, o.h) : undefined }));
   if (stops.some((o) => !o.at)) return fail('A retainer is not coaxial with the shaft.');
   stops.sort((x, y) => x.at![0] + x.at![1] - (y.at![0] + y.at![1]));
+  // A stack part slides off an end when its bore, at its widest, passes
+  // over the bearing and the retainer there at their smallest, and over
+  // every stack part between it and that end, or those leave first. Kerf
+  // grows a bore and shrinks an outline by the same error.
+  const widest = (b: AxialPart) => b.hole[1] - externalError(spec, b.part)[0];
+  const smallest = (b: AxialPart) => 2 * b.reach + externalError(spec, b.part)[0];
+  for (let side = 0; side < 2; side++) {
+    const end = Math.max(smallest(bearings[side]), axis(stops[side].h!)?.diameter ?? 0);
+    // From the end inwards, so each part knows whether those outside it leave
+    const order = side === 0 ? stack.map((_, k) => k) : stack.map((_, k) => stack.length - 1 - k);
+    const leaves: boolean[] = [];
+    for (let n = 0; n < order.length; n++) {
+      const st = stack[order[n]];
+      const w = widest(st);
+      const outside = order.slice(0, n).map((k, m) => ({ b: stack[k], gone: leaves[m] }));
+      const clear = (over: number) => w > over + EPS;
+      const near = (over: number) => Math.abs(w - over) <= EPS;
+      const free = clear(end) && outside.every((o) => o.gone || clear(smallest(o.b)));
+      leaves.push(free);
+      if (free)
+        return fail(
+          `${st.part.name} can slide off over ${bearings[side].part.name} and its retainer: its bore is wider than all that holds it on that side.`,
+          measured,
+        );
+      if (near(end) || outside.some((o) => !o.gone && near(smallest(o.b)))) boundary = true;
+    }
+  }
   for (let i = 0; i < 2; i++) {
     const { stop, h } = stops[i];
     if (!coaxial(a, h)) return fail('A retainer is not coaxial with the shaft.');

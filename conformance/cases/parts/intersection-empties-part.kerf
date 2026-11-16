@@ -1,0 +1,7 @@
+// A part that intersection() leaves with no material is warned about
+// => warning: intersection() leaves part "P" with nothing to cut: its other children cover none of it (line 4)
+// => part: "P" size=0x0
+intersection() {
+  part("P") square(20);
+  translate([30, 0]) square(10);
+}
