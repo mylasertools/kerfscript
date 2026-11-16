@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.10.0 (unreleased)
+
+Language version 0.3, as in 0.9.0: programs run as before, except that
+`color()` and `linear_extrude()` now warn instead of stopping.
+
+Language:
+
+- `text(fit = [w, h])` keeps text no wider than `w` and its capitals no
+  taller than `h`; `valign = "cap"` centres the capitals on y = 0.
+- `text_size()` gives a text's measurements as a record: `width`, `height`,
+  `bounds`, `cap`, `ascent`, `descent` and the `size` used.
+- `ellipse(d = [w, h])` takes the width and height, as `circle(d)` does.
+- `color()` and `linear_extrude()` run as their children with a warning, so
+  the 2D part of an OpenSCAD file runs unchanged.
+- Recursion and step-limit errors say what to check, instead of assuming an
+  endless loop.
+
+Libraries:
+
+- `kerf/shapes`: `heart`, `teardrop`, `egg`, `lens`, `crescent`, `capsule`,
+  `diamond`, `rounded_polygon`, `shield`, `arrow`, `chevron`, `banner`,
+  `house`, `tag`, `ring`, `scalloped`, `flower`, `cloud` and
+  `speech_bubble`, each sized to a box and centred; shapes with one outline
+  also give it as points, `heart_points()` and the like.
+- `kerf/stand`: `stand()` stands a sign or a photo in a base, upright or
+  leaning back, with `stand_tabs()` and `stand_slots()` for a base of your
+  own.
+
+Customizer:
+
+- A setting can end its comment with `when` and a condition on the other
+  settings, `// [0:0.05:0.5] when mount == "stand"`: the playground and the
+  desktop app show it only while the condition holds. `shown()` evaluates
+  it in JavaScript.
+
 ## 0.9.0 (2026-11-09)
 
 Language version 0.3, as in 0.8.0: programs run as before.

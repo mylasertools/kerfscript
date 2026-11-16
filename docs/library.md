@@ -43,6 +43,17 @@ Sizes are in millimetres. Joints use `$thickness`, the sheet thickness, so
 set it to what you measure. Each section has an example in the gallery that
 you can open in the playground.
 
+### Before you draw it yourself
+
+| To                                                 | Use                                                     |
+| -------------------------------------------------- | ------------------------------------------------------- |
+| Draw a heart, a teardrop, a cloud, a banner or tag | [`kerf/shapes`](#shapes)                                |
+| Draw a pictogram: a paw, a tree, a star, a house   | `symbol("paw", size)` from [`kerf/symbols`](#symbols)   |
+| Scale a drawing to a box, or place it by a corner  | `fit()` and `align()` from [`kerf/fit`](#fit-and-align) |
+| Close small gaps between shapes                    | `close(r)`, in place of `offset(delta = -r) offset(r)`  |
+| Fit text to a width or a height                    | `text(fit = [w, h])`, and `text_size()` to measure it   |
+| Stand a sign or a photo up                         | `stand()` from [`kerf/stand`](#stands)                  |
+
 ## Boxes
 
 `use <kerf/box>`
