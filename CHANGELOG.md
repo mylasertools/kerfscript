@@ -19,6 +19,24 @@ Language:
 - `use <...>` takes a Windows path, as `use <C:\Designs\lib\feet>`, and
   paths with spaces; a library named that way finds the libraries beside it.
 
+Fixes:
+
+- `intersection()` clips a part that is its first child to the other
+  children, and warns when it leaves a part nothing to cut.
+- A module's or function's defaults see the special variables passed with
+  the call: `w = $thickness` called with `$thickness = 6` is 6.
+- Slots for parts at an angle cut only what passes through the sheet: a
+  tapered tab no longer cuts its wider part into the slot.
+- Parts riding a bent part (`on = "host"`) have their slots, bores and
+  halvings cut where they ride.
+- `sort()` counts its comparisons against the step limit.
+- Children that define a layer are evaluated each time they are used.
+- Shaft capture fails when a part on the shaft can slide off over a bearing
+  and its retainer.
+- SVG import: lengths on shapes keep their units (`width="40mm"`), and a
+  viewBox keeps its proportions as `preserveAspectRatio` says, centred by
+  default.
+
 3D files:
 
 - `kerf render model.kerf -o model.glb` writes the model in 3D: `.glb` to view

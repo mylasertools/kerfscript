@@ -349,17 +349,58 @@ export function readSvg(src: string, opts: ReadOptions = {}): SvgDrawing {
   let sx = px,
     sy = px,
     ox = 0,
-    oy = 0;
+    oy = 0,
+    tx = 0,
+    ty = 0;
   if (vb.length === 4 && vb[2] > 0 && vb[3] > 0) {
     sx = w !== undefined ? w / vb[2] : h !== undefined ? h / vb[3] : px;
     sy = h !== undefined ? h / vb[3] : sx;
     ox = vb[0];
     oy = vb[1];
+    // A viewBox of another shape than the page keeps its proportions unless
+    // preserveAspectRatio says "none": one scale, the drawing placed by its
+    // alignment, xMidYMid (centred) by default, and fitted inside (meet) or
+    // covering the page (slice)
+    if (w !== undefined && h !== undefined) {
+      const par = (root.attrs.preserveAspectRatio ?? '').trim().split(/\s+/).filter(Boolean);
+      if (par[0] === 'defer') par.shift();
+      const align = par[0] ?? 'xMidYMid';
+      if (align !== 'none') {
+        const scale = par[1] === 'slice' ? Math.max(sx, sy) : Math.min(sx, sy);
+        const at = (min: RegExp, max: RegExp) => (min.test(align) ? 0 : max.test(align) ? 1 : 0.5);
+        tx = (w - vb[2] * scale) * at(/xMin/, /xMax/);
+        ty = (h - vb[3] * scale) * at(/YMin/, /YMax/);
+        sx = sy = scale;
+      }
+    }
   }
   if (w === undefined && h === undefined && opts.dpi === undefined && !illustrator)
     notes.push(`The file gives no page size in mm or inches: px measured at ${dpi} per inch.`);
   const pageH = h ?? (vb.length === 4 ? vb[3] * sy : 0);
-  const base: Matrix = multiply([1, 0, 0, -1, 0, pageH], [sx, 0, 0, sy, -ox * sx, -oy * sy]);
+  const base: Matrix = multiply(
+    [1, 0, 0, -1, 0, pageH],
+    [sx, 0, 0, sy, -ox * sx + tx, -oy * sy + ty],
+  );
+  // The viewport in user units, for lengths given in %
+  const viewW = vb.length === 4 ? vb[2] : (w ?? 0) / px;
+  const viewH = vb.length === 4 ? vb[3] : (h ?? 0) / px;
+  // A shape's length in user units: a plain number or px as it is, mm, cm,
+  // in, pt, pc and Q converted (one user unit being a px at this dpi), and %
+  // of the viewport's width, height or, for a radius, their mean
+  const userLength = (v: string | undefined, axis: 'x' | 'y' | 'r'): number => {
+    if (v === undefined) return 0;
+    const m = /^\s*([-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?)\s*([a-zA-Z%]*)\s*$/.exec(v);
+    if (!m) return parseFloat(v) || 0;
+    const n = Number(m[1]);
+    const unit = m[2].toLowerCase();
+    if (unit === '%')
+      return (
+        (n / 100) *
+        (axis === 'x' ? viewW : axis === 'y' ? viewH : Math.hypot(viewW, viewH) / Math.SQRT2)
+      );
+    if (unit === '' || unit === 'px') return n;
+    return (n * unitScale(unit, dpi)) / px;
+  };
 
   // Stylesheets and elements by id, for <use>
   const rules: Rule[] = [];
@@ -428,7 +469,11 @@ export function readSvg(src: string, opts: ReadOptions = {}): SvgDrawing {
 
   const SHAPES = new Set(['path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon']);
   const shapeCmds = (el: XmlElement): Cmd[] | undefined => {
-    const a = (k: string) => parseFloat(el.attrs[k] ?? '0') || 0;
+    const a = (k: string) =>
+      userLength(
+        el.attrs[k],
+        /^(x|cx|rx|x1|x2|width)$/.test(k) ? 'x' : /^(y|cy|ry|y1|y2|height)$/.test(k) ? 'y' : 'r',
+      );
     switch (el.name) {
       case 'path':
         return parseSvgPath(el.attrs.d ?? '', () => badPaths++);
