@@ -21,6 +21,8 @@ const label = (name) => name.replace(/_+/g, ' ').replace(/^./, (c) => c.toUpperC
 // browser gives "" for "-" or "1e"), so the code keeps its last number
 const typed = (input) => (input.value.trim() === '' ? NaN : Number(input.value));
 
+// Returns { refresh(values) } to show and hide settings for values set from
+// outside the controls, as by editing the code
 export function buildControls(container, params, values, onChange) {
   container.replaceChildren();
   let group = null;
@@ -150,6 +152,14 @@ export function buildControls(container, params, values, onChange) {
     rows.push({ p, row, box });
   }
   update();
+  // When the code changes the values without changing the settings, the
+  // caller passes them here so what shows follows them
+  return {
+    refresh(next) {
+      Object.assign(values, next);
+      update();
+    },
+  };
 }
 
 // Writes a value back into its top-level assignment, so code and controls

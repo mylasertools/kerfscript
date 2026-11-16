@@ -74,3 +74,18 @@ test('a setting marked when shows only while its condition holds', async () => {
   assert.equal(clearance.hidden, false);
   assert.equal(stand.hidden, false);
 });
+
+test('settings shown by when follow values the code changes', async () => {
+  const { parameters } = await import('../dist/index.js');
+  const params = parameters(
+    'mount = "wall"; // [wall, stand]\nclearance = 0.2; // [0:0.05:1] when mount == "stand"',
+  ).parameters;
+  const container = new Node('div');
+  const controls = buildControls(container, params, {}, () => {});
+  const clearance = container.all('div').filter((d) => d.attrs.class === 'control')[1];
+  assert.equal(clearance.hidden, true);
+  controls.refresh({ mount: 'stand', clearance: 0.2 });
+  assert.equal(clearance.hidden, false);
+  controls.refresh({ mount: 'wall', clearance: 0.2 });
+  assert.equal(clearance.hidden, true);
+});
