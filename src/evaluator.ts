@@ -708,6 +708,9 @@ export class Evaluator {
 
   private bindParams(params: Param[], args: Args, env: Env, defEnv: Env, what: string) {
     const names = params.map((p) => p.name);
+    // Special variables passed in come first, so defaults that read them,
+    // as w = $thickness, see the values given
+    for (const [k, v] of args.named) if (k.startsWith('$')) env.vars.set(k, v);
     params.forEach((p, i) => {
       let v: Value;
       if (args.named.has(p.name)) v = args.named.get(p.name);
@@ -715,10 +718,8 @@ export class Evaluator {
       else v = p.default ? this.expr(p.default, env) : undefined;
       env.vars.set(p.name, v);
     });
-    for (const k of args.named.keys()) {
-      if (k.startsWith('$')) env.vars.set(k, args.named.get(k));
-      else if (!names.includes(k)) this.unknownArg(what, k, args.at, names);
-    }
+    for (const k of args.named.keys())
+      if (!k.startsWith('$') && !names.includes(k)) this.unknownArg(what, k, args.at, names);
     this.checkCount(what, params.length, args);
     void defEnv;
   }

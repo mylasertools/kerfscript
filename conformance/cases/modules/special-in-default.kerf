@@ -1,0 +1,7 @@
+// A default that reads a special variable sees the one passed with the call
+// => echo: 6
+// => part: "bar" size=6x10
+function width(w = $thickness) = w;
+echo(width($thickness = 6));
+module bar(w = $thickness) part("bar") square([w, 10]);
+bar($thickness = 6);
