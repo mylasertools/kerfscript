@@ -510,3 +510,69 @@ part("floor", at = [-30, -30, -3], slots = ["tree front", "tree side"]) square(6
   // Uncapped, the side's slot from above would cut off the point
   assert.throws(() => render(`${lib}halved_pair("t") tree();`), /the side is narrower/);
 });
+
+test('kerf/shapes draws each shape to its size, centred, in one piece', () => {
+  const sized = [
+    ['heart(40)', [40, 40]],
+    ['teardrop([28, 40])', [28, 40]],
+    ['egg([32, 40])', [32, 40]],
+    ['lens([20, 40])', [20, 40]],
+    ['capsule([40, 16])', [40, 16]],
+    ['capsule([10, 30])', [10, 30]],
+    ['diamond([28, 40])', [28, 40]],
+    ['shield([32, 40])', [32, 40]],
+    ['arrow([40, 20])', [40, 20]],
+    ['chevron([24, 40])', [24, 40]],
+    ['banner([44, 18])', [44, 18]],
+    ['house([30, 40])', [30, 40]],
+    ['tag([44, 24])', [44, 24]],
+    ['ring(40, 6)', [40, 40]],
+    ['cloud([44, 28])', [44, 28]],
+    ['speech_bubble([44, 34])', [44, 34]],
+  ];
+  for (const [call, [w, h]] of sized) {
+    const r = render(
+      `use <kerf/shapes>\npart("s") { square(0.01); measure() { ${call}; echo($bounds); } } ${call};`,
+    );
+    assert.deepEqual(r.warnings, [], call);
+    const [x0, y0, x1, y1] = JSON.parse(r.echoes[0]);
+    near(x1 - x0, w, 0.01);
+    near(y1 - y0, h, 0.01);
+    near(x0 + x1, 0, 0.01);
+    near(y0 + y1, 0, 0.01);
+  }
+  for (const call of ['crescent(40)', 'rounded_polygon(3, 22, 5)', 'scalloped(40)', 'flower(40)'])
+    assert.equal(render(`use <kerf/shapes>\npart("s") ${call};`).parts[0].pieces, 1, call);
+  assert.deepEqual(size(render('use <kerf/shapes>\npart("s") crescent(40, 8);'), 's'), [24, 40]);
+});
+
+test('kerf/shapes points come counter-clockwise and refuse sizes that cannot be drawn', () => {
+  const signed = (p) =>
+    p.reduce((s, [x, y], i) => s + x * p[(i + 1) % p.length][1] - p[(i + 1) % p.length][0] * y, 0);
+  for (const f of [
+    'heart_points(30)',
+    'teardrop_points([10, 20])',
+    'egg_points(20)',
+    'lens_points([8, 20])',
+    'crescent_points(20)',
+    'capsule_points([20, 8])',
+    'diamond_points(10)',
+    'rounded_polygon_points(5, 10, 2)',
+    'shield_points(20)',
+    'arrow_points([30, 10])',
+    'chevron_points([10, 20])',
+    'banner_points([40, 10])',
+    'house_points([20, 30])',
+    'tag_points([40, 20])',
+  ]) {
+    const r = render(`use <kerf/shapes>\necho(${f});`);
+    assert.ok(signed(JSON.parse(r.echoes[0])) > 0, f);
+  }
+  for (const [call, message] of [
+    ['teardrop([20, 10])', /taller than it is wide/],
+    ['heart(0)', /size must be more than 0/],
+    ['crescent(20, 30)', /thickness/],
+    ['rounded_polygon(4, 10, 9)', /round must be less/],
+  ])
+    assert.throws(() => render(`use <kerf/shapes>\n${call};`), message, call);
+});

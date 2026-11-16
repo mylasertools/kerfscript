@@ -33,6 +33,7 @@ show each module's description when you hover over it.
 | [`kerf/rings`](#rings)             | Round things of stacked rings on a crossed core                |
 | [`kerf/joints`](#joints)           | Two profiles halved into each other: crosses, fonts, domes     |
 | [`kerf/fit`](#fit-and-align)       | Drawings scaled to a size and placed by a point of their box   |
+| [`kerf/shapes`](#shapes)           | Hearts, teardrops, clouds, shields, banners, tags and more     |
 | [`kerf/sizes`](#sizes)             | Paper, card and photo sizes                                    |
 | [`kerf/symbols`](#symbols)         | 867 pictograms by name                                         |
 | [`kerf/geo`](#maps)                | The world's land, for maps and globes                          |
@@ -766,6 +767,69 @@ The children moved so the point of their box that `anchor` names is at
 the origin: `"center"`, `"left"`, `"right"`, `"top"`, `"bottom"`,
 `"top-left"`, `"top-right"`, `"bottom-left"`, `"bottom-right"`, or
 `[fx, fy]` as fractions of the box. `anchor_point()` gives those fractions.
+
+## Shapes
+
+`use <kerf/shapes>`
+
+Basic shapes by name, each sized to a box: `size` is `[w, h]`, or one
+number for both, and the shape is centred on the origin as `circle()` and
+`ellipse()` are. Arrows and chevrons point along x; the others stand
+upright. Curves follow `$fn` when it is set, and otherwise take about a
+point per millimetre.
+
+```kerf
+use <kerf/shapes>
+
+part("gift tag") {
+  tag([70, 36]);
+  engrave() translate([8, 0]) heart([16, 14]);
+}
+part("sign", at = [0, 50, 0]) {
+  banner([120, 30]);
+  engrave() text("WELCOME", fit = [80, 12], halign = "center", valign = "cap");
+}
+```
+
+A shape with one outline also has a `_points()` function that gives the
+outline as points, counter-clockwise, with the same arguments: for
+`offset_path()`, `flex_strip()`, `point_at()` and anything else that works
+on a list of points. `heart_points(40)` is the outline of `heart(40)`.
+
+| Shape                                       | Draws                                                                                           |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `heart(size = 20)`                          | a heart: two round lobes, a dip between them and a point at the bottom                          |
+| `teardrop(size = [14, 20])`                 | round at the bottom, a point at the top; taller than it is wide                                 |
+| `egg(size = [16, 20], taper = 0.2)`         | an egg on its broad end; `taper` 0 is an ellipse                                                |
+| `lens(size = [10, 20])`                     | two arcs meeting in a point at the top and the bottom: a leaf, a petal, an eye                  |
+| `crescent(d = 20, thickness)`               | a crescent moon `d` across, open to the right, `thickness` (`d / 4`) at its widest              |
+| `capsule(size = [30, 10])`                  | a rectangle with round ends                                                                     |
+| `diamond(size = [14, 20])`                  | a rhombus touching the middle of each side of its box                                           |
+| `rounded_polygon(n = 6, r = 10, round = 2)` | `regular_polygon(n, r)` with each corner rounded to radius `round`                              |
+| `shield(size = [16, 20], point = 0.55)`     | a flat top and straight sides curving in to a point; `point` is the curve's part of `h`         |
+| `arrow(size = [30, 14], shaft, head)`       | an arrow `size[0]` long with a head `size[1]` wide; `shaft` is `h / 3`, `head` `h`              |
+| `chevron(size = [12, 20], thickness)`       | a chevron (>), each arm `thickness` (`w / 2`) across along x                                    |
+| `banner(size = [60, 16], notch)`            | a banner with a V `notch` (`h / 3`) deep cut into each end                                      |
+| `house(size = [20, 24], roof)`              | walls and a pitched roof `roof` (`w / 2`) tall                                                  |
+| `tag(size = [50, 25], cut, hole)`           | a tag with its left corners cut off by `cut` (`h / 4`) and a hole `hole` (`h / 4`) across       |
+| `ring(d = 20, width = 3)`                   | a ring `d` across with a band `width` wide                                                      |
+| `scalloped(d = 30, n = 16)`                 | a circle `d` across with `n` round scallops round its edge                                      |
+| `flower(d = 30, petals = 6, center = 0.35)` | petals round a round middle `center` of `d` across                                              |
+| `cloud(size = [40, 24], puffs = 3)`         | a flat bottom with `puffs` round puffs along the top                                            |
+| `speech_bubble(size = [40, 30], r, tail)`   | a rounded box with a tail `tail` (`h / 4`) long at its bottom left; `mirror()` it for the right |
+
+The outlines: `heart_points()`, `teardrop_points()`, `egg_points()`,
+`lens_points()`, `crescent_points()`, `capsule_points()`,
+`diamond_points()`, `rounded_polygon_points()`, `shield_points()`,
+`arrow_points()`, `chevron_points()`, `banner_points()`, `house_points()`
+and `tag_points()` (without the hole).
+
+The library's helpers are there for your own shapes too:
+`shape_size(size, what)` turns a number or `[w, h]` into `[w, h]` and
+checks it, `shape_steps(length)` is the number of points for a curve about
+`length` mm long, `shape_fill(points, size)` scales points to fill a box
+centred on the origin, `shape_centre(points)` centres them, and
+`shape_arc(c, r, a0, a1, n)` gives `n + 1` points along an arc.
 
 ## Sizes
 
