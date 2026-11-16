@@ -17,6 +17,17 @@ Language:
 - Recursion and step-limit errors say what to check, instead of assuming an
   endless loop.
 
+3D files:
+
+- `kerf render model.kerf -o model.glb` writes the model in 3D: `.glb` to view
+  or render, `.3mf` to 3D print in colour, `.stl` as one mesh. Each part is a
+  closed solid as thick as its sheet, where the assembly puts it, bent on its
+  living hinges; engraving and scoring are thin coloured bodies on its faces,
+  and hardware rods and balls. `--flat` lays the parts side by side, front
+  face up, for printing; `--mark-height` sets how far the marks stand off.
+- In JavaScript, `toModel(result, "glb" | "3mf" | "stl", options)`, with
+  `meshBodies()` for the solid bodies and `result.flat` for every part flat.
+
 Libraries:
 
 - `kerf/shapes`: `heart`, `teardrop`, `egg`, `lens`, `crescent`, `capsule`,

@@ -126,6 +126,9 @@ export interface RenderResult {
   svg: string;
   parts: PartInfo[];
   assembly: AssemblyPart[];
+  /** Every copy of every part, flat at its own origin, placed or not: for
+   * laying the parts out, or exporting them flat */
+  flat: AssemblyPart[];
   layers: LayerDef[];
   warnings: string[];
   echoes: string[];
@@ -255,6 +258,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   const assembly: AssemblyPart[] = [];
   const riders = new Map<AssemblyPart, string>();
   const loose: AssemblyPart[] = [];
+  const flatParts: AssemblyPart[] = [];
   const stackedCopies = new Set<AssemblyPart>();
   // copy(i): the number of its i-th cut copy in the assembly, so a mirrored
   // copy keeps its own number on the sheet
@@ -389,6 +393,13 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
         outline: material,
         ...(marks.length && { marks }),
       };
+      for (let i = 0; i < (p.placements?.length ?? p.qty); i++)
+        flatParts.push({
+          ...flat,
+          copy: copyNumber(p, i),
+          matrix: placementMatrix({ at: [0, 0, 0], rotate: [0, 0, 0] }),
+          placed: false,
+        });
       if (p.placements) {
         const seen = new Set<string>();
         p.placements.forEach((placement, i) => {
@@ -841,6 +852,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     svg,
     parts: infos,
     assembly,
+    flat: flatParts,
     layers: [...layerList, ...backList],
     warnings,
     echoes: res.echoes,

@@ -235,7 +235,8 @@ Errors are thrown as `KerfError` with `line` and `col`.
 
 - [Getting started](docs/getting-started.md), then the guides on
   [layers](docs/layers.md), [kerf](docs/kerf.md),
-  [parts and sheets](docs/parts-and-sheets.md), [settings](docs/customizer.md),
+  [parts and sheets](docs/parts-and-sheets.md), [3D files](docs/3d-files.md),
+  [settings](docs/customizer.md),
   the [desktop app](docs/desktop.md), the [command line](docs/cli.md), the
   [JavaScript API](docs/javascript.md),
   [assembly verification](docs/verification.md),

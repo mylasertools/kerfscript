@@ -1,5 +1,6 @@
 // Copyright (c) 2026 MyLaserTools. SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-MyLaserTools-Commercial
 
+import { toModel, type ModelFormat } from './export/model.js';
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -82,6 +83,11 @@ Shared libraries (kerf.json, kerf.lock and kerf_libraries/ in the project):
 
 Options:
   -o, --out <file>        output file (.svg, .dxf or .json); default <file>.svg
+  -o out.glb              the model in 3D, as the assembly places it: .glb for
+                          viewers and Blender, .3mf for printing in colour, .stl
+  --flat                  with a 3D file: the parts side by side, front up
+  --mark-height <mm>      with a 3D file: how far engraving and scoring stand
+                          off the face (0.1; 0 leaves them out)
   -D name=value           set a parameter (value is KerfScript: 40, "Oak", true, [1,2])
   -p, --params <file>     JSON file of parameter values
   --font <file.ttf>       font for text(); repeat for more fonts (name = file name).
@@ -165,6 +171,9 @@ function main(argv: string[]) {
   let stats = false;
   let call: string | undefined;
   let px = 1200;
+  // 3D files: the parts laid flat, and how far marks stand off them
+  let flat = false;
+  let markHeight: number | undefined;
   const sweeps: Record<string, Value>[][] = [];
   // --drive: every value of the setting marked drive, as a sweep
   let drive = false;
@@ -205,7 +214,11 @@ function main(argv: string[]) {
     else if (a === '--params-list') sweeps.push(paramsList(next()));
     else if (a === '--drive') drive = true;
     else if (a === '--call') call = next();
-    else if (a === '--px') {
+    else if (a === '--flat') flat = true;
+    else if (a === '--mark-height') {
+      markHeight = Number(next());
+      if (!(markHeight >= 0)) fail('--mark-height needs a height in mm, 0 or more');
+    } else if (a === '--px') {
       px = Number(next());
       if (!(px >= 16 && px <= 10000)) fail('--px needs a width in pixels from 16 to 10000');
     } else if (a.startsWith('-')) fail(`Unknown option ${a}`);
@@ -302,6 +315,18 @@ function main(argv: string[]) {
   const target = out || file.replace(/\.kerf$/i, '') + '.svg';
   const ext = extname(target).toLowerCase();
   const body = (s: (typeof result.sheets)[number]) => (ext === '.dxf' ? s.dxf : s.svg);
+  if (ext === '.glb' || ext === '.3mf' || ext === '.stl') {
+    writeFileSync(
+      target,
+      toModel(result, ext.slice(1) as ModelFormat, {
+        layout: flat ? 'flat' : 'assembled',
+        markHeight,
+      }),
+    );
+    process.stderr.write(`Wrote ${target}
+`);
+    return;
+  }
   if (ext === '.png') {
     // A picture to look at: one file per sheet
     result.sheets.forEach((s, i) => {

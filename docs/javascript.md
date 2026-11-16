@@ -138,6 +138,23 @@ const settings = parameters(source).parameters;
 const visible = settings.filter((p) => shown(p, { mount: 'stand' }, settings));
 ```
 
+## toModel()
+
+Write the model in 3D, as [3D files](3d-files.md) describes:
+
+```js
+import { render, toModel } from '@mylasertools/kerfscript';
+
+const glb = toModel(render(source), 'glb');
+const print = toModel(render(source), '3mf', { layout: 'flat', markHeight: 0.6 });
+```
+
+The format is `"glb"`, `"3mf"` or `"stl"`, and the result a `Uint8Array`.
+`meshBodies(result, options)` gives the solid bodies (positions and
+triangles in millimetres, z up) for a viewer of your own; `toGlb()`,
+`to3mf()` and `toStl()` write a list of them. `result.flat` lists every copy
+of every part flat at its own origin, placed or not.
+
 ## format()
 
 `format(source)` returns the program with its layout set, as `kerf fmt`

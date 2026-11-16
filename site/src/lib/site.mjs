@@ -41,6 +41,7 @@ export const GUIDES = [
   ['layers', 'Layers'],
   ['kerf', 'Kerf'],
   ['parts-and-sheets', 'Parts and sheets'],
+  ['3d-files', '3D files'],
   ['verification', 'Assembly verification'],
   ['library', 'Standard library'],
   ['shared-libraries', 'Shared libraries'],

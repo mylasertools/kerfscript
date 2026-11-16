@@ -51,3 +51,6 @@ export {
 export type * from './verify/types.js';
 export { triage, triageText, type TriageGroup } from './verify/summary.js';
 export type { RenderAnalysis } from './analysis.js';
+export { meshBodies, materialColor, type Body, type MeshOptions } from './export/mesh.js';
+export { toModel, toGlb, to3mf, toStl, type ModelFormat } from './export/model.js';
+export { triangulate } from './export/triangulate.js';
