@@ -2,7 +2,7 @@
 
 // Builds form controls from KerfScript customizer parameters.
 
-import { parameters } from './kerfscript.js';
+import { parameters, shown } from './kerfscript.js';
 
 const el = (tag, attrs = {}, ...kids) => {
   const node = document.createElement(tag);
@@ -25,9 +25,18 @@ export function buildControls(container, params, values, onChange) {
   container.replaceChildren();
   let group = null;
   let box = container;
+  // Settings marked `when ...` show only while their condition holds, and
+  // a group only while one of its settings shows
+  const rows = [];
+  const update = () => {
+    for (const r of rows) r.row.hidden = !shown(r.p, values, params);
+    for (const set of new Set(rows.map((r) => r.box)))
+      if (set !== container) set.hidden = rows.every((r) => r.box !== set || r.row.hidden);
+  };
   const set = (name, value) => {
     values[name] = value;
     onChange(name, value);
+    update();
   };
   for (const p of params) {
     if (p.group !== group) {
@@ -138,7 +147,9 @@ export function buildControls(container, params, values, onChange) {
       row.append(title, input);
     }
     box.append(row);
+    rows.push({ p, row, box });
   }
+  update();
 }
 
 // Writes a value back into its top-level assignment, so code and controls

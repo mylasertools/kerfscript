@@ -46,6 +46,7 @@ import {
 } from './geometry.js';
 import { KerfError } from './lexer.js';
 import { parse } from './parser.js';
+import { parameters } from './customizer.js';
 import { FontBook, textRegions, type FontSource } from './text.js';
 import { checkSetting, fmt, toNumber, toText, type Value } from './values.js';
 
@@ -206,6 +207,16 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       material: toText(g('$material') ?? 'material'),
     });
   if (!parts.length) warnings.push('Nothing to cut: the program made no shapes.');
+  // A setting's `when` condition that can't be used: the setting always shows
+  try {
+    for (const p of parameters(source).parameters)
+      if (p.whenProblem)
+        warnings.push(
+          `Setting ${p.name} is always shown: ${p.whenProblem} (line ${source.slice(0, p.span[0]).split('\n').length})`,
+        );
+  } catch {
+    // The program ran, so it parses; settings are only checked as extra
+  }
   // Slots, glue and riders find parts by name, so one name for two
   // different parts is ambiguous; identical copies are fine
   const shapeOf = (p: PartShape) =>

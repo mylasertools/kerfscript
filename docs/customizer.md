@@ -73,6 +73,32 @@ The playground gives it a Play button that steps it round its range, and
 any position that warns (parts colliding, a slot that misses), as
 `--sweep crank=0:5:360` would. `kerf params` lists it with `"drive": true`.
 
+## Settings that apply only sometimes
+
+A setting that matters only with certain other choices can say so with
+`when` and a condition at the end of its comment, after its range or
+choices or on its own. The playground and the desktop app show it only
+while the condition holds, and hide a group when none of its settings
+show:
+
+```kerf
+mount = "wall"; // [wall:On a wall, stand:On a stand]
+// Room for the stand's tabs in their slots
+clearance = 0.15; // [0:0.05:0.5] when mount == "stand"
+// Hole for a nail
+hole = 5; // when mount == "wall"
+
+rect([120, 80], r = 6);
+```
+
+The condition can use the other settings by name, numbers, strings,
+`true` and `false`, comparisons, `&&`, `||`, `!`, arithmetic, `? :` and
+`[i]` indexing. A condition that names something other than a setting, or
+calls a function, is reported as a warning, and the setting then always
+shows. `kerf params` lists the condition as `"when"`, and in JavaScript
+`shown(parameter, values, parameters)` says whether a setting applies to
+the values chosen so far.
+
 ## Changing settings without editing the file
 
 The CLI accepts values with `-D` or a JSON file with `--params`:

@@ -7,7 +7,7 @@ export {
   type PartInfo,
   type Sheet,
 } from './render.js';
-export { parameters, type Parameter } from './customizer.js';
+export { parameters, shown, type Parameter } from './customizer.js';
 export { parse } from './parser.js';
 export { tokenize, KerfError, type TraceFrame } from './lexer.js';
 export { formatError, type FormatOptions } from './diagnostics.js';

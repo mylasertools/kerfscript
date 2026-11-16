@@ -127,6 +127,17 @@ if (width) {
 Read the settings again after editing the source; the offsets refer to the
 string passed to `parameters()`.
 
+A setting whose comment ends with a `when` condition (see the
+[customizer](customizer.md)) has it as `when`. `shown()` says whether it
+applies to the values chosen so far, the others at their initial values:
+
+```js
+import { parameters, shown } from '@mylasertools/kerfscript';
+
+const settings = parameters(source).parameters;
+const visible = settings.filter((p) => shown(p, { mount: 'stand' }, settings));
+```
+
 ## format()
 
 `format(source)` returns the program with its layout set, as `kerf fmt`

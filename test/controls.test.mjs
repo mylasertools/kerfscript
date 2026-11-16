@@ -53,3 +53,24 @@ test('a vector control keeps numbers the code changed since it was made', () => 
   second.listeners.input();
   assert.deepEqual(changes.at(-1), [30, 40]);
 });
+
+test('a setting marked when shows only while its condition holds', async () => {
+  const { parameters } = await import('../dist/index.js');
+  const params = parameters(
+    'mount = "wall"; // [wall, stand]\nclearance = 0.2; // [0:0.05:1] when mount == "stand"\n/* [Stand] */\nfeet = 2; // [1:4] when mount == "stand"',
+  ).parameters;
+  const container = new Node('div');
+  const values = {};
+  buildControls(container, params, values, () => {});
+  const rows = container.all('div').filter((d) => d.attrs.class === 'control');
+  const [, clearance, feet] = rows;
+  const stand = container.all('fieldset')[1];
+  assert.equal(clearance.hidden, true);
+  assert.equal(feet.hidden, true);
+  assert.equal(stand.hidden, true, 'a group with nothing shown is hidden');
+  const select = container.all('select')[0];
+  select.value = 'stand';
+  select.listeners.change();
+  assert.equal(clearance.hidden, false);
+  assert.equal(stand.hidden, false);
+});

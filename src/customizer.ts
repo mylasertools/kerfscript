@@ -17,6 +17,11 @@ export interface Parameter {
   // The setting that drives the model's motion, marked `// [0:5:360] drive`:
   // the playground plays it, and `kerf check --drive` tries every value
   drive?: boolean;
+  // Shown only while this condition on the other settings holds, marked
+  // `// [0:1] when mount == "stand"`: see shown()
+  when?: string;
+  // Why `when` could not be used, so the setting is always shown
+  whenProblem?: string;
   span: [number, number];
 }
 
@@ -87,7 +92,11 @@ export function parameters(source: string): { parameters: Parameter[] } {
       initial: v,
       span: s.span,
     };
-    const m = inline ? /^\[(.*)\](\s+drive)?$/.exec(inline.trim()) : null;
+    // A trailing `when <condition>`, after the [...] or on its own
+    const w = inline ? /^((?:\[.*\](?:\s+drive)?)?)\s*when\s+(.+)$/.exec(inline.trim()) : null;
+    if (w) p.when = w[2].trim();
+    const rest = w ? w[1].trim() : inline?.trim();
+    const m = rest ? /^\[(.*)\](\s+drive)?$/.exec(rest) : null;
     if (m?.[2] && p.type === 'number' && typeof v === 'number') p.drive = true;
     if (m) {
       const body = m[1];
@@ -118,5 +127,169 @@ export function parameters(source: string): { parameters: Parameter[] } {
     }
     out.push(p);
   }
+  for (const p of out) {
+    if (p.when === undefined) continue;
+    const problem = conditionProblem(p.when, out);
+    if (problem) {
+      p.whenProblem = problem;
+      delete p.when;
+    }
+  }
   return { parameters: out };
+}
+
+// The condition's expression, or a reason it can't be one
+function condition(text: string): Expr | string {
+  try {
+    const s = parse(`when__ = (${text});`).program.body[0];
+    return s?.kind === 'assign' ? s.value : 'it is not an expression';
+  } catch (e) {
+    // Its position is in the wrapper above, not in the comment
+    return (e as Error).message.replace(/\s*\(line \d+, column \d+\)$/, '');
+  }
+}
+
+const CONDITION_OPS = new Set([
+  '==',
+  '!=',
+  '<',
+  '<=',
+  '>',
+  '>=',
+  '&&',
+  '||',
+  '+',
+  '-',
+  '*',
+  '/',
+  '%',
+  '!',
+]);
+
+function conditionProblem(text: string, params: Parameter[]): string | undefined {
+  const e = condition(text);
+  if (typeof e === 'string') return `its condition (${text}) is not an expression: ${e}`;
+  const names = new Set(params.map((p) => p.name));
+  const bad = (x: Expr): string | undefined => {
+    switch (x.kind) {
+      case 'num':
+      case 'str':
+      case 'bool':
+      case 'undef':
+        return undefined;
+      case 'var':
+        return names.has(x.name) ? undefined : `uses ${x.name}, which is not a setting`;
+      case 'list':
+        for (const it of x.items) {
+          if (it.kind !== 'item') return 'uses a list comprehension';
+          const b = bad(it.expr);
+          if (b) return b;
+        }
+        return undefined;
+      case 'unary':
+        return CONDITION_OPS.has(x.op) ? bad(x.arg) : `uses ${x.op}`;
+      case 'binary':
+        return CONDITION_OPS.has(x.op) ? (bad(x.left) ?? bad(x.right)) : `uses ${x.op}`;
+      case 'ternary':
+        return bad(x.cond) ?? bad(x.then) ?? bad(x.else);
+      case 'index':
+        return bad(x.target) ?? bad(x.index);
+      default:
+        return 'uses more than settings, values and operators';
+    }
+  };
+  const b = bad(e);
+  return b ? `its condition (${text}) ${b}` : undefined;
+}
+
+const same = (a: Value, b: Value): boolean =>
+  Array.isArray(a) && Array.isArray(b)
+    ? a.length === b.length && a.every((x, i) => same(x, b[i]))
+    : a === b;
+
+function conditionValue(x: Expr, get: (name: string) => Value): Value {
+  const v = (e: Expr) => conditionValue(e, get);
+  const truthy = (a: Value) =>
+    !(a === undefined || a === false || a === 0 || a === '' || (Array.isArray(a) && !a.length));
+  switch (x.kind) {
+    case 'num':
+    case 'str':
+    case 'bool':
+      return x.value;
+    case 'undef':
+      return undefined;
+    case 'var':
+      return get(x.name);
+    case 'list':
+      return x.items.map((it) => (it.kind === 'item' ? v(it.expr) : undefined));
+    case 'unary': {
+      const a = v(x.arg);
+      return x.op === '!' ? !truthy(a) : typeof a === 'number' ? -a : undefined;
+    }
+    case 'ternary':
+      return truthy(v(x.cond)) ? v(x.then) : v(x.else);
+    case 'index': {
+      const t = v(x.target);
+      const i = v(x.index);
+      return Array.isArray(t) && typeof i === 'number' ? t[Math.floor(i)] : undefined;
+    }
+    case 'binary': {
+      if (x.op === '&&') return truthy(v(x.left)) && truthy(v(x.right));
+      if (x.op === '||') return truthy(v(x.left)) || truthy(v(x.right));
+      const a = v(x.left);
+      const b = v(x.right);
+      if (x.op === '==') return same(a, b);
+      if (x.op === '!=') return !same(a, b);
+      if (typeof a !== 'number' || typeof b !== 'number') {
+        if (x.op === '+' && typeof a === 'string' && typeof b === 'string') return a + b;
+        return undefined;
+      }
+      switch (x.op) {
+        case '<':
+          return a < b;
+        case '<=':
+          return a <= b;
+        case '>':
+          return a > b;
+        case '>=':
+          return a >= b;
+        case '+':
+          return a + b;
+        case '-':
+          return a - b;
+        case '*':
+          return a * b;
+        case '/':
+          return a / b;
+        case '%':
+          return a % b;
+      }
+      return undefined;
+    }
+    default:
+      return undefined;
+  }
+}
+
+// Whether a setting applies with the settings at `values` (missing ones at
+// their initial values): its `when` condition holds, or it has none
+export function shown(
+  param: Parameter,
+  values: Record<string, Value>,
+  params: Parameter[],
+): boolean {
+  if (param.when === undefined) return true;
+  const e = condition(param.when);
+  if (typeof e === 'string') return true;
+  const initial = new Map(params.map((p) => [p.name, p.initial]));
+  const r = conditionValue(e, (name) =>
+    Object.prototype.hasOwnProperty.call(values, name) ? values[name] : initial.get(name),
+  );
+  return !(
+    r === undefined ||
+    r === false ||
+    r === 0 ||
+    r === '' ||
+    (Array.isArray(r) && !r.length)
+  );
 }
