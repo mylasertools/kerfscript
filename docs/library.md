@@ -21,6 +21,7 @@ show each module's description when you hover over it.
 | ---------------------------------- | -------------------------------------------------------------- |
 | [`kerf/box`](#boxes)               | Finger-jointed boxes and dividers that slide into them         |
 | [`kerf/tabs`](#tabs-and-slots)     | Tabs on one panel and the slots in another that they go into   |
+| [`kerf/stand`](#stands)            | A sign or photo standing in a base, upright or leaning back    |
 | [`kerf/hinge`](#living-hinges)     | Living hinges that bend flat sheet, and a box with round sides |
 | [`kerf/dividers`](#dividers)       | Dividers that slot into each other like an egg crate           |
 | [`kerf/hanging`](#hanging)         | Keyholes, holes and loops for hanging things on a wall         |
@@ -126,6 +127,50 @@ is `true` or `false` for all four, or `[bottom, right, top, left]`.
 
 The centres of the tabs along an edge, for placing anything else that
 lines up with them.
+
+## Stands
+
+`use <kerf/stand>`
+
+A panel (a sign, a photo frame, a calendar) standing in a base, its tabs
+through slots in the base, upright or leaning back. `stand()` makes both
+parts and puts them together; the tabs and slots always match, at any
+lean and `$thickness`.
+
+```kerf
+use <kerf/stand>
+
+stand(160, depth = 45, lean = 10) {
+  rect([160, 90], r = 6);
+  engrave() translate([80, 45]) text("OPEN", fit = [120, 40], halign = "center", valign = "cap");
+}
+```
+
+### `stand(width, depth = 40, count, tab, lean = 0, margin = 10, back, r = 3, clearance = 0.1, name = "Sign")`
+
+The children draw the panel, its bottom edge on y = 0 from x = 0 to
+`width`; `stand()` adds the tabs. The base is `depth` deep, `margin` wider
+than the panel on each side, with corners rounded to `r`. The panel leans
+back by `lean` degrees (up to 45), its back face meeting the base `back`
+from the front (half way by default). The parts are `name` and
+`"name stand"`.
+
+| Parameter   | Default                         | Meaning                              |
+| ----------- | ------------------------------- | ------------------------------------ |
+| `count`     | one for every 50 mm, at least 1 | Number of tabs                       |
+| `tab`       | half the space between tabs     | Width of each tab                    |
+| `clearance` | `0.1`                           | Added to each slot's width and depth |
+
+### `stand_tabs(width, count, tab, lean = 0)`
+
+The tabs for the bottom edge of a panel, x from 0 to `width`, hanging below
+y = 0 far enough to go through a base `$thickness` thick at that lean.
+
+### `stand_slots(width, count, tab, lean = 0, clearance = 0.1)`
+
+The slots for `stand_tabs()` with the same `width`, `count`, `tab` and
+`lean`, for a base of your own: x from 0 to `width`, for a panel whose back
+face meets the top of the base on y = 0, leaning back towards +y.
 
 ## Living hinges
 

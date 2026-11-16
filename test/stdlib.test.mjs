@@ -576,3 +576,41 @@ test('kerf/shapes points come counter-clockwise and refuse sizes that cannot be 
   ])
     assert.throws(() => render(`use <kerf/shapes>\n${call};`), message, call);
 });
+
+// kerf/stand
+
+test('stand() puts a panel in its base without a collision, upright or leaning', () => {
+  for (const lean of [0, 15, 30, 44])
+    for (const t of [3, 6]) {
+      const r = render(
+        `use <kerf/stand>\n$thickness = ${t};\nstand(160, lean = ${lean}) square([160, 90]);`,
+      );
+      assert.deepEqual(r.warnings, [], `lean ${lean}, ${t} mm`);
+      assert.deepEqual(
+        r.parts.map((p) => p.name),
+        ['Sign', 'Sign stand'],
+      );
+    }
+  const tight = render(
+    'use <kerf/stand>\n$thickness = 4;\nstand(160, lean = 20, clearance = -1) square([160, 90]);',
+  );
+  assert.equal(collisions(tight).length, 1);
+});
+
+test('stand_slots() cuts the slots the assembly needs for stand_tabs()', () => {
+  for (const lean of [0, 20, 35]) {
+    const cut = (base) =>
+      render(
+        `use <kerf/stand>\n$thickness = 4;\npart("Sign", at = [0, 20, 4], rotate = [${90 - lean}, 0, 0]) { square([160, 90]); stand_tabs(160, lean = ${lean}); }\n${base}`,
+      ).parts.find((p) => p.name === 'Base').cutLength;
+    near(
+      cut(
+        `part("Base", at = [0, 0, 0], slots = ["Sign"]) translate([-10, 0]) rect([180, 40], r = 3);`,
+      ),
+      cut(
+        `part("Base", at = [0, 0, 0]) difference() { translate([-10, 0]) rect([180, 40], r = 3); translate([0, 20]) stand_slots(160, lean = ${lean}); }`,
+      ),
+      0.05,
+    );
+  }
+});
