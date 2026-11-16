@@ -5,6 +5,19 @@
 Language version 0.3, as in 0.9.0: programs run as before, except that
 `color()` and `linear_extrude()` now warn instead of stopping.
 
+Changes to the output of existing programs, each a fix (see Fixes below):
+
+- Slots for parts that pass through at an angle are cut to what passes
+  through the sheet, so they can be narrower than before; check the fit of
+  angled tabs, tapered ones especially.
+- `intersection()` with a part as its first child clips the part instead of
+  emptying it.
+- A default such as `w = $thickness` takes the `$thickness` passed with the
+  call.
+- Parts riding a bent part, and mirrored copies of bent parts, are placed,
+  slotted and bored where they end up.
+- SVG import reads units on shapes and keeps a viewBox's proportions.
+
 Language:
 
 - `text(fit = [w, h])` keeps text no wider than `w` and its capitals no

@@ -28,14 +28,15 @@ export interface FnCtx {
 }
 
 // Order for sort(): numbers, then strings, each among themselves, and lists
-// item by item. Each pair compared is a step, so lists that share their
-// parts (small to make, huge to walk) meet the step limit
+// item by item. Each pair of items compared inside lists is a step, so lists
+// that share their parts (small to make, huge to walk) meet the step limit;
+// sort() has already counted comparing the values themselves
 function order(a: Value, b: Value, fn: string, step: () => void): number {
-  step();
   if (typeof a === 'number' && typeof b === 'number') return a - b;
   if (typeof a === 'string' && typeof b === 'string') return a < b ? -1 : a > b ? 1 : 0;
   if (Array.isArray(a) && Array.isArray(b)) {
     for (let i = 0; i < Math.min(a.length, b.length); i++) {
+      step();
       const o = order(a[i], b[i], fn, step);
       if (o) return o;
     }

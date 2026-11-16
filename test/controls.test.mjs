@@ -112,3 +112,14 @@ test('a when condition runs as the language runs it', async () => {
   // A condition the language can't work out (a number against text) shows
   assert.equal(shown(by('d'), {}, params), true);
 });
+
+test('a comment that only begins with "when" stays a comment', async () => {
+  const { parameters, render } = await import('../dist/index.js');
+  const src = 'lid = 5; // when the lid is closed\nsize = 3; // [1:5] when lid >\nrect(10);';
+  const [lid, size] = parameters(src).parameters;
+  assert.equal(lid.when, undefined);
+  assert.equal(lid.whenProblem, undefined);
+  // After [...] it is meant as a condition, so a broken one is reported
+  assert.match(size.whenProblem, /not an expression/);
+  assert.equal(render(src).warnings.length, 1);
+});

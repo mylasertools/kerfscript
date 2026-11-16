@@ -66,6 +66,8 @@ export function parameters(source: string): { parameters: Parameter[] } {
   );
   const captions = new Map(comments.filter((c) => !c.block && c.own).map((c) => [c.line, c.text]));
   const out: Parameter[] = [];
+  // Settings whose `when` follows a [...], so it is surely a condition
+  const afterControl = new Set<Parameter>();
   for (const s of program.body) {
     if (s.kind !== 'assign' || /^\$f[nas]$/.test(s.name)) continue;
     const lit = literal(s.value);
@@ -96,6 +98,7 @@ export function parameters(source: string): { parameters: Parameter[] } {
     // A trailing `when <condition>`, after the [...] or on its own
     const w = inline ? /^((?:\[.*\](?:\s+drive)?)?)\s*when\s+(.+)$/.exec(inline.trim()) : null;
     if (w) p.when = w[2].trim();
+    if (w?.[1]) afterControl.add(p);
     const rest = w ? w[1].trim() : inline?.trim();
     const m = rest ? /^\[(.*)\](\s+drive)?$/.exec(rest) : null;
     if (m?.[2] && p.type === 'number' && typeof v === 'number') p.drive = true;
@@ -130,6 +133,12 @@ export function parameters(source: string): { parameters: Parameter[] } {
   }
   for (const p of out) {
     if (p.when === undefined) continue;
+    // A comment that only begins with "when" and isn't an expression, as
+    // "when the lid is closed", is a comment; after a [...] it is meant
+    if (!afterControl.has(p) && typeof condition(p.when) === 'string') {
+      delete p.when;
+      continue;
+    }
     const problem = conditionProblem(p.when, out);
     if (problem) {
       p.whenProblem = problem;
