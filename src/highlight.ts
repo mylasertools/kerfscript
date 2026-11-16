@@ -58,7 +58,8 @@ export const BUILTINS = new Set(
     'enclosure_cutouts vents spur_gear gear_window rack lantern_disc peg_wheel eccentric ' +
     'snail_cam tappets cone_flat fit align cam geneva_wheel geneva_lock geneva_crank ratchet pawl world_map keyhole keyholes hanging_hole hanging_loop flex_rect ' +
     'flex_box flex_panel narrow_hinge flex_strip cam_lock lock_key ring_stack halved_pair symbol tabs ' +
-    'slots tab_rect abs sign floor ceil round sqrt exp ln log sin cos tan asin acos atan ' +
+    'slots tab_rect heart teardrop egg lens crescent capsule diamond rounded_polygon shield arrow chevron banner house tag ring scalloped flower cloud speech_bubble stand stand_tabs stand_slots ' +
+    'abs sign floor ceil round sqrt exp ln log sin cos tan asin acos atan ' +
     'atan2 pow min max clamp lerp norm cross path_length point_at heading_at offset_path train_for path_points ' +
     'spline_points rotation euler orient len keys merge concat reverse sort fold scan bounds crossings sum slice str chr ord ' +
     'upper lower split join search contains lookup is_num is_string is_bool is_list is_undef ' +
@@ -72,8 +73,9 @@ const CALL = /\s*\(/y;
 const PATH = /<[^>]*>?/y;
 // /* [Size] */ starts a customizer group
 const SECTION = /\/\*\s*\[[^\]]*\]\s*\*\//y;
-// width = 120; // [40:5:400] gives a setting its control
-const CONTROL = /\/\/\s*\[[^\]]*\]\s*$/y;
+// width = 120; // [40:5:400] gives a setting its control, perhaps with
+// drive or a when condition after it
+const CONTROL = /\/\/\s*(?:\[[^\]]*\](?:\s+drive)?(?:\s+when\s.*)?|when\s.*)$/y;
 // * disables a module call, # and % move it to the guide layer
 const MODIFIER = /[*#%](?=\s*[A-Za-z_$])/y;
 
