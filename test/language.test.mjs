@@ -64,7 +64,7 @@ test('errors carry line and column', () => {
     (e) => e instanceof KerfError && e.line === 2 && /Can't add list and number/.test(e.message),
   );
   assert.throws(() => render('rect(nope);'), /Unknown variable "nope" \(line 1, column 6\)/);
-  assert.throws(() => render('color("red") rect(1);'), /Use layer\(\)/);
+  assert.match(render('color("red") rect(1);').warnings[0], /color\(\) is ignored/);
   assert.throws(() => render('x = [1, 2;'), /Expected ","/);
   assert.throws(() => render('assert(1 > 2, "too small");'), /Assertion failed: too small/);
 });
