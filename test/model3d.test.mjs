@@ -234,3 +234,28 @@ test('kerf render writes a 3D file by its extension', () => {
     assert.ok(readFileSync(out).length > 80, ext);
   }
 });
+
+test('a rod in the 3D file fits the bore cut for it, square or many-sided', () => {
+  for (const [size, sides, up] of [
+    ['[2, 4]', 24, '[0, 1, 1]'],
+    ['6', 6, '[0, 0, 1]'],
+    ['5', 5, '[1, 1, 0]'],
+  ]) {
+    const r = render(
+      `hardware("steel", [20, 20, -5], [20, 20, 10], ${size}, sides = ${sides}, up = ${up}, label = "pin");\npart("p", at = [0, 0, 0], bores = ["pin"], fit = 0) rect(40);`,
+    );
+    const rod = meshBodies(r).find((b) => b.kind === 'hardware');
+    assert.ok(!rod.positions.some(Number.isNaN));
+    // The hole in the part, and the rod's corners where it starts
+    const hole = r.assembly[0].outline.find((ring) => ring.every(([x, y]) => x > 5 && y > 5));
+    const corners = [];
+    for (let i = 0; i < rod.positions.length; i += 3)
+      if (Math.abs(rod.positions[i + 2] + 5) < 1e-6)
+        corners.push([rod.positions[i], rod.positions[i + 1]]);
+    for (const [x, y] of corners)
+      assert.ok(
+        hole.some(([hx, hy]) => Math.hypot(hx - x, hy - y) < 0.01),
+        `${size}: rod corner [${x}, ${y}] is not on the bore`,
+      );
+  }
+});

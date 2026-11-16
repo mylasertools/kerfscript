@@ -27,14 +27,21 @@ const unit = (a: Vec3): Vec3 => {
 // that turns on its axle, and one held fast on it
 export const FITS: Record<string, number> = { turn: 0.3, press: -0.1 };
 
-// The rod's section round its axis, `room` wider in all: as many sides as
-// it has when it has few (a hex key), otherwise round
-function section(h: HardwareItem, room: number): Vec3[] {
+/** A rod's axes: along it, and across it, v towards `up` (a [w, h]
+ * section's h, a polygon's first corner) and u square to both (its w). The
+ * 3D files use the same, so a rod fits the bore cut for it. */
+export function rodFrame(h: HardwareItem): { axis: Vec3; u: Vec3; v: Vec3 } {
   const axis = unit(sub(h.to, h.from));
   let up = sub(h.up, axis.map((x) => x * dot(h.up, axis)) as Vec3);
   if (Math.hypot(...up) < 1e-9) up = Math.abs(axis[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0];
   const v = unit(sub(up, axis.map((x) => x * dot(up, axis)) as Vec3));
-  const u = cross(v, axis);
+  return { axis, u: cross(v, axis), v };
+}
+
+// The rod's section round its axis, `room` wider in all: as many sides as
+// it has when it has few (a hex key), otherwise round
+function section(h: HardwareItem, room: number): Vec3[] {
+  const { u, v } = rodFrame(h);
   if (Array.isArray(h.size)) {
     const [w, ht] = [h.size[0] / 2 + room / 2, h.size[1] / 2 + room / 2];
     return [

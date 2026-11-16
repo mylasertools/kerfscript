@@ -10,6 +10,7 @@ import { bendPoint, meshPieces, type AssemblyPart, type Vec3 } from '../assembly
 import type { HardwareItem } from '../evaluator.js';
 import { area, difference, intersection, strokeLines, union, type Poly } from '../geometry.js';
 import { HARDWARE_COLORS, HARDWARE_KINDS } from '../hardware.js';
+import { rodFrame } from '../bores.js';
 import { triangulate } from './triangulate.js';
 
 export interface Body {
@@ -245,20 +246,9 @@ function hardwareBody(h: HardwareItem): Body | null {
     return b;
   }
   if (!(length > 0) || !(size[0] > 0)) return null;
-  // Axes across the rod: `up` for the section's h, and one square to both
-  const z: Vec3 = [d[0] / length, d[1] / length, d[2] / length];
-  const dot = (a: Vec3, c: Vec3) => a[0] * c[0] + a[1] * c[1] + a[2] * c[2];
-  const crossV = (a: Vec3, c: Vec3): Vec3 => [
-    a[1] * c[2] - a[2] * c[1],
-    a[2] * c[0] - a[0] * c[2],
-    a[0] * c[1] - a[1] * c[0],
-  ];
-  let up: Vec3 = h.up ?? [0, 0, 1];
-  if (Math.abs(dot(up, z)) > 0.99) up = Math.abs(z[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0];
-  const yv = crossV(z, crossV(up, z));
-  const yl = Math.hypot(...yv);
-  const y: Vec3 = [yv[0] / yl, yv[1] / yl, yv[2] / yl];
-  const x = crossV(y, z);
+  // The rod's axes as its bores have them: w along u, h along v (`up`),
+  // a polygon's first corner on v, so a rod fits the hole cut for it
+  const { axis: z, u: x, v: y } = rodFrame(h);
   const n = Array.isArray(h.size) ? 4 : Math.min(128, Math.max(3, Math.floor(h.sides) || 24));
   const section: Poly = Array.isArray(h.size)
     ? [
@@ -269,7 +259,7 @@ function hardwareBody(h: HardwareItem): Body | null {
       ]
     : Array.from({ length: n }, (_, i) => {
         const a = (2 * Math.PI * i) / n;
-        return [(size[0] / 2) * Math.cos(a), (size[0] / 2) * Math.sin(a)] as [number, number];
+        return [(size[0] / 2) * Math.sin(a), (size[0] / 2) * Math.cos(a)] as [number, number];
       });
   const to: Map3 = ([u, v, w]) => [
     h.from[0] + u * x[0] + v * y[0] + w * z[0],
