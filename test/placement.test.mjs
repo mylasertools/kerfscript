@@ -795,3 +795,14 @@ test('a tapered tab leaning through a sheet cuts only what passes through it', (
   const total = slot.reduce((s, h) => s + area(h), 0);
   assert.ok(total > 16.8 && total < 17.3, `slot ${total} mm²`);
 });
+
+test('each copy of a mirrored rider rides its own host copy', () => {
+  const r = render(
+    'part("cover", qty = 2, at = [[0, 0, 0], [200, 0, 0]], bend = [50, 60, 90]) rect([120, 40]);\n' +
+      'part("tab", qty = 2, at = [[80, 10, 3], [280, 10, 3]], mirror = [false, true], on = "cover") rect([20, 20]);',
+  );
+  const tabs = r.assembly.filter((a) => a.name === 'tab').sort((a, b) => a.copy - b.copy);
+  // Both stand up on their own cover's folded end, 200 mm apart
+  assert.ok(Math.abs(tabs[1].matrix[3] - tabs[0].matrix[3] - 200) < 1e-6);
+  assert.ok(Math.abs(tabs[1].matrix[11] - tabs[0].matrix[11]) < 1e-6);
+});

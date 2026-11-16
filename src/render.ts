@@ -1176,7 +1176,13 @@ function rideFirst(parts: PartShape[], mode: (k: string) => string, warnings: st
     const host = r.on;
     const hosts = parts
       .filter((q) => q.name === host && q.placements?.length)
-      .flatMap((q) => q.placements!.map((pl) => ({ q, m: placementMatrix(pl) })));
+      .flatMap((q) =>
+        q.placements!.map((pl, i) => ({ q, m: placementMatrix(pl), copy: copyNumber(q, i) })),
+      );
+    // All copies of this rider, a mirrored copy being a part of its own
+    const copies = parts
+      .filter((q) => q.name === r.name && q.on === host)
+      .reduce((n, q) => n + (q.placements?.length ?? 0), 0);
     if (!hosts.length) {
       if (!warned.has(host))
         warnings.push(`Part "${r.name}" is on "${host}", which is not a placed part.`);
@@ -1197,8 +1203,10 @@ function rideFirst(parts: PartShape[], mode: (k: string) => string, warnings: st
     if (!(x1 >= x0)) continue;
     const [cx, cy, cz] = [(x0 + x1) / 2, (y0 + y1) / 2, r.thickness / 2];
     r.placements = r.placements.map((pl, i) => {
-      // One host placement per rider copy, or all on the first
-      const h = hosts.length === r.placements!.length ? hosts[i] : hosts[0];
+      // Rider copy k on host copy k when there are as many of each, or all
+      // on the first
+      const mine = copyNumber(r, i);
+      const h = (hosts.length === copies && hosts.find((x) => x.copy === mine)) || hosts[0];
       if (!h.q.bends?.length) return pl;
       const m = placementMatrix(pl);
       const world = [
