@@ -77,32 +77,92 @@ export function crossSection(target: Solid, other: Solid): Poly[] {
     return out;
   };
   const columns = union(deep.flatMap(across), 'nonzero');
-  const pieces = intersection(inBand(at0(0), at1(0)), columns).filter(
-    (p) => Math.abs(area(p)) > 1e-6,
-  );
-  if (!pieces.length) return [];
+  // The part of `other` that goes through, across from what goes deep
+  const outline = intersection(other.outline, columns).filter((p) => Math.abs(area(p)) > 1e-6);
+  if (!outline.length) return [];
+  // The slot is what the slab and the other part have in common, seen from
+  // above: the union of the shadows of that solid's faces. Depth into the
+  // slab is z = n * s + R[10] * w + R[11], s along (nx, ny) in the other
+  // part's plane and w through its thickness.
   const at =
     (w: number) =>
     ([u, v]: [number, number]): [number, number] => [
       R[0] * u + R[1] * v + R[2] * w + R[3],
       R[4] * u + R[5] * v + R[6] * w + R[7],
     ];
-  const flips = R[0] * R[5] - R[1] * R[4] < 0;
-  const faces = (w: number) =>
-    pieces.map((p) => {
-      const q = p.map(at(w));
-      return flips ? q.reverse() : q;
-    });
-  // The prism's sides as it sweeps through its thickness
-  const sides: Poly[] = [];
-  for (const p of pieces)
-    for (let i = 0; i < p.length; i++) {
-      const u = p[i],
-        v = p[(i + 1) % p.length];
-      const quad: Poly = [at(w0)(u), at(w0)(v), at(w1)(v), at(w1)(u)];
-      if (Math.abs(area(quad)) > 1e-9) sides.push(ccw(quad));
+  const T = target.thickness;
+  const sAt = (z: number, w: number) => (z - R[11] - R[10] * w) / n;
+  const shadows: Poly[] = [];
+  const add = (q: [number, number][]) => {
+    if (q.length >= 3 && Math.abs(area(q)) > 1e-9) shadows.push(ccw(q));
+  };
+  // The other part's two faces, each within the slab
+  for (const w of [w0, w1])
+    for (const p of intersection(outline, [ccw(bandOf(sAt(0, w), sAt(T, w)))])) add(p.map(at(w)));
+  // The slab's two faces where they cut through the other part. Leaning
+  // through it, each cuts a region; square to it, each cuts the outline along
+  // a line, whose pieces sweep through the part's thickness
+  for (const z of [0, T]) {
+    if (Math.abs(R[10]) > 1e-9) {
+      const [a0, a1] = [sAt(z, w0), sAt(z, w1)].sort((x, y) => x - y);
+      for (const p of intersection(outline, [ccw(bandOf(a0, a1))]))
+        add(p.map(([u, v]) => at((z - R[11] - R[8] * u - R[9] * v) / R[10])([u, v])));
+    } else {
+      const sc = sAt(z, 0);
+      // Where the line s = sc runs inside the outline, from a hair-thin band
+      for (const p of intersection(outline, [ccw(bandOf(sc - 1e-4, sc + 1e-4))])) {
+        let [t0, t1] = [Infinity, -Infinity];
+        for (const [u, v] of p) {
+          const t = tx * u + ty * v;
+          t0 = Math.min(t0, t);
+          t1 = Math.max(t1, t);
+        }
+        if (!(t1 - t0 > 1e-6)) continue;
+        const a: [number, number] = [nx * sc + tx * t0, ny * sc + ty * t0];
+        const c: [number, number] = [nx * sc + tx * t1, ny * sc + ty * t1];
+        add([at(w0)(a), at(w0)(c), at(w1)(c), at(w1)(a)]);
+      }
     }
-  return union([...faces(w0), ...faces(w1), ...sides], 'nonzero');
+  }
+  // The other part's sides, each a quad through its thickness, clipped to
+  // the slab
+  const depth = (u: number, v: number, w: number) => R[8] * u + R[9] * v + R[10] * w + R[11];
+  for (const ring of outline)
+    for (let i = 0; i < ring.length; i++) {
+      const [pu, pv] = ring[i];
+      const [qu, qv] = ring[(i + 1) % ring.length];
+      // Corners as [t along the edge, w], clipped by z >= 0 and z <= T
+      let poly: [number, number][] = [
+        [0, w0],
+        [1, w0],
+        [1, w1],
+        [0, w1],
+      ];
+      const z = ([t, w]: [number, number]) => depth(pu + (qu - pu) * t, pv + (qv - pv) * t, w);
+      for (const [sign, limit] of [
+        [1, 0],
+        [-1, -T],
+      ] as const) {
+        const keep = (c: [number, number]) => sign * z(c) >= limit;
+        const next: [number, number][] = [];
+        for (let k = 0; k < poly.length; k++) {
+          const c = poly[k];
+          const d = poly[(k + 1) % poly.length];
+          if (keep(c)) next.push(c);
+          if (keep(c) !== keep(d)) {
+            const zc = sign * z(c) - limit;
+            const zd = sign * z(d) - limit;
+            const f = zc / (zc - zd);
+            next.push([c[0] + (d[0] - c[0]) * f, c[1] + (d[1] - c[1]) * f]);
+          }
+        }
+        poly = next;
+        if (!poly.length) break;
+      }
+      if (poly.length >= 3)
+        add(poly.map(([t, w]) => at(w)([pu + (qu - pu) * t, pv + (qv - pv) * t])));
+    }
+  return shadows.length ? union(shadows, 'nonzero') : [];
 }
 
 // Slots in `target` for every solid in `others`, `clearance` wider all

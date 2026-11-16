@@ -772,3 +772,26 @@ test('a part riding a bent part has its bores cut where it rides', () => {
   assert.deepEqual(r.warnings, []);
   assert.equal(r.assembly.find((a) => a.name === 'tab').outline.length, 2);
 });
+
+test('a tapered tab leaning through a sheet cuts only what passes through it', () => {
+  // A triangle, point down, leaning 45 degrees through a 3 mm base: the slot
+  // is the shadow of the triangle's part inside the base, nothing more
+  const r = render(
+    '$thickness = 3;\npart("base", at = [0, 0, 0], slots = ["tab"], clearance = 0) translate([-40, -40]) square([100, 100]);\n' +
+      'part("tab", at = [0, 10, 3], rotate = [45, 0, 0]) polygon([[0, 20], [20, 20], [10, -6]]);',
+    { kerf: 0 },
+  );
+  const area = (p) =>
+    Math.abs(
+      p.reduce(
+        (s, [x, y], i) => s + x * p[(i + 1) % p.length][1] - p[(i + 1) % p.length][0] * y,
+        0,
+      ),
+    ) / 2;
+  const base = r.assembly.find((a) => a.name === 'base');
+  const slot = base.outline.filter((ring) => ring.every(([x, y]) => x > -39 && y > -39));
+  // Exact: the tab's middle plane crosses the base between local y where z
+  // runs 0 to 3 on each face; a convex shape, 16.9 mm² by sampling
+  const total = slot.reduce((s, h) => s + area(h), 0);
+  assert.ok(total > 16.8 && total < 17.3, `slot ${total} mm²`);
+});
