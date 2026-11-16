@@ -1,6 +1,7 @@
 // Copyright (c) 2026 MyLaserTools. SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-MyLaserTools-Commercial
 
 import type { Expr } from './ast.js';
+import { Evaluator } from './evaluator.js';
 import { parse } from './parser.js';
 import type { Value } from './values.js';
 
@@ -202,75 +203,6 @@ function conditionProblem(text: string, params: Parameter[]): string | undefined
   return b ? `its condition (${text}) ${b}` : undefined;
 }
 
-const same = (a: Value, b: Value): boolean =>
-  Array.isArray(a) && Array.isArray(b)
-    ? a.length === b.length && a.every((x, i) => same(x, b[i]))
-    : a === b;
-
-function conditionValue(x: Expr, get: (name: string) => Value): Value {
-  const v = (e: Expr) => conditionValue(e, get);
-  const truthy = (a: Value) =>
-    !(a === undefined || a === false || a === 0 || a === '' || (Array.isArray(a) && !a.length));
-  switch (x.kind) {
-    case 'num':
-    case 'str':
-    case 'bool':
-      return x.value;
-    case 'undef':
-      return undefined;
-    case 'var':
-      return get(x.name);
-    case 'list':
-      return x.items.map((it) => (it.kind === 'item' ? v(it.expr) : undefined));
-    case 'unary': {
-      const a = v(x.arg);
-      return x.op === '!' ? !truthy(a) : typeof a === 'number' ? -a : undefined;
-    }
-    case 'ternary':
-      return truthy(v(x.cond)) ? v(x.then) : v(x.else);
-    case 'index': {
-      const t = v(x.target);
-      const i = v(x.index);
-      return Array.isArray(t) && typeof i === 'number' ? t[Math.floor(i)] : undefined;
-    }
-    case 'binary': {
-      if (x.op === '&&') return truthy(v(x.left)) && truthy(v(x.right));
-      if (x.op === '||') return truthy(v(x.left)) || truthy(v(x.right));
-      const a = v(x.left);
-      const b = v(x.right);
-      if (x.op === '==') return same(a, b);
-      if (x.op === '!=') return !same(a, b);
-      if (typeof a !== 'number' || typeof b !== 'number') {
-        if (x.op === '+' && typeof a === 'string' && typeof b === 'string') return a + b;
-        return undefined;
-      }
-      switch (x.op) {
-        case '<':
-          return a < b;
-        case '<=':
-          return a <= b;
-        case '>':
-          return a > b;
-        case '>=':
-          return a >= b;
-        case '+':
-          return a + b;
-        case '-':
-          return a - b;
-        case '*':
-          return a * b;
-        case '/':
-          return a / b;
-        case '%':
-          return a % b;
-      }
-      return undefined;
-    }
-    default:
-      return undefined;
-  }
-}
-
 // Whether a setting applies with the settings at `values` (missing ones at
 // their initial values): its `when` condition holds, or it has none
 export function shown(
@@ -279,17 +211,20 @@ export function shown(
   params: Parameter[],
 ): boolean {
   if (param.when === undefined) return true;
-  const e = condition(param.when);
-  if (typeof e === 'string') return true;
-  const initial = new Map(params.map((p) => [p.name, p.initial]));
-  const r = conditionValue(e, (name) =>
-    Object.prototype.hasOwnProperty.call(values, name) ? values[name] : initial.get(name),
+  // The condition runs as the language runs it, the settings at the values
+  // chosen so far and the others at their initial values. One that can't
+  // be worked out shows the setting.
+  const initial = Object.fromEntries(params.map((p) => [p.name, p.initial]));
+  const chosen = Object.fromEntries(
+    Object.entries(values).filter(([k]) => Object.prototype.hasOwnProperty.call(initial, k)),
   );
-  return !(
-    r === undefined ||
-    r === false ||
-    r === 0 ||
-    r === '' ||
-    (Array.isArray(r) && !r.length)
-  );
+  try {
+    const source = [...params.map((p) => `${p.name} = undef;`), `echo((${param.when}) ? 1 : 0);`];
+    const r = new Evaluator({ overrides: { ...initial, ...chosen }, maxSteps: 100_000 }).run(
+      parse(source.join(String.fromCharCode(10))).program,
+    );
+    return r.echoes[0] !== '0';
+  } catch {
+    return true;
+  }
 }
