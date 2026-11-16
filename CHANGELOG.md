@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.10.0 (unreleased)
+## 0.10.0 (2026-11-16)
 
 Language version 0.3, as in 0.9.0: programs run as before, except that
 `color()` and `linear_extrude()` now warn instead of stopping.
