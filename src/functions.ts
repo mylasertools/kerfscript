@@ -28,13 +28,15 @@ export interface FnCtx {
 }
 
 // Order for sort(): numbers, then strings, each among themselves, and lists
-// item by item
-function order(a: Value, b: Value, fn: string): number {
+// item by item. Each pair compared is a step, so lists that share their
+// parts (small to make, huge to walk) meet the step limit
+function order(a: Value, b: Value, fn: string, step: () => void): number {
+  step();
   if (typeof a === 'number' && typeof b === 'number') return a - b;
   if (typeof a === 'string' && typeof b === 'string') return a < b ? -1 : a > b ? 1 : 0;
   if (Array.isArray(a) && Array.isArray(b)) {
     for (let i = 0; i < Math.min(a.length, b.length); i++) {
-      const o = order(a[i], b[i], fn);
+      const o = order(a[i], b[i], fn, step);
       if (o) return o;
     }
     return a.length - b.length;
@@ -340,7 +342,7 @@ export const FUNCTIONS: Record<string, Builtin> = {
     const key = a[1];
     const keyed = xs.map((x) => [key === undefined ? x : c.apply(key, [x]), x] as const);
     c.step(Math.ceil(xs.length * Math.log2(xs.length + 1)));
-    return keyed.sort((p, q) => order(p[0], q[0], 'sort')).map(([, x]) => x);
+    return keyed.sort((p, q) => order(p[0], q[0], 'sort', () => c.step())).map(([, x]) => x);
   }),
   // The accumulator after fn(acc, item) for each item in turn, from initial
   fold: def('values, initial, fn', (a, c) => {
