@@ -149,7 +149,8 @@ for (const e of settingEffects(source)) console.log(e.name, e.effect, e.same);
 ```
 
 Each entry has `name`, the values `tried` and `effect`: `"files"`,
-`"view"` (only the assembled view, steps or hardware), `"nothing"` or
+`"view"` (only the assembled view, steps or hardware), `"nothing"`,
+`"failed"` (the program stops at all values but one, or all of them) or
 `"skipped"` with a `reason`. `same` lists runs of a range, or groups of
 choices, that give the same result, and `errors` the values the program
 stops at. Pass render options as the second argument and how many values

@@ -47,7 +47,8 @@ Customizer:
 - `kerf check --settings` tries each setting across its range and says what
   it changes: the files, only the assembled view, or nothing. It points out
   where a slider stops changing anything and menu choices that give the same
-  result, and exits with 1 when a setting changes nothing.
+  result, and exits with 1 when a setting changes nothing or the program
+  stops at its values.
   `settingEffects()` gives the same in JavaScript.
 - A setting can end its comment with `when` and a condition on the other
   settings, `// [0:0.05:0.5] when mount == "stand"`: the playground and the

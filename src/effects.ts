@@ -14,9 +14,11 @@ export interface SettingEffect {
   name: string;
   /** The values tried, in order */
   tried: Value[];
-  /** "files": the cut files change; "view": only the assembled view, the
-   * steps or the hardware; "nothing": neither; "skipped": not tried */
-  effect: 'files' | 'view' | 'nothing' | 'skipped';
+  /** "files": what is cut changes (the files, the sheets' material and
+   * thickness, or the parts list); "view": only the assembled view, the
+   * steps or the hardware; "nothing": neither; "failed": the program stops
+   * at all values but one, or all of them; "skipped": not tried */
+  effect: 'files' | 'view' | 'nothing' | 'failed' | 'skipped';
   /** Values tried that give the same files and view: for a range, each
    * run of neighbouring values; for a menu, each group of choices */
   same?: Value[][];
@@ -40,10 +42,40 @@ function hash(s: string): string {
 
 const round = (v: number) => Math.round(v * 1000) / 1000;
 
+const roundPolys = (polys: [number, number][][]) =>
+  polys.map((p) => p.map(([x, y]) => [round(x), round(y)]));
+
+// What is cut, from what (the files, each sheet's size, material and
+// thickness, and the parts list), and what the assembled view shows (each
+// part's own outline, marks, thickness and placement, the hardware and the
+// steps)
 function fingerprints(r: RenderResult): { files: string; view: string } {
-  const files = r.sheets.map((s) => s.svg + (s.back?.svg ?? '')).join('\n');
+  const files = JSON.stringify([
+    r.sheets.map((s) => [s.svg, s.back?.svg ?? '', s.width, s.height, s.material, s.thickness]),
+    r.parts.map((p) => [
+      p.name,
+      p.qty,
+      p.thickness,
+      p.material,
+      p.kerf,
+      p.stack,
+      p.glued,
+      p.mirrored,
+    ]),
+  ]);
   const view = JSON.stringify([
-    r.assembly.map((a) => [a.name, a.copy, a.matrix.map(round), a.bends, a.step]),
+    [...r.assembly, ...r.flat].map((a) => [
+      a.name,
+      a.copy,
+      a.placed,
+      a.thickness,
+      a.material,
+      a.matrix.map(round),
+      a.bends,
+      a.step,
+      roundPolys(a.outline),
+      (a.marks ?? []).map((m) => [m.layer, m.side, roundPolys(m.regions), roundPolys(m.lines)]),
+    ]),
     r.hardware,
     r.steps,
   ]);
@@ -124,8 +156,7 @@ export function settingEffects(
     const effect: SettingEffect = {
       name: p.name,
       tried: values,
-      effect: ok.length < 2 ? 'skipped' : files ? 'files' : view ? 'view' : 'nothing',
-      ...(ok.length < 2 && { reason: 'it rendered at fewer than two values' }),
+      effect: ok.length < 2 ? 'failed' : files ? 'files' : view ? 'view' : 'nothing',
       ...(errors.length && { errors }),
     };
     // Runs of neighbouring values that give the same result, in a setting
@@ -152,7 +183,8 @@ export function settingEffects(
   return out;
 }
 
-/** The effects as lines to read, and whether any setting does nothing */
+/** The effects as lines to read, and whether any setting changes nothing
+ * or fails */
 export function effectsText(effects: SettingEffect[]): { lines: string[]; idle: boolean } {
   const show = (v: Value) => JSON.stringify(v);
   const lines: string[] = ['Each setting tried across its range, the others as they are:'];
@@ -162,7 +194,12 @@ export function effectsText(effects: SettingEffect[]): { lines: string[]; idle: 
       lines.push(`${e.name}: not tried, as ${e.reason}`);
       continue;
     }
-    if (e.effect === 'nothing') {
+    if (e.effect === 'failed') {
+      idle = true;
+      lines.push(
+        `${e.name}: the program stops at ${e.errors?.length ?? 0} of the ${e.tried.length} values tried`,
+      );
+    } else if (e.effect === 'nothing') {
       idle = true;
       lines.push(`${e.name}: changes nothing at ${e.tried.map(show).join(', ')}`);
     } else if (e.effect === 'view')

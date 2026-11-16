@@ -119,9 +119,13 @@ clearance: not tried, as it applies only when mount == "stand"
 ```
 
 A range is tried at its ends and three points between, a menu at every
-choice, a checkbox both ways and text shorter and changed. "Changes
-nothing" makes the command exit with 1; a range where nothing changes, or
-choices that give the same result, are pointed out without failing. The
+choice, a checkbox both ways and text shorter and changed. The files, the
+sheets' material and thickness and the parts list count as what is cut;
+each part's shape, marks and place as the assembled view. A setting that
+changes nothing, or that the program stops at for all values but one, makes
+the command exit with 1, with the errors listed; a range where nothing
+changes, or choices that give the same result, are pointed out without
+failing. The
 setting marked `drive` and settings whose `when` doesn't hold are left out.
 In JavaScript, `settingEffects(source, options)` gives the same as a list.
 
