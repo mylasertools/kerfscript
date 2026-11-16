@@ -757,3 +757,18 @@ part("Rib", qty = 24) {
     Array.from({ length: 24 }, (_, i) => i + 1),
   );
 });
+
+test('a part riding a bent part has its bores cut where it rides', () => {
+  const base = 'part("cover", at = [0, 0, 0], bend = [50, 60, 90]) rect([120, 40]);\n';
+  const rider = (extra) => `part("tab", at = [80, 10, 3], on = "cover"${extra}) rect([20, 20]);\n`;
+  const m = render(base + rider('')).assembly.find((a) => a.name === 'tab').matrix;
+  const at = (x, y, z) =>
+    [0, 1, 2].map((k) => m[k * 4] * x + m[k * 4 + 1] * y + m[k * 4 + 2] * z + m[k * 4 + 3]);
+  // A pin square through the tab's middle, where the tab ends up
+  const c = at(10, 10, 1.5);
+  const u = at(10, 10, 2.5).map((v, k) => v - c[k]);
+  const pin = `hardware("steel", [${c.map((v, k) => v - u[k] * 10)}], [${c.map((v, k) => v + u[k] * 10)}], 4, label = "pin");\n`;
+  const r = render(base + rider(', bores = ["pin"]') + pin);
+  assert.deepEqual(r.warnings, []);
+  assert.equal(r.assembly.find((a) => a.name === 'tab').outline.length, 2);
+});
