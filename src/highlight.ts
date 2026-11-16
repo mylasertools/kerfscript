@@ -75,7 +75,7 @@ const PATH = /<[^>]*>?/y;
 const SECTION = /\/\*\s*\[[^\]]*\]\s*\*\//y;
 // width = 120; // [40:5:400] gives a setting its control, perhaps with
 // drive or a when condition after it
-const CONTROL = /\/\/\s*(?:\[[^\]]*\](?:\s+drive)?(?:\s+when\s.*)?|when\s.*)$/y;
+const CONTROL = /\/\/\s*\[[^\]]*\](?:\s+drive)?(?:\s+when\s.*)?\s*$/y;
 // * disables a module call, # and % move it to the guide layer
 const MODIFIER = /[*#%](?=\s*[A-Za-z_$])/y;
 

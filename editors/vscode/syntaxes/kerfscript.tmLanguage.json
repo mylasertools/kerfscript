@@ -57,7 +57,7 @@
         },
         {
           "name": "comment.line.double-slash.customizer.kerfscript",
-          "match": "(//)\\s*(\\[[^\\]\\n]*\\])\\s*$",
+          "match": "(//)\\s*(\\[[^\\]\\n]*\\](?:\\s+drive)?(?:\\s+when\\s.*)?)\\s*$",
           "captures": {
             "1": { "name": "punctuation.definition.comment.kerfscript" },
             "2": { "name": "meta.customizer.control.kerfscript" }
