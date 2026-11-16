@@ -158,16 +158,20 @@ export const DEFAULT_LIMITS: Limits = {
 // The path of `use <path>` beside the file that says it, when that file
 // is a library in a folder: "lib/props" using "finish" gives "lib/finish"
 export function besideFile(from: string | undefined, path: string): string | undefined {
-  if (!from || own(STDLIB, from) !== undefined || path.startsWith('/')) return undefined;
-  const slash = from.lastIndexOf('/');
+  if (!from || own(STDLIB, from) !== undefined) return undefined;
+  // Windows paths as forward slashes; C:/ is absolute as / is
+  const f = from.split('\\').join('/');
+  const rel = path.split('\\').join('/');
+  if (rel.startsWith('/') || /^[A-Za-z]:\//.test(rel)) return undefined;
+  const slash = f.lastIndexOf('/');
   if (slash < 0) return undefined;
-  const parts = [...from.slice(0, slash).split('/'), ...path.split('/')];
+  const parts = [...f.slice(0, slash).split('/'), ...rel.split('/')];
   const out: string[] = [];
   for (const p of parts) {
     if (p === '..' && out.length && out[out.length - 1] !== '..') out.pop();
     else if (p !== '.' && p !== '') out.push(p);
   }
-  return (from.startsWith('/') ? '/' : '') + out.join('/');
+  return (f.startsWith('/') ? '/' : '') + out.join('/');
 }
 
 const SHAPE_COST = 100;

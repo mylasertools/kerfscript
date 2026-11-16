@@ -16,6 +16,8 @@ Language:
   the 2D part of an OpenSCAD file runs unchanged.
 - Recursion and step-limit errors say what to check, instead of assuming an
   endless loop.
+- `use <...>` takes a Windows path, as `use <C:\Designs\lib\feet>`, and
+  paths with spaces; a library named that way finds the libraries beside it.
 
 3D files:
 
