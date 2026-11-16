@@ -471,16 +471,16 @@ test('whole-inventory budgets include generated cylindrical hardware envelopes',
 });
 
 test('a stack part whose bore passes over a bearing and its retainer is not captured', () => {
-  // 10 mm round bearings on a 4 mm shaft with 6 mm heads: the rotor's
-  // 12 mm bore goes over both, so it can slide off either end
+  // 10 mm round bearings on a 4 mm shaft with 6 mm heads and 8 mm spacers:
+  // the rotor's 12 mm bore goes over all of them, so it can slide off
   const text = (rotor) =>
     [
       '$fn = 96;',
       'module disc(d, hole) difference() { circle(d = d); circle(d = hole); }',
       'material(thickness = 3, kerf = 0, name = "bearing") part("bearing", qty = 2, at = [[0, 0, 0], [0, 0, 20]]) disc(10, 4.2);',
-      'material(thickness = 5, kerf = 0, name = "spacer") part("lower spacer", at = [0, 0, 3]) disc(20, 4.2);',
+      'material(thickness = 5, kerf = 0, name = "spacer") part("lower spacer", at = [0, 0, 3]) disc(8, 4.2);',
       `material(thickness = 3, kerf = 0, name = "rotor") part("rotor", at = [0, 0, 8]) disc(30, ${rotor});`,
-      'material(thickness = 8.6, kerf = 0, name = "spacer") part("upper spacer", at = [0, 0, 11]) disc(20, 4.2);',
+      'material(thickness = 8.6, kerf = 0, name = "spacer") part("upper spacer", at = [0, 0, 11]) disc(8, 4.2);',
       'hardware("steel", [0, 0, 0], [0, 0, 28], 4, label = "shaft");',
       'hardware("steel", [0, 0, -4], [0, 0, 0], 6, label = "head");',
       'hardware("steel", [0, 0, 20], [0, 0, 28], 3.6, label = "thread");',
@@ -505,4 +505,45 @@ test('a stack part whose bore passes over a bearing and its retainer is not capt
   assert.match(loose.message, /rotor.*slide off/);
   // A bore the bearing can't pass through keeps it
   assert.notEqual(check(4.2).status, 'fail');
+});
+
+// The rotor test above, with what holds it changed
+const rotorOnShaft = (rotor, { bearing = 10, spacer = 20, kerf } = {}) => {
+  const src = [
+    '$fn = 96;',
+    'module disc(d, hole) difference() { circle(d = d); circle(d = hole); }',
+    `material(thickness = 3, kerf = 0, name = "bearing") part("bearing", qty = 2, at = [[0, 0, 0], [0, 0, 20]]) disc(${bearing}, 4.2);`,
+    `material(thickness = 5, kerf = 0, name = "spacer") part("lower spacer", at = [0, 0, 3]) disc(${spacer}, 4.2);`,
+    `material(thickness = 3, kerf = 0, name = "rotor") part("rotor", at = [0, 0, 8]) disc(30, ${rotor});`,
+    `material(thickness = 8.6, kerf = 0, name = "spacer") part("upper spacer", at = [0, 0, 11]) disc(${spacer}, 4.2);`,
+    'hardware("steel", [0, 0, 0], [0, 0, 28], 4, label = "shaft");',
+    'hardware("steel", [0, 0, -4], [0, 0, 0], 6, label = "head");',
+    'hardware("steel", [0, 0, 20], [0, 0, 28], 3.6, label = "thread");',
+    'hardware("steel", [0, 0, 23], [0, 0, 27], 6, label = "nut");',
+  ].join('\n');
+  const contract = spec([{ ...clone(shaft), clearance: [0.1, 8.5], minimumOverlap: 0.5 }]);
+  if (kerf) contract.materials = { bearing: { thickness: [3, 3], kerf } };
+  const s = snapshotFromRender(render(src, { analysis: true }), {
+    configuration: 'default',
+    provenance: provenance(src),
+  });
+  return claimResult(verify(contract, [s]), shaft.id);
+};
+
+test('a bearing the kerf may shrink below a rotor bore does not hold it', () => {
+  // 10 mm bearings cut with up to 0.2 mm more kerf than compensated are
+  // 9.8 mm, under a 9.9 mm bore, with small spacers it passes over too
+  const loose = rotorOnShaft(9.9, { spacer: 8, kerf: [0, 0.2] });
+  assert.equal(loose.status, 'fail', JSON.stringify(loose));
+  assert.match(loose.message, /rotor.*slide off/);
+  assert.notEqual(rotorOnShaft(9.9, { spacer: 8, kerf: [0, 0] }).status, 'fail');
+});
+
+test('a rotor held in by larger spacers that cannot leave is captured', () => {
+  // The rotor's 12 mm bore clears the 10 mm bearings, but the 20 mm spacers
+  // on both sides of it are held by the bearings and keep it on
+  const held = rotorOnShaft(12);
+  assert.notEqual(held.status, 'fail', JSON.stringify(held));
+  // With spacers it passes over as well, nothing holds it
+  assert.equal(rotorOnShaft(12, { spacer: 8 }).status, 'fail');
 });
