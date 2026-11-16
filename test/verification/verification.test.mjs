@@ -469,3 +469,40 @@ test('whole-inventory budgets include generated cylindrical hardware envelopes',
   assert.equal(r.report.status, 'unverified');
   assert.equal(r.report.claims[0].code, 'resource-limit');
 });
+
+test('a stack part whose bore passes over a bearing and its retainer is not captured', () => {
+  // 10 mm round bearings on a 4 mm shaft with 6 mm heads: the rotor's
+  // 12 mm bore goes over both, so it can slide off either end
+  const text = (rotor) =>
+    [
+      '$fn = 96;',
+      'module disc(d, hole) difference() { circle(d = d); circle(d = hole); }',
+      'material(thickness = 3, kerf = 0, name = "bearing") part("bearing", qty = 2, at = [[0, 0, 0], [0, 0, 20]]) disc(10, 4.2);',
+      'material(thickness = 5, kerf = 0, name = "spacer") part("lower spacer", at = [0, 0, 3]) disc(20, 4.2);',
+      `material(thickness = 3, kerf = 0, name = "rotor") part("rotor", at = [0, 0, 8]) disc(30, ${rotor});`,
+      'material(thickness = 8.6, kerf = 0, name = "spacer") part("upper spacer", at = [0, 0, 11]) disc(20, 4.2);',
+      'hardware("steel", [0, 0, 0], [0, 0, 28], 4, label = "shaft");',
+      'hardware("steel", [0, 0, -4], [0, 0, 0], 6, label = "head");',
+      'hardware("steel", [0, 0, 20], [0, 0, 28], 3.6, label = "thread");',
+      'hardware("steel", [0, 0, 23], [0, 0, 27], 6, label = "nut");',
+    ].join('\n');
+  const claim = {
+    ...clone(shaft),
+    clearance: [0.1, 8.5],
+    minimumOverlap: 0.5,
+    maximumStopGap: 0.1,
+  };
+  const check = (rotor) => {
+    const src = text(rotor);
+    const s = snapshotFromRender(render(src, { analysis: true }), {
+      configuration: 'default',
+      provenance: provenance(src),
+    });
+    return claimResult(verify(spec([claim]), [s]), shaft.id);
+  };
+  const loose = check(12);
+  assert.equal(loose.status, 'fail', JSON.stringify(loose));
+  assert.match(loose.message, /rotor.*slide off/);
+  // A bore the bearing can't pass through keeps it
+  assert.notEqual(check(4.2).status, 'fail');
+});

@@ -261,6 +261,9 @@ interface AxialPart {
   lo: number;
   hi: number;
   hole: Interval;
+  // How far the part reaches from the axis at its farthest: a bore wider
+  // than twice this passes over it
+  reach: number;
 }
 interface Axis {
   start: Vec3;
@@ -332,7 +335,16 @@ function bore(a: Axis, p: SnapshotPart): AxialPart | string {
   const max = Math.max(...hole.map((p) => Math.hypot(p[0] - at[0], p[1] - at[1])));
   const z0 = axial(a, apply(p.matrix, [0, 0, 0])),
     z1 = axial(a, apply(p.matrix, [0, 0, p.thickness]));
-  return { part: p, lo: Math.min(z0, z1), hi: Math.max(z0, z1), hole: [2 * min, 2 * max] };
+  const reach = Math.max(
+    ...p.regions.flatMap((ring) => ring.map((q) => Math.hypot(q[0] - at[0], q[1] - at[1]))),
+  );
+  return {
+    part: p,
+    lo: Math.min(z0, z1),
+    hi: Math.max(z0, z1),
+    hole: [2 * min, 2 * max],
+    reach,
+  };
 }
 
 export function capturedShaft(
@@ -410,6 +422,20 @@ export function capturedShaft(
     .map((o) => ({ ...o, at: o.h && coaxial(a, o.h) ? range(a, o.h) : undefined }));
   if (stops.some((o) => !o.at)) return fail('A retainer is not coaxial with the shaft.');
   stops.sort((x, y) => x.at![0] + x.at![1] - (y.at![0] + y.at![1]));
+  // A stack part slides off an end when its bore, at its widest, passes
+  // over both the bearing and the retainer there
+  for (const st of stack) {
+    const widest = st.hole[1] - externalError(spec, st.part)[0];
+    for (let i = 0; i < 2; i++) {
+      const over = Math.max(2 * bearings[i].reach, axis(stops[i].h!)?.diameter ?? 0);
+      if (widest > over + EPS)
+        return fail(
+          `${st.part.name} can slide off over ${bearings[i].part.name} and its retainer: its bore is wider than both.`,
+          measured,
+        );
+      if (widest > over - EPS) boundary = true;
+    }
+  }
   for (let i = 0; i < 2; i++) {
     const { stop, h } = stops[i];
     if (!coaxial(a, h)) return fail('A retainer is not coaxial with the shaft.');
