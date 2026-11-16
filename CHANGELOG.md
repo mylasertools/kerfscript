@@ -24,7 +24,8 @@ Language:
   closed solid as thick as its sheet, where the assembly puts it, bent on its
   living hinges; engraving and scoring are thin coloured bodies on its faces,
   and hardware rods and balls. `--flat` lays the parts side by side, front
-  face up, for printing; `--mark-height` sets how far the marks stand off.
+  face up, for printing; `--mark-height` sets how far the marks stand off,
+  and `--print` is `--flat` with the marks 0.6 mm high.
 - In JavaScript, `toModel(result, "glb" | "3mf" | "stl", options)`, with
   `meshBodies()` for the solid bodies and `result.flat` for every part flat.
 

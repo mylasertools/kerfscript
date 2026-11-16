@@ -124,6 +124,7 @@ installed libraries by themselves.
 | `-o out.png`, `--px n` | A picture of each sheet, `n` pixels wide (1200), to look at rather than cut                     |
 | `-o out.glb`           | The model in 3D: `.glb` to view, `.3mf` to print in colour, `.stl`; see [3D files](3d-files.md) |
 | `--flat`               | With a 3D file: the parts side by side, front face up                                           |
+| `--print`              | With a 3D file: `--flat` with the marks 0.6 mm high, to print as a second colour                |
 | `--mark-height <mm>`   | With a 3D file: how far engraving and scoring stand off the face (0.1)                          |
 | `--call 'm(1, 2)'`     | Run one call of the file's modules instead of its program; `-D` sets variables first            |
 | `--params-list file`   | With `check`: try each set of settings in a JSON list of objects                                |

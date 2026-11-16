@@ -86,6 +86,8 @@ Options:
   -o out.glb              the model in 3D, as the assembly places it: .glb for
                           viewers and Blender, .3mf for printing in colour, .stl
   --flat                  with a 3D file: the parts side by side, front up
+  --print                 with a 3D file: --flat, the marks 0.6 mm high, to
+                          print as a raised second colour
   --mark-height <mm>      with a 3D file: how far engraving and scoring stand
                           off the face (0.1; 0 leaves them out)
   -D name=value           set a parameter (value is KerfScript: 40, "Oak", true, [1,2])
@@ -215,7 +217,11 @@ function main(argv: string[]) {
     else if (a === '--drive') drive = true;
     else if (a === '--call') call = next();
     else if (a === '--flat') flat = true;
-    else if (a === '--mark-height') {
+    // --print: flat, the marks a few printed layers high
+    else if (a === '--print') {
+      flat = true;
+      markHeight ??= 0.6;
+    } else if (a === '--mark-height') {
       markHeight = Number(next());
       if (!(markHeight >= 0)) fail('--mark-height needs a height in mm, 0 or more');
     } else if (a === '--px') {

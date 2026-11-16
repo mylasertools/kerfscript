@@ -35,8 +35,13 @@ prints: a coaster, a sign, an ornament, a bookmark. Laid flat, marks for
 the back face and hardware are left out, since nothing can stand under a
 part on the bed.
 
-For printing, set the marks to a few layers' height, for example
-`--mark-height 0.6`. The engraving then prints as a raised second colour.
+For printing, set the marks to a few layers' height. `--print` does both:
+the parts flat and the marks 0.6 mm high, so the engraving prints as a
+raised second colour.
+
+```sh
+kerf render coaster.kerf -o coaster.3mf --print
+```
 
 ## Formats
 
