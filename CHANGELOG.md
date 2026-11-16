@@ -16,6 +16,11 @@ Language:
   the 2D part of an OpenSCAD file runs unchanged.
 - Recursion and step-limit errors say what to check, instead of assuming an
   endless loop.
+- `openscad/kerfscript.scad` gives OpenSCAD KerfScript's 2D shapes
+  (`rect`, `ellipse`, `regular_polygon`, `star`, `line`, `polyline`, `arc`,
+  `stroke`, `outline`, `close`, `path` with SVG path data), its list and text
+  functions and pass-through layers and parts, so the 2D part of a KerfScript
+  design runs in OpenSCAD as it is. It ships in the npm package.
 
 3D files:
 
