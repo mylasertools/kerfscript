@@ -997,8 +997,9 @@ centred on the origin, `shape_centre(points)` centres them, and
 
 `use <kerf/sizes>`
 
-Paper, card and photo sizes in millimetres, for holders, folders, frames
-and boxes made to fit them.
+Paper, card, photo and banknote sizes in millimetres, and the sizes of
+bought parts and everyday things, for holders, folders, frames and boxes
+made to fit them.
 
 ### `paper_size(name)`, `card_size(name)`, `photo_size(name)`
 
@@ -1006,27 +1007,60 @@ and boxes made to fit them.
 `"B4"` to `"B6"`, `"C4"` to `"C6"`, `"DL"`, `"letter"`, `"legal"`,
 `"tabloid"`, `"half letter"`, `"executive"`, `"pocket"` and `"traveler"`,
 standing; cards `"business"`, `"us business"`, `"credit"`, `"japan"`,
-`"playing"`, `"bridge"`, `"tarot"`, `"postcard"` and `"us postcard"`, and
+`"playing"`, `"bridge"`, `"tarot"`, `"postcard"`, `"us postcard"` and
+`"gift card"`, and
 photos `"4x6"`, `"5x7"`, `"8x10"`, `"10x15"`, `"13x18"` and the instant
 film sizes `"instant mini"`, `"instant square"`, `"instant wide"` and
 `"instant classic"`, lying down. An unknown name stops with the list of
 known ones.
 
+### `note_size(name)`
+
+A banknote's `[width, height]`, lying down: `"usd"` (every US note is the
+same size), `"cad"` (every Canadian note), `"eur 5"` to `"eur 200"`,
+`"gbp 5"` to `"gbp 50"` and `"aud 5"` to `"aud 100"`. For a wallet or a
+money gift holder, fit the largest note it is for.
+
 ### `part_size(name)`
 
-A bought part's sizes as a record: `body = [width, depth, height]`, and
-for a part with a shaft its diameter `shaft`, the `shaft_length` it stands
-out of the body and the `hole` to cut for it. `"music-18"` is an 18-note
-wind-up music box movement (its shaft is the winding key's), and
-`"quartz-clock"` a 56 mm quartz clock movement with the 16.5 mm shaft, for
-dials up to `dial = 8` mm thick. `"marble-16"` and `"marble-25"` are
-marbles. These are common retail sizes, which vary: measure yours.
+The sizes of a bought part or an everyday thing as a record: `body =
+[width, depth, height]`; for a round one its `diameter` and `height` (an
+egg's `length`); for one with a shaft its diameter `shaft`, the
+`shaft_length` it stands out of the body; and the `hole` to cut for it,
+where there is one.
+
+| Name                                             | What it is                                                                       |
+| ------------------------------------------------ | -------------------------------------------------------------------------------- |
+| `"music-18"`                                     | an 18-note wind-up music box movement; its shaft is the winding key's            |
+| `"quartz-clock"`                                 | a 56 mm quartz clock movement with the 16.5 mm shaft, for dials up to `dial = 8` |
+| `"tealight"`, `"maxi tealight"`                  | 39 × 16 and 59 × 24, with a `hole` to stand one in                               |
+| `"led tealight"`, `"led puck"`                   | battery lights, 38 × 36 with the flame and 70 × 25                               |
+| `"fairy lights"`                                 | the battery box of a string of them, and its `wire`                              |
+| `"hen egg"`, `"chocolate egg"`                   | 44 and 40 across, 57 and 60 long                                                 |
+| `"wine bottle"`                                  | 76 across and 300 high, its `neck` 30 across                                     |
+| `"magnet 6x2"`, `"magnet 10x3"`, `"magnet 12x3"` | disc magnets, with a `hole` to press one into                                    |
+| `"key ring 25"`                                  | a 25 mm split key ring                                                           |
+| `"battery box 2aa"`, `"battery box 3aa"`         | closed battery boxes with a switch                                               |
+| `"coin cell holder"`                             | a holder for a CR2032 cell                                                       |
+| `"key fob"`                                      | a car key fob                                                                    |
+| `"tissue box"`, `"tissue cube"`                  | tissue boxes, long and cube                                                      |
+| `"marble-16"`, `"marble-25"`                     | marbles                                                                          |
+
+These are common retail sizes, which vary: measure yours.
 
 ```kerf
 use <kerf/sizes>
 
 m = part_size("quartz-clock");
 part("dial") difference() { circle(d = 160); circle(d = m.hole); }
+```
+
+```kerf
+use <kerf/sizes>
+
+egg = part_size("hen egg");
+// A ring an egg sits in, a little over half its width
+part("egg cup") difference() { circle(d = egg.diameter + 16); circle(d = egg.diameter * 0.75); }
 ```
 
 ### `landscape(size)`, `portrait(size)`

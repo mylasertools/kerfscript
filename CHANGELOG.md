@@ -10,9 +10,22 @@ Language:
   shown the same way and never in the files for the laser. The parts list
   says which parts are painted.
 - A layer's colour can be a name, as `"red"`, as well as a hex colour.
+- Light sources: `hardware("tealight", at)` stands a tealight whose flame
+  flickers, LEDs (a strip when longer than 20 mm) and bulbs give off light,
+  and `light(at, color, lumens)` adds a light with nothing to show for it.
+  The 3D view lights the model with them, with "Dim the room" to see them
+  glow, `render()` returns them as `lights`, and GLB files carry them as
+  point lights with LEDs and flames emissive.
 
 Libraries:
 
+- `kerf/sizes`: `note_size()` gives banknote sizes (US, Canadian, euro,
+  pound and Australian notes), `card_size("gift card")`, and
+  `part_size()` has tealights, a maxi tealight, an LED tealight and puck,
+  a fairy-light battery box, hen and chocolate eggs, a wine bottle, disc
+  magnets, a key ring, AA battery boxes, a coin cell holder, a key fob and
+  tissue boxes, with a `diameter` and `height` for round things and a
+  `hole` to stand or press them in.
 - `wall(outline, depth)` in `kerf/hinge`: a front plate, a back plate and
   a strip between them bent on living hinges round a closed outline, tabbed
   into slots in both plates where it runs straight. The seam goes where

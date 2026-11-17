@@ -1,5 +1,6 @@
-// kerf/sizes: paper, card and photo sizes, in millimetres, for holders,
-// folders, frames and boxes made to fit them.
+// kerf/sizes: paper, card, photo and banknote sizes, and the sizes of
+// bought parts and everyday things, in millimetres, for holders, folders,
+// frames and boxes made to fit them.
 // Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
 
 // Paper sizes as [width, height], portrait: "A0" to "A8", "B4" to "B6",
@@ -12,7 +13,8 @@ function paper_size(name) = let (s = lookup_size(name, PAPER_SIZES))
 // Card sizes as [width, height], landscape: "business" (85 x 55, Europe),
 // "us business" (88.9 x 50.8), "credit" (85.6 x 53.98, ID-1), "japan"
 // (91 x 55), "playing" (63 x 88), "bridge" (56 x 87), "tarot" (70 x 120),
-// "postcard" (148 x 105), "us postcard" (152.4 x 101.6).
+// "postcard" (148 x 105), "us postcard" (152.4 x 101.6), "gift card"
+// (85.6 x 53.98, as a credit card).
 function card_size(name) = let (s = lookup_size(name, CARD_SIZES))
   is_undef(s) ? assert(false, str("Unknown card size \"", name, "\". Known: ", size_names(CARD_SIZES))) : s;
 
@@ -22,12 +24,28 @@ function card_size(name) = let (s = lookup_size(name, CARD_SIZES))
 function photo_size(name) = let (s = lookup_size(lookup_alias(name, PHOTO_ALIASES), PHOTO_SIZES))
   is_undef(s) ? assert(false, str("Unknown photo size \"", name, "\". Known: ", size_names(PHOTO_SIZES))) : s;
 
-// A bought part's sizes by name, as a record: `body` [width, depth,
-// height], and for parts with one, the `shaft` diameter, the `shaft_length`
-// it stands out of the body and the `hole` to cut for it. Retail sizes vary:
-// measure yours. "music-18" (an 18-note wind-up music box movement, shaft
-// the winding key's), "quartz-clock" (a 56 mm quartz clock movement with
-// the 16.5 mm shaft for dials up to 8 mm thick), "marble-16" and "marble-25".
+// Banknote sizes as [width, height], landscape: "usd" (every US note),
+// "cad" (every Canadian note), "eur 5" to "eur 200", "gbp 5" to "gbp 50",
+// "aud 5" to "aud 100".
+function note_size(name) = let (s = lookup_size(name, NOTE_SIZES))
+  is_undef(s) ? assert(false, str("Unknown banknote \"", name, "\". Known: ", size_names(NOTE_SIZES))) : s;
+
+// A bought part's or an everyday thing's sizes by name, as a record: `body`
+// [width, depth, height]; for a round one its `diameter` and `height` (an
+// egg's `length`); for parts with one, the `shaft` diameter, the
+// `shaft_length` it stands out of the body and the `hole` to cut for it.
+// Retail sizes vary: measure yours.
+//   Movements: "music-18" (an 18-note wind-up music box movement, shaft the
+// winding key's), "quartz-clock" (a 56 mm quartz clock movement with the
+// 16.5 mm shaft for dials up to 8 mm thick).
+//   Lights: "tealight", "maxi tealight", "led tealight", "led puck",
+// "fairy lights" (the battery box of a string of them, with its `wire`).
+//   Eggs and bottles: "hen egg", "chocolate egg", "wine bottle" (with its
+// `neck`).
+//   Small parts: "magnet 6x2", "magnet 10x3", "magnet 12x3" (discs),
+// "key ring 25", "battery box 2aa", "battery box 3aa", "coin cell holder",
+// "key fob", "marble-16", "marble-25".
+//   Boxes: "tissue box", "tissue cube".
 function part_size(name) = let (s = lookup_size(name, PART_SIZES))
   is_undef(s) ? assert(false, str("Unknown part \"", name, "\". Known: ", size_names(PART_SIZES))) : s;
 
@@ -48,7 +66,15 @@ PAPER_SIZES = [
 CARD_SIZES = [
   ["business", [85, 55]], ["us business", [88.9, 50.8]], ["credit", [85.6, 53.98]],
   ["japan", [91, 55]], ["playing", [63, 88]], ["bridge", [56, 87]], ["tarot", [70, 120]],
-  ["postcard", [148, 105]], ["us postcard", [152.4, 101.6]]
+  ["postcard", [148, 105]], ["us postcard", [152.4, 101.6]], ["gift card", [85.6, 53.98]]
+];
+NOTE_SIZES = [
+  ["usd", [155.96, 66.29]], ["cad", [152.4, 69.85]],
+  ["eur 5", [120, 62]], ["eur 10", [127, 67]], ["eur 20", [133, 72]],
+  ["eur 50", [140, 77]], ["eur 100", [147, 77]], ["eur 200", [153, 77]],
+  ["gbp 5", [125, 65]], ["gbp 10", [132, 69]], ["gbp 20", [139, 73]], ["gbp 50", [146, 77]],
+  ["aud 5", [130, 65]], ["aud 10", [137, 65]], ["aud 20", [144, 65]],
+  ["aud 50", [151, 65]], ["aud 100", [158, 65]]
 ];
 PHOTO_SIZES = [
   ["4x6", [152.4, 101.6]], ["5x7", [177.8, 127]], ["8x10", [254, 203.2]],
@@ -64,7 +90,25 @@ PART_SIZES = [
   ["music-18", {body = [50, 44, 20], shaft = 3.5, hole = 6}],
   ["quartz-clock", {body = [56, 56, 16], shaft = 7.6, shaft_length = 16.5, hole = 8, dial = 8}],
   ["marble-16", {body = [16, 16, 16]}],
-  ["marble-25", {body = [25, 25, 25]}]
+  ["marble-25", {body = [25, 25, 25]}],
+  ["tealight", {body = [39, 39, 16], diameter = 39, height = 16, hole = 40}],
+  ["maxi tealight", {body = [59, 59, 24], diameter = 59, height = 24, hole = 60}],
+  ["led tealight", {body = [38, 38, 36], diameter = 38, height = 36, hole = 40}],
+  ["led puck", {body = [70, 70, 25], diameter = 70, height = 25, hole = 72}],
+  ["fairy lights", {body = [62, 37, 22], wire = 2}],
+  ["hen egg", {body = [44, 44, 57], diameter = 44, length = 57}],
+  ["chocolate egg", {body = [40, 40, 60], diameter = 40, length = 60}],
+  ["wine bottle", {body = [76, 76, 300], diameter = 76, height = 300, neck = 30}],
+  ["magnet 6x2", {body = [6, 6, 2], diameter = 6, height = 2, hole = 6.2}],
+  ["magnet 10x3", {body = [10, 10, 3], diameter = 10, height = 3, hole = 10.2}],
+  ["magnet 12x3", {body = [12, 12, 3], diameter = 12, height = 3, hole = 12.2}],
+  ["key ring 25", {body = [25, 25, 2.5], diameter = 25, height = 2.5}],
+  ["battery box 2aa", {body = [68, 35, 18]}],
+  ["battery box 3aa", {body = [68, 48, 18]}],
+  ["coin cell holder", {body = [25, 21, 6]}],
+  ["key fob", {body = [60, 35, 15]}],
+  ["tissue box", {body = [240, 120, 90]}],
+  ["tissue cube", {body = [115, 115, 130]}]
 ];
 
 // The size of that name in a table of [name, size], ignoring case
