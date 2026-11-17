@@ -206,8 +206,8 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       name: 'part',
       qty: 1,
       layers: res.shape.layers,
-      thickness: toNumber(g('$thickness')) || 3,
-      kerf: toNumber(g('$kerf')) || 0,
+      thickness: g('$thickness') === undefined ? 3 : toNumber(g('$thickness')),
+      kerf: g('$kerf') === undefined ? 0 : toNumber(g('$kerf')),
       material: toText(g('$material') ?? 'material'),
     });
   if (!parts.length) warnings.push('Nothing to cut: the program made no shapes.');
@@ -476,6 +476,8 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     const kerf = options.kerf ?? p.kerf;
     if (!(Number.isFinite(kerf) && kerf >= 0))
       throw new KerfError('$kerf must be a number, 0 or more');
+    if (!(Number.isFinite(p.thickness) && p.thickness > 0))
+      throw new KerfError('$thickness must be a positive number');
     const info: PartInfo = {
       name: p.name,
       qty: p.qty,

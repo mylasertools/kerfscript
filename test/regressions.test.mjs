@@ -790,12 +790,16 @@ test('a part glued to a stack goes on the stack, one for each copy of it', () =>
     [0, 0, 14],
   ]);
   assert.deepEqual(z(r, 'pad'), [[0, 0, 11]]);
-  // Mixed thicknesses: the cap on a 6 mm stack of two 3 mm layers is 4 mm
+  // Mixed thicknesses: a stack of two 4 mm layers with 3 mm parts on it
   r = render(
     t +
-      'part("post", at = [0, 0, 0], stack = 2) rect(20); part("cap", glue = "post", thickness = 4) rect(20);',
+      'material(thickness = 4) part("post", at = [0, 0, 0], stack = 2) rect(20);' +
+      'part("cap", glue = "post") rect(20);' +
+      'part("foot", glue = "post", face = "bottom") rect(20);',
   );
-  assert.deepEqual(z(r, 'cap'), [[0, 0, 6]]);
+  assert.deepEqual(r.warnings, []);
+  assert.deepEqual(z(r, 'cap'), [[0, 0, 8]]);
+  assert.deepEqual(z(r, 'foot'), [[0, 0, -3]]);
 });
 
 test('a stack split into its layers for blind slots keeps its name and stays one stack', () => {
@@ -871,4 +875,101 @@ test('a bent part moved, scaled or mirrored in 2D bends where its drawing went',
     () => render(`rotate(90) ${part('[10, 20, 90]')}`),
     /can be moved, scaled or mirrored but not turned/,
   );
+});
+
+test('measure() counts what any cutting layer cuts and leaves out any guide layer', () => {
+  const m = (src) => render(src).echoes[0];
+  const two = (a, b) =>
+    `measure() { group() { ${a} rect([10, 10]); ${b} translate([20, 0]) rect([10, 10]); } echo($area, $centroid); }`;
+  // The same squares on the built-in layers and on custom ones
+  assert.equal(m(two('', '')), '200, [15, 5]');
+  assert.equal(
+    m('layer("slow-cut", mode = "cut");' + two('', 'layer("slow-cut")')),
+    '200, [15, 5]',
+  );
+  assert.equal(m(two('', 'guide()')), '100, [5, 5]');
+  assert.equal(
+    m(
+      'layer("construction", mode = "guide");' +
+        two('layer("slow-cut", mode = "cut")', 'layer("construction")'),
+    ),
+    '100, [5, 5]',
+  );
+});
+
+test('text(fit = w) is no wider than w, counting glyphs that reach past their advance', () => {
+  const fonts = {
+    A: readFileSync(new URL('../fonts/AtkinsonHyperlegible-Regular.ttf', import.meta.url)),
+  };
+  for (const [src, w] of [
+    ['text("q", fit = 20);', 20],
+    ['text("q", fit = [20, undef]);', 20],
+    ['text("jq", fit = [15, 40]);', 15],
+    ['text("Wavy jq", fit = 50);', 50],
+  ]) {
+    const r = render(`part("label") ${src}`, { fonts, kerf: 0 });
+    assert.ok(r.parts[0].width <= w + 1e-6, `${src} ${r.parts[0].width}`);
+    assert.ok(r.parts[0].width > w - 2, `${src} ${r.parts[0].width}`);
+  }
+});
+
+test('a kerf or thickness that is not a finite number is an error, not a silent 0', () => {
+  for (const src of [
+    '$kerf = 0/0; part("p") rect(20);',
+    '$kerf = 0/0; rect(20);',
+    'material(kerf = 0/0) part("p") rect(20);',
+    '$thickness = 1/0; part("p", at = [0, 0, 0]) rect(20);',
+    '$thickness = -1/0; part("p") rect(20);',
+    '$thickness = 0/0; part("p") rect(20);',
+    '$thickness = 1/0; rect(20);',
+    'material(thickness = 1/0) part("p") rect(20);',
+  ])
+    assert.throws(() => render(src), /(kerf|thickness) must be/, src);
+  // 0 is a kerf
+  assert.equal(render('$kerf = 0; part("p") rect(20);').parts[0].kerf, 0);
+  assert.equal(render('rect(20);').parts[0].kerf, 0);
+});
+
+test('a layer set again after marks went on its back sets its back the same way', () => {
+  const r = render(`part("p") {
+    rect(20);
+    layer("etch", mode = "line", side = "back") translate([2, 2]) rect(4);
+    layer("etch", mode = "fill", color = "#ff0000", order = 5);
+  }`);
+  const def = (n) => r.layers.find((l) => l.name === n);
+  assert.deepEqual(
+    { ...def('etch-back'), name: 'etch', side: undefined },
+    { ...def('etch'), side: undefined },
+  );
+  assert.match(r.sheets[0].back.svg, /<g id="etch-back"[^>]*data-mode="fill" fill="#ff0000"/);
+  // A layer with marks on the back cannot become a cut layer
+  assert.throws(
+    () =>
+      render(
+        'part("p") { rect(20); layer("etch", side = "back") rect(4); layer("etch", mode = "cut"); }',
+      ),
+    /already has marks on the back face/,
+  );
+});
+
+test('a library path may hold any character a folder name has', () => {
+  for (const path of [
+    'C:/Designs/My lib/tabs',
+    'C:/Designs/My (plywood)/tabs',
+    'C:/Designs/#1/tabs',
+    'C:/Designs/José/tabs',
+    String.raw`C:\Temp\run#!{1}\tabs`,
+    '/home/me/Ö & co/tabs.kerf',
+  ]) {
+    let asked;
+    const r = render(`use <${path}>\ntile();`, {
+      resolve: (p) => ((asked = p), 'module tile() rect(10);'),
+      kerf: 0,
+    });
+    assert.equal(asked, path);
+    assert.equal(r.parts[0].width, 10);
+  }
+  // A path stops at the end of its line, and < still compares
+  assert.throws(() => render('use <kerf/box\n>'), /library path/);
+  assert.deepEqual(render('a = 1; use <kerf/box> echo(a < 2, 3 > a);').echoes, ['true, true']);
 });

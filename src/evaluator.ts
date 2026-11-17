@@ -1489,8 +1489,18 @@ export class Evaluator {
 
   private thickness(env: Env): number {
     const t = this.dyn(env, '$thickness');
-    if (typeof t !== 'number' || t <= 0) throw new Error('$thickness must be a positive number');
+    // A calculation that went wrong (0/0, 1/0) is not a thickness
+    if (typeof t !== 'number' || !(t > 0 && Number.isFinite(t)))
+      throw new Error(`$thickness must be a positive number, got ${show(t)}`);
     return t;
+  }
+
+  private kerf(env: Env): number {
+    const k = this.dyn(env, '$kerf');
+    if (k === undefined) return 0;
+    if (typeof k !== 'number' || !(k >= 0 && Number.isFinite(k)))
+      throw new Error(`$kerf must be a number, 0 or more, got ${show(k)}`);
+    return k;
   }
 
   private fingerWidth(a: Args, env: Env, index: number): number {
@@ -1546,8 +1556,13 @@ export class Evaluator {
       if (Array.isArray(fit) && (fit.length !== 2 || (fw === undefined && fh === undefined)))
         throw new Error('fit must be a width, or [width, height] with either one undef');
       const one = textMetrics(this.opts.fonts, shown, { ...o, size: 1 });
+      // As wide as its advance, or its glyphs where they reach past it, as a
+      // q's tail or an italic's overhang does
+      const ink =
+        fw === undefined ? null : bounds(textRegions(this.opts.fonts, shown, { ...o, size: 1 }));
+      const wide = Math.max(one.advance, ink ? ink[2] - ink[0] : 0);
       const sizes = [
-        ...(fw !== undefined && one.advance > 0 ? [fw / one.advance] : []),
+        ...(fw !== undefined && wide > 0 ? [fw / wide] : []),
         ...(fh !== undefined && one.cap > 0 ? [fh / one.cap] : []),
       ];
       if (sizes.length) {
@@ -2316,13 +2331,18 @@ export class Evaluator {
               ),
             );
           c.env.vars.set('$bounds', b ? [...b] : undefined);
-          // The material's area and its balance point, from what is cut
+          // The material's area and its balance point, from what is cut, on
+          // any layer that cuts; without cuts, from everything but guides
           const layersOf = [s.layers, ...s.parts.map((p) => p.layers)];
-          const cut = layersOf.flatMap((ls) => ls.get('cut')?.regions ?? []);
+          const modeOf = (k: string) =>
+            this.layers.get(k)?.mode ?? (k === 'cut' || k === 'guide' ? k : undefined);
+          const cut = layersOf.flatMap((ls) =>
+            [...ls].filter(([k]) => modeOf(k) === 'cut').flatMap(([, l]) => l.regions),
+          );
           const regions = cut.length
             ? cut
             : layersOf.flatMap((ls) =>
-                [...ls].filter(([k]) => k !== 'guide').flatMap(([, l]) => l.regions),
+                [...ls].filter(([k]) => modeOf(k) !== 'guide').flatMap(([, l]) => l.regions),
               );
           const m = regionMoments(union(regions));
           c.env.vars.set('$area', m.area);
@@ -2438,13 +2458,23 @@ export class Evaluator {
           if (b !== undefined && !(b >= 0)) throw new Error('bleed must be 0 or more');
           if (b && m === 'cut') throw new Error('a cut layer has no bleed');
           this.layerDefs++;
-          this.layers.set(name, {
+          const def: LayerDef = {
             name,
             mode: m,
             color: col,
             ...(o !== undefined && { order: o }),
             ...(b !== undefined && { bleed: b }),
-          });
+          };
+          this.layers.set(name, def);
+          // Its back, if marks went there already, follows it
+          const back = this.layers.get(`${name}-back`);
+          if (back?.side === 'back') {
+            if (m === 'cut')
+              throw new Error(
+                `layer "${name}" already has marks on the back face, so it cannot become a cut layer`,
+              );
+            this.layers.set(back.name, { ...def, name: back.name, side: 'back' });
+          }
         }
         const side = this.arg(c.args, 'side', -1, 'front');
         if (side !== 'front' && side !== 'back')
@@ -2585,7 +2615,7 @@ export class Evaluator {
             qty: copies.length * stack,
             layers,
             thickness: t,
-            kerf: toNumber(this.dyn(c.env, '$kerf')) || 0,
+            kerf: this.kerf(c.env),
             material: toText(this.dyn(c.env, '$material') ?? 'material'),
             ...(mine ? { placements: mine } : {}),
             ...(stack > 1 ? { stack } : {}),

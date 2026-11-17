@@ -61,6 +61,11 @@ Changes to the output of existing programs, each a fix:
 - A bent part inside `translate()`, `scale()` or `mirror()` bends where its
   drawing went; its bends stayed where they were drawn. Turning one with
   `rotate()` is an error: turn it with `part(rotate = ...)`.
+- `measure()` counts what any layer of mode `"cut"` cuts, and leaves out
+  any layer of mode `"guide"`; it went by the names `cut` and `guide`, so
+  a custom cut layer was left out of `$area` and `$centroid`.
+- `text(fit = w)` is no wider than `w` where a glyph reaches past its
+  advance, as a `q`'s tail does; it was fitted by the advance alone.
 - `pattern()` clips each tile that an edge of the area crosses. A tile with
   its corners inside the area and none of the area's corners inside it was
   kept whole, over a rib or a strip of the area running through it.
@@ -72,6 +77,16 @@ Fixes:
 - `flex_strip()` along a path with no curve or corner makes a straight
   strip; it stopped with "bend must be [x0, x1, angle]". `bend = []` is no
   bend.
+- A `$kerf` or `$thickness` that is not a finite number, as `0/0` or
+  `1/0` gives, is an error; a NaN kerf was taken as 0 and an infinite
+  thickness accepted.
+- A layer set again with `layer()` after marks went on its back face sets
+  its back the same way, mode, colour and order; the back kept the first
+  settings. Making it a cut layer then is an error.
+- A library path in `use <...>` or `include <...>` may hold any character
+  a folder name has, as `(`, `#` or `é`.
+- The back-face docs say the back job is turned over within the file's
+  width, and how far to move it on stock wider than the file.
 - A stack whose layers take different blind slots, and so become a part
   each (`"top, layer 1"`), is still found by its own name for `halving`,
   and still prints as one stack with `--print`.

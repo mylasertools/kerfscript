@@ -367,6 +367,13 @@ sheet turned over left to right: `design-back.svg` from the command line,
 sheet over without moving the parts in it, line it up on the same corner
 and run the back job.
 
+The back job is the front file turned over within the file's own width,
+the width in its SVG (`sheet.width` in JavaScript), not your stock's. On
+stock just as wide as the file, the same corner lines up. On wider stock,
+a 300 mm sheet for a 46 mm wide file, the turned-over parts lie the
+difference further right, 254 mm here: start the back job that far from
+the corner, or cut the stock to the file's width first.
+
 ```kerf
 part("coaster") {
   circle(d = 90);
