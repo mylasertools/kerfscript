@@ -71,6 +71,10 @@ Command line:
 
 Libraries:
 
+- `kerf/inlay`: `inlaid()` cuts inlay shapes through a part, or engraves
+  them as pockets, and cuts each again as an insert a press fit bigger, of
+  its own stock or painted. `part(press_fit = true)` with `glue` lets an
+  insert overlap the part it presses into without a collision warning.
 - `kerf/sphere`: `ball()` makes a slot-together ball or dome of half-disc
   fins round an upright axis held by rings with halving joints, hollow
   with a floor and a rail for a scene inside if asked, and with holes for

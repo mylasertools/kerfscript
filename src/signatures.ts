@@ -621,6 +621,11 @@ export const SIGNATURES: Signature[] = [
         'The name of a part this one is glued flat onto; at and rotate are then on its face',
       ),
       named('face', 'The face of the glue part it goes on: "top" or "bottom"', '"top"'),
+      named(
+        'press_fit',
+        'Pressed into the glue part, as an inlay: they overlap on purpose, so they are not checked against each other',
+        'false',
+      ),
     ],
     children: true,
     section: 'Parts and sheets',

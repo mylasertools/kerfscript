@@ -328,6 +328,9 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
     hardware.
   - `on = "name"`: the part is glued to that bent part, and moves with the
     run of it under its centre.
+  - `press_fit = true` with `glue`: the part is pressed into the one it is
+    glued to, as an inlay, so the two overlap on purpose and are not
+    checked against each other.
   - `glue = "name"`, `face = "top"`: the part is glued flat on that part's
     top (or bottom) face; its `at` and `rotate` are measured on the face,
     and the parts list says what it is glued to. With as many copies as

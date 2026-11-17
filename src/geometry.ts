@@ -68,6 +68,9 @@ export interface PartShape {
   step?: number;
   // Glued flat on another part's face, placed on it
   glue?: { host: string; face: 'top' | 'bottom' };
+  // Pressed into the part it is glued to, as an inlay: they overlap on
+  // purpose
+  pressFit?: boolean;
   // Cut mirrored, left to right
   mirrored?: boolean;
   // Which of the part() call's copies these are, 1 up, when mirror per

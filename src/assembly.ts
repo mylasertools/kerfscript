@@ -45,6 +45,8 @@ export interface AssemblyPart {
   // The index in the assembly of the part this one is glued on: the host
   // of glue =, or for a layer of a stack after the first, the first
   glued?: number;
+  // Pressed into the part it is glued on, as an inlay: they may overlap
+  pressFit?: boolean;
   // What is engraved and scored on it, in its own coordinates, for 3D views
   marks?: Mark[];
 }

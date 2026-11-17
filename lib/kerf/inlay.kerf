@@ -1,0 +1,41 @@
+// kerf/inlay: inlays of another wood, stock or colour: the shapes cut out
+// of one part (or engraved into it as pockets) and cut again as inserts
+// that press into them.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+//
+// KerfScript takes the kerf off every cut, so a hole and an insert of the
+// same shape come out the same size; each insert is `press` mm bigger all
+// round so it holds.
+
+// A part with inlays. Its first child is the part's shape; each child
+// after it is an inlay's shape. The inlays are cut through the part, or
+// with `depth` engraved that deep on the layer "pocket" (set that layer's
+// power for the depth). Each inlay is an insert of its own, named "name
+// inlay 1" up, `press` mm bigger all round, of materials[i] (stock of its
+// own, on a sheet of its own) or painted paints[i]; a pocket's insert is
+// `depth` thick. In the assembled view a through insert sits in its hole
+// and a pocket's on the surface over it.
+module inlaid(name, depth, press = 0.05, materials, paints, at = [0, 0, 0], rotate = [0, 0, 0]) {
+  n = $children;
+  assert(n >= 2, "inlaid(): give the part's shape, then one shape for each inlay");
+  part(name, at = at, rotate = rotate) {
+    if (is_undef(depth))
+      difference() {
+        children(0);
+        for (i = [1:n - 1]) children(i);
+      }
+    else {
+      children(0);
+      layer("pocket", mode = "fill", color = "#555555") for (i = [1:n - 1]) children(i);
+    }
+  }
+  for (i = [1:n - 1])
+    let (
+      m = is_undef(materials) || i - 1 >= len(materials) ? undef : materials[i - 1],
+      c = is_undef(paints) || i - 1 >= len(paints) ? undef : paints[i - 1],
+      t = is_undef(depth) ? $thickness : depth
+    )
+      material(thickness = t, name = is_undef(m) ? $material : m)
+        part(str(name, " inlay ", i), glue = name, at = [0, 0, is_undef(depth) ? -t : 0], paint = c, press_fit = is_undef(depth))
+          offset(delta = press) children(i);
+}

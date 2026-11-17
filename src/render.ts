@@ -517,6 +517,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
             ...(p.folds && { folds: p.folds }),
             ...(p.step && { step: p.step }),
             ...(p.stack && { stack: p.stack }),
+            ...(p.pressFit && { pressFit: true }),
           };
           placedAt.set(p, [...(placedAt.get(p) ?? []), assembly.length]);
           assembly.push(part);
@@ -670,9 +671,16 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       return list;
     });
   const { found: allClashes, complete } = collisions(solids, limits.maxCollisionPairs);
-  // Pieces of one bent part meet only through its hinge
+  // Pieces of one bent part meet only through its hinge, and an inlay
+  // presses into the part it is glued on
+  const pressed = (a: AssemblyPart, b: AssemblyPart) =>
+    !!a.pressFit && a.glued !== undefined && assembly[a.glued] === b;
   const clashes = allClashes
     .filter(([a, b]) => pieceOf.get(a) !== pieceOf.get(b))
+    .filter(([a, b]) => {
+      const [pa, pb] = [pieceOf.get(a) ?? a, pieceOf.get(b) ?? b];
+      return !pressed(pa, pb) && !pressed(pb, pa);
+    })
     .map(([a, b, at]) => [pieceOf.get(a) ?? a, pieceOf.get(b) ?? b, at, a, b] as const)
     .filter(([a, b], i, all) => all.findIndex(([c, d]) => c === a && d === b) === i);
   if (!complete)

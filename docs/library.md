@@ -1191,6 +1191,38 @@ painter's order, each `[layer, colour, shapes]`, the shapes circles,
 ellipses, round-ended strokes, rounded rectangles, polygons and smooth
 closed curves, as the library's comments describe.
 
+## Inlays
+
+`use <kerf/inlay>`
+
+Inlays of another wood, stock or colour: shapes cut out of one part, or
+engraved into it as pockets, and cut again as inserts that press into
+them. KerfScript takes the kerf off every cut, so a hole and an insert of
+one shape come out the same size; each insert is `press` mm bigger all
+round so it holds.
+
+```kerf
+use <kerf/inlay>
+use <kerf/shapes>
+
+$thickness = 3;
+// A walnut heart in a plywood plaque
+inlaid("plaque", materials = ["walnut"]) {
+  rect([80, 60], r = 5);
+  translate([40, 30]) heart(30);
+}
+```
+
+### `inlaid(name, depth, press = 0.05, materials, paints, at = [0, 0, 0], rotate = [0, 0, 0])`
+
+A part with inlays: its first child is the part's shape, and each child
+after it an inlay's shape. The inlays are cut through the part, or with
+`depth` engraved that deep on the layer `"pocket"` (set its power for the
+depth). Each inlay is an insert of its own, `"name inlay 1"` up, `press`
+mm bigger all round, of `materials[i]` (on a sheet of its own) or painted
+`paints[i]`; a pocket's insert is `depth` thick. In the assembled view a
+through insert sits in its hole and a pocket's on the surface over it.
+
 ## Layered art
 
 `use <kerf/layered>`

@@ -2740,6 +2740,10 @@ export class Evaluator {
         const folds = this.folds(foldArg, this.arg(c.args, 'fold_open', -1));
         if (folds.length && bendArg !== undefined)
           throw new Error('a part bends on living hinges or folds, not both');
+        // press_fit = true: pressed into the part it is glued to, as an
+        // inlay, so the two overlap on purpose
+        const pressFit = truthy(this.arg(c.args, 'press_fit', -1, false));
+        if (pressFit && glue === undefined) throw new Error('press_fit goes with glue = "host"');
         // split = true, or [w, h]: cut into pieces that fit, joined by
         // jigsaw knobs
         const splitArg = this.arg(c.args, 'split', -1);
@@ -2941,6 +2945,7 @@ export class Evaluator {
             ...(piecesWanted !== undefined && { pieces: piecesWanted }),
             ...(hang && { hang }),
             ...(split && { split }),
+            ...(pressFit && { pressFit: true }),
             ...(mine ? { placements: mine } : {}),
             ...(stack > 1 ? { stack } : {}),
             // A mirrored copy bends as the mirror image of the part
