@@ -1072,6 +1072,75 @@ A size turned to lie wider than tall, or to stand taller than wide.
 The size of a name in a table of `[name, size]`, the names in it, and the
 name an older name stands for in a table of `[old, new]`.
 
+## Figures
+
+`use <kerf/figures>`
+
+Layered characters for ornaments, standees, scenes and cards, drawn for
+this library:
+
+| Cast          | Figures                                                                                          |
+| ------------- | ------------------------------------------------------------------------------------------------ |
+| `"christmas"` | `santa`, `elf`, `gnome`, `angel`, `reindeer`, `gingerbread`, `snowman`                           |
+| `"easter"`    | `bunny`, `chick`, `lamb`                                                                         |
+| `"halloween"` | `ghost`, `witch`, `pumpkin`, `bat`, `skeleton`                                                   |
+| `"nativity"`  | `mary`, `joseph`, `baby`, `shepherd`, `caspar`, `melchior`, `balthasar`, `ox`, `donkey`, `sheep` |
+| `"animals"`   | `bear`, `fox`, `cat`, `dog`, `owl`, `deer`                                                       |
+
+A figure is built in layers, as layered wood art is. The **outline** is a
+backer of its whole silhouette, standing `border` mm proud of the rest.
+On it lie the coloured pieces of its **clothes** (an animal's coat) and its
+**face** (skin, bellies, beaks, ears) side by side, `gap` mm apart, so the
+backer shows between them as lines. On those lie the **details**: eyes,
+noses, buttons. Each layer comes in one or more colours.
+
+```kerf
+use <kerf/figures>
+
+$thickness = 3;
+figure_parts("bunny", 80, at = [0, 0, 0], rotate = [90, 0, 0]);
+figure_parts("chick", 80, at = [70, 0, 0], rotate = [90, 0, 0]);
+```
+
+### `figure_parts(name, height = 100, at = [0, 0, 0], rotate = [0, 0, 0], label, border = 2, gap = 0.6, qty = 1)`
+
+The figure as layered parts, its outline `height` mm tall: the outline
+placed at `at` and turned by `rotate` (`[90, 0, 0]` stands it up), the
+clothes and face glued on it and the details on those. Each colour of each
+layer is a part of its own, painted that colour, so the 3D view and the
+print layout show the figure in colour and the sheets keep one wood. The
+parts are named after `label`, the figure's name unless given: `"bunny
+outline"`, `"bunny face pink"`, `"bunny details black"`. A detail too small to cut at that height, under `min_width` of
+`figure_layer()`, is left out.
+
+### `figure(name, height = 100, border = 2, gap = 0.6)`
+
+The figure from one sheet: its outline cut, the lines between its coloured
+pieces scored, and its details engraved. Put it inside a `part()`.
+
+### `figure_layer(name, layer, height = 100, color, border = 2, gap = 0.6, min_width = 1.6)`
+
+One layer of the figure as shapes: `"outline"`, `"clothes"`, `"face"` or
+`"details"`, every colour of it or only `color`. The outline is `height` mm
+tall, standing on y = 0 and centred on x = 0. Each piece loses what the
+pieces after it cover, `gap` wider, and any sliver narrower than
+`min_width`; details stay on the clothes and face.
+
+### `figure_names(cast)`, `figure_casts()`, `figure_layers(name)`
+
+The names of the figures, all or those of one cast; the casts; and the
+parts a figure is built of, as `[layer, colour]` from the outline up, as
+`figure_parts()` makes them.
+
+### `figure_entry(name)`, `figure_shapes(shapes)`, `figure_unique(list)`
+
+A figure's entry, `[name, cast, outline colour, pieces]`; the shapes of one
+of its pieces drawn, in the figure's own units; and a list without its
+repeats. Each figure is drawn 100 units tall as a list of pieces in
+painter's order, each `[layer, colour, shapes]`, the shapes circles,
+ellipses, round-ended strokes, rounded rectangles, polygons and smooth
+closed curves, as the library's comments describe.
+
 ## Symbols
 
 `use <kerf/symbols>`

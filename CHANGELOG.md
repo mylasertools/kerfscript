@@ -10,6 +10,8 @@ Language:
   shown the same way and never in the files for the laser. The parts list
   says which parts are painted.
 - A layer's colour can be a name, as `"red"`, as well as a hex colour.
+- `part(pieces = 2)` or `pieces = "any"` makes a part of loose pieces, as
+  a pair of eyes, without the warning that it cuts into separate pieces.
 - Light sources: `hardware("tealight", at)` stands a tealight whose flame
   flickers, LEDs (a strip when longer than 20 mm) and bulbs give off light,
   and `light(at, color, lumens)` adds a light with nothing to show for it.
@@ -19,6 +21,12 @@ Language:
 
 Libraries:
 
+- `kerf/figures`: 31 layered characters in five casts (Christmas, Easter,
+  Halloween, nativity and animals). `figure_parts()` builds one as a
+  backer, coloured pieces glued on it and details on those, each colour a
+  painted part; `figure()` cuts one from a single sheet with the pieces
+  scored and the details engraved; `figure_layer()` gives the shapes of
+  any layer.
 - `kerf/sizes`: `note_size()` gives banknote sizes (US, Canadian, euro,
   pound and Australian notes), `card_size("gift card")`, and
   `part_size()` has tealights, a maxi tealight, an LED tealight and puck,

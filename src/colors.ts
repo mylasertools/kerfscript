@@ -27,6 +27,19 @@ export const PAINT_COLORS: Record<string, string> = {
   gold: '#c9a227',
   copper: '#b87333',
   skin: '#f1c9a5',
+  'light grey': '#cfcfca',
+  'light gray': '#cfcfca',
+  'dark grey': '#4a4a4a',
+  'dark gray': '#4a4a4a',
+  'light brown': '#b07f4f',
+  'dark brown': '#4a2e1a',
+  beige: '#e9d6b4',
+  peach: '#f6b892',
+  'light pink': '#f8cbd8',
+  maroon: '#7a1f2b',
+  'light yellow': '#f8e48a',
+  lime: '#9ccc3c',
+  olive: '#6b7a2f',
 };
 
 /** A colour as "#rrggbb": a hex colour as it is (lower case), or one of
