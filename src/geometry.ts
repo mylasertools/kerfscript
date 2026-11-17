@@ -32,6 +32,9 @@ export interface PartShape {
   material: string;
   // Its colour in 3D views, as "#rrggbb", when it is painted
   paint?: string;
+  // How many separate pieces it is meant to cut into, or "any": a part of
+  // loose pieces, as a pair of eyes, without a warning
+  pieces?: number | 'any';
   placements?: Placement[];
   // Glued layers per placement, stacked along the part's own z
   stack?: number;

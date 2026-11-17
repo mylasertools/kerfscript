@@ -480,7 +480,12 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     }
     const split = pieces(material);
     const n = split.length;
-    if (n > 1) {
+    // pieces = "any" or the number it cuts into: meant to be loose
+    if (typeof p.pieces === 'number' && n > 0 && n !== p.pieces)
+      warnings.push(
+        `Part "${p.name}" cuts into ${n} separate piece${n > 1 ? 's' : ''}, not the ${p.pieces} its pieces = says.`,
+      );
+    else if (n > 1 && p.pieces === undefined) {
       // Say where the smaller pieces are, the biggest being the part
       const size = (g: ReturnType<typeof pieces>[number]) => g.reduce((a, r) => a + area(r), 0);
       const stray = [...split].sort((a, b) => size(b) - size(a)).slice(1, 4);

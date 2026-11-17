@@ -553,6 +553,11 @@ export const SIGNATURES: Signature[] = [
       named('mirror', 'Cut the part mirrored left to right, its text still reading', 'false'),
       named('material', 'The material it is cut from, as material(name = ...) sets it'),
       named(
+        'pieces',
+        'How many separate pieces it cuts into, as a pair of eyes, or "any": no warning that it is in pieces',
+        '1',
+      ),
+      named(
         'paint',
         'Its colour in the 3D view and the print layout, as "red" or "#c8372d"; the part stays on the sheet of its material',
       ),

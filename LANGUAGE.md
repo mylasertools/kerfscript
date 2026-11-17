@@ -290,6 +290,8 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
 - More about a part, all named:
   - `material = "red acrylic"`: the part's material, as `material(name =
 ...)` would set `$material` round it.
+  - `pieces = 2` or `pieces = "any"`: the part is meant to cut into that
+    many separate pieces, so it does not warn that it is in pieces.
   - `paint = "red"`: the part's colour in 3D views and the print
     layout, painted after cutting; it stays on the sheet of its material.
   - `stack = n`: n layers glued at each placement, one thickness apart

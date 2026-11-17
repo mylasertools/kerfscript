@@ -2543,6 +2543,17 @@ export class Evaluator {
           throw new Error(
             `paint must look like "#c8372d" or be a colour's name, as "red", got ${show(paintArg)}`,
           );
+        // pieces = 2, or "any": the part is meant to be loose pieces
+        const piecesArg = this.arg(c.args, 'pieces', -1);
+        if (
+          piecesArg !== undefined &&
+          piecesArg !== 'any' &&
+          !(typeof piecesArg === 'number' && Number.isInteger(piecesArg) && piecesArg >= 1)
+        )
+          throw new Error(
+            `pieces must be a whole number, 1 or more, or "any", got ${show(piecesArg)}`,
+          );
+        const piecesWanted = piecesArg as number | 'any' | undefined;
         if (placements && (framed || stack > 1))
           placements = placements.flatMap((pl) => {
             const m =
@@ -2639,6 +2650,7 @@ export class Evaluator {
             kerf: this.kerf(c.env),
             material: toText(this.dyn(c.env, '$material') ?? 'material'),
             ...(paint && { paint }),
+            ...(piecesWanted !== undefined && { pieces: piecesWanted }),
             ...(mine ? { placements: mine } : {}),
             ...(stack > 1 ? { stack } : {}),
             // A mirrored copy bends as the mirror image of the part

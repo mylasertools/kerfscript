@@ -97,6 +97,11 @@ place(at = [20, 10, 30], rotate = [0, 0, 90]) box([80, 60, 40], name = "crate");
   many make a stack.
 - `material = "red acrylic"` names the material the part is cut from,
   as wrapping it in `material(name = "red acrylic")` would.
+- `pieces = 2` says the part is meant to cut into two separate pieces,
+  as a pair of eyes glued on side by side; `pieces = "any"` takes any
+  number. Without it, a part in pieces warns, as a missing connection
+  usually makes one. A part that cuts into a different number of pieces
+  than `pieces` says still warns.
 - `paint = "red"` paints the part after cutting: the 3D view and the
   print layout show it red, while it stays on the sheet of its material.
   `material = "red acrylic"` is for stock that comes red, and puts the

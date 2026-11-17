@@ -973,3 +973,18 @@ test('a library path may hold any character a folder name has', () => {
   assert.throws(() => render('use <kerf/box\n>'), /library path/);
   assert.deepEqual(render('a = 1; use <kerf/box> echo(a < 2, 3 > a);').echoes, ['true, true']);
 });
+
+test('part(pieces = ...) is a part of loose pieces, and says when the count is off', () => {
+  const eyes = (p) =>
+    render(`part("eyes"${p}) { circle(5); translate([20, 0]) circle(5); }`).warnings;
+  assert.match(eyes('')[0], /cuts into 2 separate pieces\. Join them/);
+  assert.deepEqual(eyes(', pieces = 2'), []);
+  assert.deepEqual(eyes(', pieces = "any"'), []);
+  assert.deepEqual(eyes(', pieces = 3'), [
+    'Part "eyes" cuts into 2 separate pieces, not the 3 its pieces = says.',
+  ]);
+  assert.deepEqual(render('part("one", pieces = 2) circle(5);').warnings, [
+    'Part "one" cuts into 1 separate piece, not the 2 its pieces = says.',
+  ]);
+  assert.throws(() => render('part("e", pieces = 0) circle(3);'), /pieces must be a whole number/);
+});
