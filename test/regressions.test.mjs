@@ -1080,3 +1080,33 @@ test('symbol(min_width = ...) grows lines too thin to cut', () => {
   assert.ok(narrow('') > 0);
   assert.equal(narrow(', min_width = 1.6'), 0);
 });
+
+test('$copy draws each copy of a part apart, alike copies staying one part', () => {
+  const r = render(
+    'part("ring", qty = 5, at = [for (i = [0:4]) [i * 30, 0, 0]]) circle(d = 10 + 4 * ($copy % 3));',
+  );
+  assert.deepEqual(r.warnings, []);
+  assert.deepEqual(
+    r.parts.map((p) => [p.qty, p.copies, p.width]),
+    [
+      [2, [1, 4], 10],
+      [2, [2, 5], 14],
+      [1, [3], 18],
+    ],
+  );
+  assert.deepEqual(
+    r.assembly.map((a) => a.copy),
+    [1, 4, 2, 5, 3],
+  );
+  // A part that doesn't read $copy is drawn once, as before
+  assert.deepEqual(
+    render('part("same", qty = 3) circle(10);').parts.map((p) => [p.qty, p.copies]),
+    [[3, undefined]],
+  );
+  // $copy is 0 outside part(), as undef
+  assert.deepEqual(render('echo($copy); part("p", qty = 2) { echo($copy); circle(5); }').echoes, [
+    'undef',
+    '0',
+    '1',
+  ]);
+});

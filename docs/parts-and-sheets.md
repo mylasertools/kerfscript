@@ -90,6 +90,25 @@ use <kerf/box>
 place(at = [20, 10, 30], rotate = [0, 0, 90]) box([80, 60, 40], name = "crate");
 ```
 
+### Copies that differ
+
+Inside `part(qty = n)`, `$copy` is the copy being drawn, 0 up to n - 1. A
+part whose drawing reads it is drawn once for each copy, so a set of
+ornaments takes a name each, or drawers a number each:
+
+```kerf
+names = ["Anna", "Ben", "Cleo", "Dan"];
+part("tag", qty = len(names)) {
+  difference() { rect([50, 20], r = 3); translate([6, 10]) circle(d = 4); }
+  engrave() translate([30, 10]) text(names[$copy], fit = [32, 10], halign = "center", valign = "center");
+}
+```
+
+Copies that come out alike stay one part; each that differs is a part of
+its own with the same name, and the parts list says which copies it is:
+`tag (copies 1, 4) x2`. With `at` given per copy, each goes to its own
+place.
+
 ### Stacks, mirrored pairs and glued layers
 
 - `stack = 3` glues three layers at each placement, one thickness apart:

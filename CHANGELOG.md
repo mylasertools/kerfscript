@@ -10,6 +10,9 @@ Language:
   shown the same way and never in the files for the laser. The parts list
   says which parts are painted.
 - A layer's colour can be a name, as `"red"`, as well as a hex colour.
+- Copies that differ: inside `part(qty = n)`, `$copy` is the copy being
+  drawn, 0 to n - 1, so a set of tags takes a name each. Copies that come
+  out alike stay one part; the parts list says which copies each part is.
 - Hanging parts: `part(hang = [x, y], cord = 20)` hangs a part from a
   point on it, at `at`, on a cord, ring or pin, swung in its own plane
   until its weight is straight below, as a shelf sitter's legs; the cord

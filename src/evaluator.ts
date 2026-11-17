@@ -552,6 +552,9 @@ export class Evaluator {
 
   // Children shapes already made in a module call, by statement
   private childCache = new WeakMap<object, Map<Stmt, { key: string; shape: Shape | null }>>();
+  // How many times $copy has been read, so part() knows when its copies
+  // differ
+  private copyReads = 0;
 
   // What a child may depend on besides its own code: the special
   // variables it can see, the place() frame, the step and how the layers
@@ -969,6 +972,8 @@ export class Evaluator {
       case 'undef':
         return undefined;
       case 'var': {
+        // part() draws each copy apart once its drawing reads $copy
+        if (x.name === '$copy') this.copyReads++;
         const r = env.get(x.name);
         if (r.found) return r.value;
         const f = env.fn(x.name);
@@ -2809,7 +2814,43 @@ export class Evaluator {
             }
           }
         };
-        const s = draw(mirrored);
+        // $copy is the copy being drawn, 0 up: a drawing that reads it is
+        // drawn for each copy, and copies alike become one part
+        const hadCopy = c.env.vars.has('$copy');
+        const outerCopy = c.env.vars.get('$copy');
+        c.env.vars.set('$copy', 0);
+        const reads = this.copyReads;
+        let s: Shape;
+        let perCopy: { layers: Map<string, Layer>; flip: boolean; copies: number[] }[] | undefined;
+        try {
+          s = draw(mirrored);
+          if (qty > 1 && this.copyReads !== reads) {
+            const groups = new Map<
+              string,
+              { layers: Map<string, Layer>; flip: boolean; copies: number[] }
+            >();
+            for (let i = 0; i < qty; i++) {
+              c.env.vars.set('$copy', i);
+              const shape = i === 0 && flips[0] === mirrored ? s : draw(flips[i]);
+              const key = `${flips[i]}|${JSON.stringify(
+                [...shape.layers].map(([k, l]) => [
+                  k,
+                  l.regions.map((r) =>
+                    r.map(([x, y]) => [Math.round(x * 1e4), Math.round(y * 1e4)]),
+                  ),
+                  l.lines.map((r) => r.map(([x, y]) => [Math.round(x * 1e4), Math.round(y * 1e4)])),
+                ]),
+              )}`;
+              const g = groups.get(key);
+              if (g) g.copies.push(i + 1);
+              else groups.set(key, { layers: shape.layers, flip: flips[i], copies: [i + 1] });
+            }
+            perCopy = [...groups.values()];
+          }
+        } finally {
+          if (hadCopy) c.env.vars.set('$copy', outerCopy);
+          else c.env.vars.delete('$copy');
+        }
         const bends = this.bends(bendArg);
         const on = this.arg(c.args, 'on', -1);
         const slotsArg = this.arg(c.args, 'slots', -1);
@@ -2892,12 +2933,14 @@ export class Evaluator {
           };
         };
         const numbers = (flip: boolean) => flips.flatMap((f, i) => (f === flip ? [i + 1] : []));
-        const own = mixed
-          ? [
-              made(s.layers, mirrored, numbers(mirrored)),
-              made(draw(!mirrored).layers, !mirrored, numbers(!mirrored)),
-            ]
-          : [made(s.layers, mirrored, numbers(mirrored))];
+        const own = perCopy
+          ? perCopy.map((g) => made(g.layers, g.flip, g.copies))
+          : mixed
+            ? [
+                made(s.layers, mirrored, numbers(mirrored)),
+                made(draw(!mirrored).layers, !mirrored, numbers(!mirrored)),
+              ]
+            : [made(s.layers, mirrored, numbers(mirrored))];
         return { layers: new Map(), parts: [...s.parts, ...own] };
       },
       // Places the parts inside in 3D, as part()'s at and rotate do: their

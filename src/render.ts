@@ -97,6 +97,9 @@ export interface PartInfo {
   label?: number;
   // Cut mirrored, left to right
   mirrored?: boolean;
+  // Which copies of its part() these are, 1 up, when the copies differ
+  // ($copy) or some are mirrored
+  copies?: number[];
 }
 
 export interface Placed {
@@ -258,8 +261,13 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   const doubled = new Set<string>();
   for (const p of parts) {
     // A mirrored pair, mirror = [false, true], is one part cut both ways
+    // Copies of one part() drawn apart with $copy are told by their numbers
     const sig = shapeOf(p),
-      key = p.mirrored ? `${p.name}\u0000mirrored` : p.name,
+      key = p.copies
+        ? `${p.name}\u0000${p.copies.join(',')}${p.mirrored ? 'm' : ''}`
+        : p.mirrored
+          ? `${p.name}\u0000mirrored`
+          : p.name,
       had = byName.get(key);
     if (had === undefined) byName.set(key, sig);
     else if (had !== sig) doubled.add(p.name);
@@ -552,6 +560,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       ...(p.stack && { stack: p.stack }),
       ...(p.glue && { glued: p.glue.host }),
       ...(p.mirrored && { mirrored: true }),
+      ...(p.copies && { copies: p.copies }),
       ...(number !== undefined && { label: number }),
     };
     if (analysis)
