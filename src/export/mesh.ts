@@ -205,11 +205,11 @@ function partBodies(
   const flip = det3(matrix) < 0;
   const material = p.material ?? 'material';
   const out: Body[] = [];
-  const solid = body(p.name, 'part', material, materialColor(material), {
+  const solid = body(p.name, 'part', material, p.paint ?? materialColor(material), {
     part: p.name,
     copy: p.copy,
     instance,
-    clear: isClear(material),
+    clear: !p.paint && isClear(material),
   });
   for (const piece of meshPieces(outline, bends)) prism(solid, piece, 0, t, to, flip);
   out.push(solid);

@@ -18,6 +18,8 @@ export interface AssemblyPart {
   thickness: number;
   // The sheet's material name, as $material gives it
   material?: string;
+  // Painted this colour, "#rrggbb", which 3D views show over the material
+  paint?: string;
   matrix: number[];
   outline: Poly[];
   placed: boolean;

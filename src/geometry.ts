@@ -30,6 +30,8 @@ export interface PartShape {
   thickness: number;
   kerf: number;
   material: string;
+  // Its colour in 3D views, as "#rrggbb", when it is painted
+  paint?: string;
   placements?: Placement[];
   // Glued layers per placement, stacked along the part's own z
   stack?: number;

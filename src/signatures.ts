@@ -527,8 +527,8 @@ export const SIGNATURES: Signature[] = [
     kind: 'module',
     params: [
       p('name', 'Layer name'),
-      p('mode', '"cut", "line", "fill" or "guide"'),
-      p('color', 'Colour in the output, as "#00aa00"'),
+      p('mode', '"cut", "line", "fill", "guide" or "paint" (shown in 3D, not cut)'),
+      p('color', 'Colour in the output, as "#00aa00" or a name, as "red"'),
       named('order', 'Where it goes among the custom layers in the files, lowest first', '0'),
       named('bleed', "How far past the part's edge it may print", '0'),
       named(
@@ -552,6 +552,10 @@ export const SIGNATURES: Signature[] = [
       named('stack', 'Layers glued in a stack at each placement, one thickness apart', '1'),
       named('mirror', 'Cut the part mirrored left to right, its text still reading', 'false'),
       named('material', 'The material it is cut from, as material(name = ...) sets it'),
+      named(
+        'paint',
+        'Its colour in the 3D view and the print layout, as "red" or "#c8372d"; the part stays on the sheet of its material',
+      ),
       named('bend', 'Living hinge bends in the assembled view: [x0, x1, angle] or a list'),
       named('on', 'The name of a bent part this one is glued to, to move with it'),
       named('slots', 'Names of parts whose tabs pass through this one: their slots are cut'),

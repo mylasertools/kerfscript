@@ -51,6 +51,7 @@ import {
 import { KerfError, where, type Pos } from './lexer.js';
 import { FITS } from './bores.js';
 import { HARDWARE_COLORS, HARDWARE_KINDS } from './hardware.js';
+import { paintColor } from './colors.js';
 import { parse } from './parser.js';
 import { signature } from './signatures.js';
 import { LIBRARIES } from './stdlib.js';
@@ -101,7 +102,9 @@ function crossesBox(a: Pt, b: Pt, box: number[]): boolean {
 
 export interface LayerDef {
   name: string;
-  mode: 'cut' | 'line' | 'fill' | 'guide';
+  // paint: coloured areas for the 3D view and the print layout, never cut
+  // or engraved
+  mode: 'cut' | 'line' | 'fill' | 'guide' | 'paint';
   color: string;
   // Marks on the back face, made after turning the part over
   side?: 'back';
@@ -2342,7 +2345,9 @@ export class Evaluator {
           const regions = cut.length
             ? cut
             : layersOf.flatMap((ls) =>
-                [...ls].filter(([k]) => modeOf(k) !== 'guide').flatMap(([, l]) => l.regions),
+                [...ls]
+                  .filter(([k]) => modeOf(k) !== 'guide' && modeOf(k) !== 'paint')
+                  .flatMap(([, l]) => l.regions),
               );
           const m = regionMoments(union(regions));
           c.env.vars.set('$area', m.area);
@@ -2449,14 +2454,18 @@ export class Evaluator {
               `the layer "${name}" is the back of layer "${name.slice(0, -5)}"; set its mode and colour on that layer, or give this one another name`,
             );
           const m = (mode ?? known?.mode ?? 'line') as LayerDef['mode'];
-          if (!['cut', 'line', 'fill', 'guide'].includes(m))
-            throw new Error('mode must be "cut", "line", "fill" or "guide"');
-          const col = toText(color ?? known?.color ?? '#00aa00');
-          if (!/^#[0-9a-fA-F]{6}$/.test(col)) throw new Error('color must look like "#00aa00"');
+          if (!['cut', 'line', 'fill', 'guide', 'paint'].includes(m))
+            throw new Error('mode must be "cut", "line", "fill", "guide" or "paint"');
+          const raw = toText(color ?? known?.color ?? '#00aa00');
+          const col = /^#[0-9a-fA-F]{6}$/.test(raw) ? raw : paintColor(raw);
+          if (!col)
+            throw new Error(
+              `color must look like "#00aa00" or be a colour's name, as "red", got ${show(raw)}`,
+            );
           const o = order === undefined ? known?.order : this.num(order, 'layer', 'order');
           const b = bleed === undefined ? known?.bleed : this.num(bleed, 'layer', 'bleed');
           if (b !== undefined && !(b >= 0)) throw new Error('bleed must be 0 or more');
-          if (b && m === 'cut') throw new Error('a cut layer has no bleed');
+          if (b && (m === 'cut' || m === 'paint')) throw new Error(`a ${m} layer has no bleed`);
           this.layerDefs++;
           const def: LayerDef = {
             name,
@@ -2522,6 +2531,14 @@ export class Evaluator {
         const materialArg = this.arg(c.args, 'material', -1);
         if (materialArg !== undefined) c.env.vars.set('$material', toText(materialArg));
         const t = this.thickness(c.env);
+        // paint = "red": the part's colour in the 3D view and the print
+        // layout; it stays on its material's sheet
+        const paintArg = this.arg(c.args, 'paint', -1);
+        const paint = paintArg === undefined ? undefined : paintColor(toText(paintArg));
+        if (paintArg !== undefined && !paint)
+          throw new Error(
+            `paint must look like "#c8372d" or be a colour's name, as "red", got ${show(paintArg)}`,
+          );
         if (placements && (framed || stack > 1))
           placements = placements.flatMap((pl) => {
             const m =
@@ -2617,6 +2634,7 @@ export class Evaluator {
             thickness: t,
             kerf: this.kerf(c.env),
             material: toText(this.dyn(c.env, '$material') ?? 'material'),
+            ...(paint && { paint }),
             ...(mine ? { placements: mine } : {}),
             ...(stack > 1 ? { stack } : {}),
             // A mirrored copy bends as the mirror image of the part

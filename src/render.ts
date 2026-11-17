@@ -83,6 +83,8 @@ export interface PartInfo {
   thickness: number;
   kerf: number;
   material: string;
+  // Painted this colour, "#rrggbb", after cutting
+  paint?: string;
   // Glued in stacks of this many layers
   stack?: number;
   // The part it is glued onto
@@ -359,8 +361,30 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       }
     }
     const layers = new Map<string, Layer>();
+    // Painted areas: on the part in 3D views and the print layout, never
+    // in the files for the laser
+    const painted: Mark[] = [];
     for (const [k, l] of p.layers) {
       if (k === HIDDEN || (mode(k) === 'guide' && !options.guides)) continue;
+      if (mode(k) === 'paint') {
+        const def = defs.get(k)!;
+        const regions = intersection(union(l.regions), material);
+        const lines = clipLines(
+          l.lines.filter((x) => x.length >= 2),
+          material,
+          'inside',
+        );
+        if (regions.length || lines.length)
+          painted.push({
+            layer: k,
+            mode: 'fill',
+            color: def.color,
+            side: def.side ?? 'front',
+            regions,
+            lines,
+          });
+        continue;
+      }
       let regions = union(l.regions);
       let lines = l.lines.filter((x) => x.length >= 2);
       if (mode(k) === 'line' || mode(k) === 'guide') {
@@ -379,8 +403,8 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     }
     hidden.push(...hiddenFills(p.name, layers, defs));
     if (material.length) {
-      // Engraving and scoring, for 3D views
-      const marks: Mark[] = [];
+      // Paint under engraving and scoring, for 3D views
+      const marks: Mark[] = [...painted];
       for (const [k, l] of layers) {
         const def = defs.get(k);
         // Cuts inside the part, as a living hinge's, show on both faces
@@ -408,6 +432,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
         name: p.name,
         thickness: p.thickness,
         material: p.material,
+        ...(p.paint && { paint: p.paint }),
         outline: material,
         ...(marks.length && { marks }),
       };
@@ -488,6 +513,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       thickness: p.thickness,
       kerf,
       material: p.material,
+      ...(p.paint && { paint: p.paint }),
       ...(p.stack && { stack: p.stack }),
       ...(p.glue && { glued: p.glue.host }),
       ...(p.mirrored && { mirrored: true }),
@@ -650,7 +676,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     'guide',
   ];
   // Each layer's back-face twin follows it, in its own job
-  const allLayers = order.map((k) => defs.get(k)!).filter(Boolean);
+  const allLayers = order.map((k) => defs.get(k)!).filter((l) => l && l.mode !== 'paint');
   const layerList = allLayers.filter((l) => l.side !== 'back');
   const backList = [...allLayers.filter((l) => l.side === 'back')];
   const registration = g('$registration') === true;

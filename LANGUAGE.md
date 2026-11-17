@@ -231,7 +231,9 @@ layer("pocket", mode = "fill", color = "#00aa00") ...
 ```
 
 Use `layer(name, mode, color)` to define a custom layer. Its mode is
-`"cut"`, `"line"`, `"fill"` or `"guide"`.
+`"cut"`, `"line"`, `"fill"`, `"guide"` or `"paint"`; a paint layer is
+never cut or engraved, only shown in 3D views and the print layout. Its
+colour is a hex colour or a name, as `"red"`.
 
 Marks can go on a part's **back face** too: `engrave(side = "back")`,
 `score(side = "back")` or `layer(name, side = "back")`. Draw them where
@@ -288,6 +290,8 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
 - More about a part, all named:
   - `material = "red acrylic"`: the part's material, as `material(name =
 ...)` would set `$material` round it.
+  - `paint = "red"`: the part's colour in 3D views and the print
+    layout, painted after cutting; it stays on the sheet of its material.
   - `stack = n`: n layers glued at each placement, one thickness apart
     along the part's z. The parts list says how many make a stack.
   - `mirror = true`: the part is cut mirrored left to right (x becomes

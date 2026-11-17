@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+Language:
+
+- `part(paint = "red")` paints a part: the 3D view, the 3D files and the
+  print layout show it in that colour, while it stays on the sheet of its
+  material. `layer(name, mode = "paint", color)` paints areas of a part,
+  shown the same way and never in the files for the laser. The parts list
+  says which parts are painted.
+- A layer's colour can be a name, as `"red"`, as well as a hex colour.
+
 Libraries:
 
 - `wall(outline, depth)` in `kerf/hinge`: a front plate, a back plate and

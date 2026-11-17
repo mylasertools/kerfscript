@@ -97,7 +97,8 @@ engrave() translate([40, 20]) circle(d = 12);
 
 The rectangle and circle use separate engraving layers. You can assign each
 a different power in your laser software. Supported modes are `"cut"`,
-`"line"`, `"fill"` and `"guide"`.
+`"line"`, `"fill"`, `"guide"` and `"paint"`. The colour is a hex colour
+or a colour's name, as `"red"`.
 
 ## The back face
 
@@ -127,6 +128,28 @@ part("tile") {
 
 A child given the layer `""` is left out, but still covers the ones
 before it: a bare patch.
+
+## Painted areas
+
+A layer with `mode = "paint"` marks areas painted by hand after cutting.
+They are never in the files for the laser, but the 3D view and the print
+layout show them in the layer's colour, on the part's own sheet:
+
+```kerf
+layer("red", mode = "paint", color = "red");
+layer("white", mode = "paint", color = "white");
+part("mushroom", paint = "cream") {
+  circle(d = 60);
+  paint(["red", "white"]) {
+    translate([0, 8]) circle(d = 50);
+    for (p = [[-10, 18], [8, 22], [0, 4]]) translate(p) circle(d = 8);
+  }
+}
+```
+
+Paint is clipped to the part, and a paint layer with `side = "back"`
+paints the face underneath. `part(paint = colour)` paints the whole part;
+see [Parts and sheets](parts-and-sheets.md).
 
 ## Printing on parts
 

@@ -97,6 +97,15 @@ place(at = [20, 10, 30], rotate = [0, 0, 90]) box([80, 60, 40], name = "crate");
   many make a stack.
 - `material = "red acrylic"` names the material the part is cut from,
   as wrapping it in `material(name = "red acrylic")` would.
+- `paint = "red"` paints the part after cutting: the 3D view and the
+  print layout show it red, while it stays on the sheet of its material.
+  `material = "red acrylic"` is for stock that comes red, and puts the
+  part on a sheet of its own. A colour is a name (`red`, `orange`,
+  `yellow`, `green`, `dark green`, `light green`, `blue`, `dark blue`,
+  `light blue`, `navy`, `teal`, `purple`, `pink`, `brown`, `tan`,
+  `cream`, `white`, `black`, `grey`, `silver`, `gold`, `copper`, `skin`)
+  or a hex colour such as `"#c8372d"`. To paint only some areas, use a
+  paint layer, as [Layers](layers.md#painted-areas) shows.
 - `mirror = true` cuts the part mirrored left to right. A lopsided end
   plate's other half is the same part mirrored, and its engraving still
   reads the right way round. A mirrored copy of a bent part bends as its
