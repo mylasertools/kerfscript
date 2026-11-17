@@ -29,6 +29,10 @@ Language:
 
 Libraries:
 
+- `kerf/drawers`: `drawers()` makes a carcass of numbered sliding drawers
+  in a grid, as for an advent calendar, with the numbers in order, from a
+  list or shuffled, a notch or hole to pull each by, and a façade of any
+  shape with the drawers' openings cut through it.
 - `kerf/scene` for scene boxes and dioramas: `scene_floor()` and
   `scene_rails()` cut rows of rails, `standee()` gives a drawing feet that
   stand in any rail (with a mound under a narrow one, and clipped to a

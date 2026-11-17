@@ -1,0 +1,106 @@
+// kerf/drawers: a carcass of small numbered drawers in a grid, as for an
+// advent calendar, behind a façade of any shape.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+//
+// The carcass is a finger-jointed box open at the front, shelves and
+// walls halved into each other inside it, and a drawer in each cell
+// with its number engraved on the front and a notch or hole to pull it by.
+// Drawn in the assembly with the carcass's front left bottom corner at the
+// origin, the drawers facing -y.
+
+use <kerf/dividers>
+
+// The outer size [width, height, depth] of a carcass of `cols` by `rows`
+// cells, each cell [w, h] inside, `depth` deep
+function drawers_size(cols, rows, cell, depth) =
+  [cols * cell[0] + (cols + 1) * $thickness, rows * cell[1] + (rows + 1) * $thickness, depth];
+
+// The number on each drawer, row by row from the top left: `numbers` if
+// given, else 1 up, in an order shuffled by `shuffle` (a seed) when given
+function drawers_numbers(n, numbers, shuffle) =
+  !is_undef(numbers) ? numbers
+  : is_undef(shuffle) ? [for (i = [1:n]) i]
+  : let (keys = rands(0, 1, n, shuffle))
+  [for (k = sort([for (i = [0:n - 1]) [keys[i], i + 1]])) k[1]];
+
+// A carcass of `cols` by `rows` drawers, each cell `cell` = [w, h] inside
+// and `depth` deep. Drawers run on the shelves `ease` mm clear all round,
+// and pull out `open` of their depth in the assembled view. `pull` is
+// "notch" (a dip in the front's top edge), "hole" (a finger hole) or
+// "none"; numbers are engraved on the fronts unless `numbers` is false.
+// Children are a façade, drawn on the carcass's front from its bottom left
+// corner: the drawers' openings are cut through it and it is glued on.
+module drawers(cols = 4, rows = 6, cell = [40, 30], depth = 60, numbers, shuffle, pull = "notch", ease = 0.8, clearance = 0.15, open = 0, font_size, label = "") {
+  t = $thickness;
+  function n(s) = label == "" ? s : str(label, " ", s);
+  size = drawers_size(cols, rows, cell, depth);
+  W = size[0];
+  H = size[1];
+  D = depth;
+  assert(cell[1] > 3 * t + 6, str("drawers(): a cell must be more than ", 3 * t + 6, " mm high for this thickness"));
+  assert(cell[0] > 4 * t + 6, str("drawers(): a cell must be more than ", 4 * t + 6, " mm wide for this thickness"));
+  assert(open >= 0 && open <= 0.6, "drawers(): open must be from 0 to 0.6, so the drawers stay in");
+  facade = $children > 0;
+  labels = numbers == false ? [] : drawers_numbers(cols * rows, numbers, shuffle);
+  step("Glue up the carcass") {
+    part(n("carcass floor"), at = [0, 0, 0]) finger_rect([W, D], ["flat", "out", "out", "out"]);
+    part(n("carcass top"), at = [0, 0, H - t]) finger_rect([W, D], ["flat", "out", "out", "out"]);
+    part(n("carcass back"), at = [0, D, 0], rotate = [90, 0, 0]) finger_rect([W, H], ["in", "out", "in", "out"]);
+    part(n("carcass side"), qty = 2, at = [[0, 0, 0], [W - t, 0, 0]], rotate = [90, 0, 90])
+      finger_rect([D, H], ["in", "in", "in", "flat"]);
+  }
+  // Shelves and walls halve into each other: each shelf slotted from the
+  // back, each wall from the front, half the depth; they stop 0.3 mm short
+  // of the carcass all round
+  g = 0.3;
+  inner = D - t - g;
+  walls = [for (i = [1:cols - 1]) i * (cell[0] + t) + t / 2];
+  shelves = [for (j = [1:rows - 1]) j * (cell[1] + t) + t / 2];
+  step("Slot the shelves and walls together and slide them in") {
+    if (rows > 1)
+      part(n("shelf"), qty = rows - 1, at = [for (z = shelves) [t + g, 0, z - t / 2]])
+        slotted_divider(W - 2 * t - 2 * g, inner, cols > 1 ? [for (x = walls) x - t - g] : [], "top", clearance);
+    if (cols > 1)
+      part(n("wall"), qty = cols - 1, at = [for (x = walls) [x + t / 2, 0, t + g]], rotate = [0, -90, 0])
+        slotted_divider(H - 2 * t - 2 * g, inner, rows > 1 ? [for (z = shelves) z - t - g] : [], "bottom", clearance);
+  }
+  if (facade)
+    step("Glue on the front")
+      part(n("front"), at = [0, 0, 0], rotate = [90, 0, 0])
+        difference() {
+          children();
+          for (i = [0:cols - 1], j = [0:rows - 1])
+            // The drawer's front, ease / 2 clear all round
+            translate([t + i * (cell[0] + t) + ease / 2, t + j * (cell[1] + t) - ease / 2])
+              rect([cell[0] - ease, cell[1]]);
+        }
+  // Each drawer's box, its front flush with the carcass or the façade
+  dw = cell[0] - 2 * ease;
+  dh = cell[1] - ease;
+  dd = D - t - 2;
+  y0 = (facade ? -t : 0) - open * dd;
+  step("Glue up each drawer and slide it in")
+    for (j = [0:rows - 1], i = [0:cols - 1]) {
+      k = (rows - 1 - j) * cols + i;
+      x = t + i * (cell[0] + t) + ease;
+      z = t + j * (cell[1] + t);
+      num = len(labels) ? labels[k] : undef;
+      name = str(n("drawer"), " ", is_undef(num) ? k + 1 : num);
+      part(str(name, " floor"), at = [x, y0, z]) finger_rect([dw, dd], "out");
+      part(str(name, " front"), at = [x, y0 + t, z], rotate = [90, 0, 0]) {
+        difference() {
+          finger_rect([dw, dh], ["in", "out", "flat", "out"]);
+          if (pull == "notch") translate([dw / 2, dh]) circle(d = min(18, dw / 2, (dh - t) * 0.8));
+          if (pull == "hole") translate([dw / 2, dh * 0.72]) circle(d = min(12, dh * 0.3, dw / 3));
+        }
+        if (!is_undef(num))
+          engrave() translate([dw / 2, pull == "hole" ? dh * 0.36 : dh * 0.42])
+            text(str(num), size = is_undef(font_size) ? min(dh * 0.45, dw * 0.4) : font_size,
+              fit = [dw * 0.7, pull == "hole" ? dh * 0.4 : dh * 0.5], halign = "center", valign = "center");
+      }
+      part(str(name, " back"), at = [x, y0 + dd, z], rotate = [90, 0, 0])
+        finger_rect([dw, dh], ["in", "out", "flat", "out"]);
+      part(str(name, " side"), qty = 2, at = [[x, y0, z], [x + dw - t, y0, z]], rotate = [90, 0, 90])
+        finger_rect([dd, dh], ["in", "in", "flat", "in"]);
+    }
+}

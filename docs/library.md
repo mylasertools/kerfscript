@@ -1072,6 +1072,45 @@ A size turned to lie wider than tall, or to stand taller than wide.
 The size of a name in a table of `[name, size]`, the names in it, and the
 name an older name stands for in a table of `[old, new]`.
 
+## Drawers
+
+`use <kerf/drawers>`
+
+A carcass of small numbered drawers in a grid, as for an advent calendar,
+behind a façade of any shape: a finger-jointed box open at the front,
+shelves and walls halved into each other inside it, and a drawer in each
+cell with its number engraved on the front.
+
+```kerf
+use <kerf/drawers>
+
+$thickness = 3;
+// 24 drawers, numbered in a shuffled order, behind a house front
+drawers(4, 6, [40, 30], 60, shuffle = 7) {
+  polygon([[-10, -5], [185, -5], [185, 200], [87.5, 260], [-10, 200]]);
+}
+```
+
+### `drawers(cols = 4, rows = 6, cell = [40, 30], depth = 60, numbers, shuffle, pull = "notch", ease = 0.8, clearance = 0.15, open = 0, font_size, label = "")`
+
+`cols` by `rows` drawers, each cell `[w, h]` inside and the carcass `depth`
+deep, its front left bottom corner at the origin and the drawers facing
+-y. Drawers run on the shelves `ease` mm clear all round, and pull out
+`open` of their depth in the assembled view. `pull` is `"notch"` (a dip in
+the front's top edge), `"hole"` (a finger hole) or `"none"`. The numbers
+go row by row from the top left: 1 up, a list of your own in `numbers`
+(text works too), shuffled by a seed in `shuffle`, or none with `numbers
+= false`. Children are a façade, drawn on the carcass's front from its
+bottom left corner: the drawers' openings are cut through it, and it goes
+on in a step of its own. The parts are named after `label`, and the
+assembly is in steps: the carcass, the shelves and walls, the façade, the
+drawers.
+
+### `drawers_size(cols, rows, cell, depth)`, `drawers_numbers(n, numbers, shuffle)`
+
+The carcass's outer `[width, height, depth]`, for drawing a façade round
+it, and the numbers on the drawers.
+
 ## Figures
 
 `use <kerf/figures>`
