@@ -8,6 +8,7 @@
 
 import { bendPoint, meshPieces, multiply, type AssemblyPart, type Vec3 } from '../assembly.js';
 import type { HardwareItem } from '../evaluator.js';
+import type { Light } from '../lights.js';
 import { area, difference, intersection, strokeLines, union, type Poly } from '../geometry.js';
 import { HARDWARE_COLORS, HARDWARE_KINDS } from '../hardware.js';
 import { rodFrame } from '../bores.js';
@@ -28,6 +29,8 @@ export interface Body {
   color: string;
   metal?: boolean;
   clear?: boolean;
+  /** Gives off light, as an LED or a flame */
+  glow?: boolean;
   /** x, y, z of each vertex, in millimetres, z up */
   positions: number[];
   /** Three vertex indices per triangle, counter-clockwise seen from outside */
@@ -58,6 +61,8 @@ export interface MeshSource {
   /** Every part flat, for the flat layout and for a model nothing places */
   flat?: AssemblyPart[];
   hardware?: HardwareItem[];
+  /** Light sources, from tealights, LEDs, bulbs and light() */
+  lights?: Light[];
   /** The layers, to tell cuts inside a part from marks on it */
   layers?: { name: string; mode: string }[];
 }
@@ -241,6 +246,7 @@ function hardwareBody(h: HardwareItem): Body | null {
   const b = body(h.label ?? h.kind, 'hardware', h.kind, color, {
     metal: look?.metal,
     clear: h.kind === 'glass',
+    ...(look?.glow && { glow: true }),
   });
   const d = h.to.map((v, k) => v - h.from[k]) as Vec3;
   const length = Math.hypot(...d);
@@ -496,10 +502,32 @@ export function meshBodies(source: MeshSource, options: MeshOptions = {}): Body[
   const out = parts.flatMap((p, i) =>
     partBodies(p, matrices[i], { ...o, layout: flat ? 'flat' : 'assembled' }, !flat, cuts, i),
   );
-  if (!flat && o.hardware)
+  if (!flat && o.hardware) {
     for (const h of source.hardware ?? []) {
       const b = hardwareBody(h);
       if (b) out.push(b);
     }
+    // A flame over each tealight and flickering light
+    for (const l of source.lights ?? [])
+      if (l.flicker) {
+        const b = hardwareBody({
+          kind: 'flame',
+          from: l.from,
+          to: l.from,
+          size: 6,
+          up: [0, 0, 1],
+          sides: 0,
+          step: l.step,
+        });
+        if (b)
+          out.push({
+            ...b,
+            name: l.label ?? 'flame',
+            material: 'flame',
+            color: l.color,
+            glow: true,
+          });
+      }
+  }
   return out;
 }

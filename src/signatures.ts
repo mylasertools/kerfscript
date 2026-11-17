@@ -636,6 +636,25 @@ export const SIGNATURES: Signature[] = [
     doc: 'Hardware the assembly needs, in the parts list and the 3D view',
   },
   {
+    name: 'light',
+    kind: 'module',
+    params: [
+      p('at', 'Where the light is, [x, y, z]', '[0, 0, 0]'),
+      p(
+        'color',
+        'Its colour: "warm white", "white", "cool white", "warm", "flame", a colour\'s name or "#ffd9a0"',
+        '"warm white"',
+      ),
+      p('lumens', 'How much light it gives off: a tealight is about 12', '20'),
+      named('to', 'The other end of a strip of light, [x, y, z]: it lights all along'),
+      named('flicker', 'A flame: it flickers in the 3D view', 'false'),
+      named('label', 'Its name in 3D files'),
+    ],
+    children: true,
+    section: 'Parts and sheets',
+    doc: 'A light source in the 3D view and GLB files, with nothing to show for it',
+  },
+  {
     name: 'material',
     kind: 'module',
     params: [

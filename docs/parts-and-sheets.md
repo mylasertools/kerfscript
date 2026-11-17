@@ -279,14 +279,45 @@ and shows grey. JavaScript gets the list as `HARDWARE_KINDS`.
 | `cord`     | cord, string or thread                      | matt, #b23a3a    |
 | `ribbon`   | ribbon or tape                              | matt, #c2485a    |
 | `wire`     | wire                                        | metal, #b87333   |
-| `led`      | an LED or a strip of them                   | glowing, #fff4c2 |
-| `bulb`     | a light bulb                                | glowing, #fff4c2 |
+| `led`      | an LED or a strip of them, lit              | glowing, #fff4c2 |
+| `bulb`     | a light bulb, lit                           | glowing, #fff4c2 |
+| `tealight` | a tealight, lit, its flame flickering       | metal, #d4d8dc   |
 | `ball`     | a marble, ball or bead                      | matt, #8fb8d8    |
 | `tube`     | a tube or hollow arbor                      | metal, #c9a227   |
 | `lens`     | a lens                                      | matt, #d6ecf3    |
 | `mirror`   | a mirror                                    | metal, #c8d3da   |
 | `movement` | a bought clock, music box or motor movement | matt, #3d3d3d    |
 | `white`    | anything white                              | matt, #f7f7f4    |
+
+### Lights
+
+A tealight, an LED and a bulb give off light: the 3D view lights the model
+with them, and GLB files carry them as point lights, for a render of a
+lantern or a tealight house lit up. "Dim the room" in the 3D view turns the
+room's lights down to show them.
+
+- `hardware("tealight", [x, y, z])` stands a tealight, 39 mm across and
+  16 mm high, on that point. Its flame burns 10 mm above the cup and
+  flickers. Give `to` and `size` for another size, as `size = 59` and `to`
+  24 mm above for a maxi tealight.
+- `hardware("led", from, to)` longer than 20 mm is a strip of LEDs, lit
+  all along; a shorter one, or a ball, is a single LED.
+- `hardware("bulb", at, size = 60, shape = "ball")` is a bulb.
+- `light(at, color = "warm white", lumens = 20)` is a light with nothing
+  to show for it, as a battery light hidden in a base. `to = [x, y, z]`
+  makes it a strip, and `flicker = true` a flame. The colour is `"warm
+white"`, `"white"`, `"cool white"`, `"warm"`, `"flame"`, a paint
+  colour's name or a hex colour.
+
+```kerf
+part("base", at = [-40, -40, 0]) rect([80, 80]);
+hardware("tealight", [0, 0, 3]);
+light([0, 0, 60], "cool white", lumens = 40);
+```
+
+`render()` returns the lights as `lights`: each has `from` and `to` (the
+same point unless it is a strip), `color`, `lumens`, `flicker`, `source`
+(`"tealight"`, `"led"`, `"bulb"` or `"light"`), `step` and `label`.
 
 ```kerf
 step("Stand the walls in the base") {

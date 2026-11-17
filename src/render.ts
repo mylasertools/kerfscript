@@ -21,6 +21,7 @@ import { slotsFor, type Solid } from './slots.js';
 import { boreFor, FITS } from './bores.js';
 import { halvingFor } from './halving.js';
 import type { RenderAnalysis } from './analysis.js';
+import type { Light } from './lights.js';
 import {
   didYouMean,
   Evaluator,
@@ -137,6 +138,8 @@ export interface RenderResult {
   echoes: string[];
   // Hardware from hardware(), and the assembly steps from step()
   hardware: HardwareItem[];
+  // Light sources: tealights, LEDs, bulbs and light()
+  lights: Light[];
   steps: string[];
 }
 
@@ -938,6 +941,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     echoes: res.echoes,
     ...(analysis && { analysis }),
     hardware: res.hardware,
+    lights: res.lights,
     steps: res.steps,
   };
 }

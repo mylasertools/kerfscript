@@ -34,6 +34,8 @@ export {
 } from './assembly.js';
 export type { HardwareItem } from './evaluator.js';
 export { HARDWARE_KINDS, HARDWARE_COLORS, type HardwareKind } from './hardware.js';
+export { LIGHT_COLORS, lightPoints, type Light } from './lights.js';
+export { PAINT_COLORS } from './colors.js';
 
 export const VERSION = '0.10.0';
 export const LANGUAGE_VERSION = '0.3';

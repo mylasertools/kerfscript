@@ -52,6 +52,7 @@ import { KerfError, where, type Pos } from './lexer.js';
 import { FITS } from './bores.js';
 import { HARDWARE_COLORS, HARDWARE_KINDS } from './hardware.js';
 import { paintColor } from './colors.js';
+import { hardwareLights, lightColor, TEALIGHT, type Light } from './lights.js';
 import { parse } from './parser.js';
 import { signature } from './signatures.js';
 import { LIBRARIES } from './stdlib.js';
@@ -376,6 +377,7 @@ export interface EvalResult {
   echoes: string[];
   warnings: string[];
   hardware: HardwareItem[];
+  lights: Light[];
   steps: string[];
 }
 
@@ -403,6 +405,7 @@ export class Evaluator {
   // Inside step(substeps = false): inner steps add to it
   private stepFolded = false;
   readonly hardware: HardwareItem[] = [];
+  readonly lights: Light[] = [];
   readonly echoes: string[] = [];
   readonly warnings: string[] = [];
   readonly layers = new Map<string, LayerDef>(DEFAULT_LAYERS.map((l) => [l.name, l]));
@@ -445,6 +448,7 @@ export class Evaluator {
       echoes: this.echoes,
       warnings: this.warnings,
       hardware: this.hardware,
+      lights: this.lights,
       steps: this.stepNames,
     };
   }
@@ -591,7 +595,7 @@ export class Evaluator {
 
   // A count of the things a statement can make besides its shape
   private effects(): string {
-    return `${this.echoes.length},${this.hardware.length},${this.stepNames.length},${this.warnings.length},${this.copies},${this.layerDefs}`;
+    return `${this.echoes.length},${this.hardware.length},${this.lights.length},${this.stepNames.length},${this.warnings.length},${this.copies},${this.layerDefs}`;
   }
 
   // The first length with a unit read before the program set $scale
@@ -2712,8 +2716,17 @@ export class Evaluator {
         const ball = shape === 'ball' || sidesArg === 0;
         let from = this.vec3(this.arg(c.args, 'from', 1), 'from');
         const toArg = this.arg(c.args, 'to', 2);
-        let to = ball && toArg === undefined ? from : this.vec3(toArg, 'to');
-        const sz = this.arg(c.args, 'size', 3, 6);
+        // A tealight stands at from, 16 mm high, unless to says otherwise
+        const tealight = kind === 'tealight';
+        let to: Vec3 =
+          toArg !== undefined
+            ? this.vec3(toArg, 'to')
+            : tealight
+              ? [from[0], from[1], from[2] + TEALIGHT.height]
+              : ball
+                ? from
+                : this.vec3(toArg, 'to');
+        const sz = this.arg(c.args, 'size', 3, tealight ? TEALIGHT.diameter : 6);
         const size: number | [number, number] =
           typeof sz === 'number' ? sz : this.vec2(sz, 'size', false);
         if (ball) {
@@ -2753,7 +2766,7 @@ export class Evaluator {
         ];
         if (this.hardware.length >= this.limits.maxParts)
           throw new Error(`more than ${this.limits.maxParts} pieces of hardware, the limit`);
-        this.hardware.push({
+        const item: HardwareItem = {
           kind,
           from: pt(from),
           to: pt(to),
@@ -2762,6 +2775,46 @@ export class Evaluator {
           sides,
           step: this.step,
           ...(label !== undefined ? { label: toText(label) } : {}),
+        };
+        this.hardware.push(item);
+        // Tealights, LEDs and bulbs light the model
+        this.lights.push(...hardwareLights(item));
+        return c.children();
+      },
+      // A light with nothing to show for it: at a point, or all along a
+      // strip from at to `to`
+      light: (c) => {
+        const at = this.vec3(this.arg(c.args, 'at', 0, [0, 0, 0]), 'at');
+        const toArg = this.arg(c.args, 'to', -1);
+        const to = toArg === undefined ? at : this.vec3(toArg, 'to');
+        const colorArg = toText(this.arg(c.args, 'color', 1, 'warm white'));
+        const color = lightColor(colorArg);
+        if (!color)
+          throw new Error(
+            `color must look like "#ffd9a0" or be a colour's name, as "warm white" or "flame", got ${show(colorArg)}`,
+          );
+        const lumens = this.num(this.arg(c.args, 'lumens', 2, 20), 'light', 'lumens');
+        if (!(lumens >= 0 && Number.isFinite(lumens)))
+          throw new Error(`lumens must be 0 or more, got ${show(lumens)}`);
+        const flicker = truthy(this.arg(c.args, 'flicker', -1, false));
+        const label = this.arg(c.args, 'label', -1);
+        if (this.lights.length >= this.limits.maxParts)
+          throw new Error(`more than ${this.limits.maxParts} lights, the limit`);
+        const f = this.frame;
+        const pt = (p: Vec3): Vec3 => [
+          f[0] * p[0] + f[1] * p[1] + f[2] * p[2] + f[3],
+          f[4] * p[0] + f[5] * p[1] + f[6] * p[2] + f[7],
+          f[8] * p[0] + f[9] * p[1] + f[10] * p[2] + f[11],
+        ];
+        this.lights.push({
+          from: pt(at),
+          to: pt(to),
+          color,
+          lumens,
+          flicker,
+          source: 'light',
+          step: this.step,
+          ...(label !== undefined && { label: toText(label) }),
         });
         return c.children();
       },

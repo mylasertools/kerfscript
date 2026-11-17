@@ -350,7 +350,14 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
   to 128. `shape = "ball"` (or `sides = 0`) is a ball of diameter `size`
   midway between `from` and `to`; `to` may be left out. It comes back with
   `sides = 0` and `from` and `to` both at its centre. `render()` returns it
-  as `hardware`, and `kerf check` lists it.
+  as `hardware`, and `kerf check` lists it. A `"tealight"` stands at
+  `from`, 39 mm across and 16 mm high unless `to` and `size` say
+  otherwise; tealights, LEDs and bulbs give off light.
+- `light(at, color = "warm white", lumens = 20, to, flicker = false,
+label)` is a light source with nothing to show for it, at a point or,
+  with `to`, all along a strip. `render()` returns every light, those of
+  tealights, LEDs and bulbs too, as `lights`; the 3D view lights the model
+  with them and GLB files carry them.
 - Shapes outside any part form one part named `part`.
 - `material(thickness, kerf, name) { ... }` sets those special variables for
   its children.

@@ -25,6 +25,7 @@ import {
   OrthographicCamera,
   Path,
   PerspectiveCamera,
+  PointLight,
   Scene,
   Shape,
   ShapeGeometry,
@@ -33,7 +34,13 @@ import {
   WebGLRenderer,
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { bendPoint, HARDWARE_COLORS, HARDWARE_KINDS, meshPieces } from './kerfscript.js';
+import {
+  bendPoint,
+  HARDWARE_COLORS,
+  HARDWARE_KINDS,
+  lightPoints,
+  meshPieces,
+} from './kerfscript.js';
 import { referenceKey, verificationFindings } from './verification.js';
 
 // Wood and other sheets by their material name; anything else a light wood
@@ -53,6 +60,38 @@ const MATERIALS = [
 
 const colorOf = (material) => (MATERIALS.find(([re]) => re.test(material)) ?? [0, '#dcc39a'])[1];
 const transparent = (material) => /clear|acrylic|perspex|glass/i.test(material);
+
+// A point light's candela in the model's millimetres, scaled to sit with
+// the room's lights: a tealight lights a wall 5 cm away about as the sun does
+const CANDELA = 5000;
+// What the room's lights are turned down to with "Dim the room"
+const DIM = 0.12;
+const still = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+// A flame: a small glowing drop at the light
+function flameObject(l) {
+  const mesh = new Mesh(
+    new SphereGeometry(3, 16, 12),
+    new MeshStandardMaterial({ color: l.color, emissive: l.color, emissiveIntensity: 1 }),
+  );
+  mesh.material.userData.glow = l.color;
+  mesh.scale.set(1, 1, 1.6);
+  mesh.position.set(...l.from);
+  mesh.updateMatrix();
+  mesh.matrixAutoUpdate = false;
+  return mesh;
+}
+
+// Each light as up to three point lights, a strip spread along it
+function lightObjects(l) {
+  return lightPoints(l, 3).map(({ at, lumens }) => {
+    const o = new PointLight(l.color, (lumens / (4 * Math.PI)) * CANDELA, 0, 2);
+    o.matrixAutoUpdate = false;
+    o.matrix.makeTranslation(...at);
+    o.userData = { base: o.intensity, flicker: l.flicker, seed: Math.random() * 100 };
+    return o;
+  });
+}
 
 // A part's flat shape, cut into pieces that bend smoothly, extruded and
 // bent in its own coordinates
@@ -140,6 +179,7 @@ function hardwareObject(h) {
     metalness: look?.metal ? 0.6 : 0,
     ...(look?.glow && { emissive: color, emissiveIntensity: 0.6 }),
   });
+  if (look?.glow) material.userData.glow = color;
   if (ball) {
     const mesh = new Mesh(new SphereGeometry(h.size / 2, 32, 16), material);
     mesh.position.copy(a);
@@ -194,6 +234,7 @@ export function createAssemblyView(el, options = {}) {
   <p class="kv-step" aria-live="polite"></p>
   <button type="button" data-kv="all"><span>Whole model</span></button>
   <button type="button" data-kv="front" aria-pressed="false"><span>Front view</span></button>
+  <button type="button" data-kv="dim" aria-pressed="false" hidden><span>Dim the room</span></button>
 </div><div class="kv-checks" aria-live="polite" hidden></div>`;
   const stage = el.querySelector('.kv-stage');
   const empty = el.querySelector('.kv-empty');
@@ -212,11 +253,34 @@ export function createAssemblyView(el, options = {}) {
   renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
   stage.prepend(renderer.domElement);
   const scene = new Scene();
-  scene.add(new HemisphereLight('#ffffff', '#b8a58c', 1.1));
-  scene.add(new AmbientLight('#ffffff', 0.25));
-  const sun = new DirectionalLight('#ffffff', 1.6);
-  sun.position.set(-0.6, -1, 1.4);
-  scene.add(sun);
+  const room = [
+    new HemisphereLight('#ffffff', '#b8a58c', 1.1),
+    new AmbientLight('#ffffff', 0.25),
+    new DirectionalLight('#ffffff', 1.6),
+  ];
+  room[2].position.set(-0.6, -1, 1.4);
+  for (const l of room) {
+    l.userData.base = l.intensity;
+    scene.add(l);
+  }
+  let dim = false;
+  // Flames flicker while the model has any
+  let flames = [];
+  let flickering = null;
+  function flicker(time) {
+    for (const o of flames) {
+      const t = time / 1000 + o.userData.seed;
+      const f =
+        0.82 + 0.1 * Math.sin(t * 7.3) + 0.05 * Math.sin(t * 13.1) + 0.03 * Math.sin(t * 23.7);
+      o.intensity = o.userData.base * f;
+    }
+    draw();
+    flickering = requestAnimationFrame(flicker);
+  }
+  function stopFlicker() {
+    if (flickering) cancelAnimationFrame(flickering);
+    flickering = null;
+  }
   // KerfScript is z up
   const persp = new PerspectiveCamera(35, 4 / 3, 1, 1e5);
   persp.up.set(0, 0, 1);
@@ -280,6 +344,8 @@ export function createAssemblyView(el, options = {}) {
   }
 
   function clear() {
+    stopFlicker();
+    flames = [];
     for (const it of items)
       it.object.traverse((o) => {
         o.geometry?.dispose();
@@ -297,8 +363,9 @@ export function createAssemblyView(el, options = {}) {
     steps = result.steps ?? [];
     for (const part of parts) {
       const g = new Group();
-      const color = colorOf(part.material ?? part.name);
-      const clear_ = transparent(part.material ?? '');
+      // A painted part shows its paint
+      const color = part.paint ?? colorOf(part.material ?? part.name);
+      const clear_ = !part.paint && transparent(part.material ?? '');
       const face = new MeshStandardMaterial({
         color,
         roughness: 0.85,
@@ -337,10 +404,31 @@ export function createAssemblyView(el, options = {}) {
         ref: { hardware: h.label ?? '' },
       });
     }
+    const lit = [];
+    for (const l of result.lights ?? []) {
+      if (l.flicker) {
+        const o = flameObject(l);
+        model.add(o);
+        items.push({ object: o, step: l.step ?? 0, base: o.matrix.clone(), ref: {} });
+      }
+      for (const o of lightObjects(l)) {
+        model.add(o);
+        lit.push({
+          object: o,
+          step: l.step ?? 0,
+          base: o.matrix.clone(),
+          ref: { light: l.label ?? '' },
+        });
+        if (l.flicker) flames.push(o);
+      }
+    }
+    btn('dim').hidden = !lit.length;
     empty.hidden = items.length > 0;
     empty.textContent = 'Give parts at or rotate to see them assembled here.';
     model.updateMatrixWorld(true);
     box = items.length ? new Box().setFromObjects(items.map((i) => i.object)) : null;
+    items.push(...lit);
+    if (flames.length && !still()) flickering = requestAnimationFrame(flicker);
     // Keep the step when the model changes but has as many
     if (current > steps.length) current = 0;
     setStep(current, false);
@@ -354,7 +442,8 @@ export function createAssemblyView(el, options = {}) {
     for (const it of items) {
       it.object.traverse((o) => {
         const materials = Array.isArray(o.material) ? o.material : [o.material];
-        for (const material of materials) material?.emissive?.set('#000000');
+        for (const material of materials)
+          material?.emissive?.set(material.userData?.glow ?? '#000000');
       });
       it.object.visible = k === 0 || it.step <= k;
       it.object.matrix.copy(it.base);
@@ -427,6 +516,12 @@ export function createAssemblyView(el, options = {}) {
   btn('prev').addEventListener('click', () => setStep(Math.max(1, current - 1)));
   btn('next').addEventListener('click', () => setStep(Math.min(steps.length, current + 1)));
   btn('all').addEventListener('click', () => setStep(0));
+  btn('dim').addEventListener('click', () => {
+    dim = !dim;
+    btn('dim').setAttribute('aria-pressed', String(dim));
+    for (const l of room) l.intensity = l.userData.base * (dim ? DIM : 1);
+    draw();
+  });
   btn('front').addEventListener('click', () => {
     front = !front;
     btn('front').setAttribute('aria-pressed', String(front));
@@ -445,6 +540,7 @@ export function createAssemblyView(el, options = {}) {
     dispose() {
       observer.disconnect();
       clear();
+      stopFlicker();
       controls.dispose();
       renderer.dispose();
     },
