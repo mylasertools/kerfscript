@@ -264,9 +264,12 @@ Wrap it in `place()` with the plate's placement, put the other plate
 `width` away, and give both plates `slots`: they cut the slots for the
 tabs where the strip passes through them. Segments of the path shorter
 than `straight` are taken as curve; a sharp corner bends round radius
-`r`, two thicknesses by default. Sample a curve with segments shorter
-than `straight`: a curve sampled more coarsely is cut as straight runs
-with a sharp bend at each point. `narrow` uses `narrow_hinge()`.
+`r`, two thicknesses by default, and the strip follows the rounded
+corner: it is as long as the path with its corners rounded, and ends
+where the path ends. A path with no curve or corner makes a straight
+strip. Sample a curve with segments shorter than `straight`: a curve
+sampled more coarsely is cut as straight runs with a sharp bend at each
+point. `narrow` uses `narrow_hinge()`.
 
 ### `wall(outline, depth, name = "wall", join, max_length = 400, rim, seam = 0.3, tabs = true, straight = 10, r, spacing = 1.5, bridge = 3, narrow = false, at = [0, 0, 0], rotate = [90, 0, 0])`
 
@@ -293,7 +296,10 @@ wall(outline, 50, name = "lantern", join = [70, 0], max_length = 200) {
 ```
 
 - The strip's ends meet at the point of the outline nearest `join`: put
-  the seam on a straight, or where a cap or a foot will hide it.
+  the seam on a straight, or where a cap or a foot will hide it. Without
+  `join` they meet in the middle of the longest side.
+- Sharp corners of the outline are rounded as the strip bends round
+  them, radius `r` inside: the strip follows `strip_loop(outline)`.
 - A strip longer than `max_length` is cut into pieces no longer, so each
   fits the bed, split on a straight where one is near. The pieces meet
   `seam` apart, so that bent on their hinges they don't press on each
@@ -304,8 +310,8 @@ wall(outline, 50, name = "lantern", join = [70, 0], max_length = 200) {
   3 mm.
 - The parts are `"<name> front"`, `"<name> back"` and `"<name> strip"`, or
   `"<name> strip 1"`, `"<name> strip 2"` and so on for a strip in pieces.
-  `wall_pieces(outline, max_length, join)` says how many pieces there
-  will be.
+  `wall_pieces(outline, max_length, join, straight, r)` says how many
+  pieces there will be.
 - It stands upright with the outline seen from the front, the back plate
   behind it; `at` and `rotate` place it.
 
@@ -314,8 +320,9 @@ Sample the outline's curves with segments shorter than `straight`, as for
 
 ### `wall_path(outline, join)`
 
-A closed outline as the path round it that `wall()` follows: from the
-point of the outline nearest `join` all the way round to it again.
+A closed outline as the path round it from the point of it nearest
+`join` all the way round to it again; without `join`, from the middle of
+its longest side. `wall()` follows `wall_path(strip_loop(outline), join)`.
 
 ### `path_part(path, s0, s1)`
 
@@ -334,9 +341,30 @@ Where `wall()` splits a strip `L` long into `n` pieces no longer than
 straight runs) where one is near, else at one of `halves` (the middles of
 the path's segments, where its bends end).
 
+### `strip_path(path, straight = 10, r)`
+
+The path a strip bent along `path` follows: each sharp corner, where
+two segments at least `straight` long meet, rounded to an arc whose
+inside radius is `r` (two thicknesses by default), the middle of the
+sheet tangent to both segments. A corner too tight for the segments
+beside it rounds to the radius that fits half of each. `flex_strip()` is
+as long as this path.
+
+### `strip_loop(outline, straight = 10, r)`
+
+A closed outline with its sharp corners rounded as `strip_path()` rounds
+a path's, each corner judged by its whole sides.
+
+### `strip_corner(a, p, b, straight = 10, r)`
+
+The points of the rounded corner at `p`, coming from `a` and going on to
+`b`, as `strip_path()` and `strip_loop()` round it: the arc, or `[p]`
+where the corner is not sharp.
+
 ### `strip_bends(path, straight = 10, r)`
 
-The bends `flex_strip()` makes, as `[s0, s1, angle]` along the path:
+The bends `flex_strip()` makes, as `[s0, s1, angle]` along the path with
+its corners rounded by `strip_path()`:
 where each curve starts and ends and how far it turns, left positive.
 A curve whose radius changes, such as a tight fillet running into a wide
 arc, gives several bends end to end, one for each stretch of much the

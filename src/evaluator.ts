@@ -76,6 +76,29 @@ import {
 // The most sides a piece of round hardware has in the 3D view
 export const MAX_HARDWARE_SIDES = 128;
 
+// Whether the segment a-b passes through the inside of the box
+// [x0, y0, x1, y1], not only along its edge
+function crossesBox(a: Pt, b: Pt, box: number[]): boolean {
+  let [t0, t1] = [0, 1];
+  const dx = b[0] - a[0],
+    dy = b[1] - a[1];
+  for (const [p, q] of [
+    [-dx, a[0] - box[0]],
+    [dx, box[2] - a[0]],
+    [-dy, a[1] - box[1]],
+    [dy, box[3] - a[1]],
+  ]) {
+    if (p === 0) {
+      if (q <= 0) return false;
+    } else {
+      const t = q / p;
+      if (p < 0) t0 = Math.max(t0, t);
+      else t1 = Math.min(t1, t);
+    }
+  }
+  return t0 < t1;
+}
+
 export interface LayerDef {
   name: string;
   mode: 'cut' | 'line' | 'fill' | 'guide';
@@ -1564,7 +1587,8 @@ export class Evaluator {
   }
 
   private bends(v: Value): { x0: number; x1: number; angle: number }[] {
-    if (v === undefined) return [];
+    // An empty list is no bends: a strip computed to have none is straight
+    if (v === undefined || (Array.isArray(v) && !v.length)) return [];
     const list = Array.isArray(v) && Array.isArray(v[0]) ? v : [v];
     return list.map((b, i) => {
       if (
@@ -1971,8 +1995,10 @@ export class Evaluator {
               inside(b[2], b[3]),
               inside(b[0], b[3]),
             ];
+            // An edge of the area through the tile's box, even one with both
+            // ends outside it, means the tile is not wholly inside
             const edge = near.some((p) =>
-              p.some(([x, y]) => x > b[0] && x < b[2] && y > b[1] && y < b[3]),
+              p.some((q, k) => crossesBox(p[k ? k - 1 : p.length - 1], q, b)),
             );
             const whole = corners.every(Boolean) && !edge;
             const m: Matrix = [1, 0, 0, 1, ox, oy];

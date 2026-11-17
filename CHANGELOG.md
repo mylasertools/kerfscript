@@ -38,10 +38,37 @@ Changes to the output of existing programs, each a fix:
   starts; the repeated point had started the hinge and the bend a few mm
   early, on the straight.
 
+- `flex_strip()` rounds each sharp corner of its path to the arc the strip
+  bends round, radius `r` inside, and is as long as that rounded path, so
+  it ends where the path ends; it ran on past it by about 1.6 mm a corner
+  before, and was cut that much too long. `strip_path()`, `strip_loop()`
+  and `strip_corner()` give the rounded path.
+- Closed cuts on a sheet go deepest first: a part nested in another part's
+  hole is cut before that hole, and a hole before the outline round it.
+  Holes of every part used to come before every outline, so a part nested
+  in a hole could be cut after the hole had freed the stock under it.
+- With `$layout = "none"`, parts of different materials or thicknesses go
+  on separate sheets, as when packed. They shared one sheet, labelled with
+  the first part's material.
+- A tab that only dips into a part, less than 1 mm or half its thickness,
+  is not cut as a slot because another tab of its part goes deep enough:
+  each piece that enters the part is judged on its own depth, and the
+  shallow one is reported as a collision.
+- `pattern()` clips each tile that an edge of the area crosses. A tile with
+  its corners inside the area and none of the area's corners inside it was
+  kept whole, over a rib or a strip of the area running through it.
+
 Fixes:
 
 - A part with nothing in it warns: `Part "P" is empty`.
 - `slots = []` asks for no slots, without a warning that none pass through.
+- `flex_strip()` along a path with no curve or corner makes a straight
+  strip; it stopped with "bend must be [x0, x1, angle]". `bend = []` is no
+  bend.
+- `wall()` never cuts a piece longer than `max_length`; a cut it could not
+  put on a straight could leave one longer. Without `join`, its seam is in
+  the middle of the outline's longest side, not at its first point, which
+  is often a corner.
 
 ## 0.10.0 (2026-11-16)
 

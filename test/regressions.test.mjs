@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { KerfError, meshBodies, meshPieces, render } from '../dist/index.js';
+import { bendPoint, KerfError, meshBodies, meshPieces, render } from '../dist/index.js';
 
 const layers = (r) => r.sheets[0].items.map((it) => it.layers);
 
@@ -529,4 +529,221 @@ echo(strip_bends(concat([[-40, 0]], [for (a = [0:5:90]) [-25, 0] + 25 * [cos(a),
     bends.map((b) => Math.round(b[2] * 10) / 10),
     [92.5, 85],
   );
+});
+
+test('pattern() clips a tile that an edge of the area crosses, though no corner of the area is in it', () => {
+  const area = (mask) => {
+    const r = render(
+      `measure() { difference() { rect([20, 20], center = true);
+         pattern(100) { rect([10, 10], center = true); ${mask} } } echo($area); }`,
+    );
+    return Number(r.echoes[0]);
+  };
+  // A 2 mm rib kept between two openings, across, up and corner to corner
+  const strip = (rot) =>
+    `difference() { rect([12, 12], center = true); rotate(${rot}) rect([2, 40], center = true); }`;
+  const clipped = (rot) =>
+    render(
+      `measure() { difference() { rect([20, 20], center = true);
+         intersection() { rect([10, 10], center = true); ${strip(rot)} } } echo($area); }`,
+    ).echoes[0];
+  for (const rot of [0, 90, 45])
+    assert.equal(String(area(strip(rot))), clipped(rot), `rotate(${rot})`);
+  assert.equal(area(strip(0)), 320);
+});
+
+test('a tab that only dips into a part is not a slot, though another tab on its part goes deep', () => {
+  const src = (t, turn) => `$thickness = ${t};
+    place(rotate = [0, 0, ${turn}]) {
+      part("base", at = [0, 0, 0], slots = "wall", clearance = 0) rect([60, 40]);
+      part("wall", at = [0, 20, ${t}], rotate = [90, 0, 0]) {
+        rect([60, 20]);
+        translate([30, -0.2]) rect([5, 0.21]);
+        translate([10, -${t}]) rect([5, ${t} + 0.01]);
+      }
+    }`;
+  for (const [t, turn] of [
+    [3, 0],
+    [3, 30],
+    [1, 0],
+  ]) {
+    const r = render(src(t, turn), { kerf: 0 });
+    const base = r.parts.find((p) => p.name === 'base');
+    // The outline and one slot 5 x t, not two
+    assert.ok(
+      Math.abs(base.cutLength - (200 + 10 + 2 * t)) < 0.01,
+      `${t} ${turn}: ${base.cutLength}`,
+    );
+    assert.ok(
+      r.warnings.some((w) => /collide/.test(w)),
+      `${t} ${turn}`,
+    );
+  }
+});
+
+test('closed cuts go deepest first: a part nested in a hole is cut before the hole', () => {
+  const box = (xs, ys) => [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+  const fromD = (d) =>
+    d
+      .split('M')
+      .slice(1)
+      .map((p) => {
+        const v = p.match(/-?[\d.]+/g).map(Number);
+        return box(
+          v.filter((_, i) => i % 2 === 0),
+          v.filter((_, i) => i % 2 === 1),
+        );
+      });
+  // The boxes of the cut layer's rings, in the order each output has them
+  const order = (r) => {
+    const s = r.sheets[0];
+    const svg = s.svg.split('<g id="cut"')[1].split('</g>')[0];
+    const dxf = [];
+    let cur = null;
+    const lines = s.dxf.split('\n').map((l) => l.trim());
+    for (let i = 0; i < lines.length - 1; i += 2) {
+      const [code, v] = [lines[i], lines[i + 1]];
+      if (code === '0' && v === 'POLYLINE') dxf.push((cur = { x: [], y: [] }));
+      if (code === '10' && cur) cur.x.push(Number(v));
+      if (code === '20' && cur) cur.y.push(Number(v));
+    }
+    return {
+      paths: fromD(s.paths.find((p) => p.name === 'cut').regions),
+      svg: [...svg.matchAll(/ d="([^"]+)"/g)].flatMap((m) => fromD(m[1])),
+      dxf: dxf.map((c) => box(c.x.slice(1), c.y.slice(1))),
+    };
+  };
+  const holds = (a, b) => a[0] < b[0] && a[1] < b[1] && a[2] > b[2] && a[3] > b[3];
+  const cases = [
+    // a solid insert in a frame
+    'part("frame") difference() { rect([100, 100]); translate([10, 10]) rect([80, 80]); } part("insert") rect([20, 20]);',
+    // a washer in a ring
+    'part("ring") difference() { circle(50); circle(40); } part("washer") difference() { circle(15); circle(5); }',
+    // rings inside rings
+    'for (r = [50, 35, 20]) part(str("ring ", r)) difference() { circle(r); circle(r - 8); }',
+  ];
+  for (const src of cases) {
+    const r = render('$nest = true; $fn = 32; ' + src, { kerf: 0 });
+    const o = order(r);
+    let nested = 0;
+    for (const [k, boxes] of Object.entries(o)) {
+      assert.equal(boxes.length, o.paths.length, k);
+      for (let i = 0; i < boxes.length; i++)
+        for (let j = i + 1; j < boxes.length; j++) {
+          assert.ok(!holds(boxes[i], boxes[j]), `${k}: ring ${i} holds ring ${j} after it: ${src}`);
+          if (holds(boxes[j], boxes[i])) nested++;
+        }
+    }
+    // The parts did nest, or there would be nothing to order
+    assert.ok(nested >= 3 * (r.parts.length + 1), src);
+  }
+});
+
+test('$layout = "none" puts each material and thickness on a sheet of its own', () => {
+  const r = render(
+    `$layout = "none";
+     material(name = "plywood", thickness = 3) part("base") rect([40, 20]);
+     material(name = "acrylic", thickness = 2) part("window") translate([50, 0]) rect([30, 15]);
+     material(name = "acrylic", thickness = 3) part("lid") translate([0, 30]) rect([10, 10]);
+     material(name = "plywood", thickness = 3) part("foot") translate([0, 30]) rect([10, 5]);
+     part("back", side = "back") { rect(10); score(side = "back") line([2, 2], [8, 8]); }`,
+    { kerf: 0 },
+  );
+  const sheets = r.sheets.map((s) => `${s.material} ${s.thickness}: ${s.items.map((i) => i.part)}`);
+  assert.deepEqual(sheets.slice(0, 3), [
+    'plywood 3: base,foot',
+    'acrylic 2: window',
+    'acrylic 3: lid',
+  ]);
+  // Kept where they were drawn: the foot's top 15 mm past the base's, y down
+  const ply = r.sheets[0].items;
+  const y = (it) =>
+    Math.min(
+      ...it.layers
+        .get('cut')
+        .regions.flat()
+        .map((p) => p[1]),
+    );
+  assert.equal(Math.round(y(ply[0]) - y(ply[1])), 15);
+});
+
+// Where a strip's middle is, assembled, at x along it
+const stripAt = (p, x) => {
+  const q = bendPoint(p.bends ?? [], p.thickness, [x, 0, p.thickness / 2]);
+  const m = p.matrix;
+  return [0, 1, 2].map(
+    (i) => m[i * 4] * q[0] + m[i * 4 + 1] * q[1] + m[i * 4 + 2] * q[2] + m[i * 4 + 3],
+  );
+};
+const stripEnds = (p) => {
+  const xs = p.outline.flat().map((q) => q[0]);
+  return [stripAt(p, Math.min(...xs)), stripAt(p, Math.max(...xs))];
+};
+const near = (a, b, tol, msg) =>
+  assert.ok(Math.hypot(...a.map((v, i) => v - b[i])) < tol, `${msg}: ${a} is not ${b}`);
+
+test('a strip round sharp corners ends where its path ends, rounded at the corners', () => {
+  for (const [path, end] of [
+    ['[[0, 0], [100, 0], [100, 100]]', [100, 100, 0]],
+    ['[[0, 0], [100, 0], [100, -100]]', [100, -100, 0]],
+    ['[[0, 0], [100, 0], [100, -60], [30, -80]]', [30, -80, 0]],
+    ['[[0, 0], [60, 0], [60, 40], [0, 40], [0, 15]]', [0, 15, 0]],
+  ]) {
+    const r = render(`use <kerf/hinge>\n$thickness = 3;\nflex_strip(${path}, 30, tabs = false);`);
+    assert.deepEqual(r.warnings, []);
+    const [a, b] = stripEnds(r.assembly[0]);
+    near(a, [0, 0, 0], 0.01, path);
+    near(b, end, 0.05, path);
+  }
+  // The L: two straights of 92.5 and a quarter circle of radius 7.5 between
+  const l = render(
+    'use <kerf/hinge>\n$thickness = 3;\nflex_strip([[0, 0], [100, 0], [100, 100]], 30, tabs = false);',
+  );
+  assert.ok(Math.abs(l.parts[0].width - (185 + (7.5 * Math.PI) / 2)) < 0.05, l.parts[0].width);
+});
+
+test('a strip with no curve is straight, and a wall cut into straight pieces renders', () => {
+  for (const path of ['[[0, 0], [100, 0]]', '[[0, 0], [50, 0], [100, 0]]']) {
+    const r = render(`use <kerf/hinge>\nflex_strip(${path}, 30);`, { kerf: 0 });
+    assert.equal(r.parts[0].width, 100);
+    assert.equal(r.assembly[0].bends, undefined);
+  }
+  const sq = render(
+    'use <kerf/hinge>\n$thickness = 3;\nwall([[0, 0], [100, 0], [100, 100], [0, 100]], 30, max_length = 100);',
+  );
+  assert.deepEqual(sq.warnings, []);
+  assert.equal(sq.parts.filter((p) => /strip/.test(p.name)).length, 4);
+});
+
+test('wall() never cuts a piece longer than max_length, and its pieces meet end to end', () => {
+  for (const [outline, opts, max] of [
+    ['[[0, 0], [100, 0], [100, 100], [0, 100]]', 'join = [50, 0], max_length = 150', 150],
+    ['[[0, 0], [300, 0], [300, 10], [0, 10]]', 'join = [0, 5], max_length = 150', 150],
+    ['[[0, 0], [100, 0], [100, 100], [0, 100]]', 'join = [0, 0]', 400],
+    ['[for (a = [0:5:355]) 40 * [cos(a), sin(a)]]', 'join = [0, -40], max_length = 70', 70],
+  ]) {
+    const r = render(`use <kerf/hinge>\n$thickness = 3;\nwall(${outline}, 30, ${opts});`, {
+      kerf: 0,
+    });
+    assert.deepEqual(r.warnings, [], opts);
+    const strips = r.assembly.filter((p) => /strip/.test(p.name));
+    for (const p of r.parts.filter((p) => /strip/.test(p.name)))
+      assert.ok(p.width <= max + 1e-6, `${opts}: ${p.name} ${p.width}`);
+    // Each piece starts where the one before it ends, seam apart
+    const ends = strips.map(stripEnds);
+    for (let k = 0; k < ends.length; k++)
+      near(ends[k][1], ends[(k + 1) % ends.length][0], 0.35, `${opts} piece ${k + 1}`);
+  }
+});
+
+test('wall_splits keeps every cut where no piece is longer than max_length', () => {
+  const r = render(`use <kerf/hinge>
+echo(wall_splits(400, 3, 150, [100], []));
+echo(wall_splits(300, 2, 160, [], []));`);
+  for (const e of r.echoes) {
+    const cuts = [0, ...JSON.parse(e)];
+    cuts.push(cuts.length === 3 ? 400 : 300);
+    const max = cuts.length === 4 ? 150 : 160;
+    for (let k = 1; k < cuts.length; k++) assert.ok(cuts[k] - cuts[k - 1] <= max, e);
+  }
 });

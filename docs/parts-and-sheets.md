@@ -195,7 +195,8 @@ part("Cam", at = [30, 18, 20], rotate = [90, 0, 0], bores = ["Crank axle"],
 A living hinge bends a part, and the assembled view can show it bent.
 `bend = [x0, x1, angle]` bends the part along its x between x0 and x1, the
 far end folding up towards its top face by `angle` degrees (down for a
-negative angle); give a list for more than one bend. The hinge's middle
+negative angle); give a list for more than one bend, or an empty list
+for none. The hinge's middle
 layer keeps its length, so the radius follows from the hinge's width.
 Parts glued on a bent part take `on = "name"` and move with the run they
 sit on. `flex_strip()` in `kerf/hinge` works out the bends of a strip that
@@ -316,6 +317,9 @@ parts and at the sheet edges.
 
 A part larger than the sheet produces a warning. Set `$layout = "none"`
 to keep the positions from your code instead of packing the parts.
+
+Either way, parts of different materials or thicknesses go on separate
+sheets: plywood parts on one, acrylic on another.
 
 The CLI `--margin` option and API `margin` option let you set the edge
 spacing separately from the gap between parts.

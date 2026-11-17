@@ -1,7 +1,7 @@
 // Copyright (c) 2026 MyLaserTools. SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-MyLaserTools-Commercial
 
 import { DEFAULT_LAYERS, type LayerDef } from '../evaluator.js';
-import { area, type Poly } from '../geometry.js';
+import { cutOrder, type Poly } from '../geometry.js';
 import type { Placed } from '../render.js';
 import { tidy } from './svg.js';
 
@@ -103,14 +103,14 @@ export function toDxf(items: Placed[], _width: number, height: number, layers: L
   };
   for (const def of layers) {
     const ln = names.get(def.name)!;
-    const outer: Poly[] = [];
+    const rings: Poly[] = [];
     for (const it of items) {
       const l = it.layers.get(def.name);
       if (!l) continue;
       for (const p of l.lines) poly(ln, p, false);
-      for (const p of l.regions) area(p) < 0 ? poly(ln, p, true) : outer.push(p);
+      for (const p of l.regions) rings.push(p);
     }
-    for (const p of outer) poly(ln, p, true);
+    for (const i of cutOrder(rings)) poly(ln, rings[i], true);
   }
   g(0, 'ENDSEC');
   g(0, 'EOF');

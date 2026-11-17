@@ -648,39 +648,44 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   const moved = (layers: Map<string, Layer>, m: Matrix) =>
     transform({ layers, parts: [] }, m).layers;
 
+  // Parts of each material and thickness are a sheet of their own
+  const groups = new Map<string, typeof ready>();
+  for (const r of ready) {
+    const key = `${r.info.material}|${r.info.thickness}`;
+    groups.set(key, [...(groups.get(key) ?? []), r]);
+  }
   if (layoutMode === 'none') {
-    const items: Placed[] = [];
-    for (const r of ready)
-      for (let c = 0; c < r.info.qty; c++)
-        items.push({
-          part: r.info.name,
-          copy: r.copy(c),
-          layers: moved(r.layers, flipY),
-          rotated: false,
-        });
-    const all = new Map<string, Layer>();
-    for (const it of items)
-      for (const [k, l] of it.layers) {
-        const t = all.get(k) ?? { regions: [], lines: [] };
-        for (const p of l.regions) t.regions.push(p);
-        for (const p of l.lines) t.lines.push(p);
-        all.set(k, t);
+    // Each sheet keeps the parts where the program drew them
+    for (const group of groups.values()) {
+      const items: Placed[] = [];
+      for (const r of group)
+        for (let c = 0; c < r.info.qty; c++)
+          items.push({
+            part: r.info.name,
+            copy: r.copy(c),
+            layers: moved(r.layers, flipY),
+            rotated: false,
+          });
+      const all = new Map<string, Layer>();
+      for (const it of items)
+        for (const [k, l] of it.layers) {
+          const t = all.get(k) ?? { regions: [], lines: [] };
+          for (const p of l.regions) t.regions.push(p);
+          for (const p of l.lines) t.lines.push(p);
+          all.set(k, t);
+        }
+      const b = exportBounds(all);
+      const shift: Matrix = [1, 0, 0, 1, margin - b[0], margin - b[1]];
+      for (const it of items) {
+        it.layers = moved(it.layers, shift);
+        it.offset = [shift[4], shift[5]];
       }
-    const b = exportBounds(all);
-    const shift: Matrix = [1, 0, 0, 1, margin - b[0], margin - b[1]];
-    for (const it of items) {
-      it.layers = moved(it.layers, shift);
-      it.offset = [shift[4], shift[5]];
+      sheets.push(
+        finishSheet(items, b[2] - b[0] + 2 * margin, b[3] - b[1] + 2 * margin, group[0].info),
+      );
     }
-    sheets.push(
-      finishSheet(items, b[2] - b[0] + 2 * margin, b[3] - b[1] + 2 * margin, ready[0]?.info),
-    );
+    if (!groups.size) sheets.push(finishSheet([], 2 * margin, 2 * margin, undefined));
   } else {
-    const groups = new Map<string, typeof ready>();
-    for (const r of ready) {
-      const key = `${r.info.material}|${r.info.thickness}`;
-      groups.set(key, [...(groups.get(key) ?? []), r]);
-    }
     for (const group of groups.values()) {
       const [W, H] = sheetSize;
       const queue: {
