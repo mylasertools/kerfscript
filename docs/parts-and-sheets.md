@@ -266,6 +266,23 @@ part("card", at = [0, 0, 0], fold_open = open, fold = [
 A part bends on living hinges or folds, not both. Folds show in the
 assembled view and its 3D files; flat and print layouts lie flat.
 
+### Hanging parts
+
+A part that hangs, as a shelf sitter's legs on cords or a charm on a ring,
+swings until its weight is straight below the point it hangs from.
+`hang = [x, y]` is that point on the part, in its own coordinates, and
+`at` is where it hangs in the assembly; `rotate` sets the plane it swings
+in. `cord = 20` hangs it 20 mm lower on a cord, which goes in the hardware
+list and the 3D view; without it the part hangs on a ring or pin at `at`.
+
+```kerf
+$thickness = 3;
+part("body", at = [-20, 0, 0], rotate = [90, 0, 0]) rect([40, 50]);
+// Legs drawn lying down: each swings down from its top end
+part("leg", qty = 2, at = [[-10, -1.5, 2], [10, -1.5, 2]], rotate = [90, 0, 0],
+     hang = [0, 0], cord = 20) translate([0, -4]) rect([40, 8]);
+```
+
 ### Numbered parts
 
 `$label_parts = true;` numbers the parts 1, 2, 3 in the order they are

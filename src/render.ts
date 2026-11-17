@@ -40,6 +40,7 @@ import {
   layerBounds,
   offset,
   pieces,
+  regionMoments,
   strokeLines,
   transform,
   union,
@@ -268,6 +269,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       `Two different parts are named "${n}"; slots, glue and on = find parts by name, so give each its own.`,
     );
 
+  hangParts(parts, mode, res.hardware);
   glueOn(parts, warnings);
   // Parts riding on a bent part move with it before any joint is worked
   // out, so slots, bores and halvings are cut where they end up
@@ -974,6 +976,65 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     lights: res.lights,
     steps: res.steps,
   };
+}
+
+// Each hanging part swung about the point it hangs from, in its own
+// plane, until its weight is straight below, and dropped by its cord; the
+// cord goes in the hardware
+function hangParts(parts: PartShape[], mode: (k: string) => string, hardware: HardwareItem[]) {
+  for (const p of parts) {
+    if (!p.hang || !p.placements) continue;
+    const material = union(
+      [...p.layers].filter(([k]) => mode(k) === 'cut').flatMap(([, l]) => l.regions),
+    );
+    const { area: a, centroid } = regionMoments(material);
+    const [hx, hy] = p.hang.at;
+    const [vx, vy] = a > 0 ? [centroid[0] - hx, centroid[1] - hy] : [0, -1];
+    const L = p.hang.cord;
+    p.placements = p.placements.map((pl, i) => {
+      const m0 = placementMatrix(pl);
+      // The world z of the weight's direction after a turn t in the plane is
+      // cos t (a vx + b vy) + sin t (b vx - a vy): lowest at this t
+      const [ra, rb] = [m0[8], m0[9]];
+      const t =
+        Math.hypot(ra, rb) < 1e-9 ? 0 : Math.atan2(-(rb * vx - ra * vy), -(ra * vx + rb * vy));
+      const [c, s] = [Math.cos(t), Math.sin(t)];
+      // Its point at the origin, turned, placed, then dropped by the cord
+      const turn = [
+        c,
+        -s,
+        0,
+        -(c * hx - s * hy),
+        s,
+        c,
+        0,
+        -(s * hx + c * hy),
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+      ];
+      const matrix = multiply(translation(0, 0, -L), multiply(m0, turn));
+      if (L > 0) {
+        const top: [number, number, number] = [m0[3], m0[7], m0[11]];
+        hardware.push({
+          kind: 'cord',
+          from: top,
+          to: [top[0], top[1], top[2] - L],
+          size: 1.5,
+          up: [0, 1, 0],
+          sides: 12,
+          step: p.step ?? 0,
+          label: `${p.name}${p.placements!.length > 1 ? ` ${i + 1}` : ''} cord`,
+        });
+      }
+      return { ...pl, matrix };
+    });
+  }
 }
 
 // A slots name: exact, or with * standing for any run of characters

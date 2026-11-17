@@ -2714,6 +2714,27 @@ export class Evaluator {
         const folds = this.folds(foldArg, this.arg(c.args, 'fold_open', -1));
         if (folds.length && bendArg !== undefined)
           throw new Error('a part bends on living hinges or folds, not both');
+        // hang = [x, y]: the point it hangs from, at `at`, on a cord `cord`
+        // mm long; it swings in its own plane until its weight is below
+        const hangArg = this.arg(c.args, 'hang', -1);
+        const cordArg = this.arg(c.args, 'cord', -1);
+        const hang =
+          hangArg === undefined
+            ? undefined
+            : {
+                at: this.vec2(hangArg, 'hang', false) as Pt,
+                cord: cordArg === undefined ? 0 : this.num(cordArg, 'part', 'cord'),
+              };
+        if (hang && !(hang.cord >= 0 && Number.isFinite(hang.cord)))
+          throw new Error(`cord must be a length, 0 or more, got ${show(cordArg)}`);
+        if (cordArg !== undefined && !hang) throw new Error('cord goes with hang = [x, y]');
+        if (
+          hang &&
+          (at === undefined || glue !== undefined || bendArg !== undefined || folds.length)
+        )
+          throw new Error(
+            'a hanging part needs at, the point it hangs from, and no glue, bend or fold',
+          );
         let placements =
           at === undefined &&
           turn === undefined &&
@@ -2843,6 +2864,7 @@ export class Evaluator {
             material: toText(this.dyn(c.env, '$material') ?? 'material'),
             ...(paint && { paint }),
             ...(piecesWanted !== undefined && { pieces: piecesWanted }),
+            ...(hang && { hang }),
             ...(mine ? { placements: mine } : {}),
             ...(stack > 1 ? { stack } : {}),
             // A mirrored copy bends as the mirror image of the part

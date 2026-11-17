@@ -313,6 +313,10 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
     origin stays flat and each other turns about the folds between,
     towards the top face for an angle more than 0. `fold_open` (1) scales
     every fold's angle, 0 lying flat. A fold that divides nothing warns.
+  - `hang = [x, y]`, `cord = 0`: the part hangs from that point on it, at
+    `at`, and swings in the plane `rotate` gives until its weight is
+    straight below; `cord` hangs it that much lower on a cord, listed as
+    hardware.
   - `on = "name"`: the part is glued to that bent part, and moves with the
     run of it under its centre.
   - `glue = "name"`, `face = "top"`: the part is glued flat on that part's

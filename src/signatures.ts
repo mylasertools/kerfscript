@@ -581,6 +581,11 @@ export const SIGNATURES: Signature[] = [
         'Folds along any line in the assembled view, as for card: [from, to, angle] or a list; more than 0 folds towards the top face',
       ),
       named('fold_open', 'How far the folds are folded: 0 lies flat, 1 as their angles say', '1'),
+      named(
+        'hang',
+        'The point [x, y] on the part it hangs from, at `at`: it swings in its own plane until its weight is below',
+      ),
+      named('cord', 'The cord it hangs on, in mm; 0 for a ring or pin', '0'),
       named('on', 'The name of a bent part this one is glued to, to move with it'),
       named('slots', 'Names of parts whose tabs pass through this one: their slots are cut'),
       named('clearance', 'Added to the slots, in total across each', '0.1'),

@@ -42,6 +42,9 @@ export interface PartShape {
   bends?: Bend[];
   // Folds along any line, for card and paper
   folds?: Fold[];
+  // Hanging from the point `at` (in its own coordinates) on a cord `cord`
+  // mm long, or a ring or pin when 0: it swings until its weight is below
+  hang?: { at: Pt; cord: number };
   // The part this one is glued to, so it moves with that part's bends
   on?: string;
   // Parts whose tabs pass through this one: slots cut where they meet it

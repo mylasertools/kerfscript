@@ -1046,3 +1046,28 @@ test('part(fold = ...) folds card along any line, panel by panel', () => {
     /living hinges or folds, not both/,
   );
 });
+
+test('part(hang = ...) swings a part until its weight is below, on a cord', () => {
+  const r = render(
+    '$thickness = 3; part("leg", qty = 2, at = [[-10, -1.5, 2], [10, -1.5, 2]], rotate = [90, 0, 0], hang = [0, 0], cord = 20) translate([0, -4]) rect([40, 8]);',
+  );
+  assert.deepEqual(r.warnings, []);
+  assert.deepEqual(
+    r.hardware.map((h) => [h.kind, h.label, h.from, h.to]),
+    [
+      ['cord', 'leg 1 cord', [-10, -1.5, 2], [-10, -1.5, -18]],
+      ['cord', 'leg 2 cord', [10, -1.5, 2], [10, -1.5, -18]],
+    ],
+  );
+  const leg = meshBodies(r).find((b) => b.kind === 'part');
+  const zs = leg.positions.filter((_, i) => i % 3 === 2);
+  const xs = leg.positions.filter((_, i) => i % 3 === 0);
+  // Hanging straight down from the cord's end, 40 mm long
+  assert.ok(Math.abs(Math.max(...zs) + 18) < 1e-6 && Math.abs(Math.min(...zs) + 58) < 1e-6);
+  assert.ok(Math.abs((Math.max(...xs) + Math.min(...xs)) / 2 + 10) < 1e-6);
+  assert.throws(() => render('part("x", hang = [0, 0]) rect(10);'), /needs at/);
+  assert.throws(
+    () => render('part("x", at = [0, 0, 0], cord = 5) rect(10);'),
+    /cord goes with hang/,
+  );
+});
