@@ -152,3 +152,27 @@ test('text(arc = r) goes over the top of a circle, or along the bottom', () => {
     /path or arc, not both/,
   );
 });
+
+test('text(lines = 2) with fit breaks a long name when two lines let it be bigger', () => {
+  const part = (src) => render(`part("t") ${src}`, font).parts[0];
+  const one = part('text("Anna-Maria Schmidt", fit = [60, 30]);');
+  const two = part('text("Anna-Maria Schmidt", fit = [60, 30], lines = 2);');
+  assert.ok(two.height > 3 * one.height, `${two.height} vs ${one.height}`);
+  assert.ok(two.width <= 60 + 1e-6 && two.height <= 30 + 1);
+  // A short name stays on one line, as big as without lines
+  const bo = part('text("BO", fit = [60, 30], lines = 2);');
+  assert.ok(Math.abs(bo.height - part('text("BO", fit = [60, 30]);').height) < 0.01);
+  // A newline always breaks; three lines without fit are as even as they go
+  const nl = part('text("Happy\\nEaster", 10);');
+  assert.ok(nl.height > 15 && nl.width < part('text("Happy Easter", 10);').width);
+  const three = render(
+    'measure() { text("one two three four five six", 10, lines = 3); echo($bounds); }',
+    font,
+  ).echoes[0];
+  assert.ok(JSON.parse(three)[1] < -20, three);
+  assert.throws(() => render('text("A", lines = 0);', font), /lines must be from 1 to 20/);
+  assert.throws(
+    () => render('text("A B", lines = 2, arc = 20);', font),
+    /in a block, or along a path/,
+  );
+});

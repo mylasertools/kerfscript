@@ -57,7 +57,14 @@ import { parse } from './parser.js';
 import { signature } from './signatures.js';
 import { LIBRARIES } from './stdlib.js';
 import { flatten, parseSvgPath } from './paths.js';
-import { arcPath, textAlong, textMetrics, textRegions, type FontBook } from './text.js';
+import {
+  arcPath,
+  textAlong,
+  textMetrics,
+  textRegions,
+  type FontBook,
+  type TextOptions,
+} from './text.js';
 import {
   equals,
   isFn,
@@ -1580,6 +1587,122 @@ export class Evaluator {
     return o;
   }
 
+  // The text as a block of lines: each "\n" breaks a line, and with
+  // lines = n the paragraphs break at spaces into up to n lines in all,
+  // as even as they go. With fit, the number of lines that lets the text
+  // be biggest; each line aligned by halign, the block by valign.
+  private textBlock(
+    a: Args,
+    text: string,
+    o: TextOptions,
+    maxLines: number,
+    spacing: number,
+  ): Poly[] {
+    const fonts = this.opts.fonts!;
+    const one = { ...o, size: 1 };
+    const widths = new Map<string, number>();
+    const width = (line: string) => {
+      if (!line) return 0;
+      let w = widths.get(line);
+      if (w === undefined) {
+        const m = textMetrics(fonts, line, one);
+        w = Math.max(m.advance, m.bounds[1][0] - m.bounds[0][0]);
+        widths.set(line, w);
+      }
+      return w;
+    };
+    const paras = text.split('\n').map((p) => p.split(/ +/).filter(Boolean));
+    // The words of a paragraph in k lines, the widest as narrow as it goes
+    const split = (words: string[], k: number): string[] => {
+      if (k <= 1 || words.length <= 1) return [words.join(' ')];
+      const m = words.length;
+      const n = Math.min(k, m);
+      const line = (i: number, j: number) => width(words.slice(i, j).join(' '));
+      // best[c][j]: the narrowest widest line for words j.. in c lines
+      const best: number[][] = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(Infinity));
+      const cut: number[][] = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(m));
+      for (let j = 0; j < m; j++) best[1][j] = line(j, m);
+      for (let c = 2; c <= n; c++)
+        for (let j = 0; j < m; j++)
+          for (let e = j + 1; e <= m - c + 1; e++) {
+            const w = Math.max(line(j, e), best[c - 1][e]);
+            if (w < best[c][j]) [best[c][j], cut[c][j]] = [w, e];
+          }
+      const out: string[] = [];
+      for (let c = n, j = 0; c >= 1; c--) {
+        const e = c === 1 ? m : cut[c][j];
+        out.push(words.slice(j, e).join(' '));
+        j = e;
+      }
+      return out;
+    };
+    // `total` lines in all: each extra line goes to the widest paragraph
+    const layout = (total: number): string[] => {
+      const counts = paras.map(() => 1);
+      for (let extra = total - paras.length; extra > 0; extra--) {
+        let wide = -1;
+        let at = -1;
+        paras.forEach((words, i) => {
+          if (counts[i] >= words.length) return;
+          const w = Math.max(...split(words, counts[i]).map(width));
+          if (w > wide) [wide, at] = [w, i];
+        });
+        if (at < 0) break;
+        counts[at]++;
+      }
+      return paras.flatMap((words, i) => split(words, counts[i]));
+    };
+    const m1 = textMetrics(fonts, 'H', one);
+    const lineH = spacing * (m1.ascent - m1.descent);
+    const given = this.arg(a, 'size', 1);
+    const fit = this.arg(a, 'fit', -1);
+    const [fw, fh] =
+      fit === undefined
+        ? [undefined, undefined]
+        : Array.isArray(fit)
+          ? [fit[0] as number | undefined, fit[1] as number | undefined]
+          : [fit as number, undefined];
+    const sizeOf = (lines: string[]) => {
+      if (fit === undefined) return o.size;
+      const sizes = [
+        ...(fw !== undefined ? [fw / Math.max(...lines.map(width), 1e-9)] : []),
+        ...(fh !== undefined ? [fh / (m1.cap + (lines.length - 1) * lineH)] : []),
+        ...(given !== undefined ? [this.num(given, 'text', 'size')] : []),
+      ];
+      return Math.min(...sizes);
+    };
+    // With fit, the number of lines that lets the text be biggest; without,
+    // as many as lines allows
+    let lines = layout(Math.max(maxLines, paras.length));
+    if (fit !== undefined) {
+      let size = -1;
+      for (let t = paras.length; t <= Math.max(maxLines, paras.length); t++) {
+        const l = layout(t);
+        const s = sizeOf(l);
+        if (s > size * (1 + 1e-9)) [lines, size] = [l, s];
+      }
+    }
+    const size = sizeOf(lines);
+    const polys: Poly[] = [];
+    lines.forEach((line, j) => {
+      for (const p of textRegions(fonts, line, { ...o, size, valign: 'baseline' }))
+        polys.push(p.map(([x, y]): Pt => [x, y - j * lineH * size]));
+    });
+    const b = bounds(polys);
+    if (!b) return [];
+    const dy =
+      o.valign === 'top'
+        ? -b[3]
+        : o.valign === 'center'
+          ? -(b[1] + b[3]) / 2
+          : o.valign === 'bottom'
+            ? -b[1]
+            : o.valign === 'cap'
+              ? -(m1.cap * size - (lines.length - 1) * lineH * size) / 2
+              : 0;
+    return dy ? polys.map((p) => p.map(([x, y]): Pt => [x, y + dy])) : polys;
+  }
+
   private edges(v: Value): Edge[] {
     const all = (e: Value): Edge => {
       if (e === 'out' || e === 'in' || e === 'flat') return e;
@@ -1775,8 +1898,21 @@ export class Evaluator {
         const arcArg = this.arg(c.args, 'arc', -1);
         if (pathArg !== undefined && arcArg !== undefined)
           throw new Error('text() takes path or arc, not both');
+        // lines = n, or a "\n" in the text: a block of lines, broken at
+        // spaces to fit `fit` best
+        const linesArg = this.arg(c.args, 'lines', -1);
+        const maxLines =
+          linesArg === undefined ? 1 : Math.floor(this.num(linesArg, 'text', 'lines'));
+        if (!(maxLines >= 1 && maxLines <= 20))
+          throw new Error(`lines must be from 1 to 20, got ${show(linesArg)}`);
+        const block = shown.text.includes('\n') || maxLines > 1;
+        if (block && (pathArg !== undefined || arcArg !== undefined))
+          throw new Error('text() lays lines in a block, or along a path, not both');
         let glyphs: Poly[];
-        if (pathArg !== undefined || arcArg !== undefined) {
+        const spacing = this.num(this.arg(c.args, 'line_spacing', -1, 1), 'text', 'line_spacing');
+        if (!(spacing > 0)) throw new Error('line_spacing must be more than 0');
+        if (block) glyphs = this.textBlock(c.args, shown.text, topts, maxLines, spacing);
+        else if (pathArg !== undefined || arcArg !== undefined) {
           let along: Pt[];
           if (arcArg !== undefined) {
             const r = this.num(arcArg, 'text', 'arc');

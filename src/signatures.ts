@@ -189,6 +189,12 @@ export const SIGNATURES: Signature[] = [
         "Join every island (an i's dot, an accent, a stencil's counter) to the rest with a strip this wide",
       ),
       named(
+        'lines',
+        'Break the text at spaces into up to this many lines; with fit, as many as let it be biggest',
+        '1',
+      ),
+      named('line_spacing', 'The distance between lines, as a share of the usual', '1'),
+      named(
         'path',
         'Lay the text along these [x, y] points, each letter turned to the path, centred on it',
       ),

@@ -10,6 +10,10 @@ Language:
   shown the same way and never in the files for the laser. The parts list
   says which parts are painted.
 - A layer's colour can be a name, as `"red"`, as well as a hex colour.
+- Text in lines: a `"\n"` in `text()` breaks a line, and
+  `text(t, fit = [w, h], lines = 2)` breaks a long name at a space when
+  two lines let it be bigger than one. `line_spacing` sets the distance
+  between lines.
 - Text on a path: `text(t, size, path = points)` lays the text along a
   path, each letter turned to it, and `text(t, size, arc = r)` round a
   circle, over the top or (r less than 0) along the bottom. Cut, engraved
