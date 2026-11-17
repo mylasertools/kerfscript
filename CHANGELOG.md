@@ -10,6 +10,12 @@ Language:
   shown the same way and never in the files for the laser. The parts list
   says which parts are painted.
 - A layer's colour can be a name, as `"red"`, as well as a hex colour.
+- Folds along any line for card and paper: `part(fold = [from, to,
+angle])`, or a list of them, folds the part's panels in the assembled
+  view and its 3D files, cut lines inside it (a pop-up's slits) parting
+  the panels too; `fold_open` opens every fold part of the way, for a
+  card shown half open. A fold that divides nothing warns.
+  `foldPanels()` and `panelMarks()` give a viewer of your own the panels.
 - Text in lines: a `"\n"` in `text()` breaks a line, and
   `text(t, fit = [w, h], lines = 2)` breaks a long name at a space when
   two lines let it be bigger than one. `line_spacing` sets the distance

@@ -8,6 +8,7 @@ import {
   bentPieces,
   besideAssembly,
   collisions,
+  foldPanels,
   invert,
   overlapPoint,
   multiply,
@@ -39,6 +40,7 @@ import {
   layerBounds,
   offset,
   pieces,
+  strokeLines,
   transform,
   union,
   xor,
@@ -335,6 +337,28 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
             `Part "${p.name}" bends from x = ${fmt(x0)} to ${fmt(x1)}, beyond the part (x = ${fmt(lo)} to ${fmt(hi)}); only the part itself bends.`,
           );
     }
+    // A folded part's cuts inside it, as a pop-up's slits, part its panels
+    const slit =
+      p.folds && material.length
+        ? difference(
+            material,
+            strokeLines(
+              [...p.layers]
+                .filter(([k]) => mode(k) === 'cut')
+                .flatMap(([, l]) => l.lines.filter((x) => x.length >= 2)),
+              0.2,
+            ),
+          )
+        : material;
+    if (p.folds && material.length) {
+      const unused = foldPanels(slit, p.folds, p.thickness).unused ?? [];
+      for (const i of unused) {
+        const f = p.folds[i];
+        warnings.push(
+          `Part "${p.name}": the fold from [${fmt(f.from[0])}, ${fmt(f.from[1])}] to [${fmt(f.to[0])}, ${fmt(f.to[1])}] does not divide the part, so nothing folds there; run it from edge to edge, or to a cut.`,
+        );
+      }
+    }
     if (numbering && material.length) {
       number = ++label;
       const mark = partLabel(material, String(number), fonts, toText(g('$font') ?? ''));
@@ -436,7 +460,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
         thickness: p.thickness,
         material: p.material,
         ...(p.paint && { paint: p.paint }),
-        outline: material,
+        outline: slit,
         ...(marks.length && { marks }),
       };
       for (let i = 0; i < (p.placements?.length ?? p.qty); i++)
@@ -455,6 +479,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
             matrix: placementMatrix(placement),
             placed: true,
             ...(p.bends && { bends: p.bends }),
+            ...(p.folds && { folds: p.folds }),
             ...(p.step && { step: p.step }),
             ...(p.stack && { stack: p.stack }),
           };
@@ -1020,6 +1045,7 @@ function cutSlots(
         thickness: p.thickness,
         outline: cutOf(p),
         ...(p.bends && { bends: p.bends }),
+        ...(p.folds && { folds: p.folds }),
       }).map((q) => ({ matrix: q.matrix, thickness: q.thickness, outline: q.outline })),
     );
   const cuts = new Map<PartShape, ReturnType<typeof union>>();
@@ -1073,6 +1099,7 @@ function cutSlots(
           thickness: p.thickness,
           outline: cutOf(p),
           ...(p.bends && { bends: p.bends }),
+          ...(p.folds && { folds: p.folds }),
         }).flatMap((me) => {
           let cut: Poly2[] = [];
           if (p.slots) {

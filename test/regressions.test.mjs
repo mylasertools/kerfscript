@@ -988,3 +988,61 @@ test('part(pieces = ...) is a part of loose pieces, and says when the count is o
   ]);
   assert.throws(() => render('part("e", pieces = 0) circle(3);'), /pieces must be a whole number/);
 });
+
+test('part(fold = ...) folds card along any line, panel by panel', () => {
+  const box = (b) =>
+    [0, 1, 2].map((k) => {
+      const v = b.positions.filter((_, i) => i % 3 === k);
+      return [Math.round(Math.min(...v) * 10) / 10, Math.round(Math.max(...v) * 10) / 10];
+    });
+  const card = render(
+    '$thickness = 0.4; part("card", at = [0, 0, 0], fold = [[60, 0], [60, 80], 90]) rect([120, 80]);',
+  );
+  assert.deepEqual(card.warnings, []);
+  const [flat, up] = meshBodies(card).filter((b) => b.kind === 'part');
+  assert.deepEqual(box(flat), [
+    [0, 60],
+    [0, 80],
+    [0, 0.4],
+  ]);
+  // Hinged on the top face, the far half stands up beside the fold
+  assert.deepEqual(box(up), [
+    [60, 60.4],
+    [0, 80],
+    [0.4, 60.4],
+  ]);
+  // Down, and half open
+  const down = render(
+    '$thickness = 0.4; part("card", at = [0, 0, 0], fold = [[60, 0], [60, 80], -90], fold_open = 0.5) rect([120, 80]);',
+  );
+  const [, d] = meshBodies(down).filter((b) => b.kind === 'part');
+  assert.ok(box(d)[2][0] < -40 && box(d)[0][1] > 100);
+  // A pop-up step: slits part the panels, and one fold line joins a pair
+  // either side of them
+  const pop = render(
+    '$thickness = 0.4; part("card", at = [0, 0, 0], fold = [[[80, 0], [80, 40], 90], [[80, 60], [80, 100], 90], [[70, 40], [70, 60], 90], [[80, 40], [80, 60], -90], [[90, 40], [90, 60], 90]]) { rect([160, 100]); for (y = [40, 60]) line([70, y], [90, y]); }',
+  );
+  assert.deepEqual(pop.warnings, []);
+  const panels = meshBodies(pop)
+    .filter((b) => b.kind === 'part')
+    .map(box);
+  assert.equal(panels.length, 4);
+  assert.ok(
+    panels.some(([x, , z]) => x[0] === 70 && x[1] === 80 && z[0] === 10),
+    'the tread',
+  );
+  assert.ok(
+    panels.some(([x, , z]) => x[0] === 70 && x[1] === 70.4 && z[1] === 10.4),
+    'the riser',
+  );
+  // A fold that divides nothing warns; bends and folds don't mix
+  assert.match(
+    render('part("c", at = [0, 0, 0], fold = [[60, 10], [60, 70], 90]) rect([120, 80]);')
+      .warnings[0],
+    /does not divide the part/,
+  );
+  assert.throws(
+    () => render('part("c", bend = [10, 20, 90], fold = [[0, 0], [0, 10], 90]) rect(40);'),
+    /living hinges or folds, not both/,
+  );
+});

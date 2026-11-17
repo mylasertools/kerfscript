@@ -36,6 +36,8 @@ import {
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import {
   bendPoint,
+  foldPanels,
+  panelMarks,
   HARDWARE_COLORS,
   HARDWARE_KINDS,
   lightPoints,
@@ -91,6 +93,22 @@ function lightObjects(l) {
     o.userData = { base: o.intensity, flicker: l.flicker, seed: Math.random() * 100 };
     return o;
   });
+}
+
+// A folded part as its panels, each with the marks on it, folded
+function foldedObjects(part) {
+  const out = [];
+  for (const f of foldPanels(part.outline, part.folds, part.thickness)) {
+    const marks = panelMarks(part.marks ?? [], f.outline);
+    const panel = { ...part, outline: f.outline, folds: undefined, marks };
+    const m = new Matrix4().set(...f.matrix);
+    out.push({
+      geos: partGeometry(panel).map((g) => g.applyMatrix4(m)),
+      marks: markObjects(panel),
+      matrix: m,
+    });
+  }
+  return out;
 }
 
 // A part's flat shape, cut into pieces that bend smoothly, extruded and
@@ -379,8 +397,18 @@ export function createAssemblyView(el, options = {}) {
         transparent: clear_,
         opacity: clear_ ? 0.55 : 1,
       });
-      for (const geo of partGeometry(part)) g.add(new Mesh(geo, [face, edge]));
-      for (const o of markObjects(part)) g.add(o);
+      if (part.folds?.length)
+        for (const f of foldedObjects(part)) {
+          for (const geo of f.geos) g.add(new Mesh(geo, [face, edge]));
+          for (const o of f.marks) {
+            o.applyMatrix4(f.matrix);
+            g.add(o);
+          }
+        }
+      else {
+        for (const geo of partGeometry(part)) g.add(new Mesh(geo, [face, edge]));
+        for (const o of markObjects(part)) g.add(o);
+      }
       const m = new Matrix4().set(...part.matrix);
       g.matrixAutoUpdate = false;
       g.matrix.copy(m);

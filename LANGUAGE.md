@@ -307,6 +307,12 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
     view, folding the far end up towards its top face (down for a negative
     angle). The hinge's middle layer keeps its length. An empty list is
     no bend.
+  - `fold = [from, to, angle]`, or a list of them: folds along any line
+    in the assembled view, as for card. The folds (and cut lines inside
+    the part, as a pop-up's slits) cut it into panels; the one at the
+    origin stays flat and each other turns about the folds between,
+    towards the top face for an angle more than 0. `fold_open` (1) scales
+    every fold's angle, 0 lying flat. A fold that divides nothing warns.
   - `on = "name"`: the part is glued to that bent part, and moves with the
     run of it under its centre.
   - `glue = "name"`, `face = "top"`: the part is glued flat on that part's

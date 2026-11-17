@@ -32,6 +32,7 @@ import {
   type PartShape,
   type Poly,
   type Pt,
+  type Fold,
   type Shape,
 } from './geometry.js';
 import { fingerCount, fingerHoles, fingerRect, livingHinge, tslot, type Edge } from './joinery.js';
@@ -1731,6 +1732,29 @@ export class Evaluator {
     return back;
   }
 
+  // part(fold = ...): [from, to, angle] or a list of them, each angle
+  // times `open` (0 lies flat, 1 folds as given)
+  private folds(v: Value, openArg: Value): Fold[] {
+    if (v === undefined) return [];
+    const open = openArg === undefined ? 1 : this.num(openArg, 'part', 'fold_open');
+    if (!Number.isFinite(open)) throw new Error('fold_open must be a number');
+    const list =
+      Array.isArray(v) && v.length && Array.isArray(v[0]) && Array.isArray(v[0][0]) ? v : [v];
+    return list.map((f, i) => {
+      if (!Array.isArray(f) || f.length !== 3)
+        throw new Error(
+          `fold${list.length > 1 ? `[${i}]` : ''} must be [from, to, angle], as [[0, 0], [0, 60], 90]`,
+        );
+      const [from, to] = [this.vec2(f[0], 'fold', false), this.vec2(f[1], 'fold', false)];
+      const angle = this.num(f[2], 'part', 'fold');
+      if (Math.hypot(to[0] - from[0], to[1] - from[1]) < 1e-6)
+        throw new Error('a fold needs two different points');
+      if (!(Math.abs(angle) <= 180))
+        throw new Error(`a fold's angle must be from -180 to 180, got ${show(f[2])}`);
+      return { from: from as Pt, to: to as Pt, angle: angle * open };
+    });
+  }
+
   private bends(v: Value): { x0: number; x1: number; angle: number }[] {
     // An empty list is no bends: a strip computed to have none is straight
     if (v === undefined || (Array.isArray(v) && !v.length)) return [];
@@ -2684,12 +2708,19 @@ export class Evaluator {
         const framed = this.frame !== IDENTITY4 && glue === undefined;
         // A bend shows only in the assembled view: it places the part too
         const bendArg = this.arg(c.args, 'bend', -1);
+        // fold = [from, to, angle], or a list of them: card and paper folds
+        // along any line, opened `fold_open` of the way (1 by default)
+        const foldArg = this.arg(c.args, 'fold', -1);
+        const folds = this.folds(foldArg, this.arg(c.args, 'fold_open', -1));
+        if (folds.length && bendArg !== undefined)
+          throw new Error('a part bends on living hinges or folds, not both');
         let placements =
           at === undefined &&
           turn === undefined &&
           !framed &&
           glue === undefined &&
-          bendArg === undefined
+          bendArg === undefined &&
+          foldArg === undefined
             ? undefined
             : this.placements(at, turn, qty);
         // material = "red acrylic" names this part's material, as material() does
@@ -2818,6 +2849,15 @@ export class Evaluator {
             ...(bends.length
               ? { bends: flip ? bends.map((b) => ({ ...b, mirrored: true })) : bends }
               : {}),
+            ...(folds.length && {
+              folds: flip
+                ? folds.map((f) => ({
+                    ...f,
+                    from: [-f.from[0], f.from[1]] as Pt,
+                    to: [-f.to[0], f.to[1]] as Pt,
+                  }))
+                : folds,
+            }),
             ...(on !== undefined ? { on: toText(on) } : {}),
             ...(slots ? { slots, clearance } : {}),
             ...(slots && slotExtra ? { slotExtra } : {}),

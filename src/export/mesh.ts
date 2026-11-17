@@ -6,7 +6,14 @@
 // balls. The file writers in this folder turn the bodies into GLB, 3MF and
 // STL.
 
-import { bendPoint, meshPieces, multiply, type AssemblyPart, type Vec3 } from '../assembly.js';
+import {
+  bendPoint,
+  foldPanels,
+  meshPieces,
+  multiply,
+  type AssemblyPart,
+  type Vec3,
+} from '../assembly.js';
 import type { HardwareItem } from '../evaluator.js';
 import type { Light } from '../lights.js';
 import { area, difference, intersection, strokeLines, union, type Poly } from '../geometry.js';
@@ -192,6 +199,8 @@ function partBodies(
   cuts: Set<string>,
   instance: number,
   cover?: Cover,
+  // A panel of a folded part: its marks only within it
+  panel?: Poly[],
 ): Body[] {
   const t = p.thickness;
   // Cuts inside the part, as a living hinge's slits, go through it
@@ -205,6 +214,22 @@ function partBodies(
         ),
       )
     : p.outline;
+  // A folded part, assembled: each panel folded as a part of its own
+  if (bent && p.folds?.length) {
+    const panels = foldPanels(outline, p.folds, t);
+    return panels.flatMap((f) =>
+      partBodies(
+        { ...p, folds: undefined, outline: f.outline, marks: p.marks?.map((m) => ({ ...m })) },
+        multiply(matrix, f.matrix),
+        o,
+        bent,
+        cuts,
+        instance,
+        cover,
+        f.outline,
+      ),
+    );
+  }
   const bends = bent ? p.bends : undefined;
   const to: Map3 = (q) => apply(matrix, bends?.length ? bendPoint(bends, t, q) : q);
   const flip = det3(matrix) < 0;
@@ -219,7 +244,7 @@ function partBodies(
   for (const piece of meshPieces(outline, bends)) prism(solid, piece, 0, t, to, flip);
   out.push(solid);
   if (o.markHeight > 0)
-    for (const m of markAreas(p, outline, o.lineWidth, cuts)) {
+    for (const m of markAreas(p, panel ?? outline, o.lineWidth, cuts)) {
       // Laid flat, the back face is on the bed: nothing can stand under it
       if (m.side === 'back' && o.layout === 'flat') continue;
       const hidden = cover?.(m.side);

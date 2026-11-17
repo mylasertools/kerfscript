@@ -576,6 +576,11 @@ export const SIGNATURES: Signature[] = [
         'Its colour in the 3D view and the print layout, as "red" or "#c8372d"; the part stays on the sheet of its material',
       ),
       named('bend', 'Living hinge bends in the assembled view: [x0, x1, angle] or a list'),
+      named(
+        'fold',
+        'Folds along any line in the assembled view, as for card: [from, to, angle] or a list; more than 0 folds towards the top face',
+      ),
+      named('fold_open', 'How far the folds are folded: 0 lies flat, 1 as their angles say', '1'),
       named('on', 'The name of a bent part this one is glued to, to move with it'),
       named('slots', 'Names of parts whose tabs pass through this one: their slots are cut'),
       named('clearance', 'Added to the slots, in total across each', '0.1'),

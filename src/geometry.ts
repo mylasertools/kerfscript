@@ -40,6 +40,8 @@ export interface PartShape {
   stack?: number;
   // Living hinge bends, along the part's x: [x0, x1, angle]
   bends?: Bend[];
+  // Folds along any line, for card and paper
+  folds?: Fold[];
   // The part this one is glued to, so it moves with that part's bends
   on?: string;
   // Parts whose tabs pass through this one: slots cut where they meet it
@@ -66,6 +68,14 @@ export interface PartShape {
   // Layer k of the stack `part`, when its layers cut different slots and
   // became a part each: still that part by name, and one of its layers
   layerOf?: { part: PartShape; k: number };
+}
+
+// A fold along the line from `from` to `to`: the part beyond it turns
+// `angle` degrees about it, towards the top face when more than 0
+export interface Fold {
+  from: Pt;
+  to: Pt;
+  angle: number;
 }
 
 export interface Bend {
@@ -501,6 +511,9 @@ export function transform(s: Shape, m: Matrix): Shape {
       ...p,
       layers: transformLayers(p.layers, m),
       ...(p.bends && { bends: transformBends(p, m) }),
+      ...(p.folds && {
+        folds: p.folds.map((f) => ({ ...f, from: apply(m, f.from), to: apply(m, f.to) })),
+      }),
     })),
   };
 }

@@ -26,7 +26,9 @@ export {
 
 export {
   bendPoint,
+  foldPanels,
   meshPieces,
+  panelMarks,
   placementMatrix,
   type AssemblyPart,
   type Mark,

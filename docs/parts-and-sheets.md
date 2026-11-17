@@ -232,6 +232,40 @@ part("cover", bend = [[100, 100 + bend_length(10, 90), 90], [130, 130 + bend_len
 
 The collision check takes each flat run of a bent part on its own.
 
+### Folds
+
+Card and paper fold along any line, not only along x. `fold = [from, to,
+angle]`, or a list of them, folds the part along the line from one point
+to the other in the assembled view: the folds cut it into panels, the
+panel at the part's origin (else the biggest) stays flat, and each other
+panel turns about the folds between it and that one, towards the top face
+for an angle more than 0 and down for less. A fold must run from edge to
+edge, or to a cut: cut lines inside the part, as a pop-up's slits, part
+the panels too, and a fold that divides nothing warns. `fold_open = 0.5`
+folds every fold half way, for a card shown half open; 0 lies flat.
+
+Score the folds as well, so the card bends where it should:
+
+```kerf
+$thickness = 0.4;
+open = 1; // [0:0.05:1]
+// A card with a pop-up step in the middle: two slits across the fold
+part("card", at = [0, 0, 0], fold_open = open, fold = [
+  [[80, 0], [80, 40], 90], [[80, 60], [80, 100], 90],
+  [[70, 40], [70, 60], 90], [[80, 40], [80, 60], -90], [[90, 40], [90, 60], 90]
+]) {
+  rect([160, 100]);
+  for (y = [40, 60]) line([70, y], [90, y]);
+  score() {
+    line([80, 0], [80, 40]); line([80, 60], [80, 100]);
+    for (x = [70, 80, 90]) line([x, 40], [x, 60]);
+  }
+}
+```
+
+A part bends on living hinges or folds, not both. Folds show in the
+assembled view and its 3D files; flat and print layouts lie flat.
+
 ### Numbered parts
 
 `$label_parts = true;` numbers the parts 1, 2, 3 in the order they are

@@ -1,6 +1,15 @@
 // Copyright (c) 2026 MyLaserTools. SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-MyLaserTools-Commercial
 
-import { intersection, pieces, type Bend, type Poly } from './geometry.js';
+import {
+  area as polyArea,
+  clipLines,
+  difference,
+  intersection,
+  pieces,
+  type Bend,
+  type Fold,
+  type Poly,
+} from './geometry.js';
 
 export type Vec3 = [number, number, number];
 
@@ -26,6 +35,9 @@ export interface AssemblyPart {
   // Living hinge bends along the part's x, applied after matrix's
   // placement: see bendPoint()
   bends?: Bend[];
+  // Folds along any line, applied after matrix's placement: see
+  // foldPanels()
+  folds?: Fold[];
   // The assembly step that adds it: 0 when the program has no steps
   step?: number;
   // Glued in a stack of this many layers
@@ -555,6 +567,13 @@ export function runOf(bends: Bend[], x: number): number {
 // A bent part as rigid pieces, the hinges left out, to check for
 // collisions
 export function bentPieces(p: AssemblyPart): AssemblyPart[] {
+  if (p.folds?.length)
+    return foldPanels(p.outline, p.folds, p.thickness).map((f) => ({
+      ...p,
+      outline: f.outline,
+      folds: undefined,
+      matrix: multiply(p.matrix, f.matrix),
+    }));
   if (!p.bends?.length) return [p];
   const list = sortedBends(p.bends);
   const runs = bendRuns(p.bends, p.thickness);
@@ -578,6 +597,154 @@ export function bentPieces(p: AssemblyPart): AssemblyPart[] {
       out.push({ ...p, outline, bends: undefined, matrix: multiply(p.matrix, runs[k]) });
   }
   return out;
+}
+
+// A turn of `deg` degrees about the axis through `at` along unit `u`
+function turnAbout(at: Vec3, u: Vec3, deg: number): number[] {
+  const a = (deg * Math.PI) / 180;
+  const [c, s, k] = [Math.cos(a), Math.sin(a), 1 - Math.cos(a)];
+  const [x, y, z] = u;
+  const r = [
+    c + x * x * k,
+    x * y * k - z * s,
+    x * z * k + y * s,
+    y * x * k + z * s,
+    c + y * y * k,
+    y * z * k - x * s,
+    z * x * k - y * s,
+    z * y * k + x * s,
+    c + z * z * k,
+  ];
+  return [
+    r[0],
+    r[1],
+    r[2],
+    at[0] - (r[0] * at[0] + r[1] * at[1] + r[2] * at[2]),
+    r[3],
+    r[4],
+    r[5],
+    at[1] - (r[3] * at[0] + r[4] * at[1] + r[5] * at[2]),
+    r[6],
+    r[7],
+    r[8],
+    at[2] - (r[6] * at[0] + r[7] * at[1] + r[8] * at[2]),
+    0,
+    0,
+    0,
+    1,
+  ];
+}
+
+const insideAny = (rings: Poly[], [x, y]: Vec2) => {
+  let inside = false;
+  for (const r of rings)
+    for (let i = 0, j = r.length - 1; i < r.length; j = i++)
+      if (
+        r[i][1] > y !== r[j][1] > y &&
+        x < ((r[j][0] - r[i][0]) * (y - r[i][1])) / (r[j][1] - r[i][1]) + r[i][0]
+      )
+        inside = !inside;
+  return inside;
+};
+
+/** A folded part's panels, each its outline and the 4 x 4 matrix that
+ * folds it, in the part's own coordinates. The folds cut the part into
+ * panels; the panel at the origin (else the biggest) stays flat, and each
+ * other one turns about the folds between it and that one, towards the
+ * top face for an angle more than 0, hinged on the face it folds towards.
+ * `unused` lists the folds that do not divide the part. */
+export function foldPanels(
+  outline: Poly[],
+  folds: Fold[],
+  thickness: number,
+): { outline: Poly[]; matrix: number[] }[] & { unused?: number[] } {
+  // Each fold's line, a little longer, cut out thin
+  const cuts: Poly[] = folds.map((f) => {
+    const [dx, dy] = [f.to[0] - f.from[0], f.to[1] - f.from[1]];
+    const l = Math.hypot(dx, dy);
+    const [ux, uy] = [dx / l, dy / l];
+    const [nx, ny] = [-uy * 0.005, ux * 0.005];
+    const [a, b]: Vec2[] = [
+      [f.from[0] - ux * 0.02, f.from[1] - uy * 0.02],
+      [f.to[0] + ux * 0.02, f.to[1] + uy * 0.02],
+    ];
+    return [
+      [a[0] - nx, a[1] - ny],
+      [b[0] - nx, b[1] - ny],
+      [b[0] + nx, b[1] + ny],
+      [a[0] + nx, a[1] + ny],
+    ];
+  });
+  const panels = pieces(difference(outline, cuts));
+  const out = [] as unknown as { outline: Poly[]; matrix: number[] }[] & { unused?: number[] };
+  if (!panels.length) return out;
+  const which = (pt: Vec2) => panels.findIndex((g) => insideAny(g, pt));
+  // The panels each fold joins, [left, right] of its line, sampled along
+  // it: a fold across a pop-up's slits joins a pair on each side of them
+  const sides = folds.map((f) => {
+    const [dx, dy] = [f.to[0] - f.from[0], f.to[1] - f.from[1]];
+    const l = Math.hypot(dx, dy);
+    const [nx, ny] = [(-dy / l) * 0.05, (dx / l) * 0.05];
+    const found: [number, number][] = [];
+    for (let i = 0; i < 25; i++) {
+      const t = (i + 0.5) / 25;
+      const m: Vec2 = [f.from[0] + dx * t, f.from[1] + dy * t];
+      const left = which([m[0] + nx, m[1] + ny]);
+      const right = which([m[0] - nx, m[1] - ny]);
+      if (
+        left >= 0 &&
+        right >= 0 &&
+        left !== right &&
+        !found.some(([a, b]) => a === left && b === right)
+      )
+        found.push([left, right]);
+    }
+    return found;
+  });
+  const area = (g: Poly[]) => g.reduce((s, r) => s + Math.abs(polyArea(r)), 0);
+  let root = which([0, 0]);
+  if (root < 0) root = panels.map(area).reduce((best, a, i, all) => (a > all[best] ? i : best), 0);
+  const matrices: (number[] | undefined)[] = panels.map(() => undefined);
+  matrices[root] = translation(0, 0, 0);
+  const queue = [root];
+  while (queue.length) {
+    const k = queue.shift()!;
+    folds.forEach((f, i) =>
+      sides[i].forEach((s) => {
+        if (!s.includes(k)) return;
+        const other = s[0] === k ? s[1] : s[0];
+        if (matrices[other]) return;
+        const [dx, dy] = [f.to[0] - f.from[0], f.to[1] - f.from[1]];
+        const l = Math.hypot(dx, dy);
+        // The far panel turns up for an angle more than 0, whichever side of
+        // the line it is on, hinged on the top face (or the bottom, folding
+        // down) so the faces that close up meet
+        const sign = other === s[0] ? 1 : -1;
+        const hinge = f.angle > 0 ? thickness : 0;
+        const turn = turnAbout([f.from[0], f.from[1], hinge], [dx / l, dy / l, 0], sign * f.angle);
+        matrices[other] = multiply(matrices[k]!, turn);
+        queue.push(other);
+      }),
+    );
+  }
+  panels.forEach((g, i) => out.push({ outline: g, matrix: matrices[i] ?? translation(0, 0, 0) }));
+  const unused = folds.flatMap((_, i) => (sides[i].length ? [] : [i]));
+  if (unused.length) out.unused = unused;
+  return out;
+}
+
+/** The marks on one panel of a folded part: fills clipped to it, lines
+ * (and the outlines of line marks) cut where they leave it */
+export function panelMarks(marks: Mark[], panel: Poly[]): Mark[] {
+  return marks.flatMap((m) => {
+    const lines = clipLines(
+      m.mode === 'line' ? [...m.lines, ...m.regions.map((r) => [...r, r[0]])] : m.lines,
+      panel,
+      'inside',
+    );
+    const regions = m.mode === 'fill' ? intersection(m.regions, panel) : [];
+    return regions.length || lines.length ? [{ ...m, regions, lines }] : [];
+  });
 }
 
 /** The most bands a part's bends are cut into for a 3D view */
