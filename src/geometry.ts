@@ -58,6 +58,9 @@ export interface PartShape {
   // Which of the part() call's copies these are, 1 up, when mirror per
   // copy split them: the others are a part of their own
   copies?: number[];
+  // Layer k of the stack `part`, when its layers cut different slots and
+  // became a part each: still that part by name, and one of its layers
+  layerOf?: { part: PartShape; k: number };
 }
 
 export interface Bend {
@@ -489,8 +492,31 @@ function transformLayers(layers: Map<string, Layer>, m: Matrix): Map<string, Lay
 export function transform(s: Shape, m: Matrix): Shape {
   return {
     layers: transformLayers(s.layers, m),
-    parts: s.parts.map((p) => ({ ...p, layers: transformLayers(p.layers, m) })),
+    parts: s.parts.map((p) => ({
+      ...p,
+      layers: transformLayers(p.layers, m),
+      ...(p.bends && { bends: transformBends(p, m) }),
+    })),
   };
+}
+
+// A bent part's bends moved with its drawing: they lie across its x, so a
+// move, a scale or a mirror keeps them there; a turn or a shear does not
+function transformBends(p: PartShape, m: Matrix): Bend[] {
+  const bends = p.bends!;
+  const [sx, , , sy, tx] = [m[0], m[1], m[2], m[3], m[4]];
+  if (Math.abs(m[1]) > 1e-9 || Math.abs(m[2]) > 1e-9 || !(sx !== 0 && sy !== 0))
+    throw new Error(
+      `part "${p.name}" bends along its x, so it can be moved, scaled or mirrored but not turned: turn it with part(rotate = ...) instead`,
+    );
+  return bends.map((b) => {
+    // Where it bends along x, and whether it bends as a mirror image
+    const [a0, a1] = b.mirrored ? [-b.x1, -b.x0] : [b.x0, b.x1];
+    const [c0, c1] = [sx * a0 + tx, sx * a1 + tx].sort((u, v) => u - v);
+    const mirrored = !!b.mirrored !== sx < 0;
+    const { mirrored: _, ...rest } = b;
+    return mirrored ? { ...rest, x0: -c1, x1: -c0, mirrored: true } : { ...rest, x0: c0, x1: c1 };
+  });
 }
 
 export function merge(shapes: Shape[]): Shape {

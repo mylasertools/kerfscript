@@ -54,6 +54,13 @@ Changes to the output of existing programs, each a fix:
   is not cut as a slot because another tab of its part goes deep enough:
   each piece that enters the part is judged on its own depth, and the
   shallow one is reported as a collision.
+- A part glued to a stack (`glue =` a part with `stack = n`) goes on the
+  stack's top layer, or under its bottom one, not on its first layer inside
+  the stack; with as many copies as the stack has, one goes on each copy
+  of the stack, not all on the first.
+- A bent part inside `translate()`, `scale()` or `mirror()` bends where its
+  drawing went; its bends stayed where they were drawn. Turning one with
+  `rotate()` is an error: turn it with `part(rotate = ...)`.
 - `pattern()` clips each tile that an edge of the area crosses. A tile with
   its corners inside the area and none of the area's corners inside it was
   kept whole, over a rib or a strip of the area running through it.
@@ -65,6 +72,9 @@ Fixes:
 - `flex_strip()` along a path with no curve or corner makes a straight
   strip; it stopped with "bend must be [x0, x1, angle]". `bend = []` is no
   bend.
+- A stack whose layers take different blind slots, and so become a part
+  each (`"top, layer 1"`), is still found by its own name for `halving`,
+  and still prints as one stack with `--print`.
 - `wall()` never cuts a piece longer than `max_length`; a cut it could not
   put on a straight could leave one longer. Without `join`, its seam is in
   the middle of the outline's longest side, not at its first point, which

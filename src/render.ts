@@ -536,14 +536,29 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   // What each placed part is glued on, as glueOn() put it there: layer k
   // of a stack on the stack's first layer, which is on the host's
   // placement it was moved with
+  // A stack split into a part per layer is one stack again here, its
+  // layers' placements back in the order the stack had them
+  const logicalAt = new Map<PartShape, number[]>();
   for (const [p, at] of placedAt) {
+    if (!p.layerOf) {
+      logicalAt.set(p, at);
+      continue;
+    }
+    const { part, k } = p.layerOf;
+    const n = part.stack ?? 1;
+    const list = logicalAt.get(part) ?? [];
+    at.forEach((index, j) => (list[j * n + k] = index));
+    logicalAt.set(part, list);
+  }
+  for (const [p, at] of logicalAt) {
     const stack = p.stack ?? 1;
-    const host = p.glue && parts.find((q) => q.name === p.glue!.host && q !== p);
-    const hostAt = host ? placedAt.get(host) : undefined;
+    const host = p.glue && [...logicalAt.keys()].find((q) => q.name === p.glue!.host && q !== p);
+    const hostAt = host ? logicalAt.get(host) : undefined;
     const per = at.length / stack;
     at.forEach((index, i) => {
       const k = i % stack;
-      const on = k > 0 ? at[i - k] : hostAt?.[hostAt.length === per ? Math.floor(i / stack) : 0];
+      const on =
+        k > 0 ? at[i - k] : host && hostAt?.[hostLayer(host, p, Math.floor(i / stack), per)];
       if (on !== undefined) assembly[index].glued = on;
     });
   }
@@ -1117,6 +1132,7 @@ function cutSlots(
       layers: slot.length ? holed(p.layers, slot) : p.layers,
       placements: p.placements!.filter((_, i) => i % n === k),
       stack: undefined,
+      layerOf: { part: p.layerOf?.part ?? p, k },
     }));
     parts.splice(parts.indexOf(p), 1, ...split);
   }
@@ -1155,7 +1171,10 @@ function cutHalvings(parts: PartShape[], mode: (k: string) => string, warnings: 
     for (const name of p.halving) {
       const out = name.startsWith('!');
       const match = namePattern(out ? name.slice(1) : name);
-      const found = parts.filter((q) => q !== p && match(q.name));
+      // A stack split into its layers is still found by its own name
+      const found = parts.filter(
+        (q) => q !== p && (match(q.name) || (q.layerOf && match(q.layerOf.part.name))),
+      );
       if (!found.length && !out)
         warnings.push(`Part "${p.name}": no part "${name}" to halve with.`);
       for (const q of found) out ? chosen.delete(q) : chosen.add(q);
@@ -1649,9 +1668,24 @@ function hiddenFillWarnings(hidden: HiddenFill[], warnings: string[]) {
   }
 }
 
+// Which of the host's placements copy c of a part glued to it goes on: a
+// part with as many copies as its host goes one on each, otherwise all on
+// the first; and of a stacked host, the layer whose face it is glued to,
+// the top of the stack or its bottom
+function hostLayer(host: PartShape, glued: PartShape, c: number, copies: number): number {
+  const n = host.stack ?? 1;
+  const hostCopies = (host.placements?.length ?? 0) / n;
+  const at = hostCopies === copies ? c : 0;
+  // A stack glued under its own host grows down, its first layer on top
+  const down = host.glue?.face === 'bottom';
+  const top = glued.glue?.face === 'top';
+  return at * n + (top !== down ? n - 1 : 0);
+}
+
 // Parts given glue = "host" are placed on the host's top or bottom face:
 // their own placement is measured on that face. A glued part with as many
-// copies as its host goes one on each; otherwise all go on the first.
+// copies as its host goes one on each; otherwise all go on the first. On a
+// stacked host they go on the stack's top or bottom layer.
 function glueOn(parts: PartShape[], warnings: string[]) {
   const done = new Set<PartShape>();
   const visit = (p: PartShape, path: PartShape[]): void => {
@@ -1672,7 +1706,7 @@ function glueOn(parts: PartShape[], warnings: string[]) {
     const z = p.glue.face === 'top' ? host.thickness : -p.thickness;
     const per = p.placements!.length / (p.stack ?? 1);
     p.placements = p.placements!.map((pl, i) => {
-      const h = hs.length === per ? hs[Math.floor(i / (p.stack ?? 1))] : hs[0];
+      const h = hs[hostLayer(host, p, Math.floor(i / (p.stack ?? 1)), per)];
       return { ...pl, matrix: multiply(h, multiply(translation(0, 0, z), placementMatrix(pl))) };
     });
     done.add(p);

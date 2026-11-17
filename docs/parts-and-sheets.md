@@ -104,7 +104,8 @@ place(at = [20, 10, 30], rotate = [0, 0, 90]) box([80, 60, 40], name = "crate");
 - `glue = "top plate", face = "top"` lays a part on another part's face,
   its `at` and `rotate` measured on that face. Move the plate, and what is
   glued on it moves too. A stack glued under a part (`face = "bottom"`)
-  grows down, away from it.
+  grows down, away from it. A part glued to a stack goes on the stack's
+  outer layer, on top of it or under it.
 
 ```kerf
 part("seat", at = [0, 0, 40]) rect([80, 80], r = 6);
@@ -123,12 +124,15 @@ bent by a living hinge cuts slots for the tabs on its straight runs. A part
 must reach 1 mm into it (or half way through a thinner one) to cut a slot,
 and a blind tab's slot goes through: one that only dips into the surface is
 misplaced, and the collision check reports it rather than a
-slot hiding it.
+slot hiding it. Each tab is judged on its own depth, however deep the
+others of its part go.
 
 The layers of a stack each cut the slots that pass through them. When they
 differ, as a bench top of `stack = 2` taking the legs' tabs in its lower
 layer and a vice's in its upper one, the stack becomes a part per layer,
 `top, layer 1` and `top, layer 2`, so blind joints don't show through.
+`halving = "top"` still finds both, and `--print` still prints them as
+one stack.
 
 ```kerf
 part("shelf", slots = ["back"]) rect([100, 60]);

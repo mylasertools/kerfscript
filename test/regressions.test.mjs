@@ -747,3 +747,128 @@ echo(wall_splits(300, 2, 160, [], []));`);
     for (let k = 1; k < cuts.length; k++) assert.ok(cuts[k] - cuts[k - 1] <= max, e);
   }
 });
+
+test('a part glued to a stack goes on the stack, one for each copy of it', () => {
+  const z = (r, name) =>
+    r.assembly.filter((a) => a.name === name).map((a) => [a.matrix[3], a.matrix[7], a.matrix[11]]);
+  const t = '$thickness = 3;\n';
+  // On top of three layers, and under them
+  let r = render(
+    t +
+      'part("post", at = [0, 0, 0], stack = 3) rect(20);' +
+      'part("cap", glue = "post") rect(20);' +
+      'part("foot", glue = "post", face = "bottom") rect(20);' +
+      'part("pads", glue = "post", stack = 2) rect(10);',
+  );
+  assert.deepEqual(z(r, 'cap'), [[0, 0, 9]]);
+  assert.deepEqual(z(r, 'foot'), [[0, 0, -3]]);
+  assert.deepEqual(z(r, 'pads'), [
+    [0, 0, 9],
+    [0, 0, 12],
+  ]);
+  // Nothing inside the stack: the cap and the pads share its top, as asked
+  assert.ok(!r.warnings.some((w) => /"post".*collide/.test(w)), r.warnings.join('\n'));
+  // Two stacks, a cap on each
+  r = render(
+    t +
+      'part("post", qty = 2, at = [[0, 0, 0], [50, 0, 0]], stack = 2) rect(20);' +
+      'part("cap", qty = 2, glue = "post") rect(20);',
+  );
+  assert.deepEqual(z(r, 'cap'), [
+    [0, 0, 6],
+    [50, 0, 6],
+  ]);
+  // Under a stack that hangs under its host: below its lowest layer
+  r = render(
+    t +
+      'part("top", at = [0, 0, 20]) rect(30);' +
+      'part("legs", glue = "top", face = "bottom", stack = 2) rect(20);' +
+      'part("pad", glue = "legs", face = "bottom") rect(10);',
+  );
+  assert.deepEqual(z(r, 'legs'), [
+    [0, 0, 17],
+    [0, 0, 14],
+  ]);
+  assert.deepEqual(z(r, 'pad'), [[0, 0, 11]]);
+  // Mixed thicknesses: the cap on a 6 mm stack of two 3 mm layers is 4 mm
+  r = render(
+    t +
+      'part("post", at = [0, 0, 0], stack = 2) rect(20); part("cap", glue = "post", thickness = 4) rect(20);',
+  );
+  assert.deepEqual(z(r, 'cap'), [[0, 0, 6]]);
+});
+
+test('a stack split into its layers for blind slots keeps its name and stays one stack', () => {
+  const shelf = `part("top", at = [0, 0, 30], stack = 2, slots = "leg") rect([80, 40]);
+    part("leg", at = [10, 20, 0], rotate = [90, 0, 0]) {
+      rect([5, 30]);
+      translate([1, 29.99]) rect([3, 3.01]);
+    }\n`;
+  const r = render(
+    shelf +
+      'part("cross", at = [50, 20, 10], rotate = [90, 0, 90], halving = "top") rect([40, 40]);',
+  );
+  assert.deepEqual(
+    r.parts.map((p) => p.name),
+    ['top, layer 1', 'top, layer 2', 'leg', 'cross'],
+  );
+  assert.deepEqual(r.warnings, []);
+  // Halved: the cross and both layers are cut where they meet
+  const plain = render(
+    shelf + 'part("cross", at = [50, 20, 10], rotate = [90, 0, 90]) rect([40, 40]);',
+  );
+  const cut = (res, n) => res.parts.find((p) => p.name === n).cutLength;
+  assert.ok(cut(r, 'cross') > cut(plain, 'cross'));
+  assert.ok(cut(r, 'top, layer 2') > cut(plain, 'top, layer 2'));
+  // The second layer is glued on the first, so it prints as one object
+  const layer2 = r.assembly.findIndex((a) => a.name === 'top, layer 2');
+  assert.equal(
+    r.assembly[layer2].glued,
+    r.assembly.findIndex((a) => a.name === 'top, layer 1'),
+  );
+  const objects = new Set(
+    meshBodies(render(shelf), { layout: 'print' })
+      .filter((b) => /^top/.test(b.part))
+      .map((b) => b.instance),
+  );
+  assert.equal(objects.size, 1);
+});
+
+test('a bent part moved, scaled or mirrored in 2D bends where its drawing went', () => {
+  const box = (src) => {
+    const r = render(src);
+    assert.deepEqual(r.warnings, [], src);
+    const lo = [Infinity, Infinity, Infinity],
+      hi = [-Infinity, -Infinity, -Infinity];
+    for (const b of meshBodies(r, { layout: 'assembled' }).filter((b) => b.kind === 'part'))
+      for (let i = 0; i < b.positions.length; i += 3)
+        for (let k = 0; k < 3; k++) {
+          lo[k] = Math.min(lo[k], b.positions[i + k]);
+          hi[k] = Math.max(hi[k], b.positions[i + k]);
+        }
+    return [...lo, ...hi].map((v) => Math.round(v * 1000) / 1000 + 0);
+  };
+  const part = (bend, w = 40) => `part("c", at = [0, 0, 0], bend = ${bend}) rect([${w}, 20]);`;
+  // Moved and scaled, as if drawn there
+  assert.deepEqual(
+    box(`translate([100, 0]) ${part('[10, 20, 90]')}`),
+    box(`part("c", at = [0, 0, 0], bend = [110, 120, 90]) translate([100, 0]) rect([40, 20]);`),
+  );
+  assert.deepEqual(box(`scale([2, 1]) ${part('[10, 20, 90]')}`), box(part('[20, 40, 90]', 80)));
+  // Mirrored: the mirror image
+  const [x0, y0, z0, x1, y1, z1] = box(part('[10, 20, 90]'));
+  assert.deepEqual(box(`mirror([1, 0]) ${part('[10, 20, 90]')}`), [-x1, y0, z0, -x0 + 0, y1, z1]);
+  // Twice mirrored is as drawn; a turn can't keep the bends across x
+  assert.deepEqual(box(`mirror([1, 0]) mirror([1, 0]) ${part('[10, 20, 90]')}`), [
+    x0,
+    y0,
+    z0,
+    x1,
+    y1,
+    z1,
+  ]);
+  assert.throws(
+    () => render(`rotate(90) ${part('[10, 20, 90]')}`),
+    /can be moved, scaled or mirrored but not turned/,
+  );
+});
