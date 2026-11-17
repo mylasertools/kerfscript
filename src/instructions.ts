@@ -5,7 +5,7 @@
 // parts and hardware the step adds. A standalone HTML page, to print or
 // save as PDF from a browser.
 
-import { bendPoint, meshPieces, type AssemblyPart } from './assembly.js';
+import { bendPoint, bentPieces, meshPieces, type AssemblyPart } from './assembly.js';
 import { HARDWARE_COLORS, HARDWARE_KINDS } from './hardware.js';
 import type { RenderResult } from './render.js';
 
@@ -35,7 +35,7 @@ const apply = (m: number[], p: V3): V3 => [
   m[8] * p[0] + m[9] * p[1] + m[10] * p[2] + m[11],
 ];
 
-interface Face {
+export interface Face {
   pts: V3[];
   // Holes of a top or bottom face, drawn with it
   holes?: V3[][];
@@ -47,7 +47,7 @@ interface Face {
 const esc = (s: string) =>
   s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
-function shade(hex: string, k: number): string {
+export function shade(hex: string, k: number): string {
   const n = parseInt(hex.slice(1), 16);
   const ch = (v: number) =>
     Math.max(0, Math.min(255, Math.round(v * k)))
@@ -56,8 +56,10 @@ function shade(hex: string, k: number): string {
   return `#${ch(n >> 16)}${ch((n >> 8) & 255)}${ch(n & 255)}`;
 }
 
-// A part's faces in the world, bent where it bends
-function partFaces(p: AssemblyPart, color: string, stroke: string): Face[] {
+// A part's faces in the world, bent where it bends and folded where it
+// folds
+export function partFaces(p: AssemblyPart, color: string, stroke: string): Face[] {
+  if (p.folds?.length) return bentPieces(p).flatMap((q) => partFaces(q, color, stroke));
   const world = (x: number, y: number, z: number): V3 =>
     apply(p.matrix, p.bends?.length ? bendPoint(p.bends, p.thickness, [x, y, z]) : [x, y, z]);
   const faces: Face[] = [];
@@ -115,7 +117,7 @@ function partFaces(p: AssemblyPart, color: string, stroke: string): Face[] {
   return faces;
 }
 
-function hardwareFaces(h: RenderResult['hardware'][number], color: string): Face[] {
+export function hardwareFaces(h: RenderResult['hardware'][number], color: string): Face[] {
   // A rod as a thick line: one face of two points, drawn with its width
   const size = typeof h.size === 'number' ? h.size : Math.max(...h.size);
   const mid: V3 = [(h.from[0] + h.to[0]) / 2, (h.from[1] + h.to[1]) / 2, (h.from[2] + h.to[2]) / 2];
@@ -127,6 +129,53 @@ function hardwareFaces(h: RenderResult['hardware'][number], color: string): Face
       stroke: String(size),
     },
   ];
+}
+
+/** Faces seen from the front right, above, scaled into `width` by
+ * `height`, back to front: polygons (with holes) to fill, and hardware as
+ * lines `width` wide; y down */
+export function projectFaces(
+  faces: Face[],
+  width: number,
+  height: number,
+): {
+  w: number;
+  h: number;
+  items: { rings: [number, number][][]; fill: string; stroke: string; width: number }[];
+} {
+  const proj = (p: V3) => [dot(p, R), -dot(p, U)];
+  let x0 = Infinity,
+    y0 = Infinity,
+    x1 = -Infinity,
+    y1 = -Infinity;
+  for (const f of faces)
+    for (const p of f.pts) {
+      const [x, y] = proj(p);
+      x0 = Math.min(x0, x);
+      x1 = Math.max(x1, x);
+      y0 = Math.min(y0, y);
+      y1 = Math.max(y1, y);
+    }
+  if (!Number.isFinite(x0)) return { w: 0, h: 0, items: [] };
+  const pad = Math.max(x1 - x0, y1 - y0) * 0.04 + 1;
+  const k = Math.min(width / (x1 - x0 + 2 * pad), height / (y1 - y0 + 2 * pad));
+  const at = (p: V3): [number, number] => {
+    const [x, y] = proj(p);
+    return [(x - x0 + pad) * k, (y - y0 + pad) * k];
+  };
+  const items = [...faces]
+    .sort((a, b) => a.depth - b.depth)
+    .map((f) =>
+      f.pts.length === 2
+        ? { rings: [f.pts.map(at)], fill: '', stroke: f.color, width: Number(f.stroke) * k }
+        : {
+            rings: [f.pts.map(at), ...(f.holes ?? []).map((h) => h.map(at))],
+            fill: f.color,
+            stroke: f.stroke,
+            width: 0.6,
+          },
+    );
+  return { w: (x1 - x0 + 2 * pad) * k, h: (y1 - y0 + 2 * pad) * k, items };
 }
 
 function drawing(faces: Face[], width = 640, height = 420): string {
@@ -163,7 +212,7 @@ function drawing(faces: Face[], width = 640, height = 420): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${out.join('')}</svg>`;
 }
 
-const WOOD = '#d9bf91',
+export const WOOD = '#d9bf91',
   DONE = '#cfc6b8',
   NEW = '#e08a3c';
 

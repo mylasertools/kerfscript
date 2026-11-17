@@ -25,6 +25,8 @@ import { verificationCommand } from './verify/command.js';
 import { diffRenders } from './diff.js';
 import { instructionsHtml } from './instructions.js';
 import { sheetPng } from './png.js';
+import { instructionPages, pagePng, pagesPdf } from './export/pages.js';
+import { FontBook } from './text.js';
 import {
   add,
   check as checkLibraries,
@@ -47,7 +49,7 @@ Usage:
   kerf verify <file.kerf> --spec <file.json> [-o report.json]
                                     verify assembly and motion contracts;
                                     exit 0 pass, 1 failed, 2 unverified/invalid
-  kerf instructions <file.kerf> [-o out.html] [options]
+  kerf instructions <file.kerf> [-o out.html|.pdf|.png] [options]
                                     printable assembly instructions, a page
                                     per step
   kerf diff <a.kerf> <b.kerf>        what changed, by part and layer; exit 1 if
@@ -339,7 +341,27 @@ function main(argv: string[]) {
   }
   if (cmd === 'instructions') {
     const page = out || file.replace(/\.kerf$/i, '') + '-instructions.html';
-    writeFileSync(page, instructionsHtml(result, basename(file).replace(/\.kerf$/i, '')));
+    const title = basename(file).replace(/\.kerf$/i, '');
+    const kind = extname(page).toLowerCase();
+    if (kind === '.pdf' || kind === '.png') {
+      // Pages drawn with the text as the font's outlines: no browser needed
+      const pages = instructionPages(
+        result,
+        title,
+        new FontBook(withBuiltinFont(fonts), BUILTIN_FONT),
+      );
+      if (kind === '.pdf') {
+        writeFileSync(page, pagesPdf(pages));
+        process.stderr.write(`Wrote ${page}\n`);
+      } else
+        pages.forEach((p, i) => {
+          const name = page.replace(/(\.[^.]+)$/, `-${i + 1}$1`);
+          writeFileSync(name, pagePng(p, px));
+          process.stderr.write(`Wrote ${name}\n`);
+        });
+      return;
+    }
+    writeFileSync(page, instructionsHtml(result, title));
     process.stderr.write(`Wrote ${page}\n`);
     return;
   }

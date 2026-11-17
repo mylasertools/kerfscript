@@ -62,6 +62,13 @@ angle])`, or a list of them, folds the part's panels in the assembled
   glow, `render()` returns them as `lights`, and GLB files carry them as
   point lights with LEDs and flames emissive.
 
+Command line:
+
+- `kerf instructions -o out.pdf` writes the assembly instructions as a
+  PDF, and `-o out.png` as a picture of each page: the parts, then a page
+  for each step with the model as it stands, its new parts in orange and
+  what it adds. No browser is needed. Folded parts are drawn folded.
+
 Libraries:
 
 - `kerf/sphere`: `ball()` makes a slot-together ball or dome of half-disc
