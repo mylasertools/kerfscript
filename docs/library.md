@@ -1063,6 +1063,11 @@ egg = part_size("hen egg");
 part("egg cup") difference() { circle(d = egg.diameter + 16); circle(d = egg.diameter * 0.75); }
 ```
 
+### `size_list(kind)`
+
+The names in one table, as a list, for a customizer menu: `"paper"`,
+`"card"`, `"photo"`, `"note"` or `"part"`, as `// [size_list("note")]`.
+
 ### `landscape(size)`, `portrait(size)`
 
 A size turned to lie wider than tall, or to stand taller than wide.

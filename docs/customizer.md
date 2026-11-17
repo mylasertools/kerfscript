@@ -48,6 +48,19 @@ Put a range or choice list after the assignment:
 | No comment on a boolean           | Checkbox                             |
 | No comment on a string            | Text field                           |
 
+A menu can come from a library: a function call in the brackets, as
+`// [figure_names("easter")]`, `// [symbol_names("animals")]` or
+`// [size_list("note")]`, is run with the program's `use <kerf/...>`
+libraries, and each item of the list it gives is a choice (or each
+`[value, label]` pair a choice with a label):
+
+```kerf
+use <kerf/figures>
+
+figure = "bunny"; // [figure_names("easter")]
+part("figure") figure(figure, 80);
+```
+
 `/* [Size] */` starts a group named Size. `/* [Hidden] */` hides the
 settings that follow it, until another group begins.
 

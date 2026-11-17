@@ -14,6 +14,10 @@ Language:
   light behind it shows through, and GLB files make it partly transparent
   with transmission. `hardware("vellum")` is new, and `hardware("paper")`
   is translucent.
+- A customizer menu can come from a library: `// [figure_names("easter")]`
+  or any function call in the brackets is run with the program's built-in
+  libraries, each item of the list a choice. `size_list(kind)` in
+  `kerf/sizes` lists a table's names for one.
 - A layer's colour can be a name, as `"red"`, as well as a hex colour.
 - Parts too big for the bed: `part(split = true)` cuts a part into
   pieces that fit the sheet (or `split = [w, h]`), along lines that cross

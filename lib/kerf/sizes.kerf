@@ -49,6 +49,14 @@ function note_size(name) = let (s = lookup_size(name, NOTE_SIZES))
 function part_size(name) = let (s = lookup_size(name, PART_SIZES))
   is_undef(s) ? assert(false, str("Unknown part \"", name, "\". Known: ", size_names(PART_SIZES))) : s;
 
+// The names in one of the tables, as a list, for a customizer menu:
+// "paper", "card", "photo", "note" (banknotes) or "part"
+function size_list(kind) =
+  let (t = kind == "paper" ? PAPER_SIZES : kind == "card" ? CARD_SIZES : kind == "photo" ? PHOTO_SIZES
+      : kind == "note" ? NOTE_SIZES : kind == "part" ? PART_SIZES : undef)
+  assert(!is_undef(t), str("size_list(): kind must be \"paper\", \"card\", \"photo\", \"note\" or \"part\", got ", kind))
+  [for (e = t) e[0]];
+
 // A size turned to lie wider than tall
 function landscape(size) = size[0] >= size[1] ? size : [size[1], size[0]];
 // A size turned to stand taller than wide
