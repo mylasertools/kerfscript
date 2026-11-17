@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+Libraries:
+
+- `wall(outline, depth)` in `kerf/hinge`: a front plate, a back plate and
+  a strip between them bent on living hinges round a closed outline, tabbed
+  into slots in both plates where it runs straight. The seam goes where
+  `join` asks, and a strip longer than `max_length` is cut into pieces that
+  fit the bed. `wall_path()`, `wall_pieces()` and `path_part()` go with it.
+
 3D files:
 
 - The print layout, `--print` or `layout: "print"`, makes each part with
@@ -33,6 +41,7 @@ Changes to the output of existing programs, each a fix:
 Fixes:
 
 - A part with nothing in it warns: `Part "P" is empty`.
+- `slots = []` asks for no slots, without a warning that none pass through.
 
 ## 0.10.0 (2026-11-16)
 

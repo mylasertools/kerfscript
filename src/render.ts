@@ -1091,8 +1091,9 @@ function cutSlots(
       );
     const slot = union(each.flat());
     if (!slot.length) {
-      // A pattern asks for whatever passes through, which may be nothing
-      if (p.slots && !p.slots.some((n) => n.includes('*')))
+      // A pattern asks for whatever passes through, which may be nothing,
+      // and slots = [] for no part at all
+      if (p.slots?.length && !p.slots.some((n) => n.includes('*')))
         warnings.push(
           `Part "${p.name}": none of ${p.slots.map((n) => `"${n}"`).join(', ')} pass through it, so it has no slots.`,
         );

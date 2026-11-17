@@ -160,3 +160,87 @@ module flex_strip(path, width, name = "strip", tabs = true, straight = 10, r = u
           }
   }
 }
+
+// The part of `path` from s0 to s1 along it, its ends where those fall
+function path_part(path, s0, s1) =
+  let (at = concat([0], scan([for (i = [0:len(path) - 2]) norm(path[i + 1] - path[i])], 0, function(a, x) a + x)))
+  concat([point_at(path, s0)], [for (i = [0:len(path) - 1]) if (at[i] > s0 + 1e-6 && at[i] < s1 - 1e-6) path[i]], [point_at(path, s1)]);
+
+// A closed outline as a path round it that starts and ends at the point
+// of it nearest `join` (its first point when join is undef)
+function wall_path(outline, join = undef) =
+  let (
+    n = len(outline),
+    pts = norm(outline[n - 1] - outline[0]) < 1e-9 ? slice(outline, 0, n - 1) : outline,
+    m = len(pts),
+    near = [for (i = [0:m - 1]) let (a = pts[i], b = pts[(i + 1) % m], d = b - a,
+      u = is_undef(join) ? 0 : clamp(((join - a) * d) / max(d * d, 1e-12), 0, 1)) [a + u * d, is_undef(join) ? 0 : norm(join - a - u * d)]],
+    k = fold([for (i = [0:m - 1]) i], 0, function(b, i) near[i][1] < near[b][1] ? i : b),
+    ring = concat([near[k][0]], [for (i = [1:m]) pts[(k + i) % m]], [near[k][0]])
+  )
+  [for (i = [0:len(ring) - 1]) if (i == 0 || norm(ring[i] - ring[i - 1]) > 1e-9) ring[i]];
+
+// Where to split a strip L long into n pieces no longer than max_length:
+// near even spacing, at the middle of a straight run where one is near,
+// else at the middle of a segment of the path, where its bends end
+function wall_splits(L, n, max_length, mids, halves, k = 1, prev = 0, out = []) =
+  k >= n ? out
+  : let (t = k * L / n,
+    fits = function(list) [for (c = list) if (c > prev + 1 && c <= prev + max_length && L - c <= (n - k) * max_length) c],
+    nearest = function(list) fold(list, list[0], function(b, x) abs(x - t) < abs(b - t) ? x : b),
+    ok = fits(mids), half = fits(halves),
+    c = len(ok) ? nearest(ok) : len(half) ? nearest(half) : t)
+  wall_splits(L, n, max_length, mids, halves, k + 1, c, concat(out, [c]));
+
+// The names of the pieces of the strip wall() makes
+function wall_strip_names(name, pieces) = pieces == 1 ? [str(name, " strip")] : [for (k = [1:pieces]) str(name, " strip ", k)];
+
+// How many pieces wall() cuts its strip into
+function wall_pieces(outline, max_length = 400, join = undef) = max(1, ceil(path_length(wall_path(outline, join)) / max_length));
+
+// A wall round a closed outline: a front plate, a back plate `depth`
+// behind it and a strip between them that follows the outline, bent on
+// living hinges where it curves and tabbed into slots in both plates where
+// it runs straight. The strip's ends meet at the point of the outline
+// nearest `join`; a strip longer than `max_length` is cut into pieces no
+// longer, split where it runs straight when it can, so each fits the bed.
+//
+// The first child, when given, is the front plate, drawn as the outline
+// is; the second the back plate. Without them each plate is the outline
+// grown by `rim` (half a thickness and 3 mm). Where the strip's ends meet
+// they are `seam` apart, so pieces bent on their hinges don't press on
+// each other. The parts are
+// str(name, " front"), str(name, " back") and str(name, " strip"), or
+// " strip 1", " strip 2" and so on for a strip in pieces. It stands
+// upright as placed by `at` and `rotate`: the outline is seen from the
+// front, the back plate behind it.
+module wall(outline, depth, name = "wall", join = undef, max_length = 400, rim = undef, seam = 0.3, tabs = true, straight = 10, r = undef, spacing = 1.5, bridge = 3, narrow = false, at = [0, 0, 0], rotate = [90, 0, 0]) {
+  t = $thickness;
+  grow = is_undef(rim) ? t / 2 + 3 : rim;
+  path = wall_path(outline, join);
+  L = path_length(path);
+  n = max(1, ceil(L / max_length));
+  spans = strip_merge(strip_bends(path, straight, r));
+  runs = [for (k = [0:len(spans)]) [k == 0 ? 0 : spans[k - 1][1], k == len(spans) ? L : spans[k][0]]];
+  mids = [for (run = runs) if (run[1] - run[0] >= 2 * straight) (run[0] + run[1]) / 2];
+  at_ = concat([0], scan([for (i = [0:len(path) - 2]) norm(path[i + 1] - path[i])], 0, function(a, x) a + x));
+  halves = [for (i = [0:len(path) - 2]) (at_[i] + at_[i + 1]) / 2];
+  cuts = concat([0], wall_splits(L, n, max_length, mids, halves), [L]);
+  names = wall_strip_names(name, n);
+  pieces = [for (k = [0:n - 1]) path_part(path, cuts[k] + seam / 2, cuts[k + 1] - seam / 2)];
+  // The pieces with tabs, as flex_strip() puts them on runs over 16 mm
+  tabbed = !tabs ? [] : [for (k = [0:n - 1]) let (sp = strip_merge(strip_bends(pieces[k], straight, r)), l = path_length(pieces[k]),
+    rs = [for (j = [0:len(sp)]) (j == len(sp) ? l : sp[j][0]) - (j == 0 ? 0 : sp[j - 1][1])]) if (max(rs) > 16) names[k]];
+  place(at = at, rotate = rotate) {
+    part(str(name, " front"), slots = tabbed) {
+      if ($children > 0) children(0);
+      else offset(delta = grow) polygon(outline);
+    }
+    part(str(name, " back"), at = [0, 0, -depth - t], slots = tabbed) {
+      if ($children > 1) children(1);
+      else offset(delta = grow) polygon(outline);
+    }
+    for (k = [0:n - 1])
+      flex_strip(pieces[k], depth, name = names[k], tabs = tabs, straight = straight, r = r, spacing = spacing, bridge = bridge, narrow = narrow);
+  }
+}

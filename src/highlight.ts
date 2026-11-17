@@ -57,7 +57,7 @@ export const BUILTINS = new Set(
     'divider kerf_gauge slot_gauge joint_test slotted_divider grid_dividers enclosure ' +
     'enclosure_cutouts vents spur_gear gear_window rack lantern_disc peg_wheel eccentric ' +
     'snail_cam tappets cone_flat fit align cam geneva_wheel geneva_lock geneva_crank ratchet pawl world_map keyhole keyholes hanging_hole hanging_loop flex_rect ' +
-    'flex_box flex_panel narrow_hinge flex_strip cam_lock lock_key ring_stack halved_pair symbol tabs ' +
+    'flex_box flex_panel narrow_hinge flex_strip wall cam_lock lock_key ring_stack halved_pair symbol tabs ' +
     'slots tab_rect heart teardrop egg lens crescent capsule diamond rounded_polygon shield arrow chevron banner house tag ring scalloped flower cloud speech_bubble stand stand_tabs stand_slots ' +
     'abs sign floor ceil round sqrt exp ln log sin cos tan asin acos atan ' +
     'atan2 pow min max clamp lerp norm cross path_length point_at heading_at offset_path train_for path_points ' +
