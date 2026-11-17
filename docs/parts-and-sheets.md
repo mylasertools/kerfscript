@@ -106,9 +106,11 @@ place(at = [20, 10, 30], rotate = [0, 0, 90]) box([80, 60, 40], name = "crate");
   print layout show it red, while it stays on the sheet of its material.
   `material = "red acrylic"` is for stock that comes red, and puts the
   part on a sheet of its own. A colour is a name (`red`, `orange`,
-  `yellow`, `green`, `dark green`, `light green`, `blue`, `dark blue`,
-  `light blue`, `navy`, `teal`, `purple`, `pink`, `brown`, `tan`,
-  `cream`, `white`, `black`, `grey`, `silver`, `gold`, `copper`, `skin`)
+  `yellow`, `light yellow`, `green`, `dark green`, `light green`, `lime`,
+  `olive`, `blue`, `dark blue`, `light blue`, `navy`, `teal`, `purple`,
+  `pink`, `light pink`, `maroon`, `brown`, `light brown`, `dark brown`,
+  `tan`, `beige`, `peach`, `cream`, `skin`, `white`, `black`, `grey`,
+  `light grey`, `dark grey`, `silver`, `gold`, `copper`)
   or a hex colour such as `"#c8372d"`. To paint only some areas, use a
   paint layer, as [Layers](layers.md#painted-areas) shows.
 - `mirror = true` cuts the part mirrored left to right. A lopsided end
