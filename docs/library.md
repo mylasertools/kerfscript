@@ -1223,6 +1223,40 @@ goes at `at`, turned by `rotate`; a layer may be several pieces.
 The colour of layer `k` of `n`: `colors[k]`, else the palette from dark at
 the back to light at the front.
 
+## Balls and domes
+
+`use <kerf/sphere>`
+
+Slot-together balls and domes, as 3D baubles, globes and lantern domes:
+half-disc fins standing round an upright axis, like the segments of an
+orange, held by flat rings slotted onto them with halving joints. The fins
+stop short of the axis, so they never meet.
+
+```kerf
+use <kerf/sphere>
+use <kerf/scene>
+
+$thickness = 3;
+// A bauble with a snowman standing inside it
+ball(140, fins = 6, hollow = 50, floor = true, at = [0, 0, 70]);
+scene_figure("snowman", 34, at = [0, 0, 71.5]);
+```
+
+### `ball(d = 80, fins = 6, rings = 1, width = 8, hollow = 0, floor = false, dome = false, loop = 4, at = [0, 0, 0], label = "ball", clearance = 0.1)`
+
+A ball `d` across, its centre at `at`: `fins` fins and `rings` rings
+`width` wide, the equator alone or spread from 60 degrees south to north.
+`dome = true` makes the top half, standing on its lowest ring. `hollow`
+cuts the fins away within that radius, to make room for a scene inside,
+and `floor = true` makes the lowest ring a whole disc for it to stand on,
+with a rail across the hollow for a standee's feet. `loop` puts a hole of
+that diameter near the top of each fin for a ribbon to hang it by. The
+parts are `"ball fin"` and `"ball ring 1"` up, named after `label`.
+
+### `ball_rings(d, rings = 1, dome = false)`
+
+The heights of a ball's rings above its centre.
+
 ## Scenes
 
 `use <kerf/scene>`

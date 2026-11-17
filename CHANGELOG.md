@@ -51,6 +51,10 @@ angle])`, or a list of them, folds the part's panels in the assembled
 
 Libraries:
 
+- `kerf/sphere`: `ball()` makes a slot-together ball or dome of half-disc
+  fins round an upright axis held by rings with halving joints, hollow
+  with a floor and a rail for a scene inside if asked, and with holes for
+  a ribbon to hang it by.
 - `kerf/layered`: `layered()` makes multilayer art from its children, the
   layers back to front: each a part glued on the one behind and painted,
   grown to hold up everything in front of it with a rim, with an optional

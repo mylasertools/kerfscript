@@ -1,0 +1,59 @@
+// kerf/sphere: slot-together balls and domes, as 3D baubles, globes and
+// lantern domes.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+//
+// A ball is half-disc fins standing round an upright axis, like the
+// segments of an orange, held by flat rings slotted onto them with halving
+// joints. The fins stop short of the axis, so they never meet each other.
+
+// The heights of a ball's rings above its centre: the equator alone, or
+// `rings` spread between 60 degrees south and north; for a dome, from 10
+// to 70 degrees north
+function ball_rings(d, rings = 1, dome = false) =
+  let (R = d / 2)
+  dome ? (rings <= 1 ? [R * sin(10)] : [for (i = [0:rings - 1]) R * sin(10 + 60 * i / (rings - 1))])
+  : rings <= 1 ? [0] : [for (i = [0:rings - 1]) R * sin(-60 + 120 * i / (rings - 1))];
+
+// A ball `d` across, its centre at `at`: `fins` half-disc fins round its
+// upright axis and `rings` flat rings `width` wide slotted onto them. A
+// dome is the top half, standing on its lowest ring. `hollow` cuts the
+// fins away within that radius of the centre, to make room for a scene
+// inside; `floor` makes the lowest ring a whole disc for it to stand on,
+// with a rail along x across the hollow for a standee's feet.
+// `loop` (a diameter) puts a hole near the top of each fin for a ribbon
+// to hang it by. Parts are named after `label`: "ball fin", "ball ring 1".
+module ball(d = 80, fins = 6, rings = 1, width = 8, hollow = 0, floor = false, dome = false, loop = 4, at = [0, 0, 0], label = "ball", clearance = 0.1) {
+  R = d / 2;
+  t = $thickness;
+  core = 1.2 * t;
+  assert(fins >= 3, "ball(): fins must be 3 or more");
+  assert(width < R / 2, "ball(): the rings must be narrower than a quarter of the ball");
+  heights = ball_rings(d, rings, dome);
+  hx = core + loop / 2 + 2;
+  part(str(label, " fin"), qty = fins,
+    at = [for (k = [0:fins - 1]) let (a = 360 * k / fins) at + [-t / 2 * sin(a), t / 2 * cos(a), 0]],
+    rotate = [for (k = [0:fins - 1]) [90, 0, 360 * k / fins]],
+    halving = [str(label, " ring*")], clearance = clearance)
+    difference() {
+      intersection() {
+        circle(r = R);
+        translate([core, dome ? 0 : -R]) rect([R, dome ? R : 2 * R]);
+      }
+      if (hollow > 0) circle(r = hollow);
+      if (loop > 0) translate([hx, sqrt(R * R - (hx + loop / 2) * (hx + loop / 2)) - loop / 2 - 2]) circle(d = loop);
+    }
+  for (i = [0:len(heights) - 1])
+    let (h = heights[i], r = sqrt(R * R - h * h))
+      part(str(label, " ring ", i + 1), at = at + [0, 0, h - t / 2])
+        // As many corners as a multiple of the fins, so every fin crosses
+        // a ring alike and takes the same slot
+        difference() {
+          circle(r = r, $fn = fins * ceil(120 / fins));
+          if (!(floor && i == 0)) circle(r = r - width, $fn = fins * ceil(120 / fins));
+          // A floor in a hollow ball has a rail across its middle, where no
+          // fin reaches, for a standee from kerf/scene
+          if (floor && i == 0 && hollow > 12)
+            translate([-(hollow - 6), -(t + clearance) / 2]) rect([2 * (hollow - 6), t + clearance]);
+        }
+  if (loop > 0) hardware("ribbon", at + [0, 0, R - 6], at + [0, 0, R + 25], [6, 0.4], label = str(label, " ribbon"));
+}
