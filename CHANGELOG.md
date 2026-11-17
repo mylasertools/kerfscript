@@ -1,5 +1,28 @@
 # Changelog
 
+## Unreleased
+
+Changes to the output of existing programs, each a fix:
+
+- A child of `intersection()` that makes nothing at all, as OpenSCAD
+  counts it (an `if` whose condition is false and that has no `else`, an
+  `echo()` or `assert()` with no children), no longer empties the
+  intersection; in `difference()` it is not the shape cut from, the next
+  child is.
+- `flex_strip()` and `strip_bends()` keep a curve whose radius changes as
+  several bends, one for each stretch of much the same radius, instead of
+  one bend of the average radius. The cut file is unchanged; the bent strip
+  in the 3D view, the exported models, the collision checks and the slots it
+  cuts follow the path.
+- A path given to `flex_strip()` or `strip_bends()` that repeats a point,
+  as where a straight run and an arc share their end, bends where the arc
+  starts; the repeated point had started the hinge and the bend a few mm
+  early, on the straight.
+
+Fixes:
+
+- A part with nothing in it warns: `Part "P" is empty`.
+
 ## 0.10.0 (2026-11-16)
 
 Language version 0.3, as in 0.9.0: programs run as before, except that

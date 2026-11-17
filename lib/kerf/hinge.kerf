@@ -82,14 +82,19 @@ module narrow_hinge(size, spacing = 1.5, bridge = 1.5) {
 // The bends of a strip that follows `path`, a list of [x, y] points along
 // its middle: [s0, s1, angle] for each curve, measured along the path,
 // turning left positive. Segments shorter than `straight` are curve, the
-// rest straight; a sharp corner bends round radius `r`.
+// rest straight; a sharp corner bends round radius `r`. A curve whose
+// radius changes, as a tight fillet running into a wide arc, is several
+// bends end to end, one for each stretch of much the same radius.
 function strip_bends(path, straight = 10, r = undef) =
   let (
     rr = is_undef(r) ? 2 * $thickness : r,
-    n = len(path),
-    segs = [for (i = [0:n - 2]) norm(path[i + 1] - path[i])],
+    // A point repeated, as where a straight run and an arc share their end,
+    // has no heading of its own: it is left out
+    pts = [for (i = [0:len(path) - 1]) if (i == 0 || norm(path[i] - path[i - 1]) > 1e-9) path[i]],
+    n = len(pts),
+    segs = [for (i = [0:n - 2]) norm(pts[i + 1] - pts[i])],
     at = [for (i = [0:n - 1]) i == 0 ? 0 : sum([for (k = [0:i - 1]) segs[k]])],
-    head = [for (i = [0:n - 2]) atan2(path[i + 1][1] - path[i][1], path[i + 1][0] - path[i][0])],
+    head = [for (i = [0:n - 2]) atan2(pts[i + 1][1] - pts[i][1], pts[i + 1][0] - pts[i][0])],
     turn = [for (i = [1:n - 2]) let (d = head[i] - head[i - 1]) d > 180 ? d - 360 : d < -180 ? d + 360 : d],
     // Each corner as [s0, s1, angle]: a short segment's turn spreads over
     // it, a sharp corner's over a bend of radius rr
@@ -100,7 +105,23 @@ function strip_bends(path, straight = 10, r = undef) =
         s1 = short_out ? at[i] + segs[i] / 2 : at[i] + half)
         [s0, s1, turn[i - 1]]]
   )
-  strip_merge(corners);
+  strip_join(corners);
+
+// Joins bends that touch or overlap into one where they turn the same way
+// at much the same rate (within a quarter), so each bend keeps close to
+// one radius. Two that overlap but don't join meet halfway through the
+// overlap.
+function strip_join(list, i = 0, cur = undef, out = []) =
+  i == len(list) ? (is_undef(cur) ? out : concat(out, [cur]))
+  : is_undef(cur) ? strip_join(list, i + 1, list[i], out)
+  : let (nx = list[i]) nx[0] > cur[1] + 0.01 ? strip_join(list, i + 1, nx, concat(out, [cur]))
+  : let (p = cur[2] / (cur[1] - cur[0]), q = nx[2] / (nx[1] - nx[0]),
+    alike = p * q > 0 && max(abs(p), abs(q)) <= 1.25 * min(abs(p), abs(q)))
+  // Alike, or one within the other: one bend
+  alike || nx[0] <= cur[0] || nx[1] <= cur[1]
+  ? strip_join(list, i + 1, [cur[0], max(cur[1], nx[1]), cur[2] + nx[2]], out)
+  : nx[0] >= cur[1] ? strip_join(list, i + 1, nx, concat(out, [cur]))
+  : let (m = (nx[0] + cur[1]) / 2) strip_join(list, i + 1, [m, nx[1], nx[2]], concat(out, [[cur[0], m, cur[2]]]));
 
 // Joins bends that touch or overlap into one
 function strip_merge(list, i = 0, cur = undef, out = []) =
@@ -120,12 +141,14 @@ module flex_strip(path, width, name = "strip", tabs = true, straight = 10, r = u
   t = $thickness;
   L = path_length(path);
   bends = strip_bends(path, straight, r);
+  // The hinges are cut over each stretch of bends end to end
+  spans = strip_merge(bends);
   h0 = heading_at(path, 0);
   p0 = path[0] - t / 2 * [-sin(h0), cos(h0)];
-  runs = [for (k = [0:len(bends)]) [k == 0 ? 0 : bends[k - 1][1], k == len(bends) ? L : bends[k][0]]];
+  runs = [for (k = [0:len(spans)]) [k == 0 ? 0 : spans[k - 1][1], k == len(spans) ? L : spans[k][0]]];
   part(name, at = [p0[0], p0[1], 0], rotate = orient([cos(h0), sin(h0), 0], [-sin(h0), cos(h0), 0]), bend = [for (b = bends) [b[0], b[1], b[2]]]) {
     rect([L, width]);
-    for (b = bends) translate([b[0], 0])
+    for (b = spans) translate([b[0], 0])
       if (narrow) narrow_hinge([b[1] - b[0], width], spacing, bridge);
     else living_hinge([b[1] - b[0], width], spacing = spacing, bridge = bridge);
     if (tabs)

@@ -264,17 +264,29 @@ Wrap it in `place()` with the plate's placement, put the other plate
 `width` away, and give both plates `slots`: they cut the slots for the
 tabs where the strip passes through them. Segments of the path shorter
 than `straight` are taken as curve; a sharp corner bends round radius
-`r`, two thicknesses by default. `narrow` uses `narrow_hinge()`.
+`r`, two thicknesses by default. Sample a curve with segments shorter
+than `straight`: a curve sampled more coarsely is cut as straight runs
+with a sharp bend at each point. `narrow` uses `narrow_hinge()`.
 
 ### `strip_bends(path, straight = 10, r)`
 
 The bends `flex_strip()` makes, as `[s0, s1, angle]` along the path:
 where each curve starts and ends and how far it turns, left positive.
-Give them to `part(bend = ...)` for a strip of your own.
+A curve whose radius changes, such as a tight fillet running into a wide
+arc, gives several bends end to end, one for each stretch of much the
+same radius, so the bent strip follows the path. Give them to
+`part(bend = ...)` for a strip of your own.
+
+### `strip_join(list)`
+
+Joins bends that touch or overlap where they turn the same way at much
+the same rate, within a quarter of each other; `strip_bends()` uses it.
+Two that overlap but turn differently meet halfway through the overlap.
 
 ### `strip_merge(list)`
 
-Joins bends from `strip_bends()` that touch into one.
+Joins bends that touch into one, whatever their radius: the stretches
+`flex_strip()` cuts its hinges over.
 
 ## Dividers
 

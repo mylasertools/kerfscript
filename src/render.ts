@@ -211,6 +211,19 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       material: toText(g('$material') ?? 'material'),
     });
   if (!parts.length) warnings.push('Nothing to cut: the program made no shapes.');
+  // A part with nothing in it would drop out of the sheets and the
+  // assembly without a word; intersection() already says when it emptied one
+  const emptied = new Set<string>();
+  for (const p of parts) {
+    if (emptied.has(p.name)) continue;
+    const drawn = [...p.layers].some(
+      ([k, l]) => k !== HIDDEN && (l.regions.length || l.lines.length),
+    );
+    if (drawn) continue;
+    emptied.add(p.name);
+    if (!warnings.some((w) => w.includes(`leaves part "${p.name}" with nothing to cut`)))
+      warnings.push(`Part "${p.name}" is empty: nothing drawn in it is left to cut.`);
+  }
   // A setting's `when` condition that can't be used: the setting always shows
   try {
     for (const p of parameters(source).parameters)

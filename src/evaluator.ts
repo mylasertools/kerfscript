@@ -174,6 +174,19 @@ export function besideFile(from: string | undefined, path: string): string | und
   return (f.startsWith('/') ? '/' : '') + out.join('/');
 }
 
+// The children that made nothing at all, as in OpenSCAD: an if that was
+// false with no else, an echo() or assert() with no children. Each stands
+// in childList() as an empty shape kept here, for difference() and
+// intersection() to leave out; anything else, even a for of no steps or
+// an empty union(), is a child that draws nothing.
+const NO_NODE = new WeakSet<Shape>();
+const noNode = (): Shape => {
+  const e = emptyShape();
+  NO_NODE.add(e);
+  return e;
+};
+const madeNode = (s: Shape) => !NO_NODE.has(s);
+
 const SHAPE_COST = 100;
 const UNITS = { mm: 1, cm: 10, m: 1000, in: 25.4, ft: 304.8 };
 const LIST_COST = 4;
@@ -629,9 +642,9 @@ export class Evaluator {
       case 'block':
         return this.block(s.body, new Env(env));
       case 'if':
-        return truthy(this.expr(s.cond, env))
-          ? this.block(s.then, new Env(env))
-          : this.block(s.else, new Env(env));
+        if (truthy(this.expr(s.cond, env))) return this.block(s.then, new Env(env));
+        // False with no else: nothing at all (see NO_NODE)
+        return s.else.length ? this.block(s.else, new Env(env)) : null;
       case 'let': {
         const e = new Env(env);
         this.bindSeq(s.assigns, e);
@@ -656,6 +669,7 @@ export class Evaluator {
         if (s.modifier === '*') return null;
         {
           const out = this.callModule(s, env);
+          if ((s.name === 'echo' || s.name === 'assert') && !s.children.length) return null;
           return s.modifier === '#' || s.modifier === '%' ? retag(out, 'guide') : out;
         }
     }
@@ -816,7 +830,7 @@ export class Evaluator {
         const out: Shape[] = [];
         for (const st of s.children) {
           const r = this.stmt(st, e);
-          if (kids.includes(st)) out.push(r ?? emptyShape());
+          if (kids.includes(st)) out.push(r ?? noNode());
         }
         return out;
       },
@@ -1771,8 +1785,11 @@ export class Evaluator {
       },
       union: (c) => c.children(),
       group: (c) => c.children(),
+      // As in OpenSCAD, a child that made nothing at all (see NO_NODE) is
+      // left out: it is not the shape cut from, and it doesn't empty an
+      // intersection
       difference: (c) => {
-        const [first, ...rest] = c.childList();
+        const [first, ...rest] = c.childList().filter(madeNode);
         if (!first) return emptyShape();
         const cutter = flat(rest, 'difference');
         return mapLayers(first, (l) => ({
@@ -1781,7 +1798,7 @@ export class Evaluator {
         }));
       },
       intersection: (c) => {
-        const kids = c.childList();
+        const kids = c.childList().filter(madeNode);
         if (!kids.length) return emptyShape();
         // Children that only draw lines don't limit the area: their lines
         // are clipped to the others, in whichever order they come
