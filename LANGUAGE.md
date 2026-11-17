@@ -211,6 +211,8 @@ module hang_hole(d = 5) {
 | `$label_parts`    | `false`       | engrave each part's number on its back face, as in the parts list and steps                            |
 | `$join_lines`     | `false`       | join lines that meet end to end and order them nearest first, for less travel                          |
 | `$min_width`      | `1.5`         | warn where a part's material is narrower than this; `0` turns it off                                   |
+| `$knob`           | `12`          | the size of the jigsaw knobs joining the pieces of a split part                                        |
+| `$knob_clearance` | `0.15`        | the room between a knob and its socket                                                                 |
 | `$bounds`         |               | set by `measure()` for the children after the one it measures                                          |
 | `$area`           |               | set by `measure()`: the area of material the measured child cuts                                       |
 | `$centroid`       |               | set by `measure()`: the measured child's balance point `[x, y]`                                        |
@@ -314,6 +316,10 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
     origin stays flat and each other turns about the folds between,
     towards the top face for an angle more than 0. `fold_open` (1) scales
     every fold's angle, 0 lying flat. A fold that divides nothing warns.
+  - `split = true`, or `[w, h]`: a part too big for the bed is cut into
+    pieces that fit the sheet (less its margins) or that size, joined by
+    jigsaw knobs `$knob` mm across; the parts list says which pieces each
+    joins.
   - `hang = [x, y]`, `cord = 0`: the part hangs from that point on it, at
     `at`, and swings in the plane `rotate` gives until its weight is
     straight below; `cord` hangs it that much lower on a cord, listed as

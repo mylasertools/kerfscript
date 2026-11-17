@@ -1110,3 +1110,22 @@ test('$copy draws each copy of a part apart, alike copies staying one part', () 
     '1',
   ]);
 });
+
+test('part(split = ...) cuts a big part into pieces that fit, joined by knobs', () => {
+  const r = render(
+    '$sheet = [300, 200];\npart("wreath", split = true) { difference() { circle(d = 480); circle(d = 320); } engrave() for (a = [0:30:330]) rotate(a) translate([200, 0]) circle(8); }',
+  );
+  assert.deepEqual(r.warnings, []);
+  assert.equal(r.parts.length, 6);
+  for (const p of r.parts) {
+    assert.ok(p.width <= 294 && p.height <= 194, `${p.name} ${p.width} x ${p.height}`);
+    assert.ok(p.joins.length >= 2, p.name);
+  }
+  assert.deepEqual(r.parts[0].joins, ['wreath piece 2', 'wreath piece 3']);
+  // The pieces hold all the material, less the knobs' clearance
+  const whole = render('part("w") difference() { circle(d = 480); circle(d = 320); }').parts[0];
+  assert.ok(whole.width > 294);
+  assert.throws(() => render('part("w", split = [0, 10]) rect(10);'), /split must be/);
+  // A part that fits is left whole
+  assert.equal(render('part("w", split = true) rect(50);').parts[0].name, 'w');
+});

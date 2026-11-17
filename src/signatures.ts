@@ -592,6 +592,10 @@ export const SIGNATURES: Signature[] = [
         'The point [x, y] on the part it hangs from, at `at`: it swings in its own plane until its weight is below',
       ),
       named('cord', 'The cord it hangs on, in mm; 0 for a ring or pin', '0'),
+      named(
+        'split',
+        'Cut a part too big for the bed into pieces joined by jigsaw knobs: true for the sheet, or [width, height]',
+      ),
       named('on', 'The name of a bent part this one is glued to, to move with it'),
       named('slots', 'Names of parts whose tabs pass through this one: their slots are cut'),
       named('clearance', 'Added to the slots, in total across each', '0.1'),

@@ -2738,6 +2738,19 @@ export class Evaluator {
         const folds = this.folds(foldArg, this.arg(c.args, 'fold_open', -1));
         if (folds.length && bendArg !== undefined)
           throw new Error('a part bends on living hinges or folds, not both');
+        // split = true, or [w, h]: cut into pieces that fit, joined by
+        // jigsaw knobs
+        const splitArg = this.arg(c.args, 'split', -1);
+        const split: true | [number, number] | undefined =
+          splitArg === undefined || splitArg === false
+            ? undefined
+            : splitArg === true
+              ? true
+              : (this.vec2(splitArg, 'split', false) as [number, number]);
+        if (Array.isArray(split) && !(split[0] > 0 && split[1] > 0))
+          throw new Error('split must be true, or [width, height] more than 0');
+        if (split && (bendArg !== undefined || folds.length))
+          throw new Error('a part that bends or folds cannot be split');
         // hang = [x, y]: the point it hangs from, at `at`, on a cord `cord`
         // mm long; it swings in its own plane until its weight is below
         const hangArg = this.arg(c.args, 'hang', -1);
@@ -2925,6 +2938,7 @@ export class Evaluator {
             ...(paint && { paint }),
             ...(piecesWanted !== undefined && { pieces: piecesWanted }),
             ...(hang && { hang }),
+            ...(split && { split }),
             ...(mine ? { placements: mine } : {}),
             ...(stack > 1 ? { stack } : {}),
             // A mirrored copy bends as the mirror image of the part

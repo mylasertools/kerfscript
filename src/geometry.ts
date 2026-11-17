@@ -42,6 +42,11 @@ export interface PartShape {
   bends?: Bend[];
   // Folds along any line, for card and paper
   folds?: Fold[];
+  // Cut into pieces no bigger than this, joined by jigsaw knobs: true for
+  // the sheet less its margins
+  split?: true | [number, number];
+  // A piece of a split part: the pieces it joins
+  joins?: string[];
   // Hanging from the point `at` (in its own coordinates) on a cord `cord`
   // mm long, or a ring or pin when 0: it swings until its weight is below
   hang?: { at: Pt; cord: number };

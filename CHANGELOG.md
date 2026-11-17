@@ -15,6 +15,11 @@ Language:
   with transmission. `hardware("vellum")` is new, and `hardware("paper")`
   is translucent.
 - A layer's colour can be a name, as `"red"`, as well as a hex colour.
+- Parts too big for the bed: `part(split = true)` cuts a part into
+  pieces that fit the sheet (or `split = [w, h]`), along lines that cross
+  the least material and keep off engraving, joined by jigsaw knobs
+  (`$knob`, `$knob_clearance`). Each piece is a part of its own in its
+  place, and the parts list says which pieces it joins.
 - Copies that differ: inside `part(qty = n)`, `$copy` is the copy being
   drawn, 0 to n - 1, so a set of tags takes a name each. Copies that come
   out alike stay one part; the parts list says which copies each part is.

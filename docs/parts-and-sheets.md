@@ -449,6 +449,24 @@ parts and at the sheet edges.
 A part larger than the sheet produces a warning. Set `$layout = "none"`
 to keep the positions from your code instead of packing the parts.
 
+`part(split = true)` cuts a part too big for the bed, as large wall art, a
+wreath or a sign, into pieces that fit the sheet less its margins;
+`split = [w, h]` gives the size instead. The cuts run across the part in
+columns and rows, each where it crosses the least material and keeps off
+engraving, and where a cut crosses material it is joined by jigsaw knobs
+`$knob` (12) mm across, with `$knob_clearance` (0.15 mm) between a knob and
+its socket, placed clear of engraving. Each piece is a part of its own,
+`"wreath piece 1"` up, in its place in the assembled view, and the parts
+list says which pieces it joins.
+
+```kerf
+$sheet = [300, 200];
+part("wreath", split = true) {
+  difference() { circle(d = 480); circle(d = 320); }
+  engrave() for (a = [0:30:330]) rotate(a) translate([200, 0]) circle(8);
+}
+```
+
 Either way, parts of different materials or thicknesses go on separate
 sheets: plywood parts on one, acrylic on another.
 

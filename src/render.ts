@@ -100,6 +100,8 @@ export interface PartInfo {
   // Which copies of its part() these are, 1 up, when the copies differ
   // ($copy) or some are mirrored
   copies?: number[];
+  // A piece of a part split to fit the bed: the pieces it joins
+  joins?: string[];
 }
 
 export interface Placed {
@@ -278,6 +280,29 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     );
 
   hangParts(parts, mode, res.hardware);
+  {
+    // Parts bigger than the bed, cut into pieces that fit
+    const bed = (options.sheet ??
+      (res.globals.vars.has('$sheet') ? g('$sheet') : (options.defaultSheet ?? g('$sheet')))) as [
+      number,
+      number,
+    ];
+    const knob = g('$knob') === undefined ? 12 : toNumber(g('$knob'));
+    const fitting = g('$knob_clearance') === undefined ? 0.15 : toNumber(g('$knob_clearance'));
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p = parts[i];
+      if (!p.split) continue;
+      const max: [number, number] =
+        p.split === true
+          ? [
+              bed[0] - 2 * (options.margin ?? options.gap ?? toNumber(g('$gap') ?? 3)),
+              bed[1] - 2 * (options.margin ?? options.gap ?? toNumber(g('$gap') ?? 3)),
+            ]
+          : p.split;
+      const pieces = splitPart(p, mode, max, knob, fitting, warnings);
+      parts.splice(i, 1, ...pieces);
+    }
+  }
   glueOn(parts, warnings);
   // Parts riding on a bent part move with it before any joint is worked
   // out, so slots, bores and halvings are cut where they end up
@@ -561,6 +586,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       ...(p.glue && { glued: p.glue.host }),
       ...(p.mirrored && { mirrored: true }),
       ...(p.copies && { copies: p.copies }),
+      ...(p.joins && { joins: p.joins }),
       ...(number !== undefined && { label: number }),
     };
     if (analysis)
@@ -985,6 +1011,196 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     lights: res.lights,
     steps: res.steps,
   };
+}
+
+// The length of material a line x = c (or y = c, `axis` 1) crosses, as
+// segments [from, to] along the other axis
+function crossings(material: Poly2[], c: number, axis: 0 | 1): [number, number][] {
+  const hits: number[] = [];
+  for (const r of material)
+    for (let i = 0; i < r.length; i++) {
+      const a = r[i];
+      const b = r[(i + 1) % r.length];
+      if (a[axis] > c !== b[axis] > c) {
+        const t = (c - a[axis]) / (b[axis] - a[axis]);
+        hits.push(a[1 - axis] + t * (b[1 - axis] - a[1 - axis]));
+      }
+    }
+  hits.sort((u, v) => u - v);
+  const out: [number, number][] = [];
+  for (let i = 0; i + 1 < hits.length; i += 2) out.push([hits[i], hits[i + 1]]);
+  return out;
+}
+
+// A jigsaw knob on the line `axis` = c at `at` along it, sticking out to
+// the + side, `k` mm across, grown by `grow`
+function knobShape(c: number, at: number, k: number, axis: 0 | 1, grow: number): Poly2[] {
+  const neck: Poly2 = [
+    [c - 0.3 * k, at - 0.22 * k],
+    [c + 0.4 * k, at - 0.22 * k],
+    [c + 0.4 * k, at + 0.22 * k],
+    [c - 0.3 * k, at + 0.22 * k],
+  ];
+  const head: Poly2 = Array.from({ length: 48 }, (_, i) => {
+    const a = (2 * Math.PI * i) / 48;
+    return [c + 0.58 * k + 0.32 * k * Math.cos(a), at + 0.32 * k * Math.sin(a)] as [number, number];
+  });
+  let shape = union([neck, head]);
+  if (grow) shape = offset(shape, grow, 'round');
+  return axis === 0
+    ? shape
+    : shape.map((r) => r.map(([u, v]) => [v, u] as [number, number]).reverse());
+}
+
+// Where to cut a span lo to hi into pieces no longer than `max`: each cut
+// where the line crosses the least material, and above all the least
+// engraving (`marks`), in the window that leaves the rest able to fit
+function cutsAlong(
+  material: Poly2[],
+  marks: Poly2[],
+  lo: number,
+  hi: number,
+  max: number,
+  axis: 0 | 1,
+): number[] {
+  const n = Math.ceil((hi - lo) / max - 1e-9);
+  const cuts: number[] = [];
+  let from = lo;
+  for (let i = 1; i < n; i++) {
+    const a = Math.max(from + 1, hi - (n - i) * max);
+    const b = Math.min(from + max, hi - 1);
+    let best = (a + b) / 2;
+    let least = Infinity;
+    for (let s = 0; s <= 40; s++) {
+      const c = a + ((b - a) * s) / 40;
+      const across = (rs: Poly2[]) => crossings(rs, c, axis).reduce((t, [u, v]) => t + v - u, 0);
+      const len = across(material) + 5 * across(marks);
+      if (len < least - 1e-6) [least, best] = [len, c];
+    }
+    cuts.push(best);
+    from = best;
+  }
+  return cuts;
+}
+
+// A part bigger than `max` cut into pieces that fit, along lines across it
+// that cross the least material, each crossing joined by jigsaw knobs
+function splitPart(
+  p: PartShape,
+  mode: (k: string) => string,
+  max: [number, number],
+  knob: number,
+  fitting: number,
+  warnings: string[],
+): PartShape[] {
+  const material = union(
+    [...p.layers].filter(([k]) => mode(k) === 'cut').flatMap(([, l]) => l.regions),
+  );
+  const b = layerBounds(new Map([['cut', { regions: material, lines: [] }]]));
+  if (!b) return [p];
+  // Each piece's knobs reach past its cut, so a piece is a knob shorter
+  const reach = 0.9 * knob;
+  const room: [number, number] = [max[0] - reach, max[1] - reach];
+  if (!(room[0] > knob && room[1] > knob)) {
+    warnings.push(
+      `Part "${p.name}": split = [${max.join(', ')}] is too small to cut into pieces with ${knob} mm knobs.`,
+    );
+    return [p];
+  }
+  const fits = (axis: 0 | 1) => b[axis + 2] - b[axis] <= max[axis] + 1e-9;
+  // Engraving and paint a cut would spoil
+  const marks = union(
+    [...p.layers].filter(([k]) => mode(k) !== 'cut').flatMap(([, l]) => l.regions),
+  );
+  const cols = fits(0) ? [] : cutsAlong(material, marks, b[0], b[2], room[0], 0);
+  const rows = fits(1) ? [] : cutsAlong(material, marks, b[1], b[3], room[1], 1);
+  if (!cols.length && !rows.length) return [p];
+  const BIG = 1e6;
+  const strip = (lo: number, hi: number, axis: 0 | 1): Poly2[] => [
+    axis === 0
+      ? [
+          [lo, -BIG],
+          [hi, -BIG],
+          [hi, BIG],
+          [lo, BIG],
+        ]
+      : [
+          [-BIG, lo],
+          [BIG, lo],
+          [BIG, hi],
+          [-BIG, hi],
+        ],
+  ];
+  // What lies before cut c on an axis, with the knobs where it crosses
+  // `within`: shrunk for the piece before, grown for the piece after, so
+  // the knob fits its socket
+  const before = (c: number, axis: 0 | 1, grow: number, within: Poly2[]): Poly2[] => {
+    const knobs: Poly2[] = [];
+    for (const [u, v] of crossings(within, c, axis)) {
+      const len = v - u;
+      if (len < 1.6 * knob) continue;
+      const count = Math.max(1, Math.floor(len / (5 * knob)));
+      for (let i = 0; i < count; i++) {
+        // Along its stretch, where it covers the least engraving
+        const [s0, s1] = [u + (len * i) / count, u + (len * (i + 1)) / count];
+        let at = (s0 + s1) / 2;
+        if (marks.length) {
+          let least = Infinity;
+          for (let q = 0; q <= 12; q++) {
+            const t = s0 + 0.7 * knob + ((s1 - s0 - 1.4 * knob) * q) / 12;
+            const hit = intersection(knobShape(c, t, knob * 1.2, axis, 0), marks).reduce(
+              (sum, r) => sum + Math.abs(area(r)),
+              0,
+            );
+            const off = Math.abs(t - (s0 + s1) / 2) * 1e-3;
+            if (hit + off < least) [least, at] = [hit + off, t];
+          }
+        }
+        knobs.push(...knobShape(c, at, knob, axis, grow));
+      }
+    }
+    return union([...strip(-BIG, c, axis), ...knobs]);
+  };
+  // The band between cuts i - 1 and i on an axis, its knobs from the
+  // material in `within`
+  const band = (cuts: number[], i: number, axis: 0 | 1, within: Poly2[]): Poly2[] => {
+    const hiSide =
+      i < cuts.length ? before(cuts[i], axis, -fitting / 2, within) : strip(-BIG, BIG, axis);
+    return i > 0 ? difference(hiSide, before(cuts[i - 1], axis, fitting / 2, within)) : hiSide;
+  };
+  const edges = (cuts: number[]) => [-BIG, ...cuts, BIG];
+  const [ce, re] = [edges(cols), edges(rows)];
+  const names: string[][] = [];
+  const out: PartShape[] = [];
+  let n = 0;
+  for (let j = 0; j <= rows.length; j++)
+    for (let i = 0; i <= cols.length; i++) {
+      // A column's knobs come from its row's material, a row's from its
+      // column's, so each knob lies whole in its own piece
+      const rowMaterial = intersection(material, strip(re[j], re[j + 1], 1));
+      const colMaterial = intersection(material, strip(ce[i], ce[i + 1], 0));
+      const region = intersection(band(cols, i, 0, rowMaterial), band(rows, j, 1, colMaterial));
+      const own = intersection(material, region);
+      if (!own.length) continue;
+      const name = `${p.name} piece ${++n}`;
+      (names[j] ??= [])[i] = name;
+      const layers = new Map<string, Layer>();
+      for (const [k, l] of p.layers) {
+        const regions = intersection(l.regions, region);
+        const lines = clipLines(l.lines, region, 'inside');
+        if (regions.length || lines.length) layers.set(k, { regions, lines });
+      }
+      out.push({ ...p, name, layers, split: undefined });
+    }
+  // The pieces each piece joins: those beside it in the grid
+  for (const q of out) {
+    const j = names.findIndex((row) => row?.includes(q.name));
+    const i = names[j].indexOf(q.name);
+    q.joins = [names[j][i - 1], names[j][i + 1], names[j - 1]?.[i], names[j + 1]?.[i]].filter(
+      (x): x is string => !!x,
+    );
+  }
+  return out;
 }
 
 // Each hanging part swung about the point it hangs from, in its own
