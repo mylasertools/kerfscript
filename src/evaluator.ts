@@ -61,6 +61,7 @@ import { flatten, parseSvgPath } from './paths.js';
 import {
   arcPath,
   textAlong,
+  textWeld,
   textMetrics,
   textRegions,
   type FontBook,
@@ -1940,7 +1941,25 @@ export class Evaluator {
         let glyphs: Poly[];
         const spacing = this.num(this.arg(c.args, 'line_spacing', -1, 1), 'text', 'line_spacing');
         if (!(spacing > 0)) throw new Error('line_spacing must be more than 0');
-        if (block) glyphs = this.textBlock(c.args, shown.text, topts, maxLines, spacing);
+        // weld = true: the letters of each word slid together into one
+        // piece, as a script name is cut; underline = h joins the words
+        const weldArg = this.arg(c.args, 'weld', -1, false);
+        const weld = typeof weldArg === 'number' ? weldArg > 0 : truthy(weldArg);
+        const overlap = typeof weldArg === 'number' ? weldArg : undefined;
+        const underArg = this.arg(c.args, 'underline', -1);
+        const underline = underArg === undefined ? 0 : this.num(underArg, 'text', 'underline');
+        if (!(underline >= 0)) throw new Error('underline must be a height, 0 or more');
+        if (underline > 0 && !weld) throw new Error('underline goes with weld = true');
+        if (weld && (block || pathArg !== undefined || arcArg !== undefined))
+          throw new Error('weld = true is for one line of text, not lines or a path');
+        if (weld) {
+          const welded = textWeld(this.opts.fonts, shown.text, topts, underline, overlap);
+          glyphs = welded.polys;
+          if (welded.loose.length)
+            this.warn(
+              `text(): welded, "${shown.text.length > 20 ? `${shown.text.slice(0, 20)}...` : shown.text}" still has ${welded.loose.length} loose piece${welded.loose.length > 1 ? 's' : ''} (${welded.loose.map((ch) => `in "${ch}"`).join(', ')}), as an i's dot or a word apart; add underline = h or bridge = w to join ${welded.loose.length > 1 ? 'them' : 'it'} (${where(c.args.at, false)})`,
+            );
+        } else if (block) glyphs = this.textBlock(c.args, shown.text, topts, maxLines, spacing);
         else if (pathArg !== undefined || arcArg !== undefined) {
           let along: Pt[];
           if (arcArg !== undefined) {

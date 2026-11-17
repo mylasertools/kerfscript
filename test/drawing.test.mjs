@@ -176,3 +176,24 @@ test('text(lines = 2) with fit breaks a long name when two lines let it be bigge
     /in a block, or along a path/,
   );
 });
+
+test('text(weld = true) welds a name into one piece, with an underline joining words', () => {
+  const part = (src) => render(`part("n") ${src}`, font);
+  const plain = part('text("Emma", 20);');
+  const welded = part('text("Emma", 20, weld = true);');
+  assert.ok(plain.parts[0].pieces > 1);
+  assert.equal(welded.parts[0].pieces, 1);
+  // No loose piece; a font thinner than $min_width says so for itself
+  assert.deepEqual(
+    welded.warnings.filter((w) => !/narrower than/.test(w)),
+    [],
+  );
+  assert.ok(welded.parts[0].width < plain.parts[0].width);
+  // Two words join only with an underline
+  assert.equal(part('text("Emma Rose", 20, weld = true, underline = 3);').parts[0].pieces, 1);
+  // Accents above a letter stay loose and say so
+  const zoe = part('text("Zoë", 30, weld = true);');
+  assert.match(zoe.warnings[0], /still has 2 loose pieces \(in "ë", in "ë"\)/);
+  assert.throws(() => render('text("A", 10, underline = 2);', font), /underline goes with weld/);
+  assert.throws(() => render('text("A B", 10, weld = true, lines = 2);', font), /one line of text/);
+});

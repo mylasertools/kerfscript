@@ -23,6 +23,10 @@ angle])`, or a list of them, folds the part's panels in the assembled
   the panels too; `fold_open` opens every fold part of the way, for a
   card shown half open. A fold that divides nothing warns.
   `foldPanels()` and `panelMarks()` give a viewer of your own the panels.
+- Welded text: `text(name, size, weld = true)` slides each word's letters
+  together until each overlaps the one before, so a name cuts out in one
+  piece; `underline = h` adds a bar under it joining the words. A piece
+  still loose, as an i's dot, warns.
 - Text in lines: a `"\n"` in `text()` breaks a line, and
   `text(t, fit = [w, h], lines = 2)` breaks a long name at a space when
   two lines let it be bigger than one. `line_spacing` sets the distance

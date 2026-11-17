@@ -189,6 +189,12 @@ export const SIGNATURES: Signature[] = [
         "Join every island (an i's dot, an accent, a stencil's counter) to the rest with a strip this wide",
       ),
       named(
+        'weld',
+        "Slide each word's letters together into one piece, as a script name is cut; a number is how far each overlaps the one before, in mm",
+        'false',
+      ),
+      named('underline', 'With weld: a bar this high under the baseline, joining the words'),
+      named(
         'lines',
         'Break the text at spaces into up to this many lines; with fit, as many as let it be biggest',
         '1',
