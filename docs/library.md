@@ -1186,6 +1186,43 @@ painter's order, each `[layer, colour, shapes]`, the shapes circles,
 ellipses, round-ended strokes, rounded rectangles, polygons and smooth
 closed curves, as the library's comments describe.
 
+## Layered art
+
+`use <kerf/layered>`
+
+Multilayer pieces from one drawing, as layered ornaments, mandalas, wreaths
+and signs are made. The children are the art's layers, back to front; each
+becomes a part of its own, glued on the one behind it and painted its
+colour, so the 3D view and the print layout show it built up.
+
+```kerf
+use <kerf/layered>
+
+$thickness = 3;
+layered("tree", colors = ["dark green", "green", "light green", "gold"], shadow = 2, hole = [0, 52, 4]) {
+  regular_polygon(3, 40);
+  translate([0, 8]) regular_polygon(3, 28);
+  translate([0, 16]) regular_polygon(3, 16);
+  translate([0, 40]) star(5, 7, 3);
+}
+```
+
+### `layered(name = "layered", colors, border = 2, shadow = 0, shadow_color = "dark grey", hole, at = [0, 0, 0], rotate = [0, 0, 0])`
+
+One part a layer, named `"name layer 1"` up from the back. Each layer is
+its own drawing joined with everything in front of it grown by `border`
+mm, so every layer is held up by the one behind and shows as a rim round
+it. `colors` gives each layer's paint, back to front; without it they go
+from dark brown at the back to white at the front. `shadow` adds a layer
+at the back that much wider again, in `shadow_color`. `hole = [x, y, d]`
+cuts a hole `d` across through every layer, to hang it by. The back layer
+goes at `at`, turned by `rotate`; a layer may be several pieces.
+
+### `layered_color(colors, k, n)`
+
+The colour of layer `k` of `n`: `colors[k]`, else the palette from dark at
+the back to light at the front.
+
 ## Scenes
 
 `use <kerf/scene>`

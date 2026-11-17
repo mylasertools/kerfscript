@@ -1,0 +1,53 @@
+// kerf/layered: multilayer pieces from one drawing, as layered ornaments,
+// mandalas, wreaths and signs are made.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+//
+// The children are the art's layers, back to front. Each becomes a part of
+// its own, glued on the one behind it and painted its colour; each layer
+// is at least the outline of everything in front of it, `border` mm
+// wider, so every layer is held up and shows as a rim round the next.
+
+// A layer's colour: the one given for it, else from a palette that goes
+// from dark at the back to light at the front
+function layered_color(colors, k, n) =
+  !is_undef(colors) && k < len(colors) ? colors[k]
+  : ["dark brown", "brown", "light brown", "tan", "beige", "cream", "white"][
+    min(6, round(k * 6 / max(1, n - 1)))];
+
+// Layered art from its children, the layers back to front: one part a
+// layer, named "name layer 1" up from the back, each glued on the one
+// behind it and painted colors[k]. Each layer is its own drawing joined
+// with everything in front of it grown by `border` mm. `shadow` adds a
+// layer at the back that much wider still, in `shadow_color`; `hole` =
+// [x, y, d] cuts a hole d across through every layer, to hang it by. The
+// back layer goes at `at`, turned by `rotate`.
+module layered(name = "layered", colors, border = 2, shadow = 0, shadow_color = "dark grey", hole, at = [0, 0, 0], rotate = [0, 0, 0]) {
+  n = $children;
+  assert(n >= 1, "layered(): give the layers as children, back to front");
+  module through() if (!is_undef(hole)) translate([hole[0], hole[1]]) circle(d = hole[2]);
+  first = shadow > 0 ? str(name, " shadow") : str(name, " layer 1");
+  if (shadow > 0)
+    part(first, at = at, rotate = rotate, paint = shadow_color)
+      difference() {
+        offset(r = shadow) union() {
+          children(0);
+          if (n > 1) offset(r = border) union() for (j = [1:n - 1]) children(j);
+        }
+        through();
+      }
+  // Layer k: its drawing, and everything in front of it grown by the border
+  for (k = [0:n - 1])
+    let (
+      pname = str(name, " layer ", k + 1),
+      host = k == 0 ? (shadow > 0 ? first : undef) : str(name, " layer ", k)
+    )
+      part(pname, at = is_undef(host) ? at : undef, rotate = is_undef(host) ? rotate : undef,
+        glue = host, paint = layered_color(colors, k, n), pieces = "any")
+        difference() {
+          union() {
+            children(k);
+            if (k < n - 1) offset(r = border) union() for (j = [k + 1:n - 1]) children(j);
+          }
+          through();
+        }
+}

@@ -46,6 +46,10 @@ angle])`, or a list of them, folds the part's panels in the assembled
 
 Libraries:
 
+- `kerf/layered`: `layered()` makes multilayer art from its children, the
+  layers back to front: each a part glued on the one behind and painted,
+  grown to hold up everything in front of it with a rim, with an optional
+  shadow layer and a hole through every layer to hang it by.
 - `symbol(name, size, min_width = 1.6)` in `kerf/symbols` grows every
   line narrower than `min_width` to that width, so a symbol drawn small
   can be cut.
