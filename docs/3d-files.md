@@ -64,7 +64,9 @@ stack with a part bent on a living hinge is laid out part by part, flat.
 A GLB of the assembled model carries its lights (tealights, LEDs, bulbs
 and `light()`) as point lights (`KHR_lights_punctual`), each with its
 colour and its intensity in candela; a strip of LEDs is several along it.
-Each light's node has `extras` with `kind: "light"`, its `source`,
+Translucent materials (vellum, paper, frosted acrylic) are partly
+transparent and carry `KHR_materials_transmission`. Each light's node has
+`extras` with `kind: "light"`, its `source`,
 `lumens` and `flicker`, which is true for a flame. Glowing bodies, an LED
 or a flame, are emissive. Blender and most glTF viewers light the scene
 with them.

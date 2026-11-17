@@ -36,6 +36,8 @@ export interface Body {
   color: string;
   metal?: boolean;
   clear?: boolean;
+  /** Lets light through without being clear, as vellum or frosted acrylic */
+  translucent?: boolean;
   /** Gives off light, as an LED or a flame */
   glow?: boolean;
   /** x, y, z of each vertex, in millimetres, z up */
@@ -77,6 +79,8 @@ export interface MeshSource {
 // Sheet colours by material name, for the 3D views; anything else is a
 // light wood
 const MATERIALS: [RegExp, string][] = [
+  [/frosted/i, '#e6eef0'],
+  [/vellum|tracing|parchment|rice paper/i, '#f3efe2'],
   [/walnut|dark/i, '#7b5538'],
   [/cherry|mahogany|red/i, '#a0613f'],
   [/oak/i, '#c9a571'],
@@ -106,7 +110,13 @@ export function materialColor(material: string): string {
   return MATERIALS.find(([re]) => re.test(material))?.[1] ?? '#dcc39a';
 }
 
-const isClear = (material: string) => /clear|acrylic|perspex|glass/i.test(material);
+const isClear = (material: string) =>
+  /clear|acrylic|perspex|glass/i.test(material) && !isTranslucent(material);
+
+/** Whether a sheet material lets light through without being clear:
+ * vellum, tracing paper, parchment, rice paper, frosted acrylic, paper */
+export const isTranslucent = (material: string) =>
+  /vellum|tracing|parchment|rice paper|frosted|translucent|\bpaper\b/i.test(material);
 
 // Overlap between a mark and the face it stands on, so the two never share
 // a face
@@ -240,6 +250,7 @@ function partBodies(
     copy: p.copy,
     instance,
     clear: !p.paint && isClear(material),
+    translucent: !p.paint && isTranslucent(material),
   });
   for (const piece of meshPieces(outline, bends)) prism(solid, piece, 0, t, to, flip);
   out.push(solid);
@@ -272,6 +283,7 @@ function hardwareBody(h: HardwareItem): Body | null {
     metal: look?.metal,
     clear: h.kind === 'glass',
     ...(look?.glow && { glow: true }),
+    ...(look?.translucent && { translucent: true }),
   });
   const d = h.to.map((v, k) => v - h.from[k]) as Vec3;
   const length = Math.hypot(...d);

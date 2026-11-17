@@ -9,6 +9,11 @@ Language:
   material. `layer(name, mode = "paint", color)` paints areas of a part,
   shown the same way and never in the files for the laser. The parts list
   says which parts are painted.
+- Translucent materials: a part of vellum, tracing paper, parchment, rice
+  paper, frosted acrylic or paper shows translucent in the 3D view, so a
+  light behind it shows through, and GLB files make it partly transparent
+  with transmission. `hardware("vellum")` is new, and `hardware("paper")`
+  is translucent.
 - A layer's colour can be a name, as `"red"`, as well as a hex colour.
 - Copies that differ: inside `part(qty = n)`, `$copy` is the copy being
   drawn, 0 to n - 1, so a set of tags takes a name each. Copies that come

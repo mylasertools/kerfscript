@@ -10,6 +10,8 @@ export interface HardwareKind {
   metal?: boolean;
   /** Gives off light, as an LED */
   glow?: boolean;
+  /** Lets light through, as vellum: translucent in the 3D view */
+  translucent?: boolean;
   /** What it is, for the docs */
   doc: string;
 }
@@ -22,7 +24,12 @@ export const HARDWARE_KINDS: Record<string, HardwareKind> = {
   bolt: { color: '#9aa0a6', metal: true, doc: 'a bolt' },
   nut: { color: '#9aa0a6', metal: true, doc: 'a nut' },
   magnet: { color: '#55585c', metal: true, doc: 'a disc or block magnet' },
-  paper: { color: '#fbfaf6', doc: 'a sheet or strip of paper' },
+  paper: { color: '#fbfaf6', translucent: true, doc: 'a sheet or strip of paper' },
+  vellum: {
+    color: '#f3efe2',
+    translucent: true,
+    doc: 'vellum or tracing paper, as a lantern window that a light shines through',
+  },
   card: { color: '#f4f1e8', doc: 'card stock' },
   felt: { color: '#6f6a64', doc: 'felt pads or lining' },
   elastic: { color: '#262626', doc: 'an elastic band or cord' },

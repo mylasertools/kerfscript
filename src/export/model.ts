@@ -205,18 +205,27 @@ export function toGlb(bodies: Body[], lights: Light[] = []): Uint8Array {
     });
     const nv = add(nor);
     accessors.push({ bufferView: nv, componentType: 5126, count: n, type: 'VEC3' });
-    const key = `${b.material}\u0000${b.color}\u0000${b.metal ? 1 : 0}\u0000${b.clear ? 1 : 0}\u0000${b.glow ? 1 : 0}`;
+    const key = `${b.material}\u0000${b.color}\u0000${b.metal ? 1 : 0}\u0000${b.clear ? 1 : 0}\u0000${b.glow ? 1 : 0}\u0000${b.translucent ? 1 : 0}`;
     let m = materialKeys.indexOf(key);
     if (m < 0) {
       const [r, g, bl] = hex(b.color);
       materials.push({
         name: b.material,
         pbrMetallicRoughness: {
-          baseColorFactor: [linear(r), linear(g), linear(bl), b.clear ? 0.45 : 1],
+          baseColorFactor: [
+            linear(r),
+            linear(g),
+            linear(bl),
+            b.clear ? 0.45 : b.translucent ? 0.75 : 1,
+          ],
           metallicFactor: b.metal ? 0.6 : 0,
           roughnessFactor: b.metal ? 0.35 : 0.85,
         },
-        ...(b.clear && { alphaMode: 'BLEND' }),
+        ...((b.clear || b.translucent) && { alphaMode: 'BLEND', doubleSided: true }),
+        // Light comes through: a renderer lights it from behind
+        ...(b.translucent && {
+          extensions: { KHR_materials_transmission: { transmissionFactor: 0.5 } },
+        }),
         ...(b.glow && { emissiveFactor: [linear(r), linear(g), linear(bl)] }),
       });
       m = materialKeys.push(key) - 1;
@@ -258,12 +267,16 @@ export function toGlb(bodies: Body[], lights: Light[] = []): Uint8Array {
       });
     }
   }
+  const used = [
+    ...(punctual.length ? ['KHR_lights_punctual'] : []),
+    ...(bodies.some((b) => b.translucent && b.indices.length)
+      ? ['KHR_materials_transmission']
+      : []),
+  ];
   const gltf = {
     asset: { version: '2.0', generator: 'KerfScript' },
-    ...(punctual.length && {
-      extensionsUsed: ['KHR_lights_punctual'],
-      extensions: { KHR_lights_punctual: { lights: punctual } },
-    }),
+    ...(used.length && { extensionsUsed: used }),
+    ...(punctual.length && { extensions: { KHR_lights_punctual: { lights: punctual } } }),
     scene: 0,
     scenes: [{ nodes: nodes.map((_, i) => i) }],
     nodes,

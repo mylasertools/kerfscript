@@ -47,6 +47,8 @@ import { referenceKey, verificationFindings } from './verification.js';
 
 // Wood and other sheets by their material name; anything else a light wood
 const MATERIALS = [
+  [/frosted/i, '#e6eef0'],
+  [/vellum|tracing|parchment|rice paper/i, '#f3efe2'],
   [/walnut|dark/i, '#7b5538'],
   [/cherry|mahogany|red/i, '#a0613f'],
   [/oak/i, '#c9a571'],
@@ -61,7 +63,12 @@ const MATERIALS = [
 ];
 
 const colorOf = (material) => (MATERIALS.find(([re]) => re.test(material)) ?? [0, '#dcc39a'])[1];
-const transparent = (material) => /clear|acrylic|perspex|glass/i.test(material);
+// Vellum, paper and frosted acrylic let light through, clear sheets more
+const translucent = (material) =>
+  /vellum|tracing|parchment|rice paper|frosted|translucent|\bpaper\b/i.test(material);
+const transparent = (material) =>
+  /clear|acrylic|perspex|glass/i.test(material) || translucent(material);
+const opacityOf = (material) => (translucent(material) ? 0.72 : 0.55);
 
 // A point light's candela in the model's millimetres, scaled to sit with
 // the room's lights: a tealight lights a wall 5 cm away about as the sun does
@@ -196,6 +203,12 @@ function hardwareObject(h) {
     roughness: look?.metal ? 0.35 : 0.8,
     metalness: look?.metal ? 0.6 : 0,
     ...(look?.glow && { emissive: color, emissiveIntensity: 0.6 }),
+    ...(look?.translucent && {
+      transparent: true,
+      opacity: 0.72,
+      side: DoubleSide,
+      depthWrite: false,
+    }),
   });
   if (look?.glow) material.userData.glow = color;
   if (ball) {
@@ -384,18 +397,20 @@ export function createAssemblyView(el, options = {}) {
       // A painted part shows its paint
       const color = part.paint ?? colorOf(part.material ?? part.name);
       const clear_ = !part.paint && transparent(part.material ?? '');
+      const opacity = clear_ ? opacityOf(part.material ?? '') : 1;
       const face = new MeshStandardMaterial({
         color,
         roughness: 0.85,
         transparent: clear_,
-        opacity: clear_ ? 0.55 : 1,
+        opacity,
+        ...(clear_ && { side: DoubleSide, depthWrite: false }),
       });
       // Laser-cut edges come out darker
       const edge = new MeshStandardMaterial({
         color: new Color(color).multiplyScalar(0.55),
         roughness: 0.9,
         transparent: clear_,
-        opacity: clear_ ? 0.55 : 1,
+        opacity,
       });
       if (part.folds?.length)
         for (const f of foldedObjects(part)) {

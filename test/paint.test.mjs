@@ -78,3 +78,25 @@ test('measure() does not count paint', () => {
   );
   assert.deepEqual(r.echoes, ['100, [25, 5]']);
 });
+
+test('vellum, paper and frosted acrylic are translucent; clear acrylic is clear', () => {
+  const r = render(
+    'part("w", at = [0, 0, 0], material = "vellum") rect(40); part("f", at = [50, 0, 0], material = "frosted acrylic") rect(40); part("c", at = [100, 0, 0], material = "clear acrylic") rect(40); part("p", at = [150, 0, 0]) rect(40);',
+  );
+  assert.deepEqual(
+    meshBodies(r).map((b) => [b.name, !!b.clear, !!b.translucent]),
+    [
+      ['w', false, true],
+      ['f', false, true],
+      ['c', true, false],
+      ['p', false, false],
+    ],
+  );
+  const glb = toModel(r, 'glb');
+  const n = new DataView(glb.buffer, glb.byteOffset).getUint32(12, true);
+  const json = JSON.parse(new TextDecoder().decode(glb.slice(20, 20 + n)));
+  assert.deepEqual(json.extensionsUsed, ['KHR_materials_transmission']);
+  const vellum = json.materials.find((m) => m.name === 'vellum');
+  assert.equal(vellum.alphaMode, 'BLEND');
+  assert.ok(vellum.extensions.KHR_materials_transmission.transmissionFactor > 0);
+});
