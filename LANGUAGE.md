@@ -212,6 +212,8 @@ module hang_hole(d = 5) {
 | `$join_lines`     | `false`       | join lines that meet end to end and order them nearest first, for less travel                          |
 | `$min_width`      | `1.5`         | warn where a part's material is narrower than this; `0` turns it off                                   |
 | `$knob`           | `12`          | the size of the jigsaw knobs joining the pieces of a split part                                        |
+| `$stands`         | `false`       | `true` for a model meant to stand: it warns if its weight's centre is not over what it stands on       |
+| `$density`        | `0.6`         | the parts' density in g/cm³ for that check, plywood's by default                                       |
 | `$knob_clearance` | `0.15`        | the room between a knob and its socket                                                                 |
 | `$bounds`         |               | set by `measure()` for the children after the one it measures                                          |
 | `$area`           |               | set by `measure()`: the area of material the measured child cuts                                       |

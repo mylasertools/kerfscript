@@ -1129,3 +1129,30 @@ test('part(split = ...) cuts a big part into pieces that fit, joined by knobs', 
   // A part that fits is left whole
   assert.equal(render('part("w", split = true) rect(50);').parts[0].name, 'w');
 });
+
+test('$stands = true warns when a model tips over, counting hardware mass', () => {
+  const tips = (s) =>
+    render(`$stands = true; $thickness = 3;\n${s}`).warnings.some((w) => /tips over/.test(w));
+  assert.equal(
+    tips(
+      'part("base", at = [-40, -40, 0]) rect([80, 80]); part("post", at = [-5, 1.5, 3], rotate = [90, 0, 0]) rect([10, 100]);',
+    ),
+    false,
+  );
+  assert.equal(
+    tips(
+      'part("base", at = [-10, -10, 0]) rect([20, 20]); part("arm", at = [-10, -1.5, 3], rotate = [90, 0, 0]) rect([200, 10]);',
+    ),
+    true,
+  );
+  const holder =
+    'part("base", at = [-20, -20, 0]) rect([40, 40]); part("arm", at = [0, -1.5, 3], rotate = [90, 0, 0]) rect([60, 5]); hardware("ball", [55, 0, 30], size = 44, shape = "ball"';
+  assert.equal(tips(`${holder});`), false);
+  assert.equal(tips(`${holder}, mass = 60);`), true);
+  // Without $stands nothing is checked
+  assert.ok(
+    !render(
+      'part("base", at = [-10, -10, 0]) rect([20, 20]); part("arm", at = [-10, -1.5, 3], rotate = [90, 0, 0]) rect([200, 10]);',
+    ).warnings.some((w) => /tips over/.test(w)),
+  );
+});

@@ -688,6 +688,16 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   }
   if (clashes.length > 5)
     warnings.push(`${clashes.length - 5} more pairs of parts collide in the assembly.`);
+  // $stands = true: a model meant to stand tips over if its weight is not
+  // over what it stands on
+  if (g('$stands') === true) {
+    const tip = tipping(
+      assembly.filter((p) => !stackedCopies.has(p)),
+      res.hardware,
+      toNumber(g('$density') ?? 0.6),
+    );
+    if (tip) warnings.push(tip);
+  }
   hiddenFillWarnings(hidden, warnings);
   if (assembly.length && loose.length) {
     const names = [...new Set(loose.map((p) => `"${p.name}"`))];
@@ -1011,6 +1021,93 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     lights: res.lights,
     steps: res.steps,
   };
+}
+
+// Whether a model stands: its weight's centre (parts of `density` g/cm3,
+// hardware with a mass) over the outline of what touches the ground, the
+// lowest points of it. A warning when it is not.
+function tipping(
+  assembly: AssemblyPart[],
+  hardware: HardwareItem[],
+  density: number,
+): string | undefined {
+  const pieces = assembly.filter((p) => p.placed).flatMap((p) => bentPieces(p));
+  if (pieces.length < 2) return undefined;
+  const world = (m: number[], [x, y, z]: [number, number, number]): [number, number, number] => [
+    m[0] * x + m[1] * y + m[2] * z + m[3],
+    m[4] * x + m[5] * y + m[6] * z + m[7],
+    m[8] * x + m[9] * y + m[10] * z + m[11],
+  ];
+  let mass = 0;
+  const com: [number, number, number] = [0, 0, 0];
+  let low = Infinity;
+  const points: [number, number, number][] = [];
+  for (const p of pieces) {
+    const { area: a, centroid } = regionMoments(p.outline);
+    if (!(a > 0)) continue;
+    const m = a * p.thickness * density * 1e-3;
+    const c = world(p.matrix, [centroid[0], centroid[1], p.thickness / 2]);
+    for (let k = 0; k < 3; k++) com[k] += c[k] * m;
+    mass += m;
+    for (const r of p.outline)
+      for (const [x, y] of r)
+        for (const z of [0, p.thickness]) {
+          const w = world(p.matrix, [x, y, z]);
+          points.push(w);
+          low = Math.min(low, w[2]);
+        }
+  }
+  for (const h of hardware) {
+    if (!(h.mass && h.mass > 0)) continue;
+    const c: [number, number, number] = [0, 1, 2].map((k) => (h.from[k] + h.to[k]) / 2) as [
+      number,
+      number,
+      number,
+    ];
+    for (let k = 0; k < 3; k++) com[k] += c[k] * h.mass;
+    mass += h.mass;
+  }
+  if (!(mass > 0) || !points.length) return undefined;
+  const at = com.map((v) => v / mass);
+  // What stands on the ground: the points within 0.5 mm of the lowest
+  const feet = points.filter((q) => q[2] <= low + 0.5).map(([x, y]) => [x, y] as [number, number]);
+  const hull = convexHull(feet);
+  const inside = (q: [number, number]) => {
+    if (hull.length < 3) return false;
+    for (let i = 0; i < hull.length; i++) {
+      const a = hull[i];
+      const b = hull[(i + 1) % hull.length];
+      if (
+        (b[0] - a[0]) * (q[1] - a[1]) - (b[1] - a[1]) * (q[0] - a[0]) <
+        -0.5 * Math.hypot(b[0] - a[0], b[1] - a[1])
+      )
+        return false;
+    }
+    return true;
+  };
+  if (inside([at[0], at[1]])) return undefined;
+  return `The model tips over: its weight's centre, at [${round2(at[0])}, ${round2(at[1])}, ${round2(at[2])}], is not over what it stands on. Widen its base or move weight over it.`;
+}
+
+// The convex hull of points, counter-clockwise
+function convexHull(points: [number, number][]): [number, number][] {
+  const p = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  if (p.length < 3) return p;
+  const cross = (o: number[], a: number[], b: number[]) =>
+    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lower: [number, number][] = [];
+  for (const q of p) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], q) <= 0)
+      lower.pop();
+    lower.push(q);
+  }
+  const upper: [number, number][] = [];
+  for (const q of [...p].reverse()) {
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], q) <= 0)
+      upper.pop();
+    upper.push(q);
+  }
+  return [...lower.slice(0, -1), ...upper.slice(0, -1)];
 }
 
 // The length of material a line x = c (or y = c, `axis` 1) crosses, as

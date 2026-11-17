@@ -669,6 +669,10 @@ export const SIGNATURES: Signature[] = [
       named('sides', 'Sides of a round section in the 3D view; 0 makes a ball', '24'),
       named('shape', '"rod", or "ball" for a bulb, a marble or a bead', '"rod"'),
       named('label', 'The name in the hardware list'),
+      named(
+        'mass',
+        'Its weight in grams, for the check that the model stands, as an egg in a holder',
+      ),
     ],
     children: true,
     section: 'Parts and sheets',

@@ -136,6 +136,8 @@ export interface HardwareItem {
   sides: number;
   step: number;
   label?: string;
+  // Its weight in grams, for the check that the model stands
+  mass?: number;
 }
 
 export const DEFAULT_LAYERS: LayerDef[] = [
@@ -3064,6 +3066,9 @@ export class Evaluator {
             `making the shapes and hardware took more than ${this.limits.maxPoints * 10} points of work, the limit`,
           );
         const label = this.arg(c.args, 'label', -1);
+        const massArg = this.arg(c.args, 'mass', -1);
+        const mass = massArg === undefined ? undefined : this.num(massArg, 'hardware', 'mass');
+        if (mass !== undefined && !(mass >= 0)) throw new Error('mass must be grams, 0 or more');
         const f = this.frame;
         const pt = (p: Vec3): Vec3 => [
           f[0] * p[0] + f[1] * p[1] + f[2] * p[2] + f[3],
@@ -3086,6 +3091,7 @@ export class Evaluator {
           sides,
           step: this.step,
           ...(label !== undefined ? { label: toText(label) } : {}),
+          ...(mass !== undefined && { mass }),
         };
         this.hardware.push(item);
         // Tealights, LEDs and bulbs light the model

@@ -285,6 +285,23 @@ part("card", at = [0, 0, 0], fold_open = open, fold = [
 A part bends on living hinges or folds, not both. Folds show in the
 assembled view and its 3D files; flat and print layouts lie flat.
 
+### Does it stand?
+
+`$stands = true;` says the model is meant to stand on a shelf or table:
+then it warns when its weight's centre is not over what it stands on, the
+outline of its lowest points, as a figure leaning too far or an egg held
+out beyond a small base. The parts weigh as plywood (`$density = 0.6`
+g/cm³), and hardware weighs what its `mass` (grams) says, so an egg or a
+bottle it holds counts:
+
+```kerf
+$stands = true;
+part("base", at = [-20, -20, 0]) rect([40, 40]);
+part("arm", at = [0, -1.5, 3], rotate = [90, 0, 0]) rect([60, 5]);
+// A 60 g egg held out past the base: the model tips over
+hardware("ball", [55, 0, 30], size = 44, shape = "ball", mass = 60);
+```
+
 ### Hanging parts
 
 A part that hangs, as a shelf sitter's legs on cords or a charm on a ring,
@@ -326,7 +343,7 @@ adds the step "Add the chair: Glue the seat". So a piece of furniture
 builds step by step on its own and inside a room. `step("Add the chair",
 substeps = false)` takes everything inside into the one step instead.
 
-`hardware(kind, from, to, size)` lists what else the model needs: a dowel
+`hardware(kind, from, to, size, mass)` lists what else the model needs: a dowel
 from one point to another, a screw, a magnet, a strip of paper. `size` is
 a diameter, or `[w, h]` for a flat piece. `kerf check` lists the hardware
 with the parts, and the 3D view shows it.

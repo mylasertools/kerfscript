@@ -19,6 +19,10 @@ Language:
   libraries, each item of the list a choice. `size_list(kind)` in
   `kerf/sizes` lists a table's names for one.
 - A layer's colour can be a name, as `"red"`, as well as a hex colour.
+- `$stands = true` checks that a model meant to stand does: it warns when
+  its weight's centre is not over the outline of its lowest points. Parts
+  weigh as plywood (`$density`), and `hardware(..., mass = 60)` counts an
+  egg or bottle it holds.
 - Parts too big for the bed: `part(split = true)` cuts a part into
   pieces that fit the sheet (or `split = [w, h]`), along lines that cross
   the least material and keep off engraving, joined by jigsaw knobs
