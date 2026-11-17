@@ -39,6 +39,9 @@ angle])`, or a list of them, folds the part's panels in the assembled
 
 Libraries:
 
+- `symbol(name, size, min_width = 1.6)` in `kerf/symbols` grows every
+  line narrower than `min_width` to that width, so a symbol drawn small
+  can be cut.
 - `kerf/drawers`: `drawers()` makes a carcass of numbered sliding drawers
   in a grid, as for an advent calendar, with the numbers in order, from a
   list or shuffled, a notch or hole to pull each by, and a façade of any

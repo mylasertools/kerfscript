@@ -1275,7 +1275,7 @@ part("tag") {
 }
 ```
 
-### `symbol(name, size = 10, center = true, fill = "nonzero", box = "drawn", solid = false, close, bridge)`
+### `symbol(name, size = 10, center = true, fill = "nonzero", box = "drawn", solid = false, close, bridge, min_width)`
 
 The symbol `size` mm across the longer side of what it draws, centred on
 the origin, or with its bottom left corner there. With `box = "grid"`,
@@ -1288,6 +1288,11 @@ silhouette, with gaps narrower than `2 * close` (default `size / 30`)
 closed and holes filled, and the drawing's own detail engraved on it.
 `bridge = w` also joins pieces too far apart to close, such as a moon
 beside a mountain, with strips `w` wide.
+
+A symbol drawn small has lines too thin to cut: a bird's legs, a bee's
+feelers. `min_width = 1.6` grows every line narrower than 1.6 mm to that
+width, so it can be cut and holds together; gaps narrower than it close
+up as the lines either side grow.
 
 ### `symbol_names(category)`, `symbol_size(name, size = 10, box = "drawn")`, `symbol_source(name)`, `symbol_entry(name)`
 

@@ -1071,3 +1071,12 @@ test('part(hang = ...) swings a part until its weight is below, on a cord', () =
     /cord goes with hang/,
   );
 });
+
+test('symbol(min_width = ...) grows lines too thin to cut', () => {
+  const narrow = (extra) =>
+    render(`use <kerf/symbols>\npart("s") symbol("flamingo", 25${extra});`).warnings.filter((w) =>
+      /narrower than/.test(w),
+    ).length;
+  assert.ok(narrow('') > 0);
+  assert.equal(narrow(', min_width = 1.6'), 0);
+});
