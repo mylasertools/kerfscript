@@ -154,14 +154,29 @@ module figure_parts(name, height = 100, at = [0, 0, 0], rotate = [0, 0, 0], labe
         part(str(base, " ", l[0], " ", l[1]), qty = qty, glue = str(base, " outline"), paint = l[1], pieces = "any")
           figure_layer(name, l[0], height, l[1], border = border, gap = gap);
     }
-  for (l = layers)
-    if (l[0] == "details")
-      measure() {
-        figure_layer(name, "details", height, l[1], border = border, gap = gap);
-        if (!is_undef($bounds))
-          part(str(base, " details ", l[1]), qty = qty, glue = str(base, " ", middle[0][0], " ", middle[0][1]), paint = l[1], pieces = "any")
-            figure_layer(name, "details", height, l[1], border = border, gap = gap);
-      }
+  figure_details(name, height, base, qty, border, gap);
+}
+
+// A figure's details as painted parts named after `base`, glued on the
+// first of its clothes and face parts, from the `k`-th, that is big enough
+// to cut at this height
+module figure_details(name, height, base, qty = 1, border = 2, gap = 0.6, k = 0) {
+  layers = figure_layers(name);
+  middle = [for (l = layers) if (l[0] == "clothes" || l[0] == "face") l];
+  if (k < len(middle))
+    measure() {
+      figure_layer(name, middle[k][0], height, middle[k][1], border = border, gap = gap);
+      if (is_undef($bounds)) figure_details(name, height, base, qty, border, gap, k + 1);
+      else
+        for (l = layers)
+          if (l[0] == "details")
+            measure() {
+              figure_layer(name, "details", height, l[1], border = border, gap = gap);
+              if (!is_undef($bounds))
+                part(str(base, " details ", l[1]), qty = qty, glue = str(base, " ", middle[k][0], " ", middle[k][1]), paint = l[1], pieces = "any")
+                  figure_layer(name, "details", height, l[1], border = border, gap = gap);
+            }
+    }
 }
 
 // The figures: [name, cast, outline colour, pieces], each piece [layer,

@@ -29,6 +29,12 @@ Language:
 
 Libraries:
 
+- `kerf/scene` for scene boxes and dioramas: `scene_floor()` and
+  `scene_rails()` cut rows of rails, `standee()` gives a drawing feet that
+  stand in any rail (with a mound under a narrow one, and clipped to a
+  case if asked), `scene_figure()` stands a layered figure in a rail,
+  `figure_base()` puts one on a base of its own, and `drip_edge()` and
+  `wave_edge()` draw snow, icing and water edges.
 - `kerf/figures`: 31 layered characters in five casts (Christmas, Easter,
   Halloween, nativity and animals). `figure_parts()` builds one as a
   backer, coloured pieces glued on it and details on those, each colour a

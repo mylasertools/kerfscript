@@ -1132,6 +1132,12 @@ The names of the figures, all or those of one cast; the casts; and the
 parts a figure is built of, as `[layer, colour]` from the outline up, as
 `figure_parts()` makes them.
 
+### `figure_details(name, height, base, qty = 1, border = 2, gap = 0.6, k = 0)`
+
+The figure's details as painted parts named after `base`, glued on the
+first of its clothes and face parts that is big enough to cut at that
+height, as `figure_parts()` and `scene_figure()` make them.
+
 ### `figure_entry(name)`, `figure_shapes(shapes)`, `figure_unique(list)`
 
 A figure's entry, `[name, cast, outline colour, pieces]`; the shapes of one
@@ -1140,6 +1146,77 @@ repeats. Each figure is drawn 100 units tall as a list of pieces in
 painter's order, each `[layer, colour, shapes]`, the shapes circles,
 ellipses, round-ended strokes, rounded rectangles, polygons and smooth
 closed curves, as the library's comments describe.
+
+## Scenes
+
+`use <kerf/scene>`
+
+Scene boxes and dioramas. A floor (or a shelf) has **rails**: slots running
+across it, in rows from front to back. Every **standee** has 8 mm feet that
+go into any rail, so a scene changes by taking standees out and putting
+others in. A standee is drawn standing on y = 0, centred on x = 0.
+
+```kerf
+use <kerf/scene>
+
+$thickness = 3;
+rows = scene_rows(90);
+part("floor", at = [-100, 0, 0]) scene_floor(200, 90);
+scene_figure("snowman", 70, at = [-50, rows[1], 3]);
+scene_figure("gnome", 26, at = [40, rows[0], 3]);
+part("trees", at = [0, rows[5] + 1.5, 3], rotate = [90, 0, 0]) standee(full = true) {
+  translate([-90, 0]) rect([180, 14]);
+  for (x = [-80:20:80]) translate([x, 14]) regular_polygon(3, 22);
+}
+```
+
+### `scene_rows(depth, rows = 6)`
+
+Where the rails of a floor `depth` mm deep run, as y from its front edge:
+`rows` of them, the first 8 mm from the front and the last 7 mm from the
+back. Six rails on a 90 mm floor are at 8, 23, 38, 53, 68 and 83.
+
+### `scene_floor(width, depth, rows = 6, clearance = 0.1, margin = 6, r = 0)`, `scene_rails(width, depth, rows = 6, clearance = 0.1, margin = 6)`
+
+A floor `width` by `depth` with its rails cut, its front edge on y = 0; or
+only the rails, as slots to cut from a floor or shelf of your own. Each
+rail is `$thickness + clearance` wide and stops `margin` short of each
+side.
+
+### `standee(mound, full = false, tab = 8, floor, clip)`
+
+Its children, a drawing, as a standee: `tab` mm feet below y = 0 that go
+`floor` mm (`$thickness` unless given) into a rail. The feet spread over
+the width the drawing stands on: one under 28 mm, two a quarter of the
+width either side of the middle otherwise, three across a `full` width
+backdrop. A narrow standee stands on a mound 4.5 mm high, which `mound`
+sets; without one, a ground line 2 mm high joins legs that meet the floor
+apart. With `clip`, a polygon's points, the drawing is clipped to it and
+the feet left whole, as for a standee inside a round case.
+
+### `standee_feet(width, full = false)`, `standee_mound(width)`
+
+Where the feet go across a standee `width` wide, from its middle, and the
+mound under it.
+
+### `scene_figure(name, height = 60, at = [0, 0, 0], turn = 0, label, mound, floor, border = 2, gap = 0.6)`
+
+A layered figure from [`kerf/figures`](#figures) standing in a rail: its
+backer a standee, the other layers glued on its front, each colour a
+painted part. `at` is where its feet go, `[x, the rail's y, the floor's
+top z]`, and `turn` turns it about them.
+
+### `figure_base(name, height = 80, base = [60, 20], at = [0, 0, 0], label, clearance = 0.1, r = 3)`
+
+A layered figure on a base of its own, to stand on a shelf: a base plate
+with one rail, centred on `at`, the figure's feet in it.
+
+### `drip_edge(width, height = 6, depth = 8, n, seed = 1)`, `wave_edge(width, height = 6, depth = 4, n)`
+
+Edges for snow, icing, water and frills: a strip `width` wide and `height`
+tall above y = 0, with `n` round drips hanging below it up to `depth` mm,
+their lengths varied by `seed`; or with `n` waves `depth` mm deep along
+its bottom.
 
 ## Symbols
 
