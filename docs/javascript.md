@@ -164,10 +164,14 @@ Write the model in 3D, as [3D files](3d-files.md) describes:
 import { render, toModel } from '@mylasertools/kerfscript';
 
 const glb = toModel(render(source), 'glb');
-const print = toModel(render(source), '3mf', { layout: 'flat', markHeight: 0.6 });
+const print = toModel(render(source), '3mf', { layout: 'print', markHeight: 0.6 });
 ```
 
 The format is `"glb"`, `"3mf"` or `"stl"`, and the result a `Uint8Array`.
+`layout` is `"assembled"` (the default), `"flat"` (every part side by side,
+front up) or `"print"` (each part with what is glued on it as one object of
+coloured layers). Each entry of `result.assembly` with `glued` gives the
+index of the entry it is glued on.
 `meshBodies(result, options)` gives the solid bodies (positions and
 triangles in millimetres, z up) for a viewer of your own; `toGlb()`,
 `to3mf()` and `toStl()` write a list of them. `result.flat` lists every copy

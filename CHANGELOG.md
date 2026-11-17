@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+3D files:
+
+- The print layout, `--print` or `layout: "print"`, makes each part with
+  everything glued on it (`glue =` and the layers of a `stack`) one object,
+  each layer where the assembly puts it and in its own colour, lying on
+  its lowest face. Marks show only where nothing covers them. `--print`
+  laid the parts out flat and apart before.
+- A layer's colour comes from a colour named in its material (green, blue,
+  yellow, orange, purple, pink, grey, gold, brown) or a `#rrggbb` in it.
+- `result.assembly` entries say which entry each is glued on (`glued`).
+
 Changes to the output of existing programs, each a fix:
 
 - A child of `intersection()` that makes nothing at all, as OpenSCAD

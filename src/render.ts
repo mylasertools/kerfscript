@@ -276,6 +276,8 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   const loose: AssemblyPart[] = [];
   const flatParts: AssemblyPart[] = [];
   const stackedCopies = new Set<AssemblyPart>();
+  // Where each part's placements are in the assembly, in order
+  const placedAt = new Map<PartShape, number[]>();
   // copy(i): the number of its i-th cut copy in the assembly, so a mirrored
   // copy keeps its own number on the sheet
   const ready: { info: PartInfo; layers: Map<string, Layer>; copy: (i: number) => number }[] = [];
@@ -428,6 +430,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
             ...(p.step && { step: p.step }),
             ...(p.stack && { stack: p.stack }),
           };
+          placedAt.set(p, [...(placedAt.get(p) ?? []), assembly.length]);
           assembly.push(part);
           const key = part.matrix.map((v) => v.toFixed(6)).join(',');
           if (seen.has(key)) stackedCopies.add(part);
@@ -528,6 +531,21 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
         }
     infos.push(info);
     ready.push({ info, layers, copy: (i) => copyNumber(p, i) });
+  }
+
+  // What each placed part is glued on, as glueOn() put it there: layer k
+  // of a stack on the stack's first layer, which is on the host's
+  // placement it was moved with
+  for (const [p, at] of placedAt) {
+    const stack = p.stack ?? 1;
+    const host = p.glue && parts.find((q) => q.name === p.glue!.host && q !== p);
+    const hostAt = host ? placedAt.get(host) : undefined;
+    const per = at.length / stack;
+    at.forEach((index, i) => {
+      const k = i % stack;
+      const on = k > 0 ? at[i - k] : hostAt?.[hostAt.length === per ? Math.floor(i / stack) : 0];
+      if (on !== undefined) assembly[index].glued = on;
+    });
   }
 
   const pieceOf = new Map<AssemblyPart, AssemblyPart>();

@@ -28,6 +28,9 @@ export interface AssemblyPart {
   step?: number;
   // Glued in a stack of this many layers
   stack?: number;
+  // The index in the assembly of the part this one is glued on: the host
+  // of glue =, or for a layer of a stack after the first, the first
+  glued?: number;
   // What is engraved and scored on it, in its own coordinates, for 3D views
   marks?: Mark[];
 }

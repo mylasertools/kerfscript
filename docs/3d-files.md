@@ -7,7 +7,7 @@ thin coloured layer on its face.
 
 ```sh
 kerf render box.kerf -o box.glb          # the assembled model, to view or render
-kerf render sign.kerf -o sign.3mf --flat # the parts flat, to print in colour
+kerf render sign.kerf -o sign.3mf --print # laid out to print in colour
 kerf render coaster.kerf -o coaster.stl  # one mesh
 ```
 
@@ -35,13 +35,23 @@ prints: a coaster, a sign, an ornament, a bookmark. Laid flat, marks for
 the back face and hardware are left out, since nothing can stand under a
 part on the bed.
 
-For printing, set the marks to a few layers' height. `--print` does both:
-the parts flat and the marks 0.6 mm high, so the engraving prints as a
-raised second colour.
+## Laid out to print
+
+`--print` lays the model out to 3D print in colour. Each part is one
+object with everything glued on it (`glue =` and the layers of a
+`stack`), each layer where the assembly puts it and in its own colour, so
+a standee of three glued layers prints as one piece, not three to glue.
+An upright part lies down on its back face, or on the lowest layer glued
+under it. Marks stand 0.6 mm high, a raised colour of their own, and only
+where they show: not under a layer glued over them or on the bed.
 
 ```sh
-kerf render coaster.kerf -o coaster.3mf --print
+kerf render snow-scene.kerf -o snow-scene.3mf --print
 ```
+
+Each layer takes its colour from its material: a colour in the name
+(`material = "green"`, `"#cc3333 card"`) or a wood or sheet it names. A
+stack with a part bent on a living hinge is laid out part by part, flat.
 
 ## Formats
 
@@ -62,11 +72,12 @@ import { render, toModel } from '@mylasertools/kerfscript';
 
 const result = render(source);
 const glb = toModel(result, 'glb'); // a Uint8Array
-const print = toModel(result, '3mf', { layout: 'flat', markHeight: 0.6 });
+const print = toModel(result, '3mf', { layout: 'print', markHeight: 0.6 });
 ```
 
 `meshBodies(result, options)` gives the bodies themselves (positions and
 triangles in millimetres) for a viewer of your own, and `toGlb()`, `to3mf()`
-and `toStl()` write them. The options are `layout` (`"assembled"` or
-`"flat"`), `markHeight`, `lineWidth`, `slitWidth`, `hardware` and `gap`.
+and `toStl()` write them. The options are `layout` (`"assembled"`,
+`"flat"` or `"print"`), `markHeight`, `lineWidth`, `slitWidth`, `hardware`
+and `gap`.
 See the [JavaScript API](javascript.md).
