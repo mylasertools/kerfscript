@@ -188,6 +188,14 @@ export const SIGNATURES: Signature[] = [
         'bridge',
         "Join every island (an i's dot, an accent, a stencil's counter) to the rest with a strip this wide",
       ),
+      named(
+        'path',
+        'Lay the text along these [x, y] points, each letter turned to the path, centred on it',
+      ),
+      named(
+        'arc',
+        'Lay the text round a circle of this radius about the origin: over the top, or along the bottom when less than 0',
+      ),
     ],
     section: 'Shapes',
     doc: 'Text as shapes; the font must be available to the renderer',

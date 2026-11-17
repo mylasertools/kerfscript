@@ -144,3 +144,97 @@ export function textMetrics(book: FontBook, text: string, o: TextOptions) {
     cap: capHeight(font, o.size),
   };
 }
+
+// The point `s` along a path and its direction there, carrying on past
+// either end along the first or last segment
+function walk(path: [number, number][], cum: number[], s: number) {
+  let i = 0;
+  while (i < path.length - 2 && cum[i + 1] < s) i++;
+  const [a, b] = [path[i], path[i + 1]];
+  const l = cum[i + 1] - cum[i];
+  const u = (s - cum[i]) / l;
+  const t: [number, number] = [(b[0] - a[0]) / l, (b[1] - a[1]) / l];
+  return { at: [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u] as [number, number], t };
+}
+
+/** The text laid along a path: each letter where its middle falls along
+ * the path, turned to the path's direction there, its baseline on the
+ * path. halign puts the text's start, middle or end at the path's.
+ * `over` is how far the text runs past the path's ends, 0 when it fits. */
+export function textAlong(
+  book: FontBook,
+  text: string,
+  o: TextOptions,
+  points: [number, number][],
+): { polys: Poly[]; over: number } {
+  const path = points.filter(
+    ([x, y], k) => k === 0 || x !== points[k - 1][0] || y !== points[k - 1][1],
+  );
+  if (!text || path.length < 2) return { polys: [], over: 0 };
+  const font = book.get(o.font);
+  const opts = { kerning: true };
+  const chars = [...text];
+  // Where each letter starts along the text, kerning and spacing as text()
+  // lays it out in a line
+  const starts: number[] = [];
+  let x = 0;
+  chars.forEach((ch, i) => {
+    // Kerning moves a letter against the one before it: its start is the
+    // text up to it less its own advance
+    starts.push(
+      o.spacing === 1
+        ? font.getAdvanceWidth(chars.slice(0, i + 1).join(''), o.size, opts) -
+            font.getAdvanceWidth(ch, o.size, opts)
+        : x,
+    );
+    x += font.getAdvanceWidth(ch, o.size, opts) * (i < chars.length - 1 ? o.spacing : 1);
+  });
+  const total = o.spacing === 1 ? font.getAdvanceWidth(text, o.size, opts) : x;
+  // The text's own height decides valign, as for a line of it
+  const all = bounds(outlines(font, text, o).polys);
+  if (!all) return { polys: [], over: 0 };
+  const dy =
+    o.valign === 'top'
+      ? -all[3]
+      : o.valign === 'center'
+        ? -(all[1] + all[3]) / 2
+        : o.valign === 'bottom'
+          ? -all[1]
+          : o.valign === 'cap'
+            ? -capHeight(font, o.size) / 2
+            : 0;
+  const cum = [0];
+  for (let i = 1; i < path.length; i++)
+    cum.push(cum[i - 1] + Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]));
+  const length = cum[cum.length - 1];
+  const start =
+    o.halign === 'center' ? (length - total) / 2 : o.halign === 'right' ? length - total : 0;
+  const out: Poly[] = [];
+  chars.forEach((ch, i) => {
+    const w = font.getAdvanceWidth(ch, o.size, opts);
+    const { at, t } = walk(path, cum, start + starts[i] + w / 2);
+    const n: [number, number] = [-t[1], t[0]];
+    for (const p of outlines(font, ch, o).polys)
+      out.push(
+        p.map(([gx, gy]): [number, number] => {
+          const u = gx - w / 2;
+          const v = gy + dy;
+          return [at[0] + u * t[0] + v * n[0], at[1] + u * t[1] + v * n[1]];
+        }),
+      );
+  });
+  return { polys: union(out), over: Math.max(0, -start, start + total - length) };
+}
+
+/** A circle of radius |r| round the origin as a path for text: r > 0
+ * goes clockwise, its middle at the top, for text on the outside reading
+ * round; r < 0 goes anticlockwise, its middle at the bottom, for text
+ * along the bottom reading left to right */
+export function arcPath(r: number): [number, number][] {
+  const a = Math.abs(r);
+  const n = Math.min(720, Math.max(72, Math.ceil((2 * Math.PI * a) / 0.5)));
+  return Array.from({ length: n + 1 }, (_, i) => {
+    const t = r > 0 ? 1.5 * Math.PI - (2 * Math.PI * i) / n : 0.5 * Math.PI + (2 * Math.PI * i) / n;
+    return [a * Math.cos(t), a * Math.sin(t)] as [number, number];
+  });
+}

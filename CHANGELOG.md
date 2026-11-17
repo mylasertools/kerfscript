@@ -10,6 +10,10 @@ Language:
   shown the same way and never in the files for the laser. The parts list
   says which parts are painted.
 - A layer's colour can be a name, as `"red"`, as well as a hex colour.
+- Text on a path: `text(t, size, path = points)` lays the text along a
+  path, each letter turned to it, and `text(t, size, arc = r)` round a
+  circle, over the top or (r less than 0) along the bottom. Cut, engraved
+  or bridged, as any text. A text longer than its path warns.
 - `part(pieces = 2)` or `pieces = "any"` makes a part of loose pieces, as
   a pair of eyes, without the warning that it cuts into separate pieces.
 - Light sources: `hardware("tealight", at)` stands a tealight whose flame

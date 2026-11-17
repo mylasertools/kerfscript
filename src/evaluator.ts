@@ -57,7 +57,7 @@ import { parse } from './parser.js';
 import { signature } from './signatures.js';
 import { LIBRARIES } from './stdlib.js';
 import { flatten, parseSvgPath } from './paths.js';
-import { textMetrics, textRegions, type FontBook } from './text.js';
+import { arcPath, textAlong, textMetrics, textRegions, type FontBook } from './text.js';
 import {
   equals,
   isFn,
@@ -1769,7 +1769,32 @@ export class Evaluator {
           );
         this.tick(c.args.at, shown.text.length);
         const topts = this.textOpts(c.args, c.env, shown.text);
-        let glyphs = textRegions(this.opts.fonts, shown.text, topts);
+        // path = points or arc = r: the text laid along a path or round a
+        // circle, centred on it unless halign says otherwise
+        const pathArg = this.arg(c.args, 'path', -1);
+        const arcArg = this.arg(c.args, 'arc', -1);
+        if (pathArg !== undefined && arcArg !== undefined)
+          throw new Error('text() takes path or arc, not both');
+        let glyphs: Poly[];
+        if (pathArg !== undefined || arcArg !== undefined) {
+          let along: Pt[];
+          if (arcArg !== undefined) {
+            const r = this.num(arcArg, 'text', 'arc');
+            if (!(r !== 0 && Number.isFinite(r)))
+              throw new Error(`arc must be a radius other than 0, got ${show(arcArg)}`);
+            along = arcPath(r);
+          } else {
+            along = this.points(pathArg, 'path');
+            if (along.length < 2) throw new Error('path needs at least two points');
+          }
+          if (this.arg(c.args, 'halign', -1) === undefined) topts.halign = 'center';
+          const laid = textAlong(this.opts.fonts, shown.text, topts, along);
+          if (laid.over > 0.01)
+            this.warn(
+              `text(): "${shown.text.length > 20 ? `${shown.text.slice(0, 20)}...` : shown.text}" is ${Math.round(laid.over * 10) / 10} mm longer than its ${arcArg !== undefined ? 'circle' : 'path'} allows, so it carries on past the end (${where(c.args.at, false)})`,
+            );
+          glyphs = laid.polys;
+        } else glyphs = textRegions(this.opts.fonts, shown.text, topts);
         // weight = "bold" thickens the strokes by a share of the size, or a
         // number of mm (less than 0 thins them); bridge = w joins every
         // island (an i's dot, an accent, a stencil's counter) to the rest

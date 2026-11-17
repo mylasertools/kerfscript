@@ -124,3 +124,31 @@ test('point_at carries on straight past repeated end points', () => {
   );
   assert.deepEqual(r.echoes, ['[15, 0], [-5, 0], 0, [3, 3]']);
 });
+
+test('text(path = ...) lays the text along a path, each letter turned to it', () => {
+  // Along a straight path it is the same text, centred on the path
+  const line = render('part("t") text("HELLO", 10, path = [[0, 0], [100, 0]]);', font).parts[0];
+  const flat = render('part("t") text("HELLO", 10);', font).parts[0];
+  assert.ok(Math.abs(line.width - flat.width) < 0.01, `${line.width} vs ${flat.width}`);
+  assert.ok(Math.abs(line.height - flat.height) < 0.01);
+  // Up a vertical path the text stands on its side
+  const up = render('part("t") text("HELLO", 10, path = [[0, 0], [0, 100]]);', font).parts[0];
+  assert.ok(Math.abs(up.height - flat.width) < 0.01 && Math.abs(up.width - flat.height) < 0.01);
+  const long = render('text("HELLO WORLD", 10, path = [[0, 0], [20, 0]]);', font);
+  assert.match(long.warnings[0], /mm longer than its path allows/);
+  assert.throws(() => render('text("A", path = [[0, 0]]);', font), /at least two points/);
+});
+
+test('text(arc = r) goes over the top of a circle, or along the bottom', () => {
+  const b = (src) => JSON.parse(render(`measure() { ${src}; echo($bounds); }`, font).echoes[0]);
+  // Over the top, standing on the circle; along the bottom, hanging inside it
+  const [x0, y0, x1, y1] = b('text("TOP", 10, arc = 40)');
+  assert.ok(y0 > 38 && y1 < 52 && Math.abs(x0 + x1) < 1, `${[x0, y0, x1, y1]}`);
+  const [u0, v0, u1, v1] = b('text("BOTTOM", 10, arc = -40)');
+  assert.ok(v0 > -41 && v1 < -28 && Math.abs(u0 + u1) < 1, `${[u0, v0, u1, v1]}`);
+  assert.throws(() => render('text("A", arc = 0);', font), /arc must be a radius/);
+  assert.throws(
+    () => render('text("A", arc = 10, path = [[0, 0], [1, 0]]);', font),
+    /path or arc, not both/,
+  );
+});
