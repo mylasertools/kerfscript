@@ -43,6 +43,7 @@ export function snapshotFromRender(
             placed: p.placed,
             regions: definition?.cutRegions ?? p.outline,
             bends: p.bends ?? [],
+            ...(p.folds?.length && { folds: p.folds }),
             kerf: definition?.kerf ?? null,
             cutLines: definition?.cutLines ?? null,
             ...(definition?.stack && { stack: definition.stack }),

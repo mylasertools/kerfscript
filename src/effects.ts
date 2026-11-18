@@ -15,8 +15,8 @@ export interface SettingEffect {
   /** The values tried, in order */
   tried: Value[];
   /** "files": what is cut changes (the files, the sheets' material and
-   * thickness, or the parts list); "view": only the assembled view, the
-   * steps or the hardware; "nothing": neither; "failed": the program stops
+   * thickness, or the parts list); "view": only the assembled view (its
+   * paint, folds and lights too), the steps or the hardware; "nothing": neither; "failed": the program stops
    * at all values but one, or all of them; "skipped": not tried */
   effect: 'files' | 'view' | 'nothing' | 'failed' | 'skipped';
   /** Values tried that give the same files and view: for a range, each
@@ -47,8 +47,8 @@ const roundPolys = (polys: [number, number][][]) =>
 
 // What is cut, from what (the files, each sheet's size, material and
 // thickness, and the parts list), and what the assembled view shows (each
-// part's own outline, marks, thickness and placement, the hardware and the
-// steps)
+// part's own outline, marks, paint, folds, thickness and placement, the
+// hardware, the lights and the steps)
 function fingerprints(r: RenderResult): { files: string; view: string } {
   const files = JSON.stringify([
     r.sheets.map((s) => [s.svg, s.back?.svg ?? '', s.width, s.height, s.material, s.thickness]),
@@ -72,11 +72,20 @@ function fingerprints(r: RenderResult): { files: string; view: string } {
       a.material,
       a.matrix.map(round),
       a.bends,
+      a.folds ?? null,
+      a.paint ?? null,
       a.step,
       roundPolys(a.outline),
-      (a.marks ?? []).map((m) => [m.layer, m.side, roundPolys(m.regions), roundPolys(m.lines)]),
+      (a.marks ?? []).map((m) => [
+        m.layer,
+        m.side,
+        m.color,
+        roundPolys(m.regions),
+        roundPolys(m.lines),
+      ]),
     ]),
     r.hardware,
+    r.lights,
     r.steps,
   ]);
   return { files: hash(files), view: hash(view) };

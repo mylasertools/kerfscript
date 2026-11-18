@@ -289,6 +289,11 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     ];
     const knob = g('$knob') === undefined ? 12 : toNumber(g('$knob'));
     const fitting = g('$knob_clearance') === undefined ? 0.15 : toNumber(g('$knob_clearance'));
+    // The pieces count against the limit on parts
+    const budget = {
+      left: limits.maxParts - parts.reduce((n, p) => n + p.qty, 0),
+      max: limits.maxParts,
+    };
     for (let i = parts.length - 1; i >= 0; i--) {
       const p = parts[i];
       if (!p.split) continue;
@@ -299,8 +304,9 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
               bed[1] - 2 * (options.margin ?? options.gap ?? toNumber(g('$gap') ?? 3)),
             ]
           : p.split;
-      const pieces = splitPart(p, mode, max, knob, fitting, warnings);
+      const pieces = splitPart(p, mode, max, knob, fitting, warnings, budget);
       parts.splice(i, 1, ...pieces);
+      if (pieces.length > 1) piecesFor(parts, p.name, pieces, mode);
     }
   }
   glueOn(parts, warnings);
@@ -1040,7 +1046,7 @@ function tipping(
   density: number,
 ): string | undefined {
   const pieces = assembly.filter((p) => p.placed).flatMap((p) => bentPieces(p));
-  if (pieces.length < 2) return undefined;
+  if (!pieces.length) return undefined;
   const world = (m: number[], [x, y, z]: [number, number, number]): [number, number, number] => [
     m[0] * x + m[1] * y + m[2] * z + m[3],
     m[4] * x + m[5] * y + m[6] * z + m[7],
@@ -1197,6 +1203,7 @@ function splitPart(
   knob: number,
   fitting: number,
   warnings: string[],
+  budget: { left: number; max: number },
 ): PartShape[] {
   const material = union(
     [...p.layers].filter(([k]) => mode(k) === 'cut').flatMap(([, l]) => l.regions),
@@ -1217,6 +1224,14 @@ function splitPart(
   const marks = union(
     [...p.layers].filter(([k]) => mode(k) !== 'cut').flatMap(([, l]) => l.regions),
   );
+  const count = (axis: 0 | 1) =>
+    fits(axis) ? 1 : Math.ceil((b[axis + 2] - b[axis]) / room[axis] - 1e-9);
+  const more = (count(0) * count(1) - 1) * p.qty;
+  if (!(more <= budget.left))
+    throw new KerfError(
+      `Part "${p.name}": split into ${count(0) * count(1)} pieces would make more than ${budget.max} part copies in total, the limit`,
+    );
+  budget.left -= more;
   const cols = fits(0) ? [] : cutsAlong(material, marks, b[0], b[2], room[0], 0);
   const rows = fits(1) ? [] : cutsAlong(material, marks, b[1], b[3], room[1], 1);
   if (!cols.length && !rows.length) return [p];
@@ -1306,6 +1321,35 @@ function splitPart(
     );
   }
   return out;
+}
+
+// What named a part that is now split names its pieces: a part glued or
+// riding on it goes on the piece under its middle, and slots = [name]
+// takes every piece
+function piecesFor(
+  parts: PartShape[],
+  name: string,
+  pieces: PartShape[],
+  mode: (k: string) => string,
+) {
+  const cut = (q: PartShape) =>
+    [...q.layers].filter(([k]) => mode(k) === 'cut').flatMap(([, l]) => l.regions);
+  const under = (q: PartShape): string => {
+    const { area: a, centroid } = regionMoments(union(cut(q)));
+    const m = placementMatrix(q.placements?.[0] ?? { at: [0, 0, 0], rotate: [0, 0, 0] });
+    const [cx, cy] = a > 0 ? centroid : [0, 0];
+    const [x, y] = [m[0] * cx + m[1] * cy + m[3], m[4] * cx + m[5] * cy + m[7]];
+    const covers = (r: PartShape) =>
+      cut(r).reduce((n, ring) => n + (inPoly(ring, x, y) ? (area(ring) > 0 ? 1 : -1) : 0), 0) > 0;
+    return (pieces.find(covers) ?? pieces[0]).name;
+  };
+  const names = pieces.map((q) => q.name);
+  for (const q of parts) {
+    if (pieces.includes(q)) continue;
+    if (q.glue?.host === name) q.glue = { ...q.glue, host: under(q) };
+    if (q.on === name) q.on = under(q);
+    if (q.slots?.includes(name)) q.slots = q.slots.flatMap((n) => (n === name ? names : [n]));
+  }
 }
 
 // Each hanging part swung about the point it hangs from, in its own

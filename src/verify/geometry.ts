@@ -101,6 +101,7 @@ export const holesAt = (p: Poly[], at: [number, number]) =>
 export function materialGuard(p: SnapshotPart): string | null {
   if (!p.placed) return 'The part has no physical placement.';
   if (p.bends.length) return 'Flexible or bent geometry is not supported by this rigid check.';
+  if (p.folds?.length) return 'Folded geometry is not supported by this rigid check.';
   if (p.cutLines === null)
     return 'Nominal cutting-line geometry is unavailable; render with analysis: true.';
   if (p.cutLines.length)

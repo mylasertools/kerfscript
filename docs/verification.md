@@ -42,7 +42,7 @@ need separate evidence. Unsupported cases and exhausted checking budgets remain
 unverified.
 
 Missing cutting metadata, open cutting lines affecting rigid material, bends,
-legacy `echo("hardware", ...)`, compiler warnings, exhausted budgets and numerical
+folds, legacy `echo("hardware", ...)`, compiler warnings, exhausted budgets and numerical
 boundary cases cannot produce a required geometric pass. Cases refused by the
 renderer remain failed required configurations; they are not dropped from coverage.
 

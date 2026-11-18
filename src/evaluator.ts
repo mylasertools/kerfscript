@@ -2946,7 +2946,8 @@ export class Evaluator {
             material: toText(this.dyn(c.env, '$material') ?? 'material'),
             ...(paint && { paint }),
             ...(piecesWanted !== undefined && { pieces: piecesWanted }),
-            ...(hang && { hang }),
+            // A mirrored copy hangs from the mirror of the point
+            ...(hang && { hang: flip ? { ...hang, at: [-hang.at[0], hang.at[1]] as Pt } : hang }),
             ...(split && { split }),
             ...(pressFit && { pressFit: true }),
             ...(mine ? { placements: mine } : {}),

@@ -1183,3 +1183,46 @@ test('a strip round two corners on one short side ends where its path does', () 
   assert.ok(Math.hypot(x - 8, y - 30) < 0.1, `ends at ${x}, ${y}`);
   assert.ok(bends.every((b) => Math.abs(b[2]) <= 180));
 });
+
+test('a part glued on a split part goes on the piece under it', () => {
+  const r = render(
+    '$thickness = 3;\npart("backer", at = [0, 0, 0], split = [100, 100]) rect([150, 60]);\npart("badge", glue = "backer") translate([10, 10]) rect([20, 20]);',
+  );
+  assert.deepEqual(r.warnings, []);
+  const badge = r.assembly.find((a) => a.name === 'badge');
+  assert.equal(badge.matrix[11], 3);
+  assert.equal(r.assembly[badge.glued].name, 'backer piece 1');
+});
+
+test('a mirrored part hangs from the mirror of its hang point', () => {
+  for (const [mirror, hx] of [
+    ['false', 10],
+    ['true', -10],
+  ]) {
+    const r = render(
+      `$thickness = 3;\npart("pendant", at = [0, 0, 100], rotate = [90, 0, 0], hang = [10, 40], mirror = ${mirror}) rect([20, 40]);`,
+    );
+    const m = r.assembly[0].matrix;
+    const at = [0, 4, 8].map((i) => m[i] * hx + m[i + 1] * 40 + m[i + 3]);
+    assert.ok(Math.hypot(at[0], at[1], at[2] - 100) < 1e-6, `${mirror}: hangs at ${at}`);
+  }
+});
+
+test('$stands checks a model of one part', () => {
+  const r = render(
+    '$stands = true;\n$thickness = 3;\npart("p", at = [0, 0, 0], rotate = [90, 0, 0]) polygon([[0, 0], [10, 0], [10, 50], [120, 50], [120, 60], [0, 60]]);',
+  );
+  assert.match(r.warnings.join('\n'), /tips over/);
+});
+
+test('splitting a part counts its pieces against the part limit', () => {
+  assert.throws(
+    () => render('part("p", split = [100, 100]) rect([350, 60]);', { limits: { maxParts: 2 } }),
+    /4 pieces would make more than 2 part copies/,
+  );
+  assert.equal(
+    render('part("p", split = [100, 100]) rect([350, 60]);', { limits: { maxParts: 4 } }).parts
+      .length,
+    4,
+  );
+});

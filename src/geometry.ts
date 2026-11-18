@@ -525,6 +525,7 @@ export function transform(s: Shape, m: Matrix): Shape {
       ...(p.folds && {
         folds: p.folds.map((f) => ({ ...f, from: apply(m, f.from), to: apply(m, f.to) })),
       }),
+      ...(p.hang && { hang: { ...p.hang, at: apply(m, p.hang.at) } }),
     })),
   };
 }
