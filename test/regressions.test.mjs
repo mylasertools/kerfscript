@@ -530,3 +530,11 @@ echo(strip_bends(concat([[-40, 0]], [for (a = [0:5:90]) [-25, 0] + 25 * [cos(a),
     [92.5, 85],
   );
 });
+
+test('a module the program names echo or assert keeps what it makes', () => {
+  const r = render('module echo() { rect(10); } part("p") echo();');
+  assert.deepEqual(
+    r.parts.map((p) => [p.name, p.width]),
+    [['p', 10]],
+  );
+});
