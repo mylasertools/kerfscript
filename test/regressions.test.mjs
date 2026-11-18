@@ -1156,3 +1156,30 @@ test('$stands = true warns when a model tips over, counting hardware mass', () =
     ).warnings.some((w) => /tips over/.test(w)),
   );
 });
+
+test('a module the program names echo or assert keeps what it makes', () => {
+  const r = render('module echo() { rect(10); } part("p") echo();');
+  assert.deepEqual(
+    r.parts.map((p) => [p.name, p.width]),
+    [['p', 10]],
+  );
+});
+
+test('a strip round two corners on one short side ends where its path does', () => {
+  const r = render(
+    'use <kerf/hinge>\n$thickness = 3;\np = [[0, 0], [20, 0], [20, 12], [8, 12], [8, 30]];\necho(strip_bends(p));\necho(path_length(strip_path(p)));',
+  );
+  const bends = JSON.parse(r.echoes[0]);
+  const L = Number(r.echoes[1]);
+  // Walk the strip: each bend turns it evenly along its length
+  let [x, y, h] = [0, 0, 0];
+  const ds = 0.002;
+  for (let s = 0; s < L; s += ds) {
+    const b = bends.find((b) => s >= b[0] && s < b[1]);
+    if (b) h += (b[2] / (b[1] - b[0])) * ds;
+    x += Math.cos((h * Math.PI) / 180) * ds;
+    y += Math.sin((h * Math.PI) / 180) * ds;
+  }
+  assert.ok(Math.hypot(x - 8, y - 30) < 0.1, `ends at ${x}, ${y}`);
+  assert.ok(bends.every((b) => Math.abs(b[2]) <= 180));
+});
