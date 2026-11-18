@@ -692,7 +692,10 @@ export class Evaluator {
         if (s.modifier === '*') return null;
         {
           const out = this.callModule(s, env);
-          if ((s.name === 'echo' || s.name === 'assert') && !s.children.length) return null;
+          // The built-in echo() and assert() make nothing; a module of the
+          // program's own by that name keeps what it makes
+          if ((s.name === 'echo' || s.name === 'assert') && !s.children.length && !env.mod(s.name))
+            return null;
           return s.modifier === '#' || s.modifier === '%' ? retag(out, 'guide') : out;
         }
     }

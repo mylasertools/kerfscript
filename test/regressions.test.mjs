@@ -973,3 +973,11 @@ test('a library path may hold any character a folder name has', () => {
   assert.throws(() => render('use <kerf/box\n>'), /library path/);
   assert.deepEqual(render('a = 1; use <kerf/box> echo(a < 2, 3 > a);').echoes, ['true, true']);
 });
+
+test('a module the program names echo or assert keeps what it makes', () => {
+  const r = render('module echo() { rect(10); } part("p") echo();');
+  assert.deepEqual(
+    r.parts.map((p) => [p.name, p.width]),
+    [['p', 10]],
+  );
+});
