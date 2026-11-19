@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.11.0 (2026-11-18)
 
 Language:
 
@@ -142,7 +142,6 @@ Changes to the output of existing programs, each a fix:
   as where a straight run and an arc share their end, bends where the arc
   starts; the repeated point had started the hinge and the bend a few mm
   early, on the straight.
-
 - `flex_strip()` rounds each sharp corner of its path to the arc the strip
   bends round, radius `r` inside, and is as long as that rounded path, so
   it ends where the path ends; it ran on past it by about 1.6 mm a corner
