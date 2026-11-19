@@ -1,7 +1,7 @@
 // Copyright (c) 2026 MyLaserTools. SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-MyLaserTools-Commercial
 
 import type { LayerDef } from '../evaluator.js';
-import { area, type Poly } from '../geometry.js';
+import { cutOrder, type Poly } from '../geometry.js';
 import type { Placed } from '../render.js';
 
 export const n = (v: number) => {
@@ -49,21 +49,21 @@ export function layerPaths(items: Placed[], layers: LayerDef[]): LayerPath[] {
   const out: LayerPath[] = [];
   for (const def of layers) {
     const lines: string[] = [];
-    const holes: string[] = [];
-    const shapes: string[] = [];
+    const rings: Poly[] = [];
     for (const it of items) {
       const l = it.layers.get(def.name);
       if (!l) continue;
       for (const p of l.lines) lines.push(d(p, false));
-      for (const p of l.regions) (area(p) < 0 ? holes : shapes).push(d(p, true));
+      for (const p of l.regions) rings.push(p);
     }
-    if (lines.length || holes.length || shapes.length)
+    const regions = cutOrder(rings).map((i) => d(rings[i], true));
+    if (lines.length || regions.length)
       out.push({
         name: def.name,
         mode: def.mode,
         color: def.color,
-        d: [...lines, ...holes, ...shapes].join(''),
-        regions: [...holes, ...shapes].join(''),
+        d: [...lines, ...regions].join(''),
+        regions: regions.join(''),
         lines: lines.join(''),
       });
   }
@@ -78,6 +78,7 @@ export function toSvg(items: Placed[], width: number, height: number, layers: La
   for (const def of layers) {
     const inner: string[] = [];
     const outer: string[] = [];
+    const rings: [Poly, string][] = [];
     for (const it of items) {
       const l = it.layers.get(def.name);
       if (!l) continue;
@@ -92,9 +93,10 @@ export function toSvg(items: Placed[], width: number, height: number, layers: La
         continue;
       }
       for (const p of l.lines) inner.push(`<path${tag} d="${d(p, false)}"/>`);
-      for (const p of l.regions)
-        (area(p) < 0 ? inner : outer).push(`<path${tag} d="${d(p, true)}"/>`);
+      for (const p of l.regions) rings.push([p, tag]);
     }
+    for (const i of cutOrder(rings.map(([p]) => p)))
+      inner.push(`<path${rings[i][1]} d="${d(rings[i][0], true)}"/>`);
     if (!inner.length && !outer.length) continue;
     const paint =
       def.mode === 'fill'

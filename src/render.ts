@@ -206,8 +206,8 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       name: 'part',
       qty: 1,
       layers: res.shape.layers,
-      thickness: toNumber(g('$thickness')) || 3,
-      kerf: toNumber(g('$kerf')) || 0,
+      thickness: g('$thickness') === undefined ? 3 : toNumber(g('$thickness')),
+      kerf: g('$kerf') === undefined ? 0 : toNumber(g('$kerf')),
       material: toText(g('$material') ?? 'material'),
     });
   if (!parts.length) warnings.push('Nothing to cut: the program made no shapes.');
@@ -476,6 +476,8 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     const kerf = options.kerf ?? p.kerf;
     if (!(Number.isFinite(kerf) && kerf >= 0))
       throw new KerfError('$kerf must be a number, 0 or more');
+    if (!(Number.isFinite(p.thickness) && p.thickness > 0))
+      throw new KerfError('$thickness must be a positive number');
     const info: PartInfo = {
       name: p.name,
       qty: p.qty,
@@ -536,14 +538,29 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   // What each placed part is glued on, as glueOn() put it there: layer k
   // of a stack on the stack's first layer, which is on the host's
   // placement it was moved with
+  // A stack split into a part per layer is one stack again here, its
+  // layers' placements back in the order the stack had them
+  const logicalAt = new Map<PartShape, number[]>();
   for (const [p, at] of placedAt) {
+    if (!p.layerOf) {
+      logicalAt.set(p, at);
+      continue;
+    }
+    const { part, k } = p.layerOf;
+    const n = part.stack ?? 1;
+    const list = logicalAt.get(part) ?? [];
+    at.forEach((index, j) => (list[j * n + k] = index));
+    logicalAt.set(part, list);
+  }
+  for (const [p, at] of logicalAt) {
     const stack = p.stack ?? 1;
-    const host = p.glue && parts.find((q) => q.name === p.glue!.host && q !== p);
-    const hostAt = host ? placedAt.get(host) : undefined;
+    const host = p.glue && [...logicalAt.keys()].find((q) => q.name === p.glue!.host && q !== p);
+    const hostAt = host ? logicalAt.get(host) : undefined;
     const per = at.length / stack;
     at.forEach((index, i) => {
       const k = i % stack;
-      const on = k > 0 ? at[i - k] : hostAt?.[hostAt.length === per ? Math.floor(i / stack) : 0];
+      const on =
+        k > 0 ? at[i - k] : host && hostAt?.[hostLayer(host, p, Math.floor(i / stack), per)];
       if (on !== undefined) assembly[index].glued = on;
     });
   }
@@ -648,39 +665,44 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   const moved = (layers: Map<string, Layer>, m: Matrix) =>
     transform({ layers, parts: [] }, m).layers;
 
+  // Parts of each material and thickness are a sheet of their own
+  const groups = new Map<string, typeof ready>();
+  for (const r of ready) {
+    const key = `${r.info.material}|${r.info.thickness}`;
+    groups.set(key, [...(groups.get(key) ?? []), r]);
+  }
   if (layoutMode === 'none') {
-    const items: Placed[] = [];
-    for (const r of ready)
-      for (let c = 0; c < r.info.qty; c++)
-        items.push({
-          part: r.info.name,
-          copy: r.copy(c),
-          layers: moved(r.layers, flipY),
-          rotated: false,
-        });
-    const all = new Map<string, Layer>();
-    for (const it of items)
-      for (const [k, l] of it.layers) {
-        const t = all.get(k) ?? { regions: [], lines: [] };
-        for (const p of l.regions) t.regions.push(p);
-        for (const p of l.lines) t.lines.push(p);
-        all.set(k, t);
+    // Each sheet keeps the parts where the program drew them
+    for (const group of groups.values()) {
+      const items: Placed[] = [];
+      for (const r of group)
+        for (let c = 0; c < r.info.qty; c++)
+          items.push({
+            part: r.info.name,
+            copy: r.copy(c),
+            layers: moved(r.layers, flipY),
+            rotated: false,
+          });
+      const all = new Map<string, Layer>();
+      for (const it of items)
+        for (const [k, l] of it.layers) {
+          const t = all.get(k) ?? { regions: [], lines: [] };
+          for (const p of l.regions) t.regions.push(p);
+          for (const p of l.lines) t.lines.push(p);
+          all.set(k, t);
+        }
+      const b = exportBounds(all);
+      const shift: Matrix = [1, 0, 0, 1, margin - b[0], margin - b[1]];
+      for (const it of items) {
+        it.layers = moved(it.layers, shift);
+        it.offset = [shift[4], shift[5]];
       }
-    const b = exportBounds(all);
-    const shift: Matrix = [1, 0, 0, 1, margin - b[0], margin - b[1]];
-    for (const it of items) {
-      it.layers = moved(it.layers, shift);
-      it.offset = [shift[4], shift[5]];
+      sheets.push(
+        finishSheet(items, b[2] - b[0] + 2 * margin, b[3] - b[1] + 2 * margin, group[0].info),
+      );
     }
-    sheets.push(
-      finishSheet(items, b[2] - b[0] + 2 * margin, b[3] - b[1] + 2 * margin, ready[0]?.info),
-    );
+    if (!groups.size) sheets.push(finishSheet([], 2 * margin, 2 * margin, undefined));
   } else {
-    const groups = new Map<string, typeof ready>();
-    for (const r of ready) {
-      const key = `${r.info.material}|${r.info.thickness}`;
-      groups.set(key, [...(groups.get(key) ?? []), r]);
-    }
     for (const group of groups.values()) {
       const [W, H] = sheetSize;
       const queue: {
@@ -1112,6 +1134,7 @@ function cutSlots(
       layers: slot.length ? holed(p.layers, slot) : p.layers,
       placements: p.placements!.filter((_, i) => i % n === k),
       stack: undefined,
+      layerOf: { part: p.layerOf?.part ?? p, k },
     }));
     parts.splice(parts.indexOf(p), 1, ...split);
   }
@@ -1150,7 +1173,10 @@ function cutHalvings(parts: PartShape[], mode: (k: string) => string, warnings: 
     for (const name of p.halving) {
       const out = name.startsWith('!');
       const match = namePattern(out ? name.slice(1) : name);
-      const found = parts.filter((q) => q !== p && match(q.name));
+      // A stack split into its layers is still found by its own name
+      const found = parts.filter(
+        (q) => q !== p && (match(q.name) || (q.layerOf && match(q.layerOf.part.name))),
+      );
       if (!found.length && !out)
         warnings.push(`Part "${p.name}": no part "${name}" to halve with.`);
       for (const q of found) out ? chosen.delete(q) : chosen.add(q);
@@ -1644,9 +1670,24 @@ function hiddenFillWarnings(hidden: HiddenFill[], warnings: string[]) {
   }
 }
 
+// Which of the host's placements copy c of a part glued to it goes on: a
+// part with as many copies as its host goes one on each, otherwise all on
+// the first; and of a stacked host, the layer whose face it is glued to,
+// the top of the stack or its bottom
+function hostLayer(host: PartShape, glued: PartShape, c: number, copies: number): number {
+  const n = host.stack ?? 1;
+  const hostCopies = (host.placements?.length ?? 0) / n;
+  const at = hostCopies === copies ? c : 0;
+  // A stack glued under its own host grows down, its first layer on top
+  const down = host.glue?.face === 'bottom';
+  const top = glued.glue?.face === 'top';
+  return at * n + (top !== down ? n - 1 : 0);
+}
+
 // Parts given glue = "host" are placed on the host's top or bottom face:
 // their own placement is measured on that face. A glued part with as many
-// copies as its host goes one on each; otherwise all go on the first.
+// copies as its host goes one on each; otherwise all go on the first. On a
+// stacked host they go on the stack's top or bottom layer.
 function glueOn(parts: PartShape[], warnings: string[]) {
   const done = new Set<PartShape>();
   const visit = (p: PartShape, path: PartShape[]): void => {
@@ -1667,7 +1708,7 @@ function glueOn(parts: PartShape[], warnings: string[]) {
     const z = p.glue.face === 'top' ? host.thickness : -p.thickness;
     const per = p.placements!.length / (p.stack ?? 1);
     p.placements = p.placements!.map((pl, i) => {
-      const h = hs.length === per ? hs[Math.floor(i / (p.stack ?? 1))] : hs[0];
+      const h = hs[hostLayer(host, p, Math.floor(i / (p.stack ?? 1)), per)];
       return { ...pl, matrix: multiply(h, multiply(translation(0, 0, z), placementMatrix(pl))) };
     });
     done.add(p);

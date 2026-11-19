@@ -38,10 +38,62 @@ Changes to the output of existing programs, each a fix:
   starts; the repeated point had started the hinge and the bend a few mm
   early, on the straight.
 
+- `flex_strip()` rounds each sharp corner of its path to the arc the strip
+  bends round, radius `r` inside, and is as long as that rounded path, so
+  it ends where the path ends; it ran on past it by about 1.6 mm a corner
+  before, and was cut that much too long. `strip_path()`, `strip_loop()`
+  and `strip_corner()` give the rounded path.
+- Closed cuts on a sheet go deepest first: a part nested in another part's
+  hole is cut before that hole, and a hole before the outline round it.
+  Holes of every part used to come before every outline, so a part nested
+  in a hole could be cut after the hole had freed the stock under it.
+- With `$layout = "none"`, parts of different materials or thicknesses go
+  on separate sheets, as when packed. They shared one sheet, labelled with
+  the first part's material.
+- A tab that only dips into a part, less than 1 mm or half its thickness,
+  is not cut as a slot because another tab of its part goes deep enough:
+  each piece that enters the part is judged on its own depth, and the
+  shallow one is reported as a collision.
+- A part glued to a stack (`glue =` a part with `stack = n`) goes on the
+  stack's top layer, or under its bottom one, not on its first layer inside
+  the stack; with as many copies as the stack has, one goes on each copy
+  of the stack, not all on the first.
+- A bent part inside `translate()`, `scale()` or `mirror()` bends where its
+  drawing went; its bends stayed where they were drawn. Turning one with
+  `rotate()` is an error: turn it with `part(rotate = ...)`.
+- `measure()` counts what any layer of mode `"cut"` cuts, and leaves out
+  any layer of mode `"guide"`; it went by the names `cut` and `guide`, so
+  a custom cut layer was left out of `$area` and `$centroid`.
+- `text(fit = w)` is no wider than `w` where a glyph reaches past its
+  advance, as a `q`'s tail does; it was fitted by the advance alone.
+- `pattern()` clips each tile that an edge of the area crosses. A tile with
+  its corners inside the area and none of the area's corners inside it was
+  kept whole, over a rib or a strip of the area running through it.
+
 Fixes:
 
 - A part with nothing in it warns: `Part "P" is empty`.
 - `slots = []` asks for no slots, without a warning that none pass through.
+- `flex_strip()` along a path with no curve or corner makes a straight
+  strip; it stopped with "bend must be [x0, x1, angle]". `bend = []` is no
+  bend.
+- A `$kerf` or `$thickness` that is not a finite number, as `0/0` or
+  `1/0` gives, is an error; a NaN kerf was taken as 0 and an infinite
+  thickness accepted.
+- A layer set again with `layer()` after marks went on its back face sets
+  its back the same way, mode, colour and order; the back kept the first
+  settings. Making it a cut layer then is an error.
+- A library path in `use <...>` or `include <...>` may hold any character
+  a folder name has, as `(`, `#` or `é`.
+- The back-face docs say the back job is turned over within the file's
+  width, and how far to move it on stock wider than the file.
+- A stack whose layers take different blind slots, and so become a part
+  each (`"top, layer 1"`), is still found by its own name for `halving`,
+  and still prints as one stack with `--print`.
+- `wall()` never cuts a piece longer than `max_length`; a cut it could not
+  put on a straight could leave one longer. Without `join`, its seam is in
+  the middle of the outline's longest side, not at its first point, which
+  is often a corner.
 
 ## 0.10.0 (2026-11-16)
 

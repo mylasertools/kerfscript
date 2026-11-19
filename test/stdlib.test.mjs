@@ -501,7 +501,7 @@ test('wall() puts plates and a bent strip round an outline, in pieces that fit',
   assert.equal(ball.parts.filter((p) => p.name.startsWith('Ball strip')).length, 3);
 });
 
-test('wall_path starts a closed outline at the point nearest join; path_part cuts a path', () => {
+test('wall_path starts a closed outline at the point nearest join, or mid its longest side; path_part cuts a path', () => {
   const r = render(`use <kerf/hinge>
 sq = [[0, 0], [40, 0], [40, 20], [0, 20]];
 echo(wall_path(sq, [10, -5]));
@@ -509,7 +509,7 @@ echo(wall_path(concat(sq, [[0, 0]])));
 echo(path_part([[0, 0], [10, 0], [10, 10]], 5, 15));`);
   assert.deepEqual(r.echoes, [
     '[[10, 0], [40, 0], [40, 20], [0, 20], [0, 0], [10, 0]]',
-    '[[0, 0], [40, 0], [40, 20], [0, 20], [0, 0]]',
+    '[[20, 0], [40, 0], [40, 20], [0, 20], [0, 0], [20, 0]]',
     '[[5, 0], [10, 0], [10, 5]]',
   ]);
 });

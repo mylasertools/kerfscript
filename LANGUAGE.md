@@ -299,7 +299,8 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
   - `bend = [x0, x1, angle]`, or a list of them: a living hinge from x0 to
     x1 along the part's x bends it by `angle` degrees in the assembled
     view, folding the far end up towards its top face (down for a negative
-    angle). The hinge's middle layer keeps its length.
+    angle). The hinge's middle layer keeps its length. An empty list is
+    no bend.
   - `on = "name"`: the part is glued to that bent part, and moves with the
     run of it under its centre.
   - `glue = "name"`, `face = "top"`: the part is glued flat on that part's

@@ -58,6 +58,9 @@ export interface PartShape {
   // Which of the part() call's copies these are, 1 up, when mirror per
   // copy split them: the others are a part of their own
   copies?: number[];
+  // Layer k of the stack `part`, when its layers cut different slots and
+  // became a part each: still that part by name, and one of its layers
+  layerOf?: { part: PartShape; k: number };
 }
 
 export interface Bend {
@@ -360,6 +363,70 @@ export function pieces(regions: Poly[]): Poly[][] {
   return out;
 }
 
+// The order to cut closed paths in: those inside the most others first, so
+// a hole is cut before the outline round it and a part nested in another
+// part's hole before that hole frees the stock it sits on. Paths equally
+// deep keep their order.
+export function cutOrder(rings: Poly[]): number[] {
+  const n = rings.length;
+  if (n < 2) return rings.map((_, i) => i);
+  const box = rings.map((r) => bounds([r]) ?? [0, 0, 0, 0]);
+  const size = rings.map((r) => Math.abs(area(r)));
+  const inside = (p: Pt, r: Poly) => {
+    let w = false;
+    for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+      const [ax, ay] = r[j],
+        [bx, by] = r[i];
+      if (ay > p[1] !== by > p[1] && p[0] < ax + ((p[1] - ay) * (bx - ax)) / (by - ay)) w = !w;
+    }
+    return w;
+  };
+  // A grid over the sheet: each path is listed in the cells its box covers,
+  // or with the big ones if it covers many, so a path is only tested against
+  // those whose box may hold it
+  let [x0, y0, x1, y1] = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const b of box) {
+    x0 = Math.min(x0, b[0]);
+    y0 = Math.min(y0, b[1]);
+    x1 = Math.max(x1, b[2]);
+    y1 = Math.max(y1, b[3]);
+  }
+  const k = Math.max(1, Math.ceil(Math.sqrt(n)));
+  const cw = Math.max(x1 - x0, 1e-9) / k,
+    ch = Math.max(y1 - y0, 1e-9) / k;
+  const cell = (v: number, o: number, c: number) =>
+    Math.min(k - 1, Math.max(0, Math.floor((v - o) / c)));
+  const grid = new Map<number, number[]>();
+  const big: number[] = [];
+  box.forEach((b, i) => {
+    const [i0, i1] = [cell(b[0], x0, cw), cell(b[2], x0, cw)];
+    const [j0, j1] = [cell(b[1], y0, ch), cell(b[3], y0, ch)];
+    if ((i1 - i0 + 1) * (j1 - j0 + 1) > 16) return big.push(i);
+    for (let a = i0; a <= i1; a++)
+      for (let c = j0; c <= j1; c++) {
+        const key = a * k + c;
+        const list = grid.get(key);
+        if (list) list.push(i);
+        else grid.set(key, [i]);
+      }
+  });
+  const depth = rings.map((r, i) => {
+    const b = box[i];
+    if (!r.length) return 0;
+    const p = r[0];
+    let d = 0;
+    const near = grid.get(cell(p[0], x0, cw) * k + cell(p[1], y0, ch)) ?? [];
+    for (const j of [...near, ...big]) {
+      const c = box[j];
+      if (j === i || !(size[j] > size[i])) continue;
+      if (c[0] > b[0] || c[1] > b[1] || c[2] < b[2] || c[3] < b[3]) continue;
+      if (inside(p, rings[j])) d++;
+    }
+    return d;
+  });
+  return rings.map((_, i) => i).sort((a, b) => depth[b] - depth[a] || a - b);
+}
+
 export function area(p: Poly): number {
   let a = 0;
   for (let i = 0, j = p.length - 1; i < p.length; j = i++)
@@ -425,8 +492,31 @@ function transformLayers(layers: Map<string, Layer>, m: Matrix): Map<string, Lay
 export function transform(s: Shape, m: Matrix): Shape {
   return {
     layers: transformLayers(s.layers, m),
-    parts: s.parts.map((p) => ({ ...p, layers: transformLayers(p.layers, m) })),
+    parts: s.parts.map((p) => ({
+      ...p,
+      layers: transformLayers(p.layers, m),
+      ...(p.bends && { bends: transformBends(p, m) }),
+    })),
   };
+}
+
+// A bent part's bends moved with its drawing: they lie across its x, so a
+// move, a scale or a mirror keeps them there; a turn or a shear does not
+function transformBends(p: PartShape, m: Matrix): Bend[] {
+  const bends = p.bends!;
+  const [sx, , , sy, tx] = [m[0], m[1], m[2], m[3], m[4]];
+  if (Math.abs(m[1]) > 1e-9 || Math.abs(m[2]) > 1e-9 || !(sx !== 0 && sy !== 0))
+    throw new Error(
+      `part "${p.name}" bends along its x, so it can be moved, scaled or mirrored but not turned: turn it with part(rotate = ...) instead`,
+    );
+  return bends.map((b) => {
+    // Where it bends along x, and whether it bends as a mirror image
+    const [a0, a1] = b.mirrored ? [-b.x1, -b.x0] : [b.x0, b.x1];
+    const [c0, c1] = [sx * a0 + tx, sx * a1 + tx].sort((u, v) => u - v);
+    const mirrored = !!b.mirrored !== sx < 0;
+    const { mirrored: _, ...rest } = b;
+    return mirrored ? { ...rest, x0: -c1, x1: -c0, mirrored: true } : { ...rest, x0: c0, x1: c1 };
+  });
 }
 
 export function merge(shapes: Shape[]): Shape {

@@ -58,7 +58,22 @@ export function crossSection(target: Solid, other: Solid): Poly[] {
     return [];
   const inBand = (lo: number, hi: number) =>
     intersection(other.outline, [ccw(bandOf(lo, hi))]).filter((p) => Math.abs(area(p)) > 1e-6);
-  const deep = inBand(at0(EPS), at1(EPS));
+  // Each piece that enters the slab is judged on its own depth, so a deep
+  // tab elsewhere on the part does not make a shallow one a slot
+  const reach = (ps: Poly[]) => {
+    let [lo, hi] = [Infinity, -Infinity];
+    for (const ring of ps)
+      for (const [u, v] of ring)
+        for (const w of [w0, w1]) {
+          const z = R[8] * u + R[9] * v + R[10] * w + R[11];
+          lo = Math.min(lo, z);
+          hi = Math.max(hi, z);
+        }
+    return Math.min(target.thickness, hi) - Math.max(0, lo);
+  };
+  const deep = pieces(inBand(at0(EPS), at1(EPS)))
+    .filter((g) => reach(g) >= Math.min(1, target.thickness / 2) - 2 * EPS)
+    .flat();
   if (!deep.length) return [];
   // The slot spans the whole slab, but only across from what goes deeper than
   // EPS: an edge lying on a face (a gable wall's top under its roof, which

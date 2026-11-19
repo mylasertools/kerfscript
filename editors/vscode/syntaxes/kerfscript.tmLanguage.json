@@ -72,7 +72,7 @@
       ]
     },
     "import": {
-      "match": "\\b(use|include)\\s*(<)([A-Za-z0-9_./\\\\: -]*)(>)",
+      "match": "\\b(use|include)\\s*(<)([^<>]*)(>)",
       "captures": {
         "1": { "name": "keyword.control.import.kerfscript" },
         "2": { "name": "punctuation.definition.string.begin.kerfscript" },

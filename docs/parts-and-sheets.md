@@ -104,7 +104,8 @@ place(at = [20, 10, 30], rotate = [0, 0, 90]) box([80, 60, 40], name = "crate");
 - `glue = "top plate", face = "top"` lays a part on another part's face,
   its `at` and `rotate` measured on that face. Move the plate, and what is
   glued on it moves too. A stack glued under a part (`face = "bottom"`)
-  grows down, away from it.
+  grows down, away from it. A part glued to a stack goes on the stack's
+  outer layer, on top of it or under it.
 
 ```kerf
 part("seat", at = [0, 0, 40]) rect([80, 80], r = 6);
@@ -123,12 +124,15 @@ bent by a living hinge cuts slots for the tabs on its straight runs. A part
 must reach 1 mm into it (or half way through a thinner one) to cut a slot,
 and a blind tab's slot goes through: one that only dips into the surface is
 misplaced, and the collision check reports it rather than a
-slot hiding it.
+slot hiding it. Each tab is judged on its own depth, however deep the
+others of its part go.
 
 The layers of a stack each cut the slots that pass through them. When they
 differ, as a bench top of `stack = 2` taking the legs' tabs in its lower
 layer and a vice's in its upper one, the stack becomes a part per layer,
 `top, layer 1` and `top, layer 2`, so blind joints don't show through.
+`halving = "top"` still finds both, and `--print` still prints them as
+one stack.
 
 ```kerf
 part("shelf", slots = ["back"]) rect([100, 60]);
@@ -195,7 +199,8 @@ part("Cam", at = [30, 18, 20], rotate = [90, 0, 0], bores = ["Crank axle"],
 A living hinge bends a part, and the assembled view can show it bent.
 `bend = [x0, x1, angle]` bends the part along its x between x0 and x1, the
 far end folding up towards its top face by `angle` degrees (down for a
-negative angle); give a list for more than one bend. The hinge's middle
+negative angle); give a list for more than one bend, or an empty list
+for none. The hinge's middle
 layer keeps its length, so the radius follows from the hinge's width.
 Parts glued on a bent part take `on = "name"` and move with the run they
 sit on. `flex_strip()` in `kerf/hinge` works out the bends of a strip that
@@ -317,6 +322,9 @@ parts and at the sheet edges.
 A part larger than the sheet produces a warning. Set `$layout = "none"`
 to keep the positions from your code instead of packing the parts.
 
+Either way, parts of different materials or thicknesses go on separate
+sheets: plywood parts on one, acrylic on another.
+
 The CLI `--margin` option and API `margin` option let you set the edge
 spacing separately from the gap between parts.
 
@@ -358,6 +366,13 @@ sheet turned over left to right: `design-back.svg` from the command line,
 `sheet.back` in JavaScript. Cut and engrave the front, turn the whole
 sheet over without moving the parts in it, line it up on the same corner
 and run the back job.
+
+The back job is the front file turned over within the file's own width,
+the width in its SVG (`sheet.width` in JavaScript), not your stock's. On
+stock just as wide as the file, the same corner lines up. On wider stock,
+a 300 mm sheet for a 46 mm wide file, the turned-over parts lie the
+difference further right, 254 mm here: start the back job that far from
+the corner, or cut the stock to the file's width first.
 
 ```kerf
 part("coaster") {
