@@ -56,6 +56,7 @@ self.onmessage = async (event) => {
         assembly: result.assembly,
         steps: result.steps,
         hardware: result.hardware,
+        lights: result.lights,
         warnings: result.warnings,
         echoes: result.echoes,
         width: result.width,

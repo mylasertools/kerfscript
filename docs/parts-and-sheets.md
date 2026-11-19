@@ -90,6 +90,25 @@ use <kerf/box>
 place(at = [20, 10, 30], rotate = [0, 0, 90]) box([80, 60, 40], name = "crate");
 ```
 
+### Copies that differ
+
+Inside `part(qty = n)`, `$copy` is the copy being drawn, 0 up to n - 1. A
+part whose drawing reads it is drawn once for each copy, so a set of
+ornaments takes a name each, or drawers a number each:
+
+```kerf
+names = ["Anna", "Ben", "Cleo", "Dan"];
+part("tag", qty = len(names)) {
+  difference() { rect([50, 20], r = 3); translate([6, 10]) circle(d = 4); }
+  engrave() translate([30, 10]) text(names[$copy], fit = [32, 10], halign = "center", valign = "center");
+}
+```
+
+Copies that come out alike stay one part; each that differs is a part of
+its own with the same name, and the parts list says which copies it is:
+`tag (copies 1, 4) x2`. With `at` given per copy, each goes to its own
+place.
+
 ### Stacks, mirrored pairs and glued layers
 
 - `stack = 3` glues three layers at each placement, one thickness apart:
@@ -97,6 +116,22 @@ place(at = [20, 10, 30], rotate = [0, 0, 90]) box([80, 60, 40], name = "crate");
   many make a stack.
 - `material = "red acrylic"` names the material the part is cut from,
   as wrapping it in `material(name = "red acrylic")` would.
+- `pieces = 2` says the part is meant to cut into two separate pieces,
+  as a pair of eyes glued on side by side; `pieces = "any"` takes any
+  number. Without it, a part in pieces warns, as a missing connection
+  usually makes one. A part that cuts into a different number of pieces
+  than `pieces` says still warns.
+- `paint = "red"` paints the part after cutting: the 3D view and the
+  print layout show it red, while it stays on the sheet of its material.
+  `material = "red acrylic"` is for stock that comes red, and puts the
+  part on a sheet of its own. A colour is a name (`red`, `orange`,
+  `yellow`, `light yellow`, `green`, `dark green`, `light green`, `lime`,
+  `olive`, `blue`, `dark blue`, `light blue`, `navy`, `teal`, `purple`,
+  `pink`, `light pink`, `maroon`, `brown`, `light brown`, `dark brown`,
+  `tan`, `beige`, `peach`, `cream`, `skin`, `white`, `black`, `grey`,
+  `light grey`, `dark grey`, `silver`, `gold`, `copper`)
+  or a hex colour such as `"#c8372d"`. To paint only some areas, use a
+  paint layer, as [Layers](layers.md#painted-areas) shows.
 - `mirror = true` cuts the part mirrored left to right. A lopsided end
   plate's other half is the same part mirrored, and its engraving still
   reads the right way round. A mirrored copy of a bent part bends as its
@@ -216,6 +251,74 @@ part("cover", bend = [[100, 100 + bend_length(10, 90), 90], [130, 130 + bend_len
 
 The collision check takes each flat run of a bent part on its own.
 
+### Folds
+
+Card and paper fold along any line, not only along x. `fold = [from, to,
+angle]`, or a list of them, folds the part along the line from one point
+to the other in the assembled view: the folds cut it into panels, the
+panel at the part's origin (else the biggest) stays flat, and each other
+panel turns about the folds between it and that one, towards the top face
+for an angle more than 0 and down for less. A fold must run from edge to
+edge, or to a cut: cut lines inside the part, as a pop-up's slits, part
+the panels too, and a fold that divides nothing warns. `fold_open = 0.5`
+folds every fold half way, for a card shown half open; 0 lies flat.
+
+Score the folds as well, so the card bends where it should:
+
+```kerf
+$thickness = 0.4;
+open = 1; // [0:0.05:1]
+// A card with a pop-up step in the middle: two slits across the fold
+part("card", at = [0, 0, 0], fold_open = open, fold = [
+  [[80, 0], [80, 40], 90], [[80, 60], [80, 100], 90],
+  [[70, 40], [70, 60], 90], [[80, 40], [80, 60], -90], [[90, 40], [90, 60], 90]
+]) {
+  rect([160, 100]);
+  for (y = [40, 60]) line([70, y], [90, y]);
+  score() {
+    line([80, 0], [80, 40]); line([80, 60], [80, 100]);
+    for (x = [70, 80, 90]) line([x, 40], [x, 60]);
+  }
+}
+```
+
+A part bends on living hinges or folds, not both. Folds show in the
+assembled view and its 3D files; flat and print layouts lie flat.
+
+### Does it stand?
+
+`$stands = true;` says the model is meant to stand on a shelf or table:
+then it warns when its weight's centre is not over what it stands on, the
+outline of its lowest points, as a figure leaning too far or an egg held
+out beyond a small base. The parts weigh as plywood (`$density = 0.6`
+g/cm³), and hardware weighs what its `mass` (grams) says, so an egg or a
+bottle it holds counts:
+
+```kerf
+$stands = true;
+part("base", at = [-20, -20, 0]) rect([40, 40]);
+part("arm", at = [0, -1.5, 3], rotate = [90, 0, 0]) rect([60, 5]);
+// A 60 g egg held out past the base: the model tips over
+hardware("ball", [55, 0, 30], size = 44, shape = "ball", mass = 60);
+```
+
+### Hanging parts
+
+A part that hangs, as a shelf sitter's legs on cords or a charm on a ring,
+swings until its weight is straight below the point it hangs from.
+`hang = [x, y]` is that point on the part, in its own coordinates, and
+`at` is where it hangs in the assembly; `rotate` sets the plane it swings
+in. `cord = 20` hangs it 20 mm lower on a cord, which goes in the hardware
+list and the 3D view; without it the part hangs on a ring or pin at `at`.
+
+```kerf
+$thickness = 3;
+part("body", at = [-20, 0, 0], rotate = [90, 0, 0]) rect([40, 50]);
+// Legs drawn lying down: each swings down from its top end
+part("leg", qty = 2, at = [[-10, -1.5, 2], [10, -1.5, 2]], rotate = [90, 0, 0],
+     hang = [0, 0], cord = 20) translate([0, -4]) rect([40, 8]);
+```
+
 ### Numbered parts
 
 `$label_parts = true;` numbers the parts 1, 2, 3 in the order they are
@@ -240,7 +343,7 @@ adds the step "Add the chair: Glue the seat". So a piece of furniture
 builds step by step on its own and inside a room. `step("Add the chair",
 substeps = false)` takes everything inside into the one step instead.
 
-`hardware(kind, from, to, size)` lists what else the model needs: a dowel
+`hardware(kind, from, to, size, mass)` lists what else the model needs: a dowel
 from one point to another, a screw, a magnet, a strip of paper. `size` is
 a diameter, or `[w, h]` for a flat piece. `kerf check` lists the hardware
 with the parts, and the 3D view shows it.
@@ -254,30 +357,62 @@ The kinds are these; a colour (`pink`, `yellow`, `red`, `green`, `blue`,
 `orange`, `purple`, `black`, `grey`) works too, and any other kind warns
 and shows grey. JavaScript gets the list as `HARDWARE_KINDS`.
 
-| Kind       | What it is                                  | Shown            |
-| ---------- | ------------------------------------------- | ---------------- |
-| `dowel`    | a wooden dowel or axle                      | matt, #e2c48f    |
-| `steel`    | a steel rod, pin or axle                    | metal, #a7adb3   |
-| `brass`    | a brass rod, tube or pin                    | metal, #c9a227   |
-| `screw`    | a screw                                     | metal, #9aa0a6   |
-| `bolt`     | a bolt                                      | metal, #9aa0a6   |
-| `nut`      | a nut                                       | metal, #9aa0a6   |
-| `magnet`   | a disc or block magnet                      | metal, #55585c   |
-| `paper`    | a sheet or strip of paper                   | matt, #fbfaf6    |
-| `card`     | card stock                                  | matt, #f4f1e8    |
-| `felt`     | felt pads or lining                         | matt, #6f6a64    |
-| `elastic`  | an elastic band or cord                     | matt, #262626    |
-| `cord`     | cord, string or thread                      | matt, #b23a3a    |
-| `ribbon`   | ribbon or tape                              | matt, #c2485a    |
-| `wire`     | wire                                        | metal, #b87333   |
-| `led`      | an LED or a strip of them                   | glowing, #fff4c2 |
-| `bulb`     | a light bulb                                | glowing, #fff4c2 |
-| `ball`     | a marble, ball or bead                      | matt, #8fb8d8    |
-| `tube`     | a tube or hollow arbor                      | metal, #c9a227   |
-| `lens`     | a lens                                      | matt, #d6ecf3    |
-| `mirror`   | a mirror                                    | metal, #c8d3da   |
-| `movement` | a bought clock, music box or motor movement | matt, #3d3d3d    |
-| `white`    | anything white                              | matt, #f7f7f4    |
+| Kind       | What it is                                   | Shown                |
+| ---------- | -------------------------------------------- | -------------------- |
+| `dowel`    | a wooden dowel or axle                       | matt, #e2c48f        |
+| `steel`    | a steel rod, pin or axle                     | metal, #a7adb3       |
+| `brass`    | a brass rod, tube or pin                     | metal, #c9a227       |
+| `screw`    | a screw                                      | metal, #9aa0a6       |
+| `bolt`     | a bolt                                       | metal, #9aa0a6       |
+| `nut`      | a nut                                        | metal, #9aa0a6       |
+| `magnet`   | a disc or block magnet                       | metal, #55585c       |
+| `paper`    | a sheet or strip of paper                    | translucent, #fbfaf6 |
+| `vellum`   | vellum or tracing paper, as a lantern window | translucent, #f3efe2 |
+| `card`     | card stock                                   | matt, #f4f1e8        |
+| `felt`     | felt pads or lining                          | matt, #6f6a64        |
+| `elastic`  | an elastic band or cord                      | matt, #262626        |
+| `cord`     | cord, string or thread                       | matt, #b23a3a        |
+| `ribbon`   | ribbon or tape                               | matt, #c2485a        |
+| `wire`     | wire                                         | metal, #b87333       |
+| `led`      | an LED or a strip of them, lit               | glowing, #fff4c2     |
+| `bulb`     | a light bulb, lit                            | glowing, #fff4c2     |
+| `tealight` | a tealight, lit, its flame flickering        | metal, #d4d8dc       |
+| `ball`     | a marble, ball or bead                       | matt, #8fb8d8        |
+| `tube`     | a tube or hollow arbor                       | metal, #c9a227       |
+| `lens`     | a lens                                       | matt, #d6ecf3        |
+| `mirror`   | a mirror                                     | metal, #c8d3da       |
+| `movement` | a bought clock, music box or motor movement  | matt, #3d3d3d        |
+| `white`    | anything white                               | matt, #f7f7f4        |
+
+### Lights
+
+A tealight, an LED and a bulb give off light: the 3D view lights the model
+with them, and GLB files carry them as point lights, for a render of a
+lantern or a tealight house lit up. "Dim the room" in the 3D view turns the
+room's lights down to show them.
+
+- `hardware("tealight", [x, y, z])` stands a tealight, 39 mm across and
+  16 mm high, on that point. Its flame burns 10 mm above the cup and
+  flickers. Give `to` and `size` for another size, as `size = 59` and `to`
+  24 mm above for a maxi tealight.
+- `hardware("led", from, to)` longer than 20 mm is a strip of LEDs, lit
+  all along; a shorter one, or a ball, is a single LED.
+- `hardware("bulb", at, size = 60, shape = "ball")` is a bulb.
+- `light(at, color = "warm white", lumens = 20)` is a light with nothing
+  to show for it, as a battery light hidden in a base. `to = [x, y, z]`
+  makes it a strip, and `flicker = true` a flame. The colour is `"warm
+white"`, `"white"`, `"cool white"`, `"warm"`, `"flame"`, a paint
+  colour's name or a hex colour.
+
+```kerf
+part("base", at = [-40, -40, 0]) rect([80, 80]);
+hardware("tealight", [0, 0, 3]);
+light([0, 0, 60], "cool white", lumens = 40);
+```
+
+`render()` returns the lights as `lights`: each has `from` and `to` (the
+same point unless it is a strip), `color`, `lumens`, `flicker`, `source`
+(`"tealight"`, `"led"`, `"bulb"` or `"light"`), `step` and `label`.
 
 ```kerf
 step("Stand the walls in the base") {
@@ -305,6 +440,15 @@ The two plywood panels share a sheet. The acrylic window goes on a separate
 sheet. Each part records the `$thickness`, `$kerf` and `$material` values in
 effect where it is defined.
 
+The 3D view and 3D files colour each part by the woods, sheets and colours
+named in its material. A clear material (`clear`, `acrylic`, `perspex`,
+`glass`) shows see-through. A translucent one (`vellum`, `tracing` paper,
+`parchment`, `rice paper`, `frosted` acrylic, `paper`) lets light through:
+a tealight behind a vellum window shows through it, and in GLB files it is
+partly transparent with `KHR_materials_transmission`, so a renderer lights
+it from behind. `hardware("vellum", ...)` and `hardware("paper", ...)` are
+translucent too.
+
 ## Sheets
 
 Set the available sheet size and spacing in millimetres:
@@ -321,6 +465,24 @@ parts and at the sheet edges.
 
 A part larger than the sheet produces a warning. Set `$layout = "none"`
 to keep the positions from your code instead of packing the parts.
+
+`part(split = true)` cuts a part too big for the bed, as large wall art, a
+wreath or a sign, into pieces that fit the sheet less its margins;
+`split = [w, h]` gives the size instead. The cuts run across the part in
+columns and rows, each where it crosses the least material and keeps off
+engraving, and where a cut crosses material it is joined by jigsaw knobs
+`$knob` (12) mm across, with `$knob_clearance` (0.15 mm) between a knob and
+its socket, placed clear of engraving. Each piece is a part of its own,
+`"wreath piece 1"` up, in its place in the assembled view, and the parts
+list says which pieces it joins.
+
+```kerf
+$sheet = [300, 200];
+part("wreath", split = true) {
+  difference() { circle(d = 480); circle(d = 320); }
+  engrave() for (a = [0:30:330]) rotate(a) translate([200, 0]) circle(8);
+}
+```
 
 Either way, parts of different materials or thicknesses go on separate
 sheets: plywood parts on one, acrylic on another.

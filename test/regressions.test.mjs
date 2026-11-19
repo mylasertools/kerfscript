@@ -974,6 +974,189 @@ test('a library path may hold any character a folder name has', () => {
   assert.deepEqual(render('a = 1; use <kerf/box> echo(a < 2, 3 > a);').echoes, ['true, true']);
 });
 
+test('part(pieces = ...) is a part of loose pieces, and says when the count is off', () => {
+  const eyes = (p) =>
+    render(`part("eyes"${p}) { circle(5); translate([20, 0]) circle(5); }`).warnings;
+  assert.match(eyes('')[0], /cuts into 2 separate pieces\. Join them/);
+  assert.deepEqual(eyes(', pieces = 2'), []);
+  assert.deepEqual(eyes(', pieces = "any"'), []);
+  assert.deepEqual(eyes(', pieces = 3'), [
+    'Part "eyes" cuts into 2 separate pieces, not the 3 its pieces = says.',
+  ]);
+  assert.deepEqual(render('part("one", pieces = 2) circle(5);').warnings, [
+    'Part "one" cuts into 1 separate piece, not the 2 its pieces = says.',
+  ]);
+  assert.throws(() => render('part("e", pieces = 0) circle(3);'), /pieces must be a whole number/);
+});
+
+test('part(fold = ...) folds card along any line, panel by panel', () => {
+  const box = (b) =>
+    [0, 1, 2].map((k) => {
+      const v = b.positions.filter((_, i) => i % 3 === k);
+      return [Math.round(Math.min(...v) * 10) / 10, Math.round(Math.max(...v) * 10) / 10];
+    });
+  const card = render(
+    '$thickness = 0.4; part("card", at = [0, 0, 0], fold = [[60, 0], [60, 80], 90]) rect([120, 80]);',
+  );
+  assert.deepEqual(card.warnings, []);
+  const [flat, up] = meshBodies(card).filter((b) => b.kind === 'part');
+  assert.deepEqual(box(flat), [
+    [0, 60],
+    [0, 80],
+    [0, 0.4],
+  ]);
+  // Hinged on the top face, the far half stands up beside the fold
+  assert.deepEqual(box(up), [
+    [60, 60.4],
+    [0, 80],
+    [0.4, 60.4],
+  ]);
+  // Down, and half open
+  const down = render(
+    '$thickness = 0.4; part("card", at = [0, 0, 0], fold = [[60, 0], [60, 80], -90], fold_open = 0.5) rect([120, 80]);',
+  );
+  const [, d] = meshBodies(down).filter((b) => b.kind === 'part');
+  assert.ok(box(d)[2][0] < -40 && box(d)[0][1] > 100);
+  // A pop-up step: slits part the panels, and one fold line joins a pair
+  // either side of them
+  const pop = render(
+    '$thickness = 0.4; part("card", at = [0, 0, 0], fold = [[[80, 0], [80, 40], 90], [[80, 60], [80, 100], 90], [[70, 40], [70, 60], 90], [[80, 40], [80, 60], -90], [[90, 40], [90, 60], 90]]) { rect([160, 100]); for (y = [40, 60]) line([70, y], [90, y]); }',
+  );
+  assert.deepEqual(pop.warnings, []);
+  const panels = meshBodies(pop)
+    .filter((b) => b.kind === 'part')
+    .map(box);
+  assert.equal(panels.length, 4);
+  assert.ok(
+    panels.some(([x, , z]) => x[0] === 70 && x[1] === 80 && z[0] === 10),
+    'the tread',
+  );
+  assert.ok(
+    panels.some(([x, , z]) => x[0] === 70 && x[1] === 70.4 && z[1] === 10.4),
+    'the riser',
+  );
+  // A fold that divides nothing warns; bends and folds don't mix
+  assert.match(
+    render('part("c", at = [0, 0, 0], fold = [[60, 10], [60, 70], 90]) rect([120, 80]);')
+      .warnings[0],
+    /does not divide the part/,
+  );
+  assert.throws(
+    () => render('part("c", bend = [10, 20, 90], fold = [[0, 0], [0, 10], 90]) rect(40);'),
+    /living hinges or folds, not both/,
+  );
+});
+
+test('part(hang = ...) swings a part until its weight is below, on a cord', () => {
+  const r = render(
+    '$thickness = 3; part("leg", qty = 2, at = [[-10, -1.5, 2], [10, -1.5, 2]], rotate = [90, 0, 0], hang = [0, 0], cord = 20) translate([0, -4]) rect([40, 8]);',
+  );
+  assert.deepEqual(r.warnings, []);
+  assert.deepEqual(
+    r.hardware.map((h) => [h.kind, h.label, h.from, h.to]),
+    [
+      ['cord', 'leg 1 cord', [-10, -1.5, 2], [-10, -1.5, -18]],
+      ['cord', 'leg 2 cord', [10, -1.5, 2], [10, -1.5, -18]],
+    ],
+  );
+  const leg = meshBodies(r).find((b) => b.kind === 'part');
+  const zs = leg.positions.filter((_, i) => i % 3 === 2);
+  const xs = leg.positions.filter((_, i) => i % 3 === 0);
+  // Hanging straight down from the cord's end, 40 mm long
+  assert.ok(Math.abs(Math.max(...zs) + 18) < 1e-6 && Math.abs(Math.min(...zs) + 58) < 1e-6);
+  assert.ok(Math.abs((Math.max(...xs) + Math.min(...xs)) / 2 + 10) < 1e-6);
+  assert.throws(() => render('part("x", hang = [0, 0]) rect(10);'), /needs at/);
+  assert.throws(
+    () => render('part("x", at = [0, 0, 0], cord = 5) rect(10);'),
+    /cord goes with hang/,
+  );
+});
+
+test('symbol(min_width = ...) grows lines too thin to cut', () => {
+  const narrow = (extra) =>
+    render(`use <kerf/symbols>\npart("s") symbol("flamingo", 25${extra});`).warnings.filter((w) =>
+      /narrower than/.test(w),
+    ).length;
+  assert.ok(narrow('') > 0);
+  assert.equal(narrow(', min_width = 1.6'), 0);
+});
+
+test('$copy draws each copy of a part apart, alike copies staying one part', () => {
+  const r = render(
+    'part("ring", qty = 5, at = [for (i = [0:4]) [i * 30, 0, 0]]) circle(d = 10 + 4 * ($copy % 3));',
+  );
+  assert.deepEqual(r.warnings, []);
+  assert.deepEqual(
+    r.parts.map((p) => [p.qty, p.copies, p.width]),
+    [
+      [2, [1, 4], 10],
+      [2, [2, 5], 14],
+      [1, [3], 18],
+    ],
+  );
+  assert.deepEqual(
+    r.assembly.map((a) => a.copy),
+    [1, 4, 2, 5, 3],
+  );
+  // A part that doesn't read $copy is drawn once, as before
+  assert.deepEqual(
+    render('part("same", qty = 3) circle(10);').parts.map((p) => [p.qty, p.copies]),
+    [[3, undefined]],
+  );
+  // $copy is 0 outside part(), as undef
+  assert.deepEqual(render('echo($copy); part("p", qty = 2) { echo($copy); circle(5); }').echoes, [
+    'undef',
+    '0',
+    '1',
+  ]);
+});
+
+test('part(split = ...) cuts a big part into pieces that fit, joined by knobs', () => {
+  const r = render(
+    '$sheet = [300, 200];\npart("wreath", split = true) { difference() { circle(d = 480); circle(d = 320); } engrave() for (a = [0:30:330]) rotate(a) translate([200, 0]) circle(8); }',
+  );
+  assert.deepEqual(r.warnings, []);
+  assert.equal(r.parts.length, 6);
+  for (const p of r.parts) {
+    assert.ok(p.width <= 294 && p.height <= 194, `${p.name} ${p.width} x ${p.height}`);
+    assert.ok(p.joins.length >= 2, p.name);
+  }
+  assert.deepEqual(r.parts[0].joins, ['wreath piece 2', 'wreath piece 3']);
+  // The pieces hold all the material, less the knobs' clearance
+  const whole = render('part("w") difference() { circle(d = 480); circle(d = 320); }').parts[0];
+  assert.ok(whole.width > 294);
+  assert.throws(() => render('part("w", split = [0, 10]) rect(10);'), /split must be/);
+  // A part that fits is left whole
+  assert.equal(render('part("w", split = true) rect(50);').parts[0].name, 'w');
+});
+
+test('$stands = true warns when a model tips over, counting hardware mass', () => {
+  const tips = (s) =>
+    render(`$stands = true; $thickness = 3;\n${s}`).warnings.some((w) => /tips over/.test(w));
+  assert.equal(
+    tips(
+      'part("base", at = [-40, -40, 0]) rect([80, 80]); part("post", at = [-5, 1.5, 3], rotate = [90, 0, 0]) rect([10, 100]);',
+    ),
+    false,
+  );
+  assert.equal(
+    tips(
+      'part("base", at = [-10, -10, 0]) rect([20, 20]); part("arm", at = [-10, -1.5, 3], rotate = [90, 0, 0]) rect([200, 10]);',
+    ),
+    true,
+  );
+  const holder =
+    'part("base", at = [-20, -20, 0]) rect([40, 40]); part("arm", at = [0, -1.5, 3], rotate = [90, 0, 0]) rect([60, 5]); hardware("ball", [55, 0, 30], size = 44, shape = "ball"';
+  assert.equal(tips(`${holder});`), false);
+  assert.equal(tips(`${holder}, mass = 60);`), true);
+  // Without $stands nothing is checked
+  assert.ok(
+    !render(
+      'part("base", at = [-10, -10, 0]) rect([20, 20]); part("arm", at = [-10, -1.5, 3], rotate = [90, 0, 0]) rect([200, 10]);',
+    ).warnings.some((w) => /tips over/.test(w)),
+  );
+});
+
 test('a module the program names echo or assert keeps what it makes', () => {
   const r = render('module echo() { rect(10); } part("p") echo();');
   assert.deepEqual(
@@ -999,4 +1182,47 @@ test('a strip round two corners on one short side ends where its path does', () 
   }
   assert.ok(Math.hypot(x - 8, y - 30) < 0.1, `ends at ${x}, ${y}`);
   assert.ok(bends.every((b) => Math.abs(b[2]) <= 180));
+});
+
+test('a part glued on a split part goes on the piece under it', () => {
+  const r = render(
+    '$thickness = 3;\npart("backer", at = [0, 0, 0], split = [100, 100]) rect([150, 60]);\npart("badge", glue = "backer") translate([10, 10]) rect([20, 20]);',
+  );
+  assert.deepEqual(r.warnings, []);
+  const badge = r.assembly.find((a) => a.name === 'badge');
+  assert.equal(badge.matrix[11], 3);
+  assert.equal(r.assembly[badge.glued].name, 'backer piece 1');
+});
+
+test('a mirrored part hangs from the mirror of its hang point', () => {
+  for (const [mirror, hx] of [
+    ['false', 10],
+    ['true', -10],
+  ]) {
+    const r = render(
+      `$thickness = 3;\npart("pendant", at = [0, 0, 100], rotate = [90, 0, 0], hang = [10, 40], mirror = ${mirror}) rect([20, 40]);`,
+    );
+    const m = r.assembly[0].matrix;
+    const at = [0, 4, 8].map((i) => m[i] * hx + m[i + 1] * 40 + m[i + 3]);
+    assert.ok(Math.hypot(at[0], at[1], at[2] - 100) < 1e-6, `${mirror}: hangs at ${at}`);
+  }
+});
+
+test('$stands checks a model of one part', () => {
+  const r = render(
+    '$stands = true;\n$thickness = 3;\npart("p", at = [0, 0, 0], rotate = [90, 0, 0]) polygon([[0, 0], [10, 0], [10, 50], [120, 50], [120, 60], [0, 60]]);',
+  );
+  assert.match(r.warnings.join('\n'), /tips over/);
+});
+
+test('splitting a part counts its pieces against the part limit', () => {
+  assert.throws(
+    () => render('part("p", split = [100, 100]) rect([350, 60]);', { limits: { maxParts: 2 } }),
+    /4 pieces would make more than 2 part copies/,
+  );
+  assert.equal(
+    render('part("p", split = [100, 100]) rect([350, 60]);', { limits: { maxParts: 4 } }).parts
+      .length,
+    4,
+  );
 });

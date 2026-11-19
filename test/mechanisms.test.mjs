@@ -118,6 +118,35 @@ test('part_size gives bought parts by name', () => {
   assert.throws(() => render('use <kerf/sizes>\necho(part_size("x"));'), /Unknown part "x"/);
 });
 
+test('sizes of eggs, tealights, banknotes and other everyday things', () => {
+  assert.deepEqual(
+    echo(
+      'use <kerf/sizes>\ne = part_size("hen egg"); t = part_size("Tealight"); b = part_size("wine bottle");\necho(e.diameter, e.length, t.diameter, t.height, t.hole, b.neck, part_size("magnet 10x3").hole);',
+    ),
+    ['44, 57, 39, 16, 40, 30, 10.2'],
+  );
+  assert.deepEqual(
+    echo('use <kerf/sizes>\necho(note_size("USD"), note_size("eur 100"), card_size("gift card"));'),
+    ['[155.96, 66.29], [147, 77], [85.6, 53.98]'],
+  );
+  assert.throws(() => render('use <kerf/sizes>\necho(note_size("x"));'), /Unknown banknote "x"/);
+  // Every entry has a body of three sizes
+  let message = '';
+  try {
+    render('use <kerf/sizes>\necho(part_size("?"));');
+  } catch (e) {
+    message = e.message;
+  }
+  const names = /Known: ([^(]*) \(/.exec(message)[1].split(', ');
+  assert.ok(names.length >= 22);
+  for (const name of names)
+    assert.deepEqual(
+      echo(`use <kerf/sizes>\nb = part_size("${name}").body;\necho(len(b) == 3 && min(b) > 0);`),
+      ['true'],
+      name,
+    );
+});
+
 test('part(material = ...) names its own material', () => {
   const r = render(
     '$material = "ply"; part("a", material = "red acrylic") square(5); part("b") square(5);',

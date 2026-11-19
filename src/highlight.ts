@@ -53,12 +53,13 @@ export const BUILTINS = new Set(
     'rect square circle ellipse regular_polygon star polygon path text line polyline arc ' +
     'translate rotate scale mirror multmatrix union group difference intersection hull offset ' +
     'pattern spline hatch flow contours occlude hide paint measure fill_holes largest join_islands close stroke outline part place call step ' +
-    'hardware material finger_rect finger_holes tslot living_hinge children echo assert box ' +
+    'hardware light material finger_rect finger_holes tslot living_hinge children echo assert box ' +
     'divider kerf_gauge slot_gauge joint_test slotted_divider grid_dividers enclosure ' +
     'enclosure_cutouts vents spur_gear gear_window rack lantern_disc peg_wheel eccentric ' +
     'snail_cam tappets cone_flat fit align cam geneva_wheel geneva_lock geneva_crank ratchet pawl world_map keyhole keyholes hanging_hole hanging_loop flex_rect ' +
     'flex_box flex_panel narrow_hinge flex_strip wall cam_lock lock_key ring_stack halved_pair symbol tabs ' +
     'slots tab_rect heart teardrop egg lens crescent capsule diamond rounded_polygon shield arrow chevron banner house tag ring scalloped flower cloud speech_bubble stand stand_tabs stand_slots ' +
+    'figure figure_layer figure_parts figure_shapes figure_details drawers layered ball inlaid scene_rails scene_floor standee scene_figure figure_base drip_edge wave_edge ' +
     'abs sign floor ceil round sqrt exp ln log sin cos tan asin acos atan ' +
     'atan2 pow min max clamp lerp norm cross path_length point_at heading_at offset_path train_for path_points ' +
     'spline_points rotation euler orient len keys merge concat reverse sort fold scan bounds crossings sum slice str chr ord ' +

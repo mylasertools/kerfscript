@@ -170,3 +170,19 @@ test('use resolves user libraries through the resolver', () => {
   });
   assert.equal(r.parts[0].width, 10);
 });
+
+test('a customizer menu can come from a library function', () => {
+  const p = parameters(
+    'use <kerf/figures>\nuse <kerf/sizes>\nfigure = "bunny"; // [figure_names("easter")]\nnote = "usd"; // [size_list("note")]\npairs = 1; // [[[1, "one"], [2, "two"]][0:1]]\nsize = 3; // [1, 2, 3]\npart("p") rect(10);',
+  ).parameters;
+  const by = Object.fromEntries(p.map((x) => [x.name, x]));
+  assert.deepEqual(
+    by.figure.options.map((o) => o.value),
+    ['bunny', 'chick', 'lamb'],
+  );
+  assert.ok(by.note.options.some((o) => o.value === 'eur 20'));
+  assert.deepEqual(
+    by.size.options.map((o) => o.value),
+    [1, 2, 3],
+  );
+});

@@ -6,8 +6,16 @@
 // balls. The file writers in this folder turn the bodies into GLB, 3MF and
 // STL.
 
-import { bendPoint, meshPieces, multiply, type AssemblyPart, type Vec3 } from '../assembly.js';
+import {
+  bendPoint,
+  foldPanels,
+  meshPieces,
+  multiply,
+  type AssemblyPart,
+  type Vec3,
+} from '../assembly.js';
 import type { HardwareItem } from '../evaluator.js';
+import type { Light } from '../lights.js';
 import { area, difference, intersection, strokeLines, union, type Poly } from '../geometry.js';
 import { HARDWARE_COLORS, HARDWARE_KINDS } from '../hardware.js';
 import { rodFrame } from '../bores.js';
@@ -28,6 +36,10 @@ export interface Body {
   color: string;
   metal?: boolean;
   clear?: boolean;
+  /** Lets light through without being clear, as vellum or frosted acrylic */
+  translucent?: boolean;
+  /** Gives off light, as an LED or a flame */
+  glow?: boolean;
   /** x, y, z of each vertex, in millimetres, z up */
   positions: number[];
   /** Three vertex indices per triangle, counter-clockwise seen from outside */
@@ -58,6 +70,8 @@ export interface MeshSource {
   /** Every part flat, for the flat layout and for a model nothing places */
   flat?: AssemblyPart[];
   hardware?: HardwareItem[];
+  /** Light sources, from tealights, LEDs, bulbs and light() */
+  lights?: Light[];
   /** The layers, to tell cuts inside a part from marks on it */
   layers?: { name: string; mode: string }[];
 }
@@ -65,6 +79,8 @@ export interface MeshSource {
 // Sheet colours by material name, for the 3D views; anything else is a
 // light wood
 const MATERIALS: [RegExp, string][] = [
+  [/frosted/i, '#e6eef0'],
+  [/vellum|tracing|parchment|rice paper/i, '#f3efe2'],
   [/walnut|dark/i, '#7b5538'],
   [/cherry|mahogany|red/i, '#a0613f'],
   [/oak/i, '#c9a571'],
@@ -94,7 +110,13 @@ export function materialColor(material: string): string {
   return MATERIALS.find(([re]) => re.test(material))?.[1] ?? '#dcc39a';
 }
 
-const isClear = (material: string) => /clear|acrylic|perspex|glass/i.test(material);
+const isClear = (material: string) =>
+  /clear|acrylic|perspex|glass/i.test(material) && !isTranslucent(material);
+
+/** Whether a sheet material lets light through without being clear:
+ * vellum, tracing paper, parchment, rice paper, frosted acrylic, paper */
+export const isTranslucent = (material: string) =>
+  /vellum|tracing|parchment|rice paper|frosted|translucent|\bpaper\b/i.test(material);
 
 // Overlap between a mark and the face it stands on, so the two never share
 // a face
@@ -187,6 +209,8 @@ function partBodies(
   cuts: Set<string>,
   instance: number,
   cover?: Cover,
+  // A panel of a folded part: its marks only within it
+  panel?: Poly[],
 ): Body[] {
   const t = p.thickness;
   // Cuts inside the part, as a living hinge's slits, go through it
@@ -200,21 +224,38 @@ function partBodies(
         ),
       )
     : p.outline;
+  // A folded part, assembled: each panel folded as a part of its own
+  if (bent && p.folds?.length) {
+    const panels = foldPanels(outline, p.folds, t);
+    return panels.flatMap((f) =>
+      partBodies(
+        { ...p, folds: undefined, outline: f.outline, marks: p.marks?.map((m) => ({ ...m })) },
+        multiply(matrix, f.matrix),
+        o,
+        bent,
+        cuts,
+        instance,
+        cover,
+        f.outline,
+      ),
+    );
+  }
   const bends = bent ? p.bends : undefined;
   const to: Map3 = (q) => apply(matrix, bends?.length ? bendPoint(bends, t, q) : q);
   const flip = det3(matrix) < 0;
   const material = p.material ?? 'material';
   const out: Body[] = [];
-  const solid = body(p.name, 'part', material, materialColor(material), {
+  const solid = body(p.name, 'part', material, p.paint ?? materialColor(material), {
     part: p.name,
     copy: p.copy,
     instance,
-    clear: isClear(material),
+    clear: !p.paint && isClear(material),
+    translucent: !p.paint && isTranslucent(material),
   });
   for (const piece of meshPieces(outline, bends)) prism(solid, piece, 0, t, to, flip);
   out.push(solid);
   if (o.markHeight > 0)
-    for (const m of markAreas(p, outline, o.lineWidth, cuts)) {
+    for (const m of markAreas(p, panel ?? outline, o.lineWidth, cuts)) {
       // Laid flat, the back face is on the bed: nothing can stand under it
       if (m.side === 'back' && o.layout === 'flat') continue;
       const hidden = cover?.(m.side);
@@ -241,6 +282,8 @@ function hardwareBody(h: HardwareItem): Body | null {
   const b = body(h.label ?? h.kind, 'hardware', h.kind, color, {
     metal: look?.metal,
     clear: h.kind === 'glass',
+    ...(look?.glow && { glow: true }),
+    ...(look?.translucent && { translucent: true }),
   });
   const d = h.to.map((v, k) => v - h.from[k]) as Vec3;
   const length = Math.hypot(...d);
@@ -496,10 +539,32 @@ export function meshBodies(source: MeshSource, options: MeshOptions = {}): Body[
   const out = parts.flatMap((p, i) =>
     partBodies(p, matrices[i], { ...o, layout: flat ? 'flat' : 'assembled' }, !flat, cuts, i),
   );
-  if (!flat && o.hardware)
+  if (!flat && o.hardware) {
     for (const h of source.hardware ?? []) {
       const b = hardwareBody(h);
       if (b) out.push(b);
     }
+    // A flame over each tealight and flickering light
+    for (const l of source.lights ?? [])
+      if (l.flicker) {
+        const b = hardwareBody({
+          kind: 'flame',
+          from: l.from,
+          to: l.from,
+          size: 6,
+          up: [0, 0, 1],
+          sides: 0,
+          step: l.step,
+        });
+        if (b)
+          out.push({
+            ...b,
+            name: l.label ?? 'flame',
+            material: 'flame',
+            color: l.color,
+            glow: true,
+          });
+      }
+  }
   return out;
 }

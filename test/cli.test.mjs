@@ -91,3 +91,23 @@ test('text() uses the built-in font without --font', () => {
   assert.equal(r.status, 0, r.stderr);
   assert.match(readFileSync(join(dir, 'sign.svg'), 'utf8'), /<path/);
 });
+
+test('kerf instructions writes a PDF, or a PNG a page', () => {
+  const src = join(dir, 'cart.kerf');
+  writeFileSync(
+    src,
+    'step("Base") part("base", at = [0, 0, 0]) rect([60, 40]);\nstep("Wall") part("wall", at = [0, 3, 3], rotate = [90, 0, 0]) rect([60, 30]);\n',
+  );
+  const pdf = join(dir, 'cart.pdf');
+  let r = run('instructions', src, '-o', pdf);
+  assert.equal(r.status, 0, r.stderr);
+  const bytes = readFileSync(pdf);
+  assert.equal(bytes.subarray(0, 8).toString('latin1'), '%PDF-1.4');
+  assert.match(bytes.toString('latin1'), /\/Count 3/);
+  assert.match(bytes.toString('latin1'), /%%EOF\n$/);
+  r = run('instructions', src, '-o', join(dir, 'cart.png'), '--px', '400');
+  assert.equal(r.status, 0, r.stderr);
+  const png = readFileSync(join(dir, 'cart-2.png'));
+  assert.deepEqual([...png.subarray(1, 4)], [80, 78, 71]);
+  assert.equal(png.readUInt32BE(16), 400);
+});

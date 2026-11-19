@@ -42,6 +42,8 @@ export interface SnapshotPart {
   /** null means unavailable; [] means known to have no open cutting lines. */
   cutLines: Poly[] | null;
   bends: Bend[];
+  /** Fold lines of card or paper; a folded part is not rigid */
+  folds?: { from: [number, number]; to: [number, number]; angle: number }[];
   stack?: number;
   glue?: PartRef;
   glueFace?: 'top' | 'bottom';

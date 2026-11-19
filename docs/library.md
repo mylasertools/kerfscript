@@ -997,8 +997,9 @@ centred on the origin, `shape_centre(points)` centres them, and
 
 `use <kerf/sizes>`
 
-Paper, card and photo sizes in millimetres, for holders, folders, frames
-and boxes made to fit them.
+Paper, card, photo and banknote sizes in millimetres, and the sizes of
+bought parts and everyday things, for holders, folders, frames and boxes
+made to fit them.
 
 ### `paper_size(name)`, `card_size(name)`, `photo_size(name)`
 
@@ -1006,21 +1007,46 @@ and boxes made to fit them.
 `"B4"` to `"B6"`, `"C4"` to `"C6"`, `"DL"`, `"letter"`, `"legal"`,
 `"tabloid"`, `"half letter"`, `"executive"`, `"pocket"` and `"traveler"`,
 standing; cards `"business"`, `"us business"`, `"credit"`, `"japan"`,
-`"playing"`, `"bridge"`, `"tarot"`, `"postcard"` and `"us postcard"`, and
+`"playing"`, `"bridge"`, `"tarot"`, `"postcard"`, `"us postcard"` and
+`"gift card"`, and
 photos `"4x6"`, `"5x7"`, `"8x10"`, `"10x15"`, `"13x18"` and the instant
 film sizes `"instant mini"`, `"instant square"`, `"instant wide"` and
 `"instant classic"`, lying down. An unknown name stops with the list of
 known ones.
 
+### `note_size(name)`
+
+A banknote's `[width, height]`, lying down: `"usd"` (every US note is the
+same size), `"cad"` (every Canadian note), `"eur 5"` to `"eur 200"`,
+`"gbp 5"` to `"gbp 50"` and `"aud 5"` to `"aud 100"`. For a wallet or a
+money gift holder, fit the largest note it is for.
+
 ### `part_size(name)`
 
-A bought part's sizes as a record: `body = [width, depth, height]`, and
-for a part with a shaft its diameter `shaft`, the `shaft_length` it stands
-out of the body and the `hole` to cut for it. `"music-18"` is an 18-note
-wind-up music box movement (its shaft is the winding key's), and
-`"quartz-clock"` a 56 mm quartz clock movement with the 16.5 mm shaft, for
-dials up to `dial = 8` mm thick. `"marble-16"` and `"marble-25"` are
-marbles. These are common retail sizes, which vary: measure yours.
+The sizes of a bought part or an everyday thing as a record: `body =
+[width, depth, height]`; for a round one its `diameter` and `height` (an
+egg's `length`); for one with a shaft its diameter `shaft`, the
+`shaft_length` it stands out of the body; and the `hole` to cut for it,
+where there is one.
+
+| Name                                             | What it is                                                                       |
+| ------------------------------------------------ | -------------------------------------------------------------------------------- |
+| `"music-18"`                                     | an 18-note wind-up music box movement; its shaft is the winding key's            |
+| `"quartz-clock"`                                 | a 56 mm quartz clock movement with the 16.5 mm shaft, for dials up to `dial = 8` |
+| `"tealight"`, `"maxi tealight"`                  | 39 × 16 and 59 × 24, with a `hole` to stand one in                               |
+| `"led tealight"`, `"led puck"`                   | battery lights, 38 × 36 with the flame and 70 × 25                               |
+| `"fairy lights"`                                 | the battery box of a string of them, and its `wire`                              |
+| `"hen egg"`, `"chocolate egg"`                   | 44 and 40 across, 57 and 60 long                                                 |
+| `"wine bottle"`                                  | 76 across and 300 high, its `neck` 30 across                                     |
+| `"magnet 6x2"`, `"magnet 10x3"`, `"magnet 12x3"` | disc magnets, with a `hole` to press one into                                    |
+| `"key ring 25"`                                  | a 25 mm split key ring                                                           |
+| `"battery box 2aa"`, `"battery box 3aa"`         | closed battery boxes with a switch                                               |
+| `"coin cell holder"`                             | a holder for a CR2032 cell                                                       |
+| `"key fob"`                                      | a car key fob                                                                    |
+| `"tissue box"`, `"tissue cube"`                  | tissue boxes, long and cube                                                      |
+| `"marble-16"`, `"marble-25"`                     | marbles                                                                          |
+
+These are common retail sizes, which vary: measure yours.
 
 ```kerf
 use <kerf/sizes>
@@ -1028,6 +1054,19 @@ use <kerf/sizes>
 m = part_size("quartz-clock");
 part("dial") difference() { circle(d = 160); circle(d = m.hole); }
 ```
+
+```kerf
+use <kerf/sizes>
+
+egg = part_size("hen egg");
+// A ring an egg sits in, a little over half its width
+part("egg cup") difference() { circle(d = egg.diameter + 16); circle(d = egg.diameter * 0.75); }
+```
+
+### `size_list(kind)`
+
+The names in one table, as a list, for a customizer menu: `"paper"`,
+`"card"`, `"photo"`, `"note"` or `"part"`, as `// [size_list("note")]`.
 
 ### `landscape(size)`, `portrait(size)`
 
@@ -1037,6 +1076,294 @@ A size turned to lie wider than tall, or to stand taller than wide.
 
 The size of a name in a table of `[name, size]`, the names in it, and the
 name an older name stands for in a table of `[old, new]`.
+
+## Drawers
+
+`use <kerf/drawers>`
+
+A carcass of small numbered drawers in a grid, as for an advent calendar,
+behind a façade of any shape: a finger-jointed box open at the front,
+shelves and walls halved into each other inside it, and a drawer in each
+cell with its number engraved on the front.
+
+```kerf
+use <kerf/drawers>
+
+$thickness = 3;
+// 24 drawers, numbered in a shuffled order, behind a house front
+drawers(4, 6, [40, 30], 60, shuffle = 7) {
+  polygon([[-10, -5], [185, -5], [185, 200], [87.5, 260], [-10, 200]]);
+}
+```
+
+### `drawers(cols = 4, rows = 6, cell = [40, 30], depth = 60, numbers, shuffle, pull = "notch", ease = 0.8, clearance = 0.15, open = 0, font_size, label = "")`
+
+`cols` by `rows` drawers, each cell `[w, h]` inside and the carcass `depth`
+deep, its front left bottom corner at the origin and the drawers facing
+-y. Drawers run on the shelves `ease` mm clear all round, and pull out
+`open` of their depth in the assembled view. `pull` is `"notch"` (a dip in
+the front's top edge), `"hole"` (a finger hole) or `"none"`. The numbers
+go row by row from the top left: 1 up, a list of your own in `numbers`
+(text works too), shuffled by a seed in `shuffle`, or none with `numbers
+= false`. Children are a façade, drawn on the carcass's front from its
+bottom left corner: the drawers' openings are cut through it, and it goes
+on in a step of its own. The parts are named after `label`, and the
+assembly is in steps: the carcass, the shelves and walls, the façade, the
+drawers.
+
+### `drawers_size(cols, rows, cell, depth)`, `drawers_numbers(n, numbers, shuffle)`
+
+The carcass's outer `[width, height, depth]`, for drawing a façade round
+it, and the numbers on the drawers.
+
+## Figures
+
+`use <kerf/figures>`
+
+Layered characters for ornaments, standees, scenes and cards, drawn for
+this library:
+
+| Cast          | Figures                                                                                          |
+| ------------- | ------------------------------------------------------------------------------------------------ |
+| `"christmas"` | `santa`, `elf`, `gnome`, `angel`, `reindeer`, `gingerbread`, `snowman`                           |
+| `"easter"`    | `bunny`, `chick`, `lamb`                                                                         |
+| `"halloween"` | `ghost`, `witch`, `pumpkin`, `bat`, `skeleton`                                                   |
+| `"nativity"`  | `mary`, `joseph`, `baby`, `shepherd`, `caspar`, `melchior`, `balthasar`, `ox`, `donkey`, `sheep` |
+| `"animals"`   | `bear`, `fox`, `cat`, `dog`, `owl`, `deer`                                                       |
+
+A figure is built in layers, as layered wood art is. The **outline** is a
+backer of its whole silhouette, standing `border` mm proud of the rest.
+On it lie the coloured pieces of its **clothes** (an animal's coat) and its
+**face** (skin, bellies, beaks, ears) side by side, `gap` mm apart, so the
+backer shows between them as lines. On those lie the **details**: eyes,
+noses, buttons. Each layer comes in one or more colours.
+
+```kerf
+use <kerf/figures>
+
+$thickness = 3;
+figure_parts("bunny", 80, at = [0, 0, 0], rotate = [90, 0, 0]);
+figure_parts("chick", 80, at = [70, 0, 0], rotate = [90, 0, 0]);
+```
+
+### `figure_parts(name, height = 100, at = [0, 0, 0], rotate = [0, 0, 0], label, border = 2, gap = 0.6, qty = 1)`
+
+The figure as layered parts, its outline `height` mm tall: the outline
+placed at `at` and turned by `rotate` (`[90, 0, 0]` stands it up), the
+clothes and face glued on it and the details on those. Each colour of each
+layer is a part of its own, painted that colour, so the 3D view and the
+print layout show the figure in colour and the sheets keep one wood. The
+parts are named after `label`, the figure's name unless given: `"bunny
+outline"`, `"bunny face pink"`, `"bunny details black"`. A detail too small to cut at that height, under `min_width` of
+`figure_layer()`, is left out.
+
+### `figure(name, height = 100, border = 2, gap = 0.6)`
+
+The figure from one sheet: its outline cut, the lines between its coloured
+pieces scored, and its details engraved. Put it inside a `part()`.
+
+### `figure_layer(name, layer, height = 100, color, border = 2, gap = 0.6, min_width = 1.6)`
+
+One layer of the figure as shapes: `"outline"`, `"clothes"`, `"face"` or
+`"details"`, every colour of it or only `color`. The outline is `height` mm
+tall, standing on y = 0 and centred on x = 0. Each piece loses what the
+pieces after it cover, `gap` wider, and any sliver narrower than
+`min_width`; details stay on the clothes and face.
+
+### `figure_names(cast)`, `figure_casts()`, `figure_layers(name)`
+
+The names of the figures, all or those of one cast; the casts; and the
+parts a figure is built of, as `[layer, colour]` from the outline up, as
+`figure_parts()` makes them.
+
+### `figure_details(name, height, base, qty = 1, border = 2, gap = 0.6, k = 0)`
+
+The figure's details as painted parts named after `base`, glued on the
+first of its clothes and face parts that is big enough to cut at that
+height, as `figure_parts()` and `scene_figure()` make them.
+
+### `figure_entry(name)`, `figure_shapes(shapes)`, `figure_unique(list)`
+
+A figure's entry, `[name, cast, outline colour, pieces]`; the shapes of one
+of its pieces drawn, in the figure's own units; and a list without its
+repeats. Each figure is drawn 100 units tall as a list of pieces in
+painter's order, each `[layer, colour, shapes]`, the shapes circles,
+ellipses, round-ended strokes, rounded rectangles, polygons and smooth
+closed curves, as the library's comments describe.
+
+## Inlays
+
+`use <kerf/inlay>`
+
+Inlays of another wood, stock or colour: shapes cut out of one part, or
+engraved into it as pockets, and cut again as inserts that press into
+them. KerfScript takes the kerf off every cut, so a hole and an insert of
+one shape come out the same size; each insert is `press` mm bigger all
+round so it holds.
+
+```kerf
+use <kerf/inlay>
+use <kerf/shapes>
+
+$thickness = 3;
+// A walnut heart in a plywood plaque
+inlaid("plaque", materials = ["walnut"]) {
+  rect([80, 60], r = 5);
+  translate([40, 30]) heart(30);
+}
+```
+
+### `inlaid(name, depth, press = 0.05, materials, paints, at = [0, 0, 0], rotate = [0, 0, 0])`
+
+A part with inlays: its first child is the part's shape, and each child
+after it an inlay's shape. The inlays are cut through the part, or with
+`depth` engraved that deep on the layer `"pocket"` (set its power for the
+depth). Each inlay is an insert of its own, `"name inlay 1"` up, `press`
+mm bigger all round, of `materials[i]` (on a sheet of its own) or painted
+`paints[i]`; a pocket's insert is `depth` thick. In the assembled view a
+through insert sits in its hole and a pocket's on the surface over it.
+
+## Layered art
+
+`use <kerf/layered>`
+
+Multilayer pieces from one drawing, as layered ornaments, mandalas, wreaths
+and signs are made. The children are the art's layers, back to front; each
+becomes a part of its own, glued on the one behind it and painted its
+colour, so the 3D view and the print layout show it built up.
+
+```kerf
+use <kerf/layered>
+
+$thickness = 3;
+layered("tree", colors = ["dark green", "green", "light green", "gold"], shadow = 2, hole = [0, 52, 4]) {
+  regular_polygon(3, 40);
+  translate([0, 8]) regular_polygon(3, 28);
+  translate([0, 16]) regular_polygon(3, 16);
+  translate([0, 40]) star(5, 7, 3);
+}
+```
+
+### `layered(name = "layered", colors, border = 2, shadow = 0, shadow_color = "dark grey", hole, at = [0, 0, 0], rotate = [0, 0, 0])`
+
+One part a layer, named `"name layer 1"` up from the back. Each layer is
+its own drawing joined with everything in front of it grown by `border`
+mm, so every layer is held up by the one behind and shows as a rim round
+it. `colors` gives each layer's paint, back to front; without it they go
+from dark brown at the back to white at the front. `shadow` adds a layer
+at the back that much wider again, in `shadow_color`. `hole = [x, y, d]`
+cuts a hole `d` across through every layer, to hang it by. The back layer
+goes at `at`, turned by `rotate`; a layer may be several pieces.
+
+### `layered_color(colors, k, n)`
+
+The colour of layer `k` of `n`: `colors[k]`, else the palette from dark at
+the back to light at the front.
+
+## Balls and domes
+
+`use <kerf/sphere>`
+
+Slot-together balls and domes, as 3D baubles, globes and lantern domes:
+half-disc fins standing round an upright axis, like the segments of an
+orange, held by flat rings slotted onto them with halving joints. The fins
+stop short of the axis, so they never meet.
+
+```kerf
+use <kerf/sphere>
+use <kerf/scene>
+
+$thickness = 3;
+// A bauble with a snowman standing inside it
+ball(140, fins = 6, hollow = 50, floor = true, at = [0, 0, 70]);
+scene_figure("snowman", 34, at = [0, 0, 71.5]);
+```
+
+### `ball(d = 80, fins = 6, rings = 1, width = 8, hollow = 0, floor = false, dome = false, loop = 4, at = [0, 0, 0], label = "ball", clearance = 0.1)`
+
+A ball `d` across, its centre at `at`: `fins` fins and `rings` rings
+`width` wide, the equator alone or spread from 60 degrees south to north.
+`dome = true` makes the top half, standing on its lowest ring. `hollow`
+cuts the fins away within that radius, to make room for a scene inside,
+and `floor = true` makes the lowest ring a whole disc for it to stand on,
+with a rail across the hollow for a standee's feet. `loop` puts a hole of
+that diameter near the top of each fin for a ribbon to hang it by. The
+parts are `"ball fin"` and `"ball ring 1"` up, named after `label`.
+
+### `ball_rings(d, rings = 1, dome = false)`
+
+The heights of a ball's rings above its centre.
+
+## Scenes
+
+`use <kerf/scene>`
+
+Scene boxes and dioramas. A floor (or a shelf) has **rails**: slots running
+across it, in rows from front to back. Every **standee** has 8 mm feet that
+go into any rail, so a scene changes by taking standees out and putting
+others in. A standee is drawn standing on y = 0, centred on x = 0.
+
+```kerf
+use <kerf/scene>
+
+$thickness = 3;
+rows = scene_rows(90);
+part("floor", at = [-100, 0, 0]) scene_floor(200, 90);
+scene_figure("snowman", 70, at = [-50, rows[1], 3]);
+scene_figure("gnome", 26, at = [40, rows[0], 3]);
+part("trees", at = [0, rows[5] + 1.5, 3], rotate = [90, 0, 0]) standee(full = true) {
+  translate([-90, 0]) rect([180, 14]);
+  for (x = [-80:20:80]) translate([x, 14]) regular_polygon(3, 22);
+}
+```
+
+### `scene_rows(depth, rows = 6)`
+
+Where the rails of a floor `depth` mm deep run, as y from its front edge:
+`rows` of them, the first 8 mm from the front and the last 7 mm from the
+back. Six rails on a 90 mm floor are at 8, 23, 38, 53, 68 and 83.
+
+### `scene_floor(width, depth, rows = 6, clearance = 0.1, margin = 6, r = 0)`, `scene_rails(width, depth, rows = 6, clearance = 0.1, margin = 6)`
+
+A floor `width` by `depth` with its rails cut, its front edge on y = 0; or
+only the rails, as slots to cut from a floor or shelf of your own. Each
+rail is `$thickness + clearance` wide and stops `margin` short of each
+side.
+
+### `standee(mound, full = false, tab = 8, floor, clip)`
+
+Its children, a drawing, as a standee: `tab` mm feet below y = 0 that go
+`floor` mm (`$thickness` unless given) into a rail. The feet spread over
+the width the drawing stands on: one under 28 mm, two a quarter of the
+width either side of the middle otherwise, three across a `full` width
+backdrop. A narrow standee stands on a mound 4.5 mm high, which `mound`
+sets; without one, a ground line 2 mm high joins legs that meet the floor
+apart. With `clip`, a polygon's points, the drawing is clipped to it and
+the feet left whole, as for a standee inside a round case.
+
+### `standee_feet(width, full = false)`, `standee_mound(width)`
+
+Where the feet go across a standee `width` wide, from its middle, and the
+mound under it.
+
+### `scene_figure(name, height = 60, at = [0, 0, 0], turn = 0, label, mound, floor, border = 2, gap = 0.6)`
+
+A layered figure from [`kerf/figures`](#figures) standing in a rail: its
+backer a standee, the other layers glued on its front, each colour a
+painted part. `at` is where its feet go, `[x, the rail's y, the floor's
+top z]`, and `turn` turns it about them.
+
+### `figure_base(name, height = 80, base = [60, 20], at = [0, 0, 0], label, clearance = 0.1, r = 3)`
+
+A layered figure on a base of its own, to stand on a shelf: a base plate
+with one rail, centred on `at`, the figure's feet in it.
+
+### `drip_edge(width, height = 6, depth = 8, n, seed = 1)`, `wave_edge(width, height = 6, depth = 4, n)`
+
+Edges for snow, icing, water and frills: a strip `width` wide and `height`
+tall above y = 0, with `n` round drips hanging below it up to `depth` mm,
+their lengths varied by `seed`; or with `n` waves `depth` mm deep along
+its bottom.
 
 ## Symbols
 
@@ -1056,7 +1383,7 @@ part("tag") {
 }
 ```
 
-### `symbol(name, size = 10, center = true, fill = "nonzero", box = "drawn", solid = false, close, bridge)`
+### `symbol(name, size = 10, center = true, fill = "nonzero", box = "drawn", solid = false, close, bridge, min_width)`
 
 The symbol `size` mm across the longer side of what it draws, centred on
 the origin, or with its bottom left corner there. With `box = "grid"`,
@@ -1069,6 +1396,11 @@ silhouette, with gaps narrower than `2 * close` (default `size / 30`)
 closed and holes filled, and the drawing's own detail engraved on it.
 `bridge = w` also joins pieces too far apart to close, such as a moon
 beside a mountain, with strips `w` wide.
+
+A symbol drawn small has lines too thin to cut: a bird's legs, a bee's
+feelers. `min_width = 1.6` grows every line narrower than 1.6 mm to that
+width, so it can be cut and holds together; gaps narrower than it close
+up as the lines either side grow.
 
 ### `symbol_names(category)`, `symbol_size(name, size = 10, box = "drawn")`, `symbol_source(name)`, `symbol_entry(name)`
 

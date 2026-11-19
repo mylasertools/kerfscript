@@ -30,11 +30,26 @@ export interface PartShape {
   thickness: number;
   kerf: number;
   material: string;
+  // Its colour in 3D views, as "#rrggbb", when it is painted
+  paint?: string;
+  // How many separate pieces it is meant to cut into, or "any": a part of
+  // loose pieces, as a pair of eyes, without a warning
+  pieces?: number | 'any';
   placements?: Placement[];
   // Glued layers per placement, stacked along the part's own z
   stack?: number;
   // Living hinge bends, along the part's x: [x0, x1, angle]
   bends?: Bend[];
+  // Folds along any line, for card and paper
+  folds?: Fold[];
+  // Cut into pieces no bigger than this, joined by jigsaw knobs: true for
+  // the sheet less its margins
+  split?: true | [number, number];
+  // A piece of a split part: the pieces it joins
+  joins?: string[];
+  // Hanging from the point `at` (in its own coordinates) on a cord `cord`
+  // mm long, or a ring or pin when 0: it swings until its weight is below
+  hang?: { at: Pt; cord: number };
   // The part this one is glued to, so it moves with that part's bends
   on?: string;
   // Parts whose tabs pass through this one: slots cut where they meet it
@@ -53,6 +68,9 @@ export interface PartShape {
   step?: number;
   // Glued flat on another part's face, placed on it
   glue?: { host: string; face: 'top' | 'bottom' };
+  // Pressed into the part it is glued to, as an inlay: they overlap on
+  // purpose
+  pressFit?: boolean;
   // Cut mirrored, left to right
   mirrored?: boolean;
   // Which of the part() call's copies these are, 1 up, when mirror per
@@ -61,6 +79,14 @@ export interface PartShape {
   // Layer k of the stack `part`, when its layers cut different slots and
   // became a part each: still that part by name, and one of its layers
   layerOf?: { part: PartShape; k: number };
+}
+
+// A fold along the line from `from` to `to`: the part beyond it turns
+// `angle` degrees about it, towards the top face when more than 0
+export interface Fold {
+  from: Pt;
+  to: Pt;
+  angle: number;
 }
 
 export interface Bend {
@@ -496,6 +522,10 @@ export function transform(s: Shape, m: Matrix): Shape {
       ...p,
       layers: transformLayers(p.layers, m),
       ...(p.bends && { bends: transformBends(p, m) }),
+      ...(p.folds && {
+        folds: p.folds.map((f) => ({ ...f, from: apply(m, f.from), to: apply(m, f.to) })),
+      }),
+      ...(p.hang && { hang: { ...p.hang, at: apply(m, p.hang.at) } }),
     })),
   };
 }

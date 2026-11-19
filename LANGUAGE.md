@@ -193,26 +193,31 @@ module hang_hole(d = 5) {
 
 ## Special variables
 
-| Name              | Default       | Meaning                                                                       |
-| ----------------- | ------------- | ----------------------------------------------------------------------------- |
-| `$thickness`      | `3`           | material thickness, used by joinery and stored on parts                       |
-| `$kerf`           | `0`           | beam width; cut outlines are offset by half of it                             |
-| `$material`       | `"material"`  | material name; parts are packed per material and thickness                    |
-| `$sheet`          | `[600, 400]`  | sheet size for packing                                                        |
-| `$gap`            | `3`           | space between packed parts and around the sheet edge                          |
-| `$layout`         | `"pack"`      | `"pack"` packs parts onto sheets, `"none"` keeps your placement               |
-| `$fn` `$fa` `$fs` | `0` `2` `0.2` | curve resolution: fixed segment count, or max angle and max segment length    |
-| `$font`           |               | default font name for `text()`                                                |
-| `$mirrored`       | `false`       | set inside a mirrored part and on the back face: `text()` reads right         |
-| `$scale`          | `1`           | the model's scale: `140cm` is 1400 mm divided by `$scale`                     |
-| `$nest`           | `false`       | pack small parts into the holes of bigger ones                                |
-| `$registration`   | `false`       | print-and-cut marks in three corners of every sheet                           |
-| `$label_parts`    | `false`       | engrave each part's number on its back face, as in the parts list and steps   |
-| `$join_lines`     | `false`       | join lines that meet end to end and order them nearest first, for less travel |
-| `$min_width`      | `1.5`         | warn where a part's material is narrower than this; `0` turns it off          |
-| `$bounds`         |               | set by `measure()` for the children after the one it measures                 |
-| `$area`           |               | set by `measure()`: the area of material the measured child cuts              |
-| `$centroid`       |               | set by `measure()`: the measured child's balance point `[x, y]`               |
+| Name              | Default       | Meaning                                                                                                |
+| ----------------- | ------------- | ------------------------------------------------------------------------------------------------------ |
+| `$thickness`      | `3`           | material thickness, used by joinery and stored on parts                                                |
+| `$kerf`           | `0`           | beam width; cut outlines are offset by half of it                                                      |
+| `$material`       | `"material"`  | material name; parts are packed per material and thickness                                             |
+| `$sheet`          | `[600, 400]`  | sheet size for packing                                                                                 |
+| `$gap`            | `3`           | space between packed parts and around the sheet edge                                                   |
+| `$layout`         | `"pack"`      | `"pack"` packs parts onto sheets, `"none"` keeps your placement                                        |
+| `$fn` `$fa` `$fs` | `0` `2` `0.2` | curve resolution: fixed segment count, or max angle and max segment length                             |
+| `$font`           |               | default font name for `text()`                                                                         |
+| `$mirrored`       | `false`       | set inside a mirrored part and on the back face: `text()` reads right                                  |
+| `$copy`           |               | inside `part(qty = n)`: the copy being drawn, 0 to n - 1; copies that differ become parts of their own |
+| `$scale`          | `1`           | the model's scale: `140cm` is 1400 mm divided by `$scale`                                              |
+| `$nest`           | `false`       | pack small parts into the holes of bigger ones                                                         |
+| `$registration`   | `false`       | print-and-cut marks in three corners of every sheet                                                    |
+| `$label_parts`    | `false`       | engrave each part's number on its back face, as in the parts list and steps                            |
+| `$join_lines`     | `false`       | join lines that meet end to end and order them nearest first, for less travel                          |
+| `$min_width`      | `1.5`         | warn where a part's material is narrower than this; `0` turns it off                                   |
+| `$knob`           | `12`          | the size of the jigsaw knobs joining the pieces of a split part                                        |
+| `$stands`         | `false`       | `true` for a model meant to stand: it warns if its weight's centre is not over what it stands on       |
+| `$density`        | `0.6`         | the parts' density in g/cm³ for that check, plywood's by default                                       |
+| `$knob_clearance` | `0.15`        | the room between a knob and its socket                                                                 |
+| `$bounds`         |               | set by `measure()` for the children after the one it measures                                          |
+| `$area`           |               | set by `measure()`: the area of material the measured child cuts                                       |
+| `$centroid`       |               | set by `measure()`: the measured child's balance point `[x, y]`                                        |
 
 ## Layers
 
@@ -231,7 +236,9 @@ layer("pocket", mode = "fill", color = "#00aa00") ...
 ```
 
 Use `layer(name, mode, color)` to define a custom layer. Its mode is
-`"cut"`, `"line"`, `"fill"` or `"guide"`.
+`"cut"`, `"line"`, `"fill"`, `"guide"` or `"paint"`; a paint layer is
+never cut or engraved, only shown in 3D views and the print layout. Its
+colour is a hex colour or a name, as `"red"`.
 
 Marks can go on a part's **back face** too: `engrave(side = "back")`,
 `score(side = "back")` or `layer(name, side = "back")`. Draw them where
@@ -288,6 +295,10 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
 - More about a part, all named:
   - `material = "red acrylic"`: the part's material, as `material(name =
 ...)` would set `$material` round it.
+  - `pieces = 2` or `pieces = "any"`: the part is meant to cut into that
+    many separate pieces, so it does not warn that it is in pieces.
+  - `paint = "red"`: the part's colour in 3D views and the print
+    layout, painted after cutting; it stays on the sheet of its material.
   - `stack = n`: n layers glued at each placement, one thickness apart
     along the part's z. The parts list says how many make a stack.
   - `mirror = true`: the part is cut mirrored left to right (x becomes
@@ -301,8 +312,25 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
     view, folding the far end up towards its top face (down for a negative
     angle). The hinge's middle layer keeps its length. An empty list is
     no bend.
+  - `fold = [from, to, angle]`, or a list of them: folds along any line
+    in the assembled view, as for card. The folds (and cut lines inside
+    the part, as a pop-up's slits) cut it into panels; the one at the
+    origin stays flat and each other turns about the folds between,
+    towards the top face for an angle more than 0. `fold_open` (1) scales
+    every fold's angle, 0 lying flat. A fold that divides nothing warns.
+  - `split = true`, or `[w, h]`: a part too big for the bed is cut into
+    pieces that fit the sheet (less its margins) or that size, joined by
+    jigsaw knobs `$knob` mm across; the parts list says which pieces each
+    joins.
+  - `hang = [x, y]`, `cord = 0`: the part hangs from that point on it, at
+    `at`, and swings in the plane `rotate` gives until its weight is
+    straight below; `cord` hangs it that much lower on a cord, listed as
+    hardware.
   - `on = "name"`: the part is glued to that bent part, and moves with the
     run of it under its centre.
+  - `press_fit = true` with `glue`: the part is pressed into the one it is
+    glued to, as an inlay, so the two overlap on purpose and are not
+    checked against each other.
   - `glue = "name"`, `face = "top"`: the part is glued flat on that part's
     top (or bottom) face; its `at` and `rotate` are measured on the face,
     and the parts list says what it is glued to. With as many copies as
@@ -346,7 +374,14 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
   to 128. `shape = "ball"` (or `sides = 0`) is a ball of diameter `size`
   midway between `from` and `to`; `to` may be left out. It comes back with
   `sides = 0` and `from` and `to` both at its centre. `render()` returns it
-  as `hardware`, and `kerf check` lists it.
+  as `hardware`, and `kerf check` lists it. A `"tealight"` stands at
+  `from`, 39 mm across and 16 mm high unless `to` and `size` say
+  otherwise; tealights, LEDs and bulbs give off light.
+- `light(at, color = "warm white", lumens = 20, to, flicker = false,
+label)` is a light source with nothing to show for it, at a point or,
+  with `to`, all along a strip. `render()` returns every light, those of
+  tealights, LEDs and bulbs too, as `lights`; the 3D view lights the model
+  with them and GLB files carry them.
 - Shapes outside any part form one part named `part`.
 - `material(thickness, kerf, name) { ... }` sets those special variables for
   its children.
@@ -365,25 +400,29 @@ export examples.
 
 ### Shapes
 
-| Module                                                     | Notes                                                                                                                               |
-| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `rect(size, center = false, r = 0)`                        | `size` is a number or `[w, h]`; `r` rounds the corners. `square` is an alias                                                        |
-| `circle(r)` or `circle(d = ...)`                           |                                                                                                                                     |
-| `ellipse([rx, ry])` or `ellipse(d = [w, h])`               | radii, or the width and height                                                                                                      |
-| `regular_polygon(n, r)`                                    | corner radius `r`                                                                                                                   |
-| `star(n, r, inner)`                                        |                                                                                                                                     |
-| `polygon(points, paths)`                                   | even-odd fill, `paths` lists point indexes per outline                                                                              |
-| `path(d, fill = "evenodd", close = false)`                 | SVG path data; closed subpaths become shapes, open ones lines unless `close`                                                        |
-| `text(text, size = 10, font, halign, valign, spacing = 1)` | `halign`: left, center, right; `valign`: baseline, top, center, bottom, or cap (capitals centred on y = 0)                          |
-| `text(text, size, fit = width)`                            | no wider than `fit`: the size shrinks to fit, never above `size` if given                                                           |
-| `text(text, size, fit = [w, h])`                           | no wider than `w`, capitals no taller than `h`; either may be `undef`                                                               |
-| `text(text, size, weight = "bold")`                        | strokes thickened by 3.5% of the size, or by a number of mm (less than 0 thins)                                                     |
-| `text(text, size, bridge = w)`                             | every island (an i's dot, an accent, a stencil's counter) joined to the rest by a strip `w` wide, for cut-out and stencil lettering |
-| `line(from, to)`                                           | a line, not an area                                                                                                                 |
-| `line(from, to, width)`                                    | a strip `width` wide between the points, an area                                                                                    |
-| `spline(points, width, steps = 8, closed = false)`         | a smooth curve through the points; with `width`, an area along it                                                                   |
-| `polyline(points, closed = false)`                         |                                                                                                                                     |
-| `arc(r, start = 0, end = 90)`                              | arc line, angles in degrees                                                                                                         |
+| Module                                                     | Notes                                                                                                                                                                                                                                                                                                                                                         |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rect(size, center = false, r = 0)`                        | `size` is a number or `[w, h]`; `r` rounds the corners. `square` is an alias                                                                                                                                                                                                                                                                                  |
+| `circle(r)` or `circle(d = ...)`                           |                                                                                                                                                                                                                                                                                                                                                               |
+| `ellipse([rx, ry])` or `ellipse(d = [w, h])`               | radii, or the width and height                                                                                                                                                                                                                                                                                                                                |
+| `regular_polygon(n, r)`                                    | corner radius `r`                                                                                                                                                                                                                                                                                                                                             |
+| `star(n, r, inner)`                                        |                                                                                                                                                                                                                                                                                                                                                               |
+| `polygon(points, paths)`                                   | even-odd fill, `paths` lists point indexes per outline                                                                                                                                                                                                                                                                                                        |
+| `path(d, fill = "evenodd", close = false)`                 | SVG path data; closed subpaths become shapes, open ones lines unless `close`                                                                                                                                                                                                                                                                                  |
+| `text(text, size = 10, font, halign, valign, spacing = 1)` | `halign`: left, center, right; `valign`: baseline, top, center, bottom, or cap (capitals centred on y = 0)                                                                                                                                                                                                                                                    |
+| `text(text, size, fit = width)`                            | no wider than `fit`: the size shrinks to fit, never above `size` if given                                                                                                                                                                                                                                                                                     |
+| `text(text, size, fit = [w, h])`                           | no wider than `w`, capitals no taller than `h`; either may be `undef`                                                                                                                                                                                                                                                                                         |
+| `text(text, size, weight = "bold")`                        | strokes thickened by 3.5% of the size, or by a number of mm (less than 0 thins)                                                                                                                                                                                                                                                                               |
+| `text(text, size, bridge = w)`                             | every island (an i's dot, an accent, a stencil's counter) joined to the rest by a strip `w` wide, for cut-out and stencil lettering                                                                                                                                                                                                                           |
+| `text(text, size, weld = true)`                            | each word's letters slid together until each overlaps the one before (by a tenth of the size and at least 1.5 mm, or by `weld` mm when it is a number), so a name cuts out in one piece, as script names on key rings and toppers are; `underline = h` adds a bar `h` high under the baseline that joins the words; what is still loose, as an i's dot, warns |
+| `text(text, size, lines = n)`                              | a block of lines: a `"\n"` in the text breaks a line, and the text breaks at spaces into up to `n` lines in all, as even as they go; with `fit`, as many lines as let the text be biggest, so a long name fills a tag in two; `line_spacing = 1` sets the distance between lines; `halign` aligns each line and `valign` the block                            |
+| `text(text, size, path = points)`                          | laid along the path through the points, each letter turned to it, its baseline on the path; centred on the path, or `halign` puts the start or end there; a warning if it runs past an end                                                                                                                                                                    |
+| `text(text, size, arc = r)`                                | round a circle of radius `r` about the origin: centred over the top, reading round it, or with `r` less than 0 along the bottom, reading left to right                                                                                                                                                                                                        |
+| `line(from, to)`                                           | a line, not an area                                                                                                                                                                                                                                                                                                                                           |
+| `line(from, to, width)`                                    | a strip `width` wide between the points, an area                                                                                                                                                                                                                                                                                                              |
+| `spline(points, width, steps = 8, closed = false)`         | a smooth curve through the points; with `width`, an area along it                                                                                                                                                                                                                                                                                             |
+| `polyline(points, closed = false)`                         |                                                                                                                                                                                                                                                                                                                                                               |
+| `arc(r, start = 0, end = 90)`                              | arc line, angles in degrees                                                                                                                                                                                                                                                                                                                                   |
 
 Supply geometry as children of a shape-processing module, for example
 `translate([10, 0]) circle(d = 5);`. Fonts used by `text()` must be supplied

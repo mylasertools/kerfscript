@@ -17,7 +17,7 @@ const rgb = (hex: string): RGB => {
   return Number.isFinite(n) ? [n >> 16, (n >> 8) & 255, n & 255] : [0, 0, 0];
 };
 
-class Canvas {
+export class Canvas {
   readonly data: Uint8ClampedArray;
   constructor(
     readonly w: number,
@@ -139,6 +139,13 @@ function encode(cv: Canvas): Uint8Array {
     chunk('IDAT', deflateSync(raw)),
     chunk('IEND', Buffer.alloc(0)),
   ]);
+}
+
+/** A picture `w` by `h` pixels, white, drawn on by `draw`, as a PNG */
+export function pngOf(w: number, h: number, draw: (cv: Canvas) => void): Uint8Array {
+  const cv = new Canvas(Math.max(1, w), Math.max(1, h));
+  draw(cv);
+  return encode(cv);
 }
 
 /** The most pixels a picture of a sheet has, and on each side */

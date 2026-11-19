@@ -598,7 +598,12 @@ export function validateSnapshots(inputs: unknown): VerificationIssue[] {
         !Array.isArray(p.bends) ||
         !p.bends.every(
           (b) => record(b) && number(b.x0) && number(b.x1) && b.x1 > b.x0 && number(b.angle),
-        )
+        ) ||
+        (p.folds !== undefined &&
+          (!Array.isArray(p.folds) ||
+            !p.folds.every(
+              (f) => record(f) && vector(f.from, 2) && vector(f.to, 2) && number(f.angle),
+            )))
       ) {
         bad(
           `${path}.parts[${j}]`,

@@ -179,6 +179,17 @@ step's parts in orange, and the parts and hardware it adds. With
 kerf instructions lock-box.kerf -o lock-box-instructions.html
 ```
 
+With `-o` ending in `.pdf` it writes the same instructions as a PDF, an A4
+page for the parts and one for each step; ending in `.png`, a picture of
+each page, `lock-box-1.png` up, `--px` wide (1200 by default), to share or
+show in a listing. The text is drawn as the font's outlines, so neither
+needs a browser or a font installed.
+
+```sh
+kerf instructions lock-box.kerf -o lock-box.pdf
+kerf instructions lock-box.kerf -o lock-box.png --px 1600
+```
+
 `kerf diff` renders two designs (or one design before and after a change)
 with the same settings and lists, part by part and layer by layer, what
 differs: the area of shapes that changed, open lines added or removed, and

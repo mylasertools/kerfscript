@@ -4,6 +4,7 @@
 // web, 3MF for 3D printing in colour, STL for a single mesh.
 
 import { meshBodies, type Body, type MeshOptions, type MeshSource } from './mesh.js';
+import { lightPoints, type Light } from '../lights.js';
 import { zip } from './zip.js';
 
 export type ModelFormat = 'glb' | '3mf' | 'stl';
@@ -150,8 +151,9 @@ const linear = (v: number) => {
 };
 
 /** GLB (binary glTF 2.0): a node and a mesh for each body, in metres with
- * y up as glTF has it; each node's extras give its kind, part and copy */
-export function toGlb(bodies: Body[]): Uint8Array {
+ * y up as glTF has it; each node's extras give its kind, part and copy.
+ * Lights become point lights (KHR_lights_punctual), a strip several. */
+export function toGlb(bodies: Body[], lights: Light[] = []): Uint8Array {
   const buffers: Uint8Array[] = [];
   let length = 0;
   const views: object[] = [];
@@ -203,18 +205,28 @@ export function toGlb(bodies: Body[]): Uint8Array {
     });
     const nv = add(nor);
     accessors.push({ bufferView: nv, componentType: 5126, count: n, type: 'VEC3' });
-    const key = `${b.material}\u0000${b.color}\u0000${b.metal ? 1 : 0}\u0000${b.clear ? 1 : 0}`;
+    const key = `${b.material}\u0000${b.color}\u0000${b.metal ? 1 : 0}\u0000${b.clear ? 1 : 0}\u0000${b.glow ? 1 : 0}\u0000${b.translucent ? 1 : 0}`;
     let m = materialKeys.indexOf(key);
     if (m < 0) {
       const [r, g, bl] = hex(b.color);
       materials.push({
         name: b.material,
         pbrMetallicRoughness: {
-          baseColorFactor: [linear(r), linear(g), linear(bl), b.clear ? 0.45 : 1],
+          baseColorFactor: [
+            linear(r),
+            linear(g),
+            linear(bl),
+            b.clear ? 0.45 : b.translucent ? 0.75 : 1,
+          ],
           metallicFactor: b.metal ? 0.6 : 0,
           roughnessFactor: b.metal ? 0.35 : 0.85,
         },
-        ...(b.clear && { alphaMode: 'BLEND' }),
+        ...((b.clear || b.translucent) && { alphaMode: 'BLEND', doubleSided: true }),
+        // Light comes through: a renderer lights it from behind
+        ...(b.translucent && {
+          extensions: { KHR_materials_transmission: { transmissionFactor: 0.5 } },
+        }),
+        ...(b.glow && { emissiveFactor: [linear(r), linear(g), linear(bl)] }),
       });
       m = materialKeys.push(key) - 1;
     }
@@ -237,8 +249,34 @@ export function toGlb(bodies: Body[]): Uint8Array {
       },
     });
   }
+  // A point light's intensity is in candela: lumens spread over a sphere
+  const punctual: object[] = [];
+  for (const l of lights) {
+    const [r, g, bl] = hex(l.color);
+    for (const { at, lumens } of lightPoints(l)) {
+      punctual.push({
+        type: 'point',
+        color: [linear(r), linear(g), linear(bl)],
+        intensity: lumens / (4 * Math.PI),
+      });
+      nodes.push({
+        name: l.label ?? l.source,
+        translation: [at[0] / 1000 + 0, at[2] / 1000 + 0, -at[1] / 1000 + 0],
+        extensions: { KHR_lights_punctual: { light: punctual.length - 1 } },
+        extras: { kind: 'light', source: l.source, flicker: l.flicker, lumens },
+      });
+    }
+  }
+  const used = [
+    ...(punctual.length ? ['KHR_lights_punctual'] : []),
+    ...(bodies.some((b) => b.translucent && b.indices.length)
+      ? ['KHR_materials_transmission']
+      : []),
+  ];
   const gltf = {
     asset: { version: '2.0', generator: 'KerfScript' },
+    ...(used.length && { extensionsUsed: used }),
+    ...(punctual.length && { extensions: { KHR_lights_punctual: { lights: punctual } } }),
     scene: 0,
     scenes: [{ nodes: nodes.map((_, i) => i) }],
     nodes,
@@ -282,5 +320,7 @@ export function toModel(
   const bodies = meshBodies(source, options);
   if (format === 'stl') return toStl(bodies);
   if (format === '3mf') return to3mf(bodies);
-  return toGlb(bodies);
+  // Lights stand where the assembly has them, so only there
+  const assembled = (options.layout ?? 'assembled') === 'assembled' && source.assembly.length > 0;
+  return toGlb(bodies, assembled && options.hardware !== false ? (source.lights ?? []) : []);
 }

@@ -30,6 +30,14 @@ test('rigid clearance measures actual sheet solids and small interference', () =
   assert.equal(result(spec([rigid]), [snap(blocks)], 'clear')[0].status, 'pass');
   assert.equal(result(spec([rigid]), [snap(blocks, { x: 1.9 })], 'clear')[0].status, 'fail');
 });
+test('a folded part is not checked as if it lay flat', () => {
+  // The flap folds up to stand 2 mm from the block; flat, it lies well clear
+  const source =
+    '$thickness=1; part("card",at=[0,0,0],fold=[[50,0],[50,40],90]) rect([100,40]); part("block",at=[47,0,20]) rect([2,40]);';
+  const [c] = result(spec([{ ...rigid, minimumGap: 5 }]), [snap(source)], 'clear');
+  assert.notEqual(c.status, 'pass', JSON.stringify(c));
+  assert.match(JSON.stringify(c), /Folded geometry/);
+});
 test('physical box hardware participates in static clearance', () => {
   const source =
     'x=4; $thickness=1; part("a",at=[0,0,0]) rect([2,2]); hardware("steel",[x,1,0],[x,1,1],[2,2],up=[0,1,0],label="box");';

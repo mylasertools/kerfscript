@@ -53,6 +53,35 @@ function literal(e: Expr): { ok: boolean; value?: Value } {
   }
 }
 
+// A menu worked out by a function, as `// [figure_names("easter")]`: the
+// call run with the program's built-in libraries, a list of names or of
+// [value, label]. Undefined when it is not a call or does not give a list.
+function computedOptions(
+  source: string,
+  call: string,
+): { name: string; value: number | string }[] | undefined {
+  if (!/^[A-Za-z_][A-Za-z0-9_]*\s*\(.*\)$/.test(call.trim())) return undefined;
+  const uses = source
+    .split('\n')
+    .filter((l) => /^\s*(use|include)\s*<kerf\/[A-Za-z0-9_/-]+>/.test(l))
+    .map((l) => /^\s*(?:use|include)\s*<kerf\/[A-Za-z0-9_/-]+>/.exec(l)![0].trim())
+    .map((l) => l.replace(/^include/, 'use'));
+  try {
+    const res = new Evaluator({ maxSteps: 2_000_000 }).run(
+      parse(`${uses.join('\n')}\n__options = ${call};`).program,
+    );
+    const list = res.globals.get('__options').value;
+    if (!Array.isArray(list) || !list.length) return undefined;
+    return list.map((v) => {
+      if (Array.isArray(v) && v.length === 2)
+        return { name: String(v[1]), value: typeof v[0] === 'number' ? v[0] : String(v[0]) };
+      return { name: String(v), value: typeof v === 'number' ? v : String(v) };
+    });
+  } catch {
+    return undefined;
+  }
+}
+
 function parseNumber(s: string): number | undefined {
   const n = Number(s.trim());
   return s.trim() !== '' && Number.isFinite(n) ? n : undefined;
@@ -102,7 +131,9 @@ export function parameters(source: string): { parameters: Parameter[] } {
     const rest = w ? w[1].trim() : inline?.trim();
     const m = rest ? /^\[(.*)\](\s+drive)?$/.exec(rest) : null;
     if (m?.[2] && p.type === 'number' && typeof v === 'number') p.drive = true;
-    if (m) {
+    const computed = m ? computedOptions(source, m[1]) : undefined;
+    if (computed) p.options = computed;
+    else if (m) {
       const body = m[1];
       if (
         body.includes(',') ||

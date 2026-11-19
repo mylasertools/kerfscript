@@ -61,6 +61,16 @@ stack with a part bent on a living hinge is laid out part by part, flat.
 | `.3mf` | millimetres, z up   | each part one object, with its engraving and scoring as coloured parts of it, so a slicer prints each in its own colour                                               |
 | `.stl` | millimetres, z up   | every body in one mesh, without colours                                                                                                                               |
 
+A GLB of the assembled model carries its lights (tealights, LEDs, bulbs
+and `light()`) as point lights (`KHR_lights_punctual`), each with its
+colour and its intensity in candela; a strip of LEDs is several along it.
+Translucent materials (vellum, paper, frosted acrylic) are partly
+transparent and carry `KHR_materials_transmission`. Each light's node has
+`extras` with `kind: "light"`, its `source`,
+`lumens` and `flicker`, which is true for a flame. Glowing bodies, an LED
+or a flame, are emissive. Blender and most glTF viewers light the scene
+with them.
+
 Every part and mark is a closed solid: each edge is shared by exactly two
 triangles, facing out. A bent part is the exception: it is built from bands
 across its hinge, which meet inside it.

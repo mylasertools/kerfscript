@@ -124,3 +124,76 @@ test('point_at carries on straight past repeated end points', () => {
   );
   assert.deepEqual(r.echoes, ['[15, 0], [-5, 0], 0, [3, 3]']);
 });
+
+test('text(path = ...) lays the text along a path, each letter turned to it', () => {
+  // Along a straight path it is the same text, centred on the path
+  const line = render('part("t") text("HELLO", 10, path = [[0, 0], [100, 0]]);', font).parts[0];
+  const flat = render('part("t") text("HELLO", 10);', font).parts[0];
+  assert.ok(Math.abs(line.width - flat.width) < 0.01, `${line.width} vs ${flat.width}`);
+  assert.ok(Math.abs(line.height - flat.height) < 0.01);
+  // Up a vertical path the text stands on its side
+  const up = render('part("t") text("HELLO", 10, path = [[0, 0], [0, 100]]);', font).parts[0];
+  assert.ok(Math.abs(up.height - flat.width) < 0.01 && Math.abs(up.width - flat.height) < 0.01);
+  const long = render('text("HELLO WORLD", 10, path = [[0, 0], [20, 0]]);', font);
+  assert.match(long.warnings[0], /mm longer than its path allows/);
+  assert.throws(() => render('text("A", path = [[0, 0]]);', font), /at least two points/);
+});
+
+test('text(arc = r) goes over the top of a circle, or along the bottom', () => {
+  const b = (src) => JSON.parse(render(`measure() { ${src}; echo($bounds); }`, font).echoes[0]);
+  // Over the top, standing on the circle; along the bottom, hanging inside it
+  const [x0, y0, x1, y1] = b('text("TOP", 10, arc = 40)');
+  assert.ok(y0 > 38 && y1 < 52 && Math.abs(x0 + x1) < 1, `${[x0, y0, x1, y1]}`);
+  const [u0, v0, u1, v1] = b('text("BOTTOM", 10, arc = -40)');
+  assert.ok(v0 > -41 && v1 < -28 && Math.abs(u0 + u1) < 1, `${[u0, v0, u1, v1]}`);
+  assert.throws(() => render('text("A", arc = 0);', font), /arc must be a radius/);
+  assert.throws(
+    () => render('text("A", arc = 10, path = [[0, 0], [1, 0]]);', font),
+    /path or arc, not both/,
+  );
+});
+
+test('text(lines = 2) with fit breaks a long name when two lines let it be bigger', () => {
+  const part = (src) => render(`part("t") ${src}`, font).parts[0];
+  const one = part('text("Anna-Maria Schmidt", fit = [60, 30]);');
+  const two = part('text("Anna-Maria Schmidt", fit = [60, 30], lines = 2);');
+  assert.ok(two.height > 3 * one.height, `${two.height} vs ${one.height}`);
+  assert.ok(two.width <= 60 + 1e-6 && two.height <= 30 + 1);
+  // A short name stays on one line, as big as without lines
+  const bo = part('text("BO", fit = [60, 30], lines = 2);');
+  assert.ok(Math.abs(bo.height - part('text("BO", fit = [60, 30]);').height) < 0.01);
+  // A newline always breaks; three lines without fit are as even as they go
+  const nl = part('text("Happy\\nEaster", 10);');
+  assert.ok(nl.height > 15 && nl.width < part('text("Happy Easter", 10);').width);
+  const three = render(
+    'measure() { text("one two three four five six", 10, lines = 3); echo($bounds); }',
+    font,
+  ).echoes[0];
+  assert.ok(JSON.parse(three)[1] < -20, three);
+  assert.throws(() => render('text("A", lines = 0);', font), /lines must be from 1 to 20/);
+  assert.throws(
+    () => render('text("A B", lines = 2, arc = 20);', font),
+    /in a block, or along a path/,
+  );
+});
+
+test('text(weld = true) welds a name into one piece, with an underline joining words', () => {
+  const part = (src) => render(`part("n") ${src}`, font);
+  const plain = part('text("Emma", 20);');
+  const welded = part('text("Emma", 20, weld = true);');
+  assert.ok(plain.parts[0].pieces > 1);
+  assert.equal(welded.parts[0].pieces, 1);
+  // No loose piece; a font thinner than $min_width says so for itself
+  assert.deepEqual(
+    welded.warnings.filter((w) => !/narrower than/.test(w)),
+    [],
+  );
+  assert.ok(welded.parts[0].width < plain.parts[0].width);
+  // Two words join only with an underline
+  assert.equal(part('text("Emma Rose", 20, weld = true, underline = 3);').parts[0].pieces, 1);
+  // Accents above a letter stay loose and say so
+  const zoe = part('text("Zoë", 30, weld = true);');
+  assert.match(zoe.warnings[0], /still has 2 loose pieces \(in "ë", in "ë"\)/);
+  assert.throws(() => render('text("A", 10, underline = 2);', font), /underline goes with weld/);
+  assert.throws(() => render('text("A B", 10, weld = true, lines = 2);', font), /one line of text/);
+});

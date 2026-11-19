@@ -1,0 +1,161 @@
+// kerf/scene: scene boxes and dioramas: a floor with rails, standees with
+// feet that stand in any rail, layered figures standing in them, and
+// snow-drip and wave edges.
+// Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
+//
+// A floor (or a shelf) has rails: slots running across it, front to back
+// in rows. Every standee has 8 mm feet that go into any rail, so a scene
+// is changed by taking the standees out and putting others in. Standees
+// are drawn standing on y = 0, centred on x = 0; their feet go below.
+
+use <kerf/figures>
+
+// Where a floor's rails run, front to back: `rows` of them across a floor
+// `depth` deep, the first 8 mm from the front and the last 7 mm from the
+// back
+function scene_rows(depth, rows = 6) =
+  assert(is_num(depth) && depth > 15, "scene_rows(): depth must be more than 15")
+  rows == 1 ? [depth / 2] : [for (i = [0:rows - 1]) 8 + i * (depth - 15) / (rows - 1)];
+
+// The rails of a floor `width` wide and `depth` deep, as slots to cut from
+// it: each `$thickness + clearance` wide, running across the floor and
+// stopping `margin` short of each side
+module scene_rails(width, depth, rows = 6, clearance = 0.1, margin = 6) {
+  w = $thickness + clearance;
+  for (y = scene_rows(depth, rows)) translate([margin, y - w / 2]) rect([width - 2 * margin, w]);
+}
+
+// A floor with its rails, `width` by `depth`, its front edge on y = 0
+module scene_floor(width, depth, rows = 6, clearance = 0.1, margin = 6, r = 0) {
+  difference() {
+    rect([width, depth], r = r);
+    scene_rails(width, depth, rows, clearance, margin);
+  }
+}
+
+// Where a standee's feet go across it, from its middle: one for a standee
+// under 28 mm wide, two a quarter of the width either side otherwise, and
+// three for a full-width one, as a backdrop
+function standee_feet(width, full = false) =
+  full ? [-width / 3, 0, width / 3] : width < 28 ? [0] : [-width / 4, width / 4];
+
+// The mound a standee stands on: 4.5 mm under a standee under 28 mm wide,
+// so it stands clear of the floor's edge, else none
+function standee_mound(width) = width < 28 ? 4.5 : 0;
+
+// A standee: its children, a drawing, stood on a mound `mound` mm high
+// (by default as standee_mound() says) with `tab` mm feet below y = 0 that
+// go `floor` mm (the floor's thickness, $thickness) into a rail, spread
+// over the width it stands on as standee_feet() says; without a mound, a
+// ground line 2 mm high joins what stands on the floor. With
+// `clip`, a polygon's points, the drawing and mound are clipped to it and
+// the feet left whole, as for a standee in a round case.
+module standee(mound, full = false, tab = 8, floor, clip) {
+  t = is_undef(floor) ? $thickness : floor;
+  measure() {
+    children();
+    let (
+      b = $bounds,
+      w = b[2] - b[0],
+      cx = (b[0] + b[2]) / 2,
+      m = is_undef(mound) ? standee_mound(w) : mound
+    ) {
+      intersection() {
+        union() {
+          translate([0, m - b[1]]) children();
+          if (m > 0) translate([b[0], 0]) rect([w, m + 0.5], r = min(m / 2, w / 4));
+        }
+        if (!is_undef(clip)) polygon(clip);
+      }
+      // The feet go where the drawing meets the floor: spread over the
+      // width it stands on, each a whole tab inside it where it is wide
+      // enough
+      measure() {
+        intersection() {
+          union() {
+            translate([0, m - b[1]]) children();
+            if (m > 0) translate([b[0], 0]) rect([w, m + 0.5], r = min(m / 2, w / 4));
+          }
+          translate([b[0] - 1, -1]) rect([w + 2, 2]);
+        }
+        let (f = $bounds, fw = f[2] - f[0], fc = (f[0] + f[2]) / 2) {
+          // A ground line 2 mm high joins legs and feet that meet the
+          // floor apart
+          if (m == 0) translate([f[0], 0]) rect([fw, 2]);
+          for (x = standee_feet(fw, full))
+            let (at = fw < tab ? fc : clamp(fc + x, f[0] + tab / 2, f[2] - tab / 2))
+              translate([at - tab / 2, -t]) rect([tab, t + 0.5]);
+        }
+      }
+    }
+  }
+}
+
+// A layered figure from kerf/figures standing in a rail: its backer a
+// standee with feet (and a mound when narrow), its other layers glued on
+// the front. `at` is where its feet go: [x, the rail's y, the floor's top
+// z]; `turn` turns it about its feet. Each colour is a painted part, named
+// after `label`.
+module scene_figure(name, height = 60, at = [0, 0, 0], turn = 0, label, mound, floor, border = 2, gap = 0.6) {
+  base = is_undef(label) ? lower(name) : label;
+  t = is_undef(floor) ? $thickness : floor;
+  layers = figure_layers(name);
+  middle = [for (l = layers) if (l[0] == "clothes" || l[0] == "face") l];
+  measure() {
+    figure_layer(name, "outline", height, border = border, gap = gap);
+    let (b = $bounds, m = is_undef(mound) ? standee_mound(b[2] - b[0]) : mound) {
+      // Its thickness stands in the rail, centred on it
+      part(str(base, " outline"), at = [at[0] - $thickness / 2 * sin(turn), at[1] + $thickness / 2 * cos(turn), at[2]],
+        rotate = [90, 0, turn], paint = layers[0][1])
+        standee(m, floor = t) figure_layer(name, "outline", height, border = border, gap = gap);
+      for (l = middle)
+        measure() {
+          figure_layer(name, l[0], height, l[1], border = border, gap = gap);
+          if (!is_undef($bounds))
+            part(str(base, " ", l[0], " ", l[1]), glue = str(base, " outline"), at = [0, m, 0], paint = l[1], pieces = "any")
+              figure_layer(name, l[0], height, l[1], border = border, gap = gap);
+        }
+      figure_details(name, height, base, 1, border, gap);
+    }
+  }
+}
+
+// A layered figure on a base of its own, to stand on a shelf: a base
+// plate `base` [w, d] mm with one rail, the figure's feet in it
+module figure_base(name, height = 80, base = [60, 20], at = [0, 0, 0], label, clearance = 0.1, r = 3) {
+  label_ = is_undef(label) ? lower(name) : label;
+  part(str(label_, " base"), at = [at[0] - base[0] / 2, at[1] - base[1] / 2, at[2]])
+    difference() {
+      rect(base, r = r);
+      translate([6, base[1] / 2 - ($thickness + clearance) / 2]) rect([base[0] - 12, $thickness + clearance]);
+    }
+  scene_figure(name, height, at = [at[0], at[1], at[2] + $thickness], label = label_);
+}
+
+// An edge that drips, as snow along a roof or icing on a cake: a strip
+// `width` wide and `height` tall above y = 0, with `n` round drips hanging
+// below it up to `depth` mm, their lengths and places varied by `seed`
+module drip_edge(width, height = 6, depth = 8, n, seed = 1) {
+  k = is_undef(n) ? max(2, round(width / 12)) : n;
+  len_ = rands(0.35, 1, k, seed);
+  shift = rands(-0.25, 0.25, k, seed + 1);
+  r = min(width / k / 4, depth / 3);
+  rect([width, height]);
+  for (i = [0:k - 1])
+    let (x = width * (i + 0.5 + shift[i]) / k)
+      hull() {
+        translate([x, height / 2]) circle(r = r);
+        translate([x, -depth * len_[i] + r]) circle(r = r);
+      }
+}
+
+// An edge of waves, as water or a frill: a strip `width` wide and `height`
+// tall above y = 0, its bottom edge `n` waves `depth` mm deep
+module wave_edge(width, height = 6, depth = 4, n) {
+  k = is_undef(n) ? max(1, round(width / 20)) : n;
+  steps = 24 * k;
+  polygon(concat(
+    [[0, height], [width, height]],
+    [for (i = [0:steps]) let (x = width * (1 - i / steps)) [x, -depth / 2 + depth / 2 * cos(360 * k * x / width)]]
+  ));
+}

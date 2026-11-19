@@ -84,3 +84,17 @@ test('a setting the program stops at fails, with its errors', () => {
     /n: the program stops at 4 of the 5 values tried\n {2}at 0: Assertion failed: only 2/,
   );
 });
+
+test('paint, folds and lights are what a setting shows', () => {
+  const effects = settingEffects(
+    'c = "red"; // [red, blue]\nf = 90; // [0:90]\nl = 10; // [1:100]\npart("p", at = [0, 0, 0], paint = c, fold = [[20, 0], [20, 20], f]) rect([40, 20]);\nlight([0, 0, 30], lumens = l);',
+  );
+  assert.deepEqual(
+    effects.map((e) => [e.name, e.effect]),
+    [
+      ['c', 'view'],
+      ['f', 'view'],
+      ['l', 'view'],
+    ],
+  );
+});

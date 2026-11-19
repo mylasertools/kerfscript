@@ -1,9 +1,114 @@
 # Changelog
 
-## Unreleased
+## 0.11.0 (2026-11-18)
+
+Language:
+
+- `part(paint = "red")` paints a part: the 3D view, the 3D files and the
+  print layout show it in that colour, while it stays on the sheet of its
+  material. `layer(name, mode = "paint", color)` paints areas of a part,
+  shown the same way and never in the files for the laser. The parts list
+  says which parts are painted.
+- Translucent materials: a part of vellum, tracing paper, parchment, rice
+  paper, frosted acrylic or paper shows translucent in the 3D view, so a
+  light behind it shows through, and GLB files make it partly transparent
+  with transmission. `hardware("vellum")` is new, and `hardware("paper")`
+  is translucent.
+- A customizer menu can come from a library: `// [figure_names("easter")]`
+  or any function call in the brackets is run with the program's built-in
+  libraries, each item of the list a choice. `size_list(kind)` in
+  `kerf/sizes` lists a table's names for one.
+- A layer's colour can be a name, as `"red"`, as well as a hex colour.
+- `$stands = true` checks that a model meant to stand does: it warns when
+  its weight's centre is not over the outline of its lowest points. Parts
+  weigh as plywood (`$density`), and `hardware(..., mass = 60)` counts an
+  egg or bottle it holds.
+- Parts too big for the bed: `part(split = true)` cuts a part into
+  pieces that fit the sheet (or `split = [w, h]`), along lines that cross
+  the least material and keep off engraving, joined by jigsaw knobs
+  (`$knob`, `$knob_clearance`). Each piece is a part of its own in its
+  place, and the parts list says which pieces it joins.
+- Copies that differ: inside `part(qty = n)`, `$copy` is the copy being
+  drawn, 0 to n - 1, so a set of tags takes a name each. Copies that come
+  out alike stay one part; the parts list says which copies each part is.
+- Hanging parts: `part(hang = [x, y], cord = 20)` hangs a part from a
+  point on it, at `at`, on a cord, ring or pin, swung in its own plane
+  until its weight is straight below, as a shelf sitter's legs; the cord
+  is listed as hardware.
+- Folds along any line for card and paper: `part(fold = [from, to,
+angle])`, or a list of them, folds the part's panels in the assembled
+  view and its 3D files, cut lines inside it (a pop-up's slits) parting
+  the panels too; `fold_open` opens every fold part of the way, for a
+  card shown half open. A fold that divides nothing warns.
+  `foldPanels()` and `panelMarks()` give a viewer of your own the panels.
+- Welded text: `text(name, size, weld = true)` slides each word's letters
+  together until each overlaps the one before, so a name cuts out in one
+  piece; `underline = h` adds a bar under it joining the words. A piece
+  still loose, as an i's dot, warns.
+- Text in lines: a `"\n"` in `text()` breaks a line, and
+  `text(t, fit = [w, h], lines = 2)` breaks a long name at a space when
+  two lines let it be bigger than one. `line_spacing` sets the distance
+  between lines.
+- Text on a path: `text(t, size, path = points)` lays the text along a
+  path, each letter turned to it, and `text(t, size, arc = r)` round a
+  circle, over the top or (r less than 0) along the bottom. Cut, engraved
+  or bridged, as any text. A text longer than its path warns.
+- `part(pieces = 2)` or `pieces = "any"` makes a part of loose pieces, as
+  a pair of eyes, without the warning that it cuts into separate pieces.
+- Light sources: `hardware("tealight", at)` stands a tealight whose flame
+  flickers, LEDs (a strip when longer than 20 mm) and bulbs give off light,
+  and `light(at, color, lumens)` adds a light with nothing to show for it.
+  The 3D view lights the model with them, with "Dim the room" to see them
+  glow, `render()` returns them as `lights`, and GLB files carry them as
+  point lights with LEDs and flames emissive.
+
+Command line:
+
+- `kerf instructions -o out.pdf` writes the assembly instructions as a
+  PDF, and `-o out.png` as a picture of each page: the parts, then a page
+  for each step with the model as it stands, its new parts in orange and
+  what it adds. No browser is needed. Folded parts are drawn folded.
 
 Libraries:
 
+- `kerf/inlay`: `inlaid()` cuts inlay shapes through a part, or engraves
+  them as pockets, and cuts each again as an insert a press fit bigger, of
+  its own stock or painted. `part(press_fit = true)` with `glue` lets an
+  insert overlap the part it presses into without a collision warning.
+- `kerf/sphere`: `ball()` makes a slot-together ball or dome of half-disc
+  fins round an upright axis held by rings with halving joints, hollow
+  with a floor and a rail for a scene inside if asked, and with holes for
+  a ribbon to hang it by.
+- `kerf/layered`: `layered()` makes multilayer art from its children, the
+  layers back to front: each a part glued on the one behind and painted,
+  grown to hold up everything in front of it with a rim, with an optional
+  shadow layer and a hole through every layer to hang it by.
+- `symbol(name, size, min_width = 1.6)` in `kerf/symbols` grows every
+  line narrower than `min_width` to that width, so a symbol drawn small
+  can be cut.
+- `kerf/drawers`: `drawers()` makes a carcass of numbered sliding drawers
+  in a grid, as for an advent calendar, with the numbers in order, from a
+  list or shuffled, a notch or hole to pull each by, and a façade of any
+  shape with the drawers' openings cut through it.
+- `kerf/scene` for scene boxes and dioramas: `scene_floor()` and
+  `scene_rails()` cut rows of rails, `standee()` gives a drawing feet that
+  stand in any rail (with a mound under a narrow one, and clipped to a
+  case if asked), `scene_figure()` stands a layered figure in a rail,
+  `figure_base()` puts one on a base of its own, and `drip_edge()` and
+  `wave_edge()` draw snow, icing and water edges.
+- `kerf/figures`: 31 layered characters in five casts (Christmas, Easter,
+  Halloween, nativity and animals). `figure_parts()` builds one as a
+  backer, coloured pieces glued on it and details on those, each colour a
+  painted part; `figure()` cuts one from a single sheet with the pieces
+  scored and the details engraved; `figure_layer()` gives the shapes of
+  any layer.
+- `kerf/sizes`: `note_size()` gives banknote sizes (US, Canadian, euro,
+  pound and Australian notes), `card_size("gift card")`, and
+  `part_size()` has tealights, a maxi tealight, an LED tealight and puck,
+  a fairy-light battery box, hen and chocolate eggs, a wine bottle, disc
+  magnets, a key ring, AA battery boxes, a coin cell holder, a key fob and
+  tissue boxes, with a `diameter` and `height` for round things and a
+  `hole` to stand or press them in.
 - `wall(outline, depth)` in `kerf/hinge`: a front plate, a back plate and
   a strip between them bent on living hinges round a closed outline, tabbed
   into slots in both plates where it runs straight. The seam goes where
@@ -37,7 +142,6 @@ Changes to the output of existing programs, each a fix:
   as where a straight run and an arc share their end, bends where the arc
   starts; the repeated point had started the hinge and the bend a few mm
   early, on the straight.
-
 - `flex_strip()` rounds each sharp corner of its path to the arc the strip
   bends round, radius `r` inside, and is as long as that rounded path, so
   it ends where the path ends; it ran on past it by about 1.6 mm a corner

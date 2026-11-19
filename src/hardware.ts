@@ -10,6 +10,8 @@ export interface HardwareKind {
   metal?: boolean;
   /** Gives off light, as an LED */
   glow?: boolean;
+  /** Lets light through, as vellum: translucent in the 3D view */
+  translucent?: boolean;
   /** What it is, for the docs */
   doc: string;
 }
@@ -22,15 +24,29 @@ export const HARDWARE_KINDS: Record<string, HardwareKind> = {
   bolt: { color: '#9aa0a6', metal: true, doc: 'a bolt' },
   nut: { color: '#9aa0a6', metal: true, doc: 'a nut' },
   magnet: { color: '#55585c', metal: true, doc: 'a disc or block magnet' },
-  paper: { color: '#fbfaf6', doc: 'a sheet or strip of paper' },
+  paper: { color: '#fbfaf6', translucent: true, doc: 'a sheet or strip of paper' },
+  vellum: {
+    color: '#f3efe2',
+    translucent: true,
+    doc: 'vellum or tracing paper, as a lantern window that a light shines through',
+  },
   card: { color: '#f4f1e8', doc: 'card stock' },
   felt: { color: '#6f6a64', doc: 'felt pads or lining' },
   elastic: { color: '#262626', doc: 'an elastic band or cord' },
   cord: { color: '#b23a3a', doc: 'cord, string or thread' },
   ribbon: { color: '#c2485a', doc: 'ribbon or tape' },
   wire: { color: '#b87333', metal: true, doc: 'wire' },
-  led: { color: '#fff4c2', glow: true, doc: 'an LED or a strip of them' },
-  bulb: { color: '#fff4c2', glow: true, doc: 'a light bulb; give it shape = "ball"' },
+  led: { color: '#fff4c2', glow: true, doc: 'an LED or a strip of them, giving off light' },
+  bulb: {
+    color: '#fff4c2',
+    glow: true,
+    doc: 'a light bulb, giving off light; give it shape = "ball"',
+  },
+  tealight: {
+    color: '#d4d8dc',
+    metal: true,
+    doc: 'a tealight, 39 mm across and 16 mm high, standing at from; its flame flickers',
+  },
   ball: { color: '#8fb8d8', doc: 'a marble, ball or bead; give it shape = "ball"' },
   tube: { color: '#c9a227', metal: true, doc: 'a tube, as a hollow arbor or a sleeve' },
   lens: { color: '#d6ecf3', doc: 'a lens, a thin disc of glass or acrylic' },

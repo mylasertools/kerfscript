@@ -32,6 +32,7 @@ import {
   type PartShape,
   type Poly,
   type Pt,
+  type Fold,
   type Shape,
 } from './geometry.js';
 import { fingerCount, fingerHoles, fingerRect, livingHinge, tslot, type Edge } from './joinery.js';
@@ -51,11 +52,21 @@ import {
 import { KerfError, where, type Pos } from './lexer.js';
 import { FITS } from './bores.js';
 import { HARDWARE_COLORS, HARDWARE_KINDS } from './hardware.js';
+import { paintColor } from './colors.js';
+import { hardwareLights, lightColor, TEALIGHT, type Light } from './lights.js';
 import { parse } from './parser.js';
 import { signature } from './signatures.js';
 import { LIBRARIES } from './stdlib.js';
 import { flatten, parseSvgPath } from './paths.js';
-import { textMetrics, textRegions, type FontBook } from './text.js';
+import {
+  arcPath,
+  textAlong,
+  textWeld,
+  textMetrics,
+  textRegions,
+  type FontBook,
+  type TextOptions,
+} from './text.js';
 import {
   equals,
   isFn,
@@ -101,7 +112,9 @@ function crossesBox(a: Pt, b: Pt, box: number[]): boolean {
 
 export interface LayerDef {
   name: string;
-  mode: 'cut' | 'line' | 'fill' | 'guide';
+  // paint: coloured areas for the 3D view and the print layout, never cut
+  // or engraved
+  mode: 'cut' | 'line' | 'fill' | 'guide' | 'paint';
   color: string;
   // Marks on the back face, made after turning the part over
   side?: 'back';
@@ -123,6 +136,8 @@ export interface HardwareItem {
   sides: number;
   step: number;
   label?: string;
+  // Its weight in grams, for the check that the model stands
+  mass?: number;
 }
 
 export const DEFAULT_LAYERS: LayerDef[] = [
@@ -373,6 +388,7 @@ export interface EvalResult {
   echoes: string[];
   warnings: string[];
   hardware: HardwareItem[];
+  lights: Light[];
   steps: string[];
 }
 
@@ -400,6 +416,7 @@ export class Evaluator {
   // Inside step(substeps = false): inner steps add to it
   private stepFolded = false;
   readonly hardware: HardwareItem[] = [];
+  readonly lights: Light[] = [];
   readonly echoes: string[] = [];
   readonly warnings: string[] = [];
   readonly layers = new Map<string, LayerDef>(DEFAULT_LAYERS.map((l) => [l.name, l]));
@@ -442,6 +459,7 @@ export class Evaluator {
       echoes: this.echoes,
       warnings: this.warnings,
       hardware: this.hardware,
+      lights: this.lights,
       steps: this.stepNames,
     };
   }
@@ -537,6 +555,9 @@ export class Evaluator {
 
   // Children shapes already made in a module call, by statement
   private childCache = new WeakMap<object, Map<Stmt, { key: string; shape: Shape | null }>>();
+  // How many times $copy has been read, so part() knows when its copies
+  // differ
+  private copyReads = 0;
 
   // What a child may depend on besides its own code: the special
   // variables it can see, the place() frame, the step and how the layers
@@ -588,7 +609,7 @@ export class Evaluator {
 
   // A count of the things a statement can make besides its shape
   private effects(): string {
-    return `${this.echoes.length},${this.hardware.length},${this.stepNames.length},${this.warnings.length},${this.copies},${this.layerDefs}`;
+    return `${this.echoes.length},${this.hardware.length},${this.lights.length},${this.stepNames.length},${this.warnings.length},${this.copies},${this.layerDefs}`;
   }
 
   // The first length with a unit read before the program set $scale
@@ -957,6 +978,8 @@ export class Evaluator {
       case 'undef':
         return undefined;
       case 'var': {
+        // part() draws each copy apart once its drawing reads $copy
+        if (x.name === '$copy') this.copyReads++;
         const r = env.get(x.name);
         if (r.found) return r.value;
         const f = env.fn(x.name);
@@ -1576,6 +1599,122 @@ export class Evaluator {
     return o;
   }
 
+  // The text as a block of lines: each "\n" breaks a line, and with
+  // lines = n the paragraphs break at spaces into up to n lines in all,
+  // as even as they go. With fit, the number of lines that lets the text
+  // be biggest; each line aligned by halign, the block by valign.
+  private textBlock(
+    a: Args,
+    text: string,
+    o: TextOptions,
+    maxLines: number,
+    spacing: number,
+  ): Poly[] {
+    const fonts = this.opts.fonts!;
+    const one = { ...o, size: 1 };
+    const widths = new Map<string, number>();
+    const width = (line: string) => {
+      if (!line) return 0;
+      let w = widths.get(line);
+      if (w === undefined) {
+        const m = textMetrics(fonts, line, one);
+        w = Math.max(m.advance, m.bounds[1][0] - m.bounds[0][0]);
+        widths.set(line, w);
+      }
+      return w;
+    };
+    const paras = text.split('\n').map((p) => p.split(/ +/).filter(Boolean));
+    // The words of a paragraph in k lines, the widest as narrow as it goes
+    const split = (words: string[], k: number): string[] => {
+      if (k <= 1 || words.length <= 1) return [words.join(' ')];
+      const m = words.length;
+      const n = Math.min(k, m);
+      const line = (i: number, j: number) => width(words.slice(i, j).join(' '));
+      // best[c][j]: the narrowest widest line for words j.. in c lines
+      const best: number[][] = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(Infinity));
+      const cut: number[][] = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(m));
+      for (let j = 0; j < m; j++) best[1][j] = line(j, m);
+      for (let c = 2; c <= n; c++)
+        for (let j = 0; j < m; j++)
+          for (let e = j + 1; e <= m - c + 1; e++) {
+            const w = Math.max(line(j, e), best[c - 1][e]);
+            if (w < best[c][j]) [best[c][j], cut[c][j]] = [w, e];
+          }
+      const out: string[] = [];
+      for (let c = n, j = 0; c >= 1; c--) {
+        const e = c === 1 ? m : cut[c][j];
+        out.push(words.slice(j, e).join(' '));
+        j = e;
+      }
+      return out;
+    };
+    // `total` lines in all: each extra line goes to the widest paragraph
+    const layout = (total: number): string[] => {
+      const counts = paras.map(() => 1);
+      for (let extra = total - paras.length; extra > 0; extra--) {
+        let wide = -1;
+        let at = -1;
+        paras.forEach((words, i) => {
+          if (counts[i] >= words.length) return;
+          const w = Math.max(...split(words, counts[i]).map(width));
+          if (w > wide) [wide, at] = [w, i];
+        });
+        if (at < 0) break;
+        counts[at]++;
+      }
+      return paras.flatMap((words, i) => split(words, counts[i]));
+    };
+    const m1 = textMetrics(fonts, 'H', one);
+    const lineH = spacing * (m1.ascent - m1.descent);
+    const given = this.arg(a, 'size', 1);
+    const fit = this.arg(a, 'fit', -1);
+    const [fw, fh] =
+      fit === undefined
+        ? [undefined, undefined]
+        : Array.isArray(fit)
+          ? [fit[0] as number | undefined, fit[1] as number | undefined]
+          : [fit as number, undefined];
+    const sizeOf = (lines: string[]) => {
+      if (fit === undefined) return o.size;
+      const sizes = [
+        ...(fw !== undefined ? [fw / Math.max(...lines.map(width), 1e-9)] : []),
+        ...(fh !== undefined ? [fh / (m1.cap + (lines.length - 1) * lineH)] : []),
+        ...(given !== undefined ? [this.num(given, 'text', 'size')] : []),
+      ];
+      return Math.min(...sizes);
+    };
+    // With fit, the number of lines that lets the text be biggest; without,
+    // as many as lines allows
+    let lines = layout(Math.max(maxLines, paras.length));
+    if (fit !== undefined) {
+      let size = -1;
+      for (let t = paras.length; t <= Math.max(maxLines, paras.length); t++) {
+        const l = layout(t);
+        const s = sizeOf(l);
+        if (s > size * (1 + 1e-9)) [lines, size] = [l, s];
+      }
+    }
+    const size = sizeOf(lines);
+    const polys: Poly[] = [];
+    lines.forEach((line, j) => {
+      for (const p of textRegions(fonts, line, { ...o, size, valign: 'baseline' }))
+        polys.push(p.map(([x, y]): Pt => [x, y - j * lineH * size]));
+    });
+    const b = bounds(polys);
+    if (!b) return [];
+    const dy =
+      o.valign === 'top'
+        ? -b[3]
+        : o.valign === 'center'
+          ? -(b[1] + b[3]) / 2
+          : o.valign === 'bottom'
+            ? -b[1]
+            : o.valign === 'cap'
+              ? -(m1.cap * size - (lines.length - 1) * lineH * size) / 2
+              : 0;
+    return dy ? polys.map((p) => p.map(([x, y]): Pt => [x, y + dy])) : polys;
+  }
+
   private edges(v: Value): Edge[] {
     const all = (e: Value): Edge => {
       if (e === 'out' || e === 'in' || e === 'flat') return e;
@@ -1602,6 +1741,29 @@ export class Evaluator {
       this.layerDefs++;
     }
     return back;
+  }
+
+  // part(fold = ...): [from, to, angle] or a list of them, each angle
+  // times `open` (0 lies flat, 1 folds as given)
+  private folds(v: Value, openArg: Value): Fold[] {
+    if (v === undefined) return [];
+    const open = openArg === undefined ? 1 : this.num(openArg, 'part', 'fold_open');
+    if (!Number.isFinite(open)) throw new Error('fold_open must be a number');
+    const list =
+      Array.isArray(v) && v.length && Array.isArray(v[0]) && Array.isArray(v[0][0]) ? v : [v];
+    return list.map((f, i) => {
+      if (!Array.isArray(f) || f.length !== 3)
+        throw new Error(
+          `fold${list.length > 1 ? `[${i}]` : ''} must be [from, to, angle], as [[0, 0], [0, 60], 90]`,
+        );
+      const [from, to] = [this.vec2(f[0], 'fold', false), this.vec2(f[1], 'fold', false)];
+      const angle = this.num(f[2], 'part', 'fold');
+      if (Math.hypot(to[0] - from[0], to[1] - from[1]) < 1e-6)
+        throw new Error('a fold needs two different points');
+      if (!(Math.abs(angle) <= 180))
+        throw new Error(`a fold's angle must be from -180 to 180, got ${show(f[2])}`);
+      return { from: from as Pt, to: to as Pt, angle: angle * open };
+    });
   }
 
   private bends(v: Value): { x0: number; x1: number; angle: number }[] {
@@ -1765,7 +1927,63 @@ export class Evaluator {
           );
         this.tick(c.args.at, shown.text.length);
         const topts = this.textOpts(c.args, c.env, shown.text);
-        let glyphs = textRegions(this.opts.fonts, shown.text, topts);
+        // path = points or arc = r: the text laid along a path or round a
+        // circle, centred on it unless halign says otherwise
+        const pathArg = this.arg(c.args, 'path', -1);
+        const arcArg = this.arg(c.args, 'arc', -1);
+        if (pathArg !== undefined && arcArg !== undefined)
+          throw new Error('text() takes path or arc, not both');
+        // lines = n, or a "\n" in the text: a block of lines, broken at
+        // spaces to fit `fit` best
+        const linesArg = this.arg(c.args, 'lines', -1);
+        const maxLines =
+          linesArg === undefined ? 1 : Math.floor(this.num(linesArg, 'text', 'lines'));
+        if (!(maxLines >= 1 && maxLines <= 20))
+          throw new Error(`lines must be from 1 to 20, got ${show(linesArg)}`);
+        const block = shown.text.includes('\n') || maxLines > 1;
+        if (block && (pathArg !== undefined || arcArg !== undefined))
+          throw new Error('text() lays lines in a block, or along a path, not both');
+        let glyphs: Poly[];
+        const spacing = this.num(this.arg(c.args, 'line_spacing', -1, 1), 'text', 'line_spacing');
+        if (!(spacing > 0)) throw new Error('line_spacing must be more than 0');
+        // weld = true: the letters of each word slid together into one
+        // piece, as a script name is cut; underline = h joins the words
+        const weldArg = this.arg(c.args, 'weld', -1, false);
+        const weld = typeof weldArg === 'number' ? weldArg > 0 : truthy(weldArg);
+        const overlap = typeof weldArg === 'number' ? weldArg : undefined;
+        const underArg = this.arg(c.args, 'underline', -1);
+        const underline = underArg === undefined ? 0 : this.num(underArg, 'text', 'underline');
+        if (!(underline >= 0)) throw new Error('underline must be a height, 0 or more');
+        if (underline > 0 && !weld) throw new Error('underline goes with weld = true');
+        if (weld && (block || pathArg !== undefined || arcArg !== undefined))
+          throw new Error('weld = true is for one line of text, not lines or a path');
+        if (weld) {
+          const welded = textWeld(this.opts.fonts, shown.text, topts, underline, overlap);
+          glyphs = welded.polys;
+          if (welded.loose.length)
+            this.warn(
+              `text(): welded, "${shown.text.length > 20 ? `${shown.text.slice(0, 20)}...` : shown.text}" still has ${welded.loose.length} loose piece${welded.loose.length > 1 ? 's' : ''} (${welded.loose.map((ch) => `in "${ch}"`).join(', ')}), as an i's dot or a word apart; add underline = h or bridge = w to join ${welded.loose.length > 1 ? 'them' : 'it'} (${where(c.args.at, false)})`,
+            );
+        } else if (block) glyphs = this.textBlock(c.args, shown.text, topts, maxLines, spacing);
+        else if (pathArg !== undefined || arcArg !== undefined) {
+          let along: Pt[];
+          if (arcArg !== undefined) {
+            const r = this.num(arcArg, 'text', 'arc');
+            if (!(r !== 0 && Number.isFinite(r)))
+              throw new Error(`arc must be a radius other than 0, got ${show(arcArg)}`);
+            along = arcPath(r);
+          } else {
+            along = this.points(pathArg, 'path');
+            if (along.length < 2) throw new Error('path needs at least two points');
+          }
+          if (this.arg(c.args, 'halign', -1) === undefined) topts.halign = 'center';
+          const laid = textAlong(this.opts.fonts, shown.text, topts, along);
+          if (laid.over > 0.01)
+            this.warn(
+              `text(): "${shown.text.length > 20 ? `${shown.text.slice(0, 20)}...` : shown.text}" is ${Math.round(laid.over * 10) / 10} mm longer than its ${arcArg !== undefined ? 'circle' : 'path'} allows, so it carries on past the end (${where(c.args.at, false)})`,
+            );
+          glyphs = laid.polys;
+        } else glyphs = textRegions(this.opts.fonts, shown.text, topts);
         // weight = "bold" thickens the strokes by a share of the size, or a
         // number of mm (less than 0 thins them); bridge = w joins every
         // island (an i's dot, an accent, a stencil's counter) to the rest
@@ -2345,7 +2563,9 @@ export class Evaluator {
           const regions = cut.length
             ? cut
             : layersOf.flatMap((ls) =>
-                [...ls].filter(([k]) => modeOf(k) !== 'guide').flatMap(([, l]) => l.regions),
+                [...ls]
+                  .filter(([k]) => modeOf(k) !== 'guide' && modeOf(k) !== 'paint')
+                  .flatMap(([, l]) => l.regions),
               );
           const m = regionMoments(union(regions));
           c.env.vars.set('$area', m.area);
@@ -2452,14 +2672,18 @@ export class Evaluator {
               `the layer "${name}" is the back of layer "${name.slice(0, -5)}"; set its mode and colour on that layer, or give this one another name`,
             );
           const m = (mode ?? known?.mode ?? 'line') as LayerDef['mode'];
-          if (!['cut', 'line', 'fill', 'guide'].includes(m))
-            throw new Error('mode must be "cut", "line", "fill" or "guide"');
-          const col = toText(color ?? known?.color ?? '#00aa00');
-          if (!/^#[0-9a-fA-F]{6}$/.test(col)) throw new Error('color must look like "#00aa00"');
+          if (!['cut', 'line', 'fill', 'guide', 'paint'].includes(m))
+            throw new Error('mode must be "cut", "line", "fill", "guide" or "paint"');
+          const raw = toText(color ?? known?.color ?? '#00aa00');
+          const col = /^#[0-9a-fA-F]{6}$/.test(raw) ? raw : paintColor(raw);
+          if (!col)
+            throw new Error(
+              `color must look like "#00aa00" or be a colour's name, as "red", got ${show(raw)}`,
+            );
           const o = order === undefined ? known?.order : this.num(order, 'layer', 'order');
           const b = bleed === undefined ? known?.bleed : this.num(bleed, 'layer', 'bleed');
           if (b !== undefined && !(b >= 0)) throw new Error('bleed must be 0 or more');
-          if (b && m === 'cut') throw new Error('a cut layer has no bleed');
+          if (b && (m === 'cut' || m === 'paint')) throw new Error(`a ${m} layer has no bleed`);
           this.layerDefs++;
           const def: LayerDef = {
             name,
@@ -2513,18 +2737,82 @@ export class Evaluator {
         const framed = this.frame !== IDENTITY4 && glue === undefined;
         // A bend shows only in the assembled view: it places the part too
         const bendArg = this.arg(c.args, 'bend', -1);
+        // fold = [from, to, angle], or a list of them: card and paper folds
+        // along any line, opened `fold_open` of the way (1 by default)
+        const foldArg = this.arg(c.args, 'fold', -1);
+        const folds = this.folds(foldArg, this.arg(c.args, 'fold_open', -1));
+        if (folds.length && bendArg !== undefined)
+          throw new Error('a part bends on living hinges or folds, not both');
+        // press_fit = true: pressed into the part it is glued to, as an
+        // inlay, so the two overlap on purpose
+        const pressFit = truthy(this.arg(c.args, 'press_fit', -1, false));
+        if (pressFit && glue === undefined) throw new Error('press_fit goes with glue = "host"');
+        // split = true, or [w, h]: cut into pieces that fit, joined by
+        // jigsaw knobs
+        const splitArg = this.arg(c.args, 'split', -1);
+        const split: true | [number, number] | undefined =
+          splitArg === undefined || splitArg === false
+            ? undefined
+            : splitArg === true
+              ? true
+              : (this.vec2(splitArg, 'split', false) as [number, number]);
+        if (Array.isArray(split) && !(split[0] > 0 && split[1] > 0))
+          throw new Error('split must be true, or [width, height] more than 0');
+        if (split && (bendArg !== undefined || folds.length))
+          throw new Error('a part that bends or folds cannot be split');
+        // hang = [x, y]: the point it hangs from, at `at`, on a cord `cord`
+        // mm long; it swings in its own plane until its weight is below
+        const hangArg = this.arg(c.args, 'hang', -1);
+        const cordArg = this.arg(c.args, 'cord', -1);
+        const hang =
+          hangArg === undefined
+            ? undefined
+            : {
+                at: this.vec2(hangArg, 'hang', false) as Pt,
+                cord: cordArg === undefined ? 0 : this.num(cordArg, 'part', 'cord'),
+              };
+        if (hang && !(hang.cord >= 0 && Number.isFinite(hang.cord)))
+          throw new Error(`cord must be a length, 0 or more, got ${show(cordArg)}`);
+        if (cordArg !== undefined && !hang) throw new Error('cord goes with hang = [x, y]');
+        if (
+          hang &&
+          (at === undefined || glue !== undefined || bendArg !== undefined || folds.length)
+        )
+          throw new Error(
+            'a hanging part needs at, the point it hangs from, and no glue, bend or fold',
+          );
         let placements =
           at === undefined &&
           turn === undefined &&
           !framed &&
           glue === undefined &&
-          bendArg === undefined
+          bendArg === undefined &&
+          foldArg === undefined
             ? undefined
             : this.placements(at, turn, qty);
         // material = "red acrylic" names this part's material, as material() does
         const materialArg = this.arg(c.args, 'material', -1);
         if (materialArg !== undefined) c.env.vars.set('$material', toText(materialArg));
         const t = this.thickness(c.env);
+        // paint = "red": the part's colour in the 3D view and the print
+        // layout; it stays on its material's sheet
+        const paintArg = this.arg(c.args, 'paint', -1);
+        const paint = paintArg === undefined ? undefined : paintColor(toText(paintArg));
+        if (paintArg !== undefined && !paint)
+          throw new Error(
+            `paint must look like "#c8372d" or be a colour's name, as "red", got ${show(paintArg)}`,
+          );
+        // pieces = 2, or "any": the part is meant to be loose pieces
+        const piecesArg = this.arg(c.args, 'pieces', -1);
+        if (
+          piecesArg !== undefined &&
+          piecesArg !== 'any' &&
+          !(typeof piecesArg === 'number' && Number.isInteger(piecesArg) && piecesArg >= 1)
+        )
+          throw new Error(
+            `pieces must be a whole number, 1 or more, or "any", got ${show(piecesArg)}`,
+          );
+        const piecesWanted = piecesArg as number | 'any' | undefined;
         if (placements && (framed || stack > 1))
           placements = placements.flatMap((pl) => {
             const m =
@@ -2567,7 +2855,43 @@ export class Evaluator {
             }
           }
         };
-        const s = draw(mirrored);
+        // $copy is the copy being drawn, 0 up: a drawing that reads it is
+        // drawn for each copy, and copies alike become one part
+        const hadCopy = c.env.vars.has('$copy');
+        const outerCopy = c.env.vars.get('$copy');
+        c.env.vars.set('$copy', 0);
+        const reads = this.copyReads;
+        let s: Shape;
+        let perCopy: { layers: Map<string, Layer>; flip: boolean; copies: number[] }[] | undefined;
+        try {
+          s = draw(mirrored);
+          if (qty > 1 && this.copyReads !== reads) {
+            const groups = new Map<
+              string,
+              { layers: Map<string, Layer>; flip: boolean; copies: number[] }
+            >();
+            for (let i = 0; i < qty; i++) {
+              c.env.vars.set('$copy', i);
+              const shape = i === 0 && flips[0] === mirrored ? s : draw(flips[i]);
+              const key = `${flips[i]}|${JSON.stringify(
+                [...shape.layers].map(([k, l]) => [
+                  k,
+                  l.regions.map((r) =>
+                    r.map(([x, y]) => [Math.round(x * 1e4), Math.round(y * 1e4)]),
+                  ),
+                  l.lines.map((r) => r.map(([x, y]) => [Math.round(x * 1e4), Math.round(y * 1e4)])),
+                ]),
+              )}`;
+              const g = groups.get(key);
+              if (g) g.copies.push(i + 1);
+              else groups.set(key, { layers: shape.layers, flip: flips[i], copies: [i + 1] });
+            }
+            perCopy = [...groups.values()];
+          }
+        } finally {
+          if (hadCopy) c.env.vars.set('$copy', outerCopy);
+          else c.env.vars.delete('$copy');
+        }
         const bends = this.bends(bendArg);
         const on = this.arg(c.args, 'on', -1);
         const slotsArg = this.arg(c.args, 'slots', -1);
@@ -2620,12 +2944,27 @@ export class Evaluator {
             thickness: t,
             kerf: this.kerf(c.env),
             material: toText(this.dyn(c.env, '$material') ?? 'material'),
+            ...(paint && { paint }),
+            ...(piecesWanted !== undefined && { pieces: piecesWanted }),
+            // A mirrored copy hangs from the mirror of the point
+            ...(hang && { hang: flip ? { ...hang, at: [-hang.at[0], hang.at[1]] as Pt } : hang }),
+            ...(split && { split }),
+            ...(pressFit && { pressFit: true }),
             ...(mine ? { placements: mine } : {}),
             ...(stack > 1 ? { stack } : {}),
             // A mirrored copy bends as the mirror image of the part
             ...(bends.length
               ? { bends: flip ? bends.map((b) => ({ ...b, mirrored: true })) : bends }
               : {}),
+            ...(folds.length && {
+              folds: flip
+                ? folds.map((f) => ({
+                    ...f,
+                    from: [-f.from[0], f.from[1]] as Pt,
+                    to: [-f.to[0], f.to[1]] as Pt,
+                  }))
+                : folds,
+            }),
             ...(on !== undefined ? { on: toText(on) } : {}),
             ...(slots ? { slots, clearance } : {}),
             ...(slots && slotExtra ? { slotExtra } : {}),
@@ -2638,12 +2977,14 @@ export class Evaluator {
           };
         };
         const numbers = (flip: boolean) => flips.flatMap((f, i) => (f === flip ? [i + 1] : []));
-        const own = mixed
-          ? [
-              made(s.layers, mirrored, numbers(mirrored)),
-              made(draw(!mirrored).layers, !mirrored, numbers(!mirrored)),
-            ]
-          : [made(s.layers, mirrored, numbers(mirrored))];
+        const own = perCopy
+          ? perCopy.map((g) => made(g.layers, g.flip, g.copies))
+          : mixed
+            ? [
+                made(s.layers, mirrored, numbers(mirrored)),
+                made(draw(!mirrored).layers, !mirrored, numbers(!mirrored)),
+              ]
+            : [made(s.layers, mirrored, numbers(mirrored))];
         return { layers: new Map(), parts: [...s.parts, ...own] };
       },
       // Places the parts inside in 3D, as part()'s at and rotate do: their
@@ -2697,8 +3038,17 @@ export class Evaluator {
         const ball = shape === 'ball' || sidesArg === 0;
         let from = this.vec3(this.arg(c.args, 'from', 1), 'from');
         const toArg = this.arg(c.args, 'to', 2);
-        let to = ball && toArg === undefined ? from : this.vec3(toArg, 'to');
-        const sz = this.arg(c.args, 'size', 3, 6);
+        // A tealight stands at from, 16 mm high, unless to says otherwise
+        const tealight = kind === 'tealight';
+        let to: Vec3 =
+          toArg !== undefined
+            ? this.vec3(toArg, 'to')
+            : tealight
+              ? [from[0], from[1], from[2] + TEALIGHT.height]
+              : ball
+                ? from
+                : this.vec3(toArg, 'to');
+        const sz = this.arg(c.args, 'size', 3, tealight ? TEALIGHT.diameter : 6);
         const size: number | [number, number] =
           typeof sz === 'number' ? sz : this.vec2(sz, 'size', false);
         if (ball) {
@@ -2725,6 +3075,9 @@ export class Evaluator {
             `making the shapes and hardware took more than ${this.limits.maxPoints * 10} points of work, the limit`,
           );
         const label = this.arg(c.args, 'label', -1);
+        const massArg = this.arg(c.args, 'mass', -1);
+        const mass = massArg === undefined ? undefined : this.num(massArg, 'hardware', 'mass');
+        if (mass !== undefined && !(mass >= 0)) throw new Error('mass must be grams, 0 or more');
         const f = this.frame;
         const pt = (p: Vec3): Vec3 => [
           f[0] * p[0] + f[1] * p[1] + f[2] * p[2] + f[3],
@@ -2738,7 +3091,7 @@ export class Evaluator {
         ];
         if (this.hardware.length >= this.limits.maxParts)
           throw new Error(`more than ${this.limits.maxParts} pieces of hardware, the limit`);
-        this.hardware.push({
+        const item: HardwareItem = {
           kind,
           from: pt(from),
           to: pt(to),
@@ -2747,6 +3100,47 @@ export class Evaluator {
           sides,
           step: this.step,
           ...(label !== undefined ? { label: toText(label) } : {}),
+          ...(mass !== undefined && { mass }),
+        };
+        this.hardware.push(item);
+        // Tealights, LEDs and bulbs light the model
+        this.lights.push(...hardwareLights(item));
+        return c.children();
+      },
+      // A light with nothing to show for it: at a point, or all along a
+      // strip from at to `to`
+      light: (c) => {
+        const at = this.vec3(this.arg(c.args, 'at', 0, [0, 0, 0]), 'at');
+        const toArg = this.arg(c.args, 'to', -1);
+        const to = toArg === undefined ? at : this.vec3(toArg, 'to');
+        const colorArg = toText(this.arg(c.args, 'color', 1, 'warm white'));
+        const color = lightColor(colorArg);
+        if (!color)
+          throw new Error(
+            `color must look like "#ffd9a0" or be a colour's name, as "warm white" or "flame", got ${show(colorArg)}`,
+          );
+        const lumens = this.num(this.arg(c.args, 'lumens', 2, 20), 'light', 'lumens');
+        if (!(lumens >= 0 && Number.isFinite(lumens)))
+          throw new Error(`lumens must be 0 or more, got ${show(lumens)}`);
+        const flicker = truthy(this.arg(c.args, 'flicker', -1, false));
+        const label = this.arg(c.args, 'label', -1);
+        if (this.lights.length >= this.limits.maxParts)
+          throw new Error(`more than ${this.limits.maxParts} lights, the limit`);
+        const f = this.frame;
+        const pt = (p: Vec3): Vec3 => [
+          f[0] * p[0] + f[1] * p[1] + f[2] * p[2] + f[3],
+          f[4] * p[0] + f[5] * p[1] + f[6] * p[2] + f[7],
+          f[8] * p[0] + f[9] * p[1] + f[10] * p[2] + f[11],
+        ];
+        this.lights.push({
+          from: pt(at),
+          to: pt(to),
+          color,
+          lumens,
+          flicker,
+          source: 'light',
+          step: this.step,
+          ...(label !== undefined && { label: toText(label) }),
         });
         return c.children();
       },
