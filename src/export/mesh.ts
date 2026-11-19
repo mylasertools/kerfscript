@@ -6,7 +6,7 @@
 // balls. The file writers in this folder turn the bodies into GLB, 3MF and
 // STL.
 
-import { bendPoint, meshPieces, type AssemblyPart, type Vec3 } from '../assembly.js';
+import { bendPoint, meshPieces, multiply, type AssemblyPart, type Vec3 } from '../assembly.js';
 import type { HardwareItem } from '../evaluator.js';
 import { area, difference, intersection, strokeLines, union, type Poly } from '../geometry.js';
 import { HARDWARE_COLORS, HARDWARE_KINDS } from '../hardware.js';
@@ -36,8 +36,10 @@ export interface Body {
 
 export interface MeshOptions {
   /** "assembled" puts each part where the program places it; "flat" lays
-   * them side by side on the bed, front face up, as for printing */
-  layout?: 'assembled' | 'flat';
+   * them side by side on the bed, front face up; "print" lays them out
+   * as "flat" does, but each part with everything glued on it as one
+   * object, its layers where the assembly has them */
+  layout?: 'assembled' | 'flat' | 'print';
   /** How far engraving and scoring stand off the face, in mm; 0 leaves
    * them out */
   markHeight?: number;
@@ -72,11 +74,23 @@ const MATERIALS: [RegExp, string][] = [
   [/card|paper/i, '#ece6d8'],
   [/black/i, '#2b2b2b'],
   [/white/i, '#f1f1ee'],
+  [/green/i, '#4f8a4b'],
+  [/blue/i, '#3f6fa8'],
+  [/yellow/i, '#e3c13b'],
+  [/orange/i, '#e07b2e'],
+  [/purple|violet/i, '#7b4f9e'],
+  [/pink/i, '#e58fae'],
+  [/gr[ae]y|silver/i, '#9a9a9a'],
+  [/gold/i, '#c9a227'],
+  [/brown/i, '#7a5534'],
   [/clear|acrylic|perspex|glass/i, '#cfe6ee'],
 ];
 
-/** The colour a 3D view gives a sheet material */
+/** The colour a 3D view gives a sheet material: a #rrggbb in its name,
+ * else one for a wood, sheet or colour named in it, else a light wood */
 export function materialColor(material: string): string {
+  const hex = /#[0-9a-f]{6}(?![0-9a-f])/i.exec(material);
+  if (hex) return hex[0].toLowerCase();
   return MATERIALS.find(([re]) => re.test(material))?.[1] ?? '#dcc39a';
 }
 
@@ -161,6 +175,10 @@ function markAreas(
   return out;
 }
 
+// What hides a face's marks: null hides them all, else the areas of the
+// parts against it, in the part's own coordinates
+type Cover = (side: 'front' | 'back') => Poly[][] | null;
+
 function partBodies(
   p: AssemblyPart,
   matrix: number[],
@@ -168,6 +186,7 @@ function partBodies(
   bent: boolean,
   cuts: Set<string>,
   instance: number,
+  cover?: Cover,
 ): Body[] {
   const t = p.thickness;
   // Cuts inside the part, as a living hinge's slits, go through it
@@ -198,6 +217,10 @@ function partBodies(
     for (const m of markAreas(p, outline, o.lineWidth, cuts)) {
       // Laid flat, the back face is on the bed: nothing can stand under it
       if (m.side === 'back' && o.layout === 'flat') continue;
+      const hidden = cover?.(m.side);
+      if (hidden === null) continue;
+      for (const h of hidden ?? []) m.regions = difference(m.regions, h);
+      if (!m.regions.length) continue;
       const [z0, z1] =
         m.side === 'front' ? [t - OVERLAP, t + o.markHeight] : [-o.markHeight, OVERLAP];
       const mark = body(`${p.name} ${m.layer}`, 'mark', m.layer, m.color, {
@@ -270,27 +293,33 @@ function hardwareBody(h: HardwareItem): Body | null {
   return b;
 }
 
+// The [x0, y0, x1, y1] round a part's outline
+const outlineBox = (p: AssemblyPart) => {
+  let [x0, y0, x1, y1] = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const r of p.outline)
+    for (const [x, y] of r) {
+      x0 = Math.min(x0, x);
+      y0 = Math.min(y0, y);
+      x1 = Math.max(x1, x);
+      y1 = Math.max(y1, y);
+    }
+  return [x0, y0, x1, y1];
+};
+
 // Where each part goes when they are laid flat: rows across, the tallest
 // first, each at its outline's corner
 function flatMatrices(parts: AssemblyPart[], gap: number): number[][] {
-  const box = (p: AssemblyPart) => {
-    let [x0, y0, x1, y1] = [Infinity, Infinity, -Infinity, -Infinity];
-    for (const r of p.outline)
-      for (const [x, y] of r) {
-        x0 = Math.min(x0, x);
-        y0 = Math.min(y0, y);
-        x1 = Math.max(x1, x);
-        y1 = Math.max(y1, y);
-      }
-    return [x0, y0, x1, y1];
-  };
-  const boxes = parts.map(box);
+  return packed(parts.map(outlineBox), gap);
+}
+
+// Moves that pack boxes [x0, y0, x1, y1] in rows across, the tallest first
+function packed(boxes: number[][], gap: number): number[][] {
   const total = boxes.reduce((s, [x0, y0, x1, y1]) => s + (x1 - x0 + gap) * (y1 - y0 + gap), 0);
   const rowWidth = Math.max(Math.sqrt(total) * 1.3, ...boxes.map(([x0, , x1]) => x1 - x0));
-  const order = parts
+  const order = boxes
     .map((_, i) => i)
     .sort((a, b) => boxes[b][3] - boxes[b][1] - (boxes[a][3] - boxes[a][1]));
-  const out: number[][] = new Array(parts.length);
+  const out: number[][] = new Array(boxes.length);
   let x = 0;
   let y = 0;
   let rowHeight = 0;
@@ -305,6 +334,140 @@ function flatMatrices(parts: AssemblyPart[], gap: number): number[][] {
     x += x1 - x0 + gap;
     rowHeight = Math.max(rowHeight, y1 - y0);
   }
+  return out;
+}
+
+// The inverse of a placement: a turn, maybe mirrored, and a move
+function inverse(m: number[]): number[] {
+  const [a, b, c, , d, e, f, , g, h, k] = m;
+  const det = a * (e * k - f * h) - b * (d * k - f * g) + c * (d * h - e * g);
+  const r = [
+    (e * k - f * h) / det,
+    (c * h - b * k) / det,
+    (b * f - c * e) / det,
+    (f * g - d * k) / det,
+    (a * k - c * g) / det,
+    (c * d - a * f) / det,
+    (d * h - e * g) / det,
+    (b * g - a * h) / det,
+    (a * e - b * d) / det,
+  ];
+  const [tx, ty, tz] = [m[3], m[7], m[11]];
+  return [
+    r[0],
+    r[1],
+    r[2],
+    -(r[0] * tx + r[1] * ty + r[2] * tz),
+    r[3],
+    r[4],
+    r[5],
+    -(r[3] * tx + r[4] * ty + r[5] * tz),
+    r[6],
+    r[7],
+    r[8],
+    -(r[6] * tx + r[7] * ty + r[8] * tz),
+    0,
+    0,
+    0,
+    1,
+  ];
+}
+
+// The print layout: each part with everything glued on it, as the assembly
+// has them, as one object resting on its lowest face, the objects packed
+// side by side. A face glued to another or lying on the bed loses its
+// marks where it is covered.
+function printBodies(source: MeshSource, o: Required<MeshOptions>, cuts: Set<string>): Body[] {
+  const all = source.assembly;
+  const rootOf = (i: number) => {
+    const seen = new Set<number>();
+    let j = i;
+    while (all[j].glued !== undefined && all[all[j].glued!] && !seen.has(j)) {
+      seen.add(j);
+      j = all[j].glued!;
+    }
+    return j;
+  };
+  const byRoot = new Map<number, number[]>();
+  all.forEach((p, i) => {
+    if (!p.outline.length) return;
+    const r = rootOf(i);
+    byRoot.set(r, [...(byRoot.get(r) ?? []), i]);
+  });
+  // A stack with a bent part is not one flat object: its parts lie apart
+  const groups: { root: number; members: number[] }[] = [];
+  for (const [root, members] of byRoot)
+    if (members.length > 1 && members.some((i) => all[i].bends?.length))
+      for (const i of members) groups.push({ root: i, members: [i] });
+    else groups.push({ root, members });
+  const EPS = 1e-3;
+  const placed = groups.map(({ root, members }) => {
+    const back = inverse(all[root].matrix);
+    const local = new Map(members.map((i) => [i, multiply(back, all[i].matrix)] as const));
+    let [x0, y0, z0, x1, y1] = [Infinity, Infinity, Infinity, -Infinity, -Infinity];
+    for (const i of members)
+      for (const r of all[i].outline)
+        for (const [x, y] of r)
+          for (const z of [0, all[i].thickness]) {
+            const [px, py, pz] = apply(local.get(i)!, [x, y, z]);
+            [x0, y0, z0] = [Math.min(x0, px), Math.min(y0, py), Math.min(z0, pz)];
+            [x1, y1] = [Math.max(x1, px), Math.max(y1, py)];
+          }
+    return { members, local, box: [x0, y0, x1, y1], z0 };
+  });
+  const moves = packed(
+    placed.map((g) => g.box),
+    o.gap,
+  );
+  // A face of a part lying flat in the object: its height and which way it
+  // faces, or nothing for a part at an angle
+  const face = (m: number[], t: number, side: 'front' | 'back') => {
+    if (Math.abs(Math.abs(m[10]) - 1) > EPS) return undefined;
+    const z = side === 'front' ? t : 0;
+    const up = m[10] > 0 === (side === 'front');
+    return { height: m[11] + m[10] * z, up };
+  };
+  const out: Body[] = [];
+  placed.forEach(({ members, local, z0 }, g) => {
+    const shift = multiply(moves[g], [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, -z0, 0, 0, 0, 1]);
+    for (const i of members) {
+      const p = all[i];
+      const m = local.get(i)!;
+      const cover: Cover = (side) => {
+        const f = face(m, p.thickness, side);
+        if (!f) return [];
+        if (!f.up && Math.abs(f.height - z0) < EPS) return null;
+        // The other parts with a face against this one, in its coordinates
+        const into = inverse(m);
+        const hidden: Poly[][] = [];
+        for (const j of members) {
+          if (j === i) continue;
+          const q = local.get(j)!;
+          for (const s of ['front', 'back'] as const) {
+            const h = face(q, all[j].thickness, s);
+            if (!h || h.up === f.up || Math.abs(h.height - f.height) > EPS) continue;
+            const z = s === 'front' ? all[j].thickness : 0;
+            const to = multiply(into, q);
+            // A mirroring move turns the rings the other way round
+            const mirrored = det3(to) < 0;
+            hidden.push(
+              union(
+                all[j].outline.map((r) => {
+                  const ring = r.map(([x, y]) => {
+                    const [u, v] = apply(to, [x, y, z]);
+                    return [u, v] as [number, number];
+                  });
+                  return mirrored ? ring.reverse() : ring;
+                }),
+              ),
+            );
+          }
+        }
+        return hidden;
+      };
+      out.push(...partBodies(p, multiply(shift, m), o, false, cuts, g, cover));
+    }
+  });
   return out;
 }
 
@@ -323,8 +486,9 @@ export function meshBodies(source: MeshSource, options: MeshOptions = {}): Body[
       .filter((l) => l.mode === 'cut')
       .map((l) => l.name),
   );
+  if (o.layout === 'print' && source.assembly.length) return printBodies(source, o, cuts);
   // A model that places nothing has no assembly: it is laid flat
-  const flat = o.layout === 'flat' || !source.assembly.length;
+  const flat = o.layout !== 'assembled' || !source.assembly.length;
   const parts = (flat ? (source.flat ?? source.assembly) : source.assembly).filter(
     (p) => p.outline.length,
   );

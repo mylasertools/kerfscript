@@ -259,3 +259,113 @@ test('a rod in the 3D file fits the bore cut for it, square or many-sided', () =
       );
   }
 });
+
+test('the print layout makes each part and what is glued on it one object', () => {
+  const r = render(`
+part("Base", rotate = [90, 0, 0], material = "white") { rect([60, 40]); engrave() translate([5, 5]) rect([50, 30]); }
+part("Hill", glue = "Base", face = "top", at = [10, 0, 0], material = "green") { rect([40, 20]); engrave() translate([2, 2]) rect([36, 16]); }
+part("House", glue = "Hill", face = "top", at = [5, 5, 0], material = "#cc3333 card") rect([10, 10]);
+part("Back", glue = "Base", face = "bottom", material = "black") { rect([60, 10]); engrave(side = "back") rect([60, 10]); }
+part("Post", stack = 3, at = [100, 0, 0]) { rect([10, 10]); engrave() translate([2, 2]) rect([6, 6]); }
+`);
+  assert.deepEqual(
+    r.assembly.map((a) => [a.name, a.glued]),
+    [
+      ['Base', undefined],
+      ['Hill', 0],
+      ['House', 1],
+      ['Back', 0],
+      ['Post', undefined],
+      ['Post', 4],
+      ['Post', 4],
+    ],
+  );
+  const bodies = meshBodies(r, { layout: 'print', markHeight: 0.6 });
+  for (const b of bodies) assert.equal(openEdges(b), 0, b.name);
+  const z = (name, kind = 'part') =>
+    bodies.filter((b) => b.name === name && b.kind === kind).map((b) => box(b).map((v) => v[2]));
+  // The upright standee lies on its lowest layer, each layer on the one under it
+  assert.deepEqual(z('Back'), [[0, 3]]);
+  assert.deepEqual(z('Base'), [[3, 6]]);
+  assert.deepEqual(z('Hill'), [[6, 9]]);
+  assert.deepEqual(z('House'), [[9, 12]]);
+  assert.deepEqual(z('Post'), [
+    [0, 3],
+    [3, 6],
+    [6, 9],
+  ]);
+  // One object per stack, each layer in its material's colour
+  assert.deepEqual(
+    [...new Set(bodies.map((b) => b.instance))].map((i) =>
+      bodies.filter((b) => b.instance === i && b.kind === 'part').map((b) => b.name),
+    ),
+    [
+      ['Base', 'Hill', 'House', 'Back'],
+      ['Post', 'Post', 'Post'],
+    ],
+  );
+  assert.deepEqual(
+    ['Base', 'Hill', 'House', 'Back'].map((n) => bodies.find((b) => b.name === n).color),
+    ['#f1f1ee', '#4f8a4b', '#cc3333', '#2b2b2b'],
+  );
+  // Marks show only where nothing covers them: none on the bed, none under
+  // a layer, the post's only on top
+  assert.equal(bodies.filter((b) => b.name === 'Back engrave').length, 0);
+  assert.deepEqual(z('Post engrave', 'mark'), [[8.99, 9.6]]);
+  const area = (b) => {
+    let a = 0;
+    const p = b.positions;
+    for (let i = 0; i < b.indices.length; i += 3) {
+      const [u, v, w] = [b.indices[i], b.indices[i + 1], b.indices[i + 2]];
+      if (Math.abs(p[u * 3 + 2] - box(b)[1][2]) > 1e-6) continue;
+      if (
+        Math.abs(p[v * 3 + 2] - p[u * 3 + 2]) > 1e-6 ||
+        Math.abs(p[w * 3 + 2] - p[u * 3 + 2]) > 1e-6
+      )
+        continue;
+      a +=
+        ((p[v * 3] - p[u * 3]) * (p[w * 3 + 1] - p[u * 3 + 1]) -
+          (p[v * 3 + 1] - p[u * 3 + 1]) * (p[w * 3] - p[u * 3])) /
+        2;
+    }
+    return Math.round(a);
+  };
+  // The base's 50 x 30 engraving less the hill's 40 x 20 footprint over it
+  // (y 0..20 of the part, the engraving's y 5..20 under it)
+  assert.equal(area(bodies.find((b) => b.name === 'Base engrave')), 50 * 30 - 40 * 15);
+  // the hill's 36 x 16 less the house's 10 x 10
+  assert.equal(area(bodies.find((b) => b.name === 'Hill engrave')), 36 * 16 - 100);
+
+  const zip = Buffer.from(toModel(r, '3mf', { layout: 'print' })).toString('latin1');
+  const model = zip.slice(zip.indexOf('<?xml', zip.indexOf('3D/3dmodel.model')));
+  assert.equal((model.match(/<item /g) ?? []).length, 2);
+});
+
+test('the print layout lays a bent part apart from its stack, and a model with nothing placed flat', () => {
+  const bent = render(`
+part("strip", at = [0, 0, 0], bend = [20, 30, 90]) rect([60, 20]);
+part("badge", glue = "strip", at = [2, 2, 0]) rect([10, 10]);
+`);
+  const bodies = meshBodies(bent, { layout: 'print' });
+  assert.equal(new Set(bodies.map((b) => b.instance)).size, 2);
+  for (const b of bodies) assert.equal(box(b)[0][2], 0, b.name);
+  const loose = render('part("a") rect(10); part("b") rect(20);');
+  assert.deepEqual(
+    meshBodies(loose, { layout: 'print' }).map(box),
+    meshBodies(loose, { layout: 'flat' }).map(box),
+  );
+});
+
+test('kerf render --print lays glued stacks out as one object each', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'kerf-print-'));
+  const src = join(dir, 'm.kerf');
+  execFileSync('node', [
+    '-e',
+    `require('fs').writeFileSync(${JSON.stringify(src)}, 'part("a", rotate = [90, 0, 0]) rect(20); part("b", glue = "a", at = [5, 5, 0]) rect(5);')`,
+  ]);
+  const out = join(dir, 'm.3mf');
+  execFileSync('node', ['dist/cli.js', 'render', src, '-o', out, '--print'], { stdio: 'pipe' });
+  const zip = readFileSync(out).toString('latin1');
+  const model = zip.slice(zip.indexOf('<?xml', zip.indexOf('3D/3dmodel.model')));
+  assert.equal((model.match(/<item /g) ?? []).length, 1);
+});

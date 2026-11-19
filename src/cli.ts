@@ -87,8 +87,9 @@ Options:
   -o out.glb              the model in 3D, as the assembly places it: .glb for
                           viewers and Blender, .3mf for printing in colour, .stl
   --flat                  with a 3D file: the parts side by side, front up
-  --print                 with a 3D file: --flat, the marks 0.6 mm high, to
-                          print as a raised second colour
+  --print                 with a 3D file: laid out to print, each part with
+                          what is glued on it as one object of coloured
+                          layers, the marks 0.6 mm high as a raised colour
   --mark-height <mm>      with a 3D file: how far engraving and scoring stand
                           off the face (0.1; 0 leaves them out)
   -D name=value           set a parameter (value is KerfScript: 40, "Oak", true, [1,2])
@@ -176,8 +177,10 @@ function main(argv: string[]) {
   let stats = false;
   let call: string | undefined;
   let px = 1200;
-  // 3D files: the parts laid flat, and how far marks stand off them
+  // 3D files: the parts laid flat or out to print, and how far marks
+  // stand off them
   let flat = false;
+  let print = false;
   let markHeight: number | undefined;
   const sweeps: Record<string, Value>[][] = [];
   // --drive: every value of the setting marked drive, as a sweep
@@ -223,9 +226,10 @@ function main(argv: string[]) {
     else if (a === '--settings') settings = true;
     else if (a === '--call') call = next();
     else if (a === '--flat') flat = true;
-    // --print: flat, the marks a few printed layers high
+    // --print: glued stacks as one object each, the marks a few printed
+    // layers high
     else if (a === '--print') {
-      flat = true;
+      print = true;
       markHeight ??= 0.6;
     } else if (a === '--mark-height') {
       markHeight = Number(next());
@@ -346,7 +350,7 @@ function main(argv: string[]) {
     writeFileSync(
       target,
       toModel(result, ext.slice(1) as ModelFormat, {
-        layout: flat ? 'flat' : 'assembled',
+        layout: print ? 'print' : flat ? 'flat' : 'assembled',
         markHeight,
       }),
     );

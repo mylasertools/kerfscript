@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { KerfError, meshPieces, render } from '../dist/index.js';
+import { KerfError, meshBodies, meshPieces, render } from '../dist/index.js';
 
 const layers = (r) => r.sheets[0].items.map((it) => it.layers);
 
@@ -427,5 +427,114 @@ test('a bend ending at the edge, past it only by rounding, does not warn', () =>
   assert.deepEqual(
     r.warnings.filter((w) => /beyond the part/.test(w)),
     [],
+  );
+});
+
+test('a child of intersection() or difference() that makes nothing is left out, as in OpenSCAD', () => {
+  const size = (src) => {
+    const r = render(src, { kerf: 0 });
+    return [r.parts[0].width, r.parts[0].height];
+  };
+  const want = size('part("P") intersection() { rect(10); circle(r = 8); }');
+  assert.deepEqual(want, [8, 8]);
+  // What OpenSCAD 2021.01 leaves out: an if that is false with no else, an
+  // echo or assert with no children, a child switched off with *
+  for (const skipped of [
+    'if (false) circle(r = 2);',
+    'echo("x");',
+    'assert(true);',
+    '*circle(r = 2);',
+  ])
+    assert.deepEqual(
+      size(`part("P") intersection() { rect(10); circle(r = 8); ${skipped} }`),
+      want,
+      skipped,
+    );
+  // and what it keeps as a child that draws nothing, emptying the intersection
+  for (const empty of [
+    'for (i = []) circle(r = 2);',
+    'union() { for (i = [1:1:0]) circle(r = 2); }',
+    'translate([1, 0]) if (false) circle(r = 2);',
+    'if (true) {}',
+    'none();',
+    'intersection() { circle(1); translate([50, 0]) circle(1); }',
+  ])
+    assert.deepEqual(
+      size(`module none() {}
+part("P") intersection() { rect(10); circle(r = 8); ${empty} }`),
+      [0, 0],
+      empty,
+    );
+  // The first child that makes something is the one cut from
+  assert.deepEqual(
+    size('part("D") difference() { if (false) rect(30); rect(10); circle(r = 3); }'),
+    [10, 10],
+  );
+  assert.deepEqual(size('part("D") difference() { union() {} rect(10); }'), [0, 0]);
+});
+
+test('a part with nothing in it warns once', () => {
+  const r = render('part("E", qty = 2) rect(0); part("ok") rect(3);', { kerf: 0 });
+  assert.deepEqual(r.warnings, ['Part "E" is empty: nothing drawn in it is left to cut.']);
+  const g = render('part("G") intersection() { rect(10); for (i = []) circle(2); }', { kerf: 0 });
+  assert.deepEqual(g.warnings, ['Part "G" is empty: nothing drawn in it is left to cut.']);
+  // intersection() already says when it empties a part
+  const cut = render('intersection() { part("P") rect(5); translate([20, 0]) rect(5); }', {
+    kerf: 0,
+  });
+  assert.equal(cut.warnings.filter((w) => w.includes('"P"')).length, 1);
+});
+
+test('a strip whose curve changes radius bends as each stretch of it does', () => {
+  const r = render(
+    `use <kerf/hinge>
+R = 60; yb = 45; rc = 12;
+xc = sqrt(pow(R - rc, 2) - pow(yb - rc, 2));
+a0 = atan2(-yb + rc, xc);
+path = concat([[0, -yb]], [for (i = [0:8]) let (a = -90 + i * (a0 + 90) / 8) [xc, -yb + rc] + rc * [cos(a), sin(a)]], [for (i = [1:40]) let (a = a0 + i * (90 - a0) / 40) R * [cos(a), sin(a)]]);
+echo(strip_bends(path));
+place(rotate = [90, 0, 0]) flex_strip(path, 40, name = "Wall");`,
+    { kerf: 0 },
+  );
+  const bends = JSON.parse(r.echoes[0]);
+  // The fillet and the arc, each its own radius, end to end
+  const radius = (b) => (b[1] - b[0]) / ((Math.abs(b[2]) * Math.PI) / 180);
+  const fillet = bends.find((b) => Math.abs(radius(b) - 12) < 1);
+  const arc = bends.find((b) => Math.abs(radius(b) - 60) < 2);
+  assert.ok(fillet && arc, JSON.stringify(bends));
+  for (let i = 1; i < bends.length; i++) assert.ok(bends[i][0] >= bends[i - 1][1] - 1e-6);
+  // The bent strip stays on the path: x 0..60, z -45..60, give or take its thickness
+  const lo = [Infinity, Infinity, Infinity],
+    hi = [-Infinity, -Infinity, -Infinity];
+  for (const b of meshBodies(r))
+    if (b.kind === 'part')
+      for (let i = 0; i < b.positions.length; i += 3)
+        for (let k = 0; k < 3; k++) {
+          lo[k] = Math.min(lo[k], b.positions[i + k]);
+          hi[k] = Math.max(hi[k], b.positions[i + k]);
+        }
+  assert.ok(lo[0] > -2 && hi[0] < 62, `x ${lo[0]}..${hi[0]}`);
+  assert.ok(lo[2] > -47 && hi[2] < 62, `z ${lo[2]}..${hi[2]}`);
+  assert.deepEqual(r.warnings, []);
+});
+
+test('a sharp corner beside a curve is a bend of its own', () => {
+  const r = render(
+    `use <kerf/hinge>
+echo(strip_bends(concat([[-40, 0]], [for (a = [0:5:90]) [-25, 0] + 25 * [cos(a), sin(a)]])));`,
+  );
+  const bends = JSON.parse(r.echoes[0]);
+  assert.equal(bends.length, 2);
+  assert.deepEqual(
+    bends.map((b) => Math.round(b[2] * 10) / 10),
+    [92.5, 85],
+  );
+});
+
+test('a module the program names echo or assert keeps what it makes', () => {
+  const r = render('module echo() { rect(10); } part("p") echo();');
+  assert.deepEqual(
+    r.parts.map((p) => [p.name, p.width]),
+    [['p', 10]],
   );
 });

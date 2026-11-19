@@ -425,6 +425,14 @@ playground, the command line and `kerfscript.wasm` have `Atkinson`
 | `stroke(width)`                                        | turns lines into areas of that width, for cutting single line art                                                                       |
 | `outline()`                                            | turns areas into their outline lines                                                                                                    |
 
+As in OpenSCAD, a child that makes nothing at all is left out of
+`difference()` and `intersection()`: an `if` whose condition is false and
+that has no `else`, an `echo()` or `assert()` with no children, or a child
+switched off with `*`. It neither empties an intersection nor becomes the
+shape a difference cuts from. Any other child counts even when it draws
+nothing, such as a `for` over an empty list or an empty `union()`, and
+then empties an intersection.
+
 ### Joinery
 
 | Module                                               | Notes                                                                                                                                                                                                                                                                                                                                                   |

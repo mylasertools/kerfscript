@@ -439,6 +439,81 @@ test('flex_strip bends round its path and the plates cut its slots', () => {
   );
 });
 
+test('wall() puts plates and a bent strip round an outline, in pieces that fit', () => {
+  const stadium =
+    'use <kerf/hinge>\noutline = concat([for (a = [-90:5:90]) [100, 40] + 40 * [cos(a), sin(a)]], [for (a = [90:5:270]) [40, 40] + 40 * [cos(a), sin(a)]]);\n';
+  const one = render(stadium + 'wall(outline, 50, name = "Box", join = [70, 0]);', { kerf: 0 });
+  assert.deepEqual(one.warnings, []);
+  assert.deepEqual(
+    one.parts.map((p) => p.name),
+    ['Box front', 'Box back', 'Box strip'],
+  );
+  // The plates cut slots for the strip's tabs on the straights
+  const plain = render(stadium + 'wall(outline, 50, name = "Box", join = [70, 0], tabs = false);', {
+    kerf: 0,
+  });
+  assert.deepEqual(plain.warnings, []);
+  const cut = (r, n) => r.parts.find((p) => p.name === n).cutLength;
+  assert.ok(cut(one, 'Box front') > cut(plain, 'Box front') + 40);
+  // The strip runs round the outline, x 0..140, y 0..80 on its middle,
+  // the plates in front of it and behind
+  const box = (r, re) => {
+    const lo = [Infinity, Infinity, Infinity],
+      hi = [-Infinity, -Infinity, -Infinity];
+    for (const a of r.assembly.filter((a) => re.test(a.name)))
+      for (const q of a.bends ? [] : a.outline.flat()) {
+        const p = [0, 1, 2].map(
+          (k) => a.matrix[k * 4] * q[0] + a.matrix[k * 4 + 1] * q[1] + a.matrix[k * 4 + 3],
+        );
+        p.forEach((v, k) => ((lo[k] = Math.min(lo[k], v)), (hi[k] = Math.max(hi[k], v))));
+      }
+    return [lo, hi];
+  };
+  const mm = (v) => v.map((x) => Math.round(x * 10) / 10);
+  assert.deepEqual(box(one, /front/).map(mm), [
+    [-4.5, 0, -4.5],
+    [144.5, 0, 84.5],
+  ]);
+  assert.deepEqual(box(one, /back/).map(mm), [
+    [-4.5, 53, -4.5],
+    [144.5, 53, 84.5],
+  ]);
+  // In pieces no longer than max_length, meeting without pressing on each other
+  const split = render(
+    stadium +
+      'echo(wall_pieces(outline, 150, [70, 0]));\nwall(outline, 50, name = "Box", join = [70, 0], max_length = 150);',
+    { kerf: 0 },
+  );
+  assert.deepEqual(split.echoes, ['3']);
+  assert.deepEqual(split.warnings, []);
+  const strips = split.parts.filter((p) => p.name.startsWith('Box strip'));
+  assert.deepEqual(
+    strips.map((p) => p.name),
+    ['Box strip 1', 'Box strip 2', 'Box strip 3'],
+  );
+  for (const p of strips) assert.ok(p.width <= 150, `${p.name} ${p.width}`);
+  // A round outline has no straight run for tabs, so no slots and no warning
+  const ball = render(
+    'use <kerf/hinge>\nwall([for (a = [0:5:355]) 40 * [cos(a), sin(a)]], 30, name = "Ball", join = [0, -40], max_length = 100);',
+    { kerf: 0 },
+  );
+  assert.deepEqual(ball.warnings, []);
+  assert.equal(ball.parts.filter((p) => p.name.startsWith('Ball strip')).length, 3);
+});
+
+test('wall_path starts a closed outline at the point nearest join; path_part cuts a path', () => {
+  const r = render(`use <kerf/hinge>
+sq = [[0, 0], [40, 0], [40, 20], [0, 20]];
+echo(wall_path(sq, [10, -5]));
+echo(wall_path(concat(sq, [[0, 0]])));
+echo(path_part([[0, 0], [10, 0], [10, 10]], 5, 15));`);
+  assert.deepEqual(r.echoes, [
+    '[[10, 0], [40, 0], [40, 20], [0, 20], [0, 0], [10, 0]]',
+    '[[0, 0], [40, 0], [40, 20], [0, 20], [0, 0]]',
+    '[[5, 0], [10, 0], [10, 5]]',
+  ]);
+});
+
 test('paper, card and photo sizes by name', () => {
   const r = render(
     'use <kerf/sizes>\necho(paper_size("a5"), card_size("business"), landscape(photo_size("instant mini")), photo_size("Instax Mini") == photo_size("instant mini"));',

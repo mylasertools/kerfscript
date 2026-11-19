@@ -22,7 +22,7 @@ show each module's description when you hover over it.
 | [`kerf/box`](#boxes)               | Finger-jointed boxes and dividers that slide into them         |
 | [`kerf/tabs`](#tabs-and-slots)     | Tabs on one panel and the slots in another that they go into   |
 | [`kerf/stand`](#stands)            | A sign or photo standing in a base, upright or leaning back    |
-| [`kerf/hinge`](#living-hinges)     | Living hinges that bend flat sheet, and a box with round sides |
+| [`kerf/hinge`](#living-hinges)     | Living hinges that bend flat sheet, round boxes and bent walls |
 | [`kerf/dividers`](#dividers)       | Dividers that slot into each other like an egg crate           |
 | [`kerf/hanging`](#hanging)         | Keyholes, holes and loops for hanging things on a wall         |
 | [`kerf/enclosure`](#enclosures)    | Boxes with a screwed-on lid, cutouts for ports and vents       |
@@ -264,17 +264,95 @@ Wrap it in `place()` with the plate's placement, put the other plate
 `width` away, and give both plates `slots`: they cut the slots for the
 tabs where the strip passes through them. Segments of the path shorter
 than `straight` are taken as curve; a sharp corner bends round radius
-`r`, two thicknesses by default. `narrow` uses `narrow_hinge()`.
+`r`, two thicknesses by default. Sample a curve with segments shorter
+than `straight`: a curve sampled more coarsely is cut as straight runs
+with a sharp bend at each point. `narrow` uses `narrow_hinge()`.
+
+### `wall(outline, depth, name = "wall", join, max_length = 400, rim, seam = 0.3, tabs = true, straight = 10, r, spacing = 1.5, bridge = 3, narrow = false, at = [0, 0, 0], rotate = [90, 0, 0])`
+
+A wall round a closed outline, as for a lantern, a light box or a round
+case: a front plate, a back plate `depth` behind it, and a strip between
+them that follows the outline, made by `flex_strip()`. The strip bends on
+living hinges where the outline curves and has tabs where it runs
+straight, and both plates cut the slots for them.
+
+```kerf
+use <kerf/hinge>
+
+// A lantern: two straights and two round ends, the seam at the bottom
+outline = concat(
+  [for (a = [-90:5:90]) [100, 40] + 40 * [cos(a), sin(a)]],
+  [for (a = [90:5:270]) [40, 40] + 40 * [cos(a), sin(a)]]
+);
+wall(outline, 50, name = "lantern", join = [70, 0], max_length = 200) {
+  difference() {
+    offset(delta = 5) polygon(outline);
+    translate([70, 40]) circle(d = 40);
+  }
+}
+```
+
+- The strip's ends meet at the point of the outline nearest `join`: put
+  the seam on a straight, or where a cap or a foot will hide it.
+- A strip longer than `max_length` is cut into pieces no longer, so each
+  fits the bed, split on a straight where one is near. The pieces meet
+  `seam` apart, so that bent on their hinges they don't press on each
+  other.
+- The first child is the front plate, drawn as the outline is, with the
+  windows or art you cut in it; the second is the back plate. Without
+  them, each plate is the outline grown by `rim`, half a thickness and
+  3 mm.
+- The parts are `"<name> front"`, `"<name> back"` and `"<name> strip"`, or
+  `"<name> strip 1"`, `"<name> strip 2"` and so on for a strip in pieces.
+  `wall_pieces(outline, max_length, join)` says how many pieces there
+  will be.
+- It stands upright with the outline seen from the front, the back plate
+  behind it; `at` and `rotate` place it.
+
+Sample the outline's curves with segments shorter than `straight`, as for
+`flex_strip()`.
+
+### `wall_path(outline, join)`
+
+A closed outline as the path round it that `wall()` follows: from the
+point of the outline nearest `join` all the way round to it again.
+
+### `path_part(path, s0, s1)`
+
+The part of a path from `s0` to `s1` along it, its ends where those fall.
+
+### `wall_strip_names(name, pieces)`
+
+The names of the strip's parts for a wall named `name` in that many
+pieces, as `slots` lists them: `wall_strip_names("lantern", 2)` is
+`["lantern strip 1", "lantern strip 2"]`.
+
+### `wall_splits(L, n, max_length, mids, halves)`
+
+Where `wall()` splits a strip `L` long into `n` pieces no longer than
+`max_length`: near even spacing, at a point of `mids` (the middles of the
+straight runs) where one is near, else at one of `halves` (the middles of
+the path's segments, where its bends end).
 
 ### `strip_bends(path, straight = 10, r)`
 
 The bends `flex_strip()` makes, as `[s0, s1, angle]` along the path:
 where each curve starts and ends and how far it turns, left positive.
-Give them to `part(bend = ...)` for a strip of your own.
+A curve whose radius changes, such as a tight fillet running into a wide
+arc, gives several bends end to end, one for each stretch of much the
+same radius, so the bent strip follows the path. Give them to
+`part(bend = ...)` for a strip of your own.
+
+### `strip_join(list)`
+
+Joins bends that touch or overlap where they turn the same way at much
+the same rate, within a quarter of each other; `strip_bends()` uses it.
+Two that overlap but turn differently meet halfway through the overlap.
 
 ### `strip_merge(list)`
 
-Joins bends from `strip_bends()` that touch into one.
+Joins bends that touch into one, whatever their radius: the stretches
+`flex_strip()` cuts its hinges over.
 
 ## Dividers
 

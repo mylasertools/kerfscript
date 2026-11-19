@@ -211,6 +211,19 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       material: toText(g('$material') ?? 'material'),
     });
   if (!parts.length) warnings.push('Nothing to cut: the program made no shapes.');
+  // A part with nothing in it would drop out of the sheets and the
+  // assembly without a word; intersection() already says when it emptied one
+  const emptied = new Set<string>();
+  for (const p of parts) {
+    if (emptied.has(p.name)) continue;
+    const drawn = [...p.layers].some(
+      ([k, l]) => k !== HIDDEN && (l.regions.length || l.lines.length),
+    );
+    if (drawn) continue;
+    emptied.add(p.name);
+    if (!warnings.some((w) => w.includes(`leaves part "${p.name}" with nothing to cut`)))
+      warnings.push(`Part "${p.name}" is empty: nothing drawn in it is left to cut.`);
+  }
   // A setting's `when` condition that can't be used: the setting always shows
   try {
     for (const p of parameters(source).parameters)
@@ -263,6 +276,8 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   const loose: AssemblyPart[] = [];
   const flatParts: AssemblyPart[] = [];
   const stackedCopies = new Set<AssemblyPart>();
+  // Where each part's placements are in the assembly, in order
+  const placedAt = new Map<PartShape, number[]>();
   // copy(i): the number of its i-th cut copy in the assembly, so a mirrored
   // copy keeps its own number on the sheet
   const ready: { info: PartInfo; layers: Map<string, Layer>; copy: (i: number) => number }[] = [];
@@ -415,6 +430,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
             ...(p.step && { step: p.step }),
             ...(p.stack && { stack: p.stack }),
           };
+          placedAt.set(p, [...(placedAt.get(p) ?? []), assembly.length]);
           assembly.push(part);
           const key = part.matrix.map((v) => v.toFixed(6)).join(',');
           if (seen.has(key)) stackedCopies.add(part);
@@ -515,6 +531,21 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
         }
     infos.push(info);
     ready.push({ info, layers, copy: (i) => copyNumber(p, i) });
+  }
+
+  // What each placed part is glued on, as glueOn() put it there: layer k
+  // of a stack on the stack's first layer, which is on the host's
+  // placement it was moved with
+  for (const [p, at] of placedAt) {
+    const stack = p.stack ?? 1;
+    const host = p.glue && parts.find((q) => q.name === p.glue!.host && q !== p);
+    const hostAt = host ? placedAt.get(host) : undefined;
+    const per = at.length / stack;
+    at.forEach((index, i) => {
+      const k = i % stack;
+      const on = k > 0 ? at[i - k] : hostAt?.[hostAt.length === per ? Math.floor(i / stack) : 0];
+      if (on !== undefined) assembly[index].glued = on;
+    });
   }
 
   const pieceOf = new Map<AssemblyPart, AssemblyPart>();
@@ -1060,8 +1091,9 @@ function cutSlots(
       );
     const slot = union(each.flat());
     if (!slot.length) {
-      // A pattern asks for whatever passes through, which may be nothing
-      if (p.slots && !p.slots.some((n) => n.includes('*')))
+      // A pattern asks for whatever passes through, which may be nothing,
+      // and slots = [] for no part at all
+      if (p.slots?.length && !p.slots.some((n) => n.includes('*')))
         warnings.push(
           `Part "${p.name}": none of ${p.slots.map((n) => `"${n}"`).join(', ')} pass through it, so it has no slots.`,
         );
