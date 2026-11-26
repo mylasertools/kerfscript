@@ -791,6 +791,7 @@
         "height": 65,
         "throw": 5,
         "locked": false,
+        "lock_at": "inside",
         "$thickness": 2.5
       },
       {

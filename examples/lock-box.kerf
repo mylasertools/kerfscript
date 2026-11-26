@@ -1,8 +1,11 @@
 // Lock box: a finger-jointed box whose lid locks with a key. The lock is
-// three layers glued on the front: turn the key half a turn and its cam
-// throws a bolt up into the keeper, a slotted plate under the lid's front
-// edge, and the lid cannot lift. The lid's insert keeps it square on the
-// walls. Made with box() from kerf/box and cam_lock() from kerf/lock.
+// three layers glued on the front, or hidden inside the box behind a
+// keyhole in the front wall. Half a turn of the key and its cam slides a
+// bolt sideways into the keeper, a three-layer block hanging from the lid
+// with a pocket cut through it. Lifting the lid pulls the pocket's
+// floor up against the bolt, so the lid stays shut until the key turns
+// back. The lid's insert keeps it square on the walls. Made with
+// finger_rect() and cam_lock() from kerf/lock.
 
 /* [Box] */
 // Outside width
@@ -11,6 +14,8 @@ width = 160; // [110:5:300]
 depth = 110; // [80:5:220]
 // Height of the walls
 height = 80; // [60:5:180]
+// Where the lock goes
+lock_at = "front"; // [front:On the front, inside:Inside the box]
 // How far the bolt moves
 throw = 7; // [5:0.5:10]
 // Show the lock locked
@@ -21,40 +26,73 @@ $thickness = 3; // [2.5:0.5:4]
 $kerf = 0.15; // [0:0.01:0.3]
 
 /* [Hidden] */
-use <kerf/box>
 use <kerf/lock>
 $fn = 48;
 $material = "plywood";
 t = $thickness;
+inside = lock_at == "inside";
 b = lock_bounds(throw);
 nose = lock_nose(throw);
-// The lock's centre on the front, below the lid by room for the keeper:
-// the bolt's nose and 4 mm of keeper above it
-zc = height - b[3] - (throw + 4);
-assert(zc + b[1] > 12, "Make the box taller for the lock");
-// The lid overhangs the front by the lock's three layers
-over = 3 * t + 1;
-step("Make the box: the bottom, then the walls")
-  box([width, depth, height], name = "Box");
-// The lock lies on the front, its bolt moving up
-step("Glue the lock on the front: the base and the cam hub, the frame, the cam and the bolt, then the plate")
-  place(at = [width / 2, 0, zc], rotate = orient([1, 0, 0], [0, -1, 0]))
-    material(name = "walnut") cam_lock(throw, locked = locked, name = "Lock", key = false);
-step("Glue the insert and the keeper under the lid") {
-  part("Lid", at = [0, -over, height], slots = ["Keeper"]) rect([width, depth + over], r = 3);
-  part("Lid insert", glue = "Lid", face = "bottom", at = [t + 0.3, over + t + 0.3, 0])
-    rect([width - 2 * t - 0.6, depth - 2 * t - 0.6], r = 1);
-  // The keeper hangs in the plane of the lock's frame, above it, with a
-  // notch for the bolt's nose and tabs up into the lid
-  kh = height - (zc + b[3] + 0.5);
-  part("Keeper", at = [width / 2 + b[0], -t, zc + b[3] + 0.5], rotate = [90, 0, 0]) difference() {
-    union() {
-      rect([b[2] - b[0], kh]);
-      for (x = [4, b[2] - b[0] - 12]) translate([x, kh - 0.01]) rect([8, t + 0.01]);
+reach = nose[1] - b[3];
+keyhole = sqrt(25 + t * t) + 0.5;
+// The keeper: its pocket a little deeper and taller than the nose, with
+// 6 mm of wood past it and under it
+pocket = [reach + 1, nose[0] + 0.8];
+kw = pocket[0] + 6;
+// The lid's front edge overhangs the lock's three layers when it is outside
+over = inside ? 0 : 3 * t + 1;
+// The keeper's top: under the lid, or under the lid's insert inside
+kt = inside ? height - t : height;
+// The lock's key axis, the lock lying with its bolt moving along x, 3 mm
+// below the keeper's top, the lock and the keeper centred on the front
+zc = kt - b[2] - 3;
+xc = width / 2 - (0.5 + kw) / 2;
+x0 = xc + b[3] + 0.5;
+kb = zc - pocket[1] / 2 - 6;
+// The lock's base layer starts on the front's outside face, or 4
+// thicknesses in when the lock's plate is glued inside the front
+ys = inside ? 4 * t : 0;
+assert(zc + b[0] > t + 8, "Make the box taller for the lock");
+module lock_frame() place(at = [xc, ys, zc], rotate = orient([0, 0, -1], [0, -1, 0])) children();
+
+step("Make the box: the bottom, then the walls") {
+  part("Box bottom", at = [0, 0, 0]) finger_rect([width, depth], "out");
+  part("Box front", at = [0, t, 0], rotate = [90, 0, 0]) {
+    difference() {
+      finger_rect([width, height], ["in", "out", "flat", "out"]);
+      if (inside) translate([xc, zc]) circle(d = keyhole);
     }
-    translate([(b[2] - b[0] - nose[0]) / 2 - 0.4, -1]) rect([nose[0] + 0.8, nose[1] - b[3] + 1.5]);
+    if (inside) engrave() translate([xc, zc]) difference() {
+      circle(r = keyhole / 2 + 3.2);
+      circle(r = keyhole / 2 + 1.6);
+    }
+  }
+  part("Box back", at = [0, depth, 0], rotate = [90, 0, 0]) finger_rect([width, height], ["in", "out", "flat", "out"]);
+  part("Box left", rotate = [90, 0, 90]) finger_rect([depth, height], ["in", "in", "flat", "in"]);
+  part("Box right", at = [width - t, 0, 0], rotate = [90, 0, 90]) finger_rect([depth, height], ["in", "in", "flat", "in"]);
+}
+step(inside
+    ? "Glue the lock inside the front, its keyhole over the one in the wall: the plate, the frame with the cam and the bolt, then the base and the cam hub, glued to the cam"
+    : "Glue the lock on the front: the base and the cam hub, the frame, the cam and the bolt, then the plate")
+  lock_frame() material(name = "walnut") cam_lock(throw, locked = locked, name = "Lock", key = false, ring = !inside);
+step(inside ? "Glue the insert under the lid, then the keeper under the insert" : "Glue the insert and the keeper under the lid") {
+  part("Lid", at = [0, -over, height], slots = inside ? [] : ["Keeper"]) rect([width, depth + over], r = 3);
+  part("Lid insert", glue = "Lid", face = "bottom", at = [t + 0.3, over + t + 0.3, 0], slots = inside ? ["Keeper"] : [])
+    rect([width - 2 * t - 0.6, depth - 2 * t - 0.6], r = 1);
+  // The keeper lies beside the lock, three layers in the lock's planes,
+  // the pocket through all three, open towards the bolt, so the lid's play
+  // never pinches the nose
+  module keeper_layer(tab) difference() {
+    union() {
+      rect([kw, kt - kb]);
+      if (tab) translate([kw / 2 - 3, kt - kb - 0.01]) rect([6, t + 0.01]);
+    }
+    translate([-1, zc - kb - pocket[1] / 2]) rect([pocket[0] + 1, pocket[1]]);
+  }
+  material(name = "walnut") {
+    part("Keeper", at = [x0, ys - t, kb], rotate = [90, 0, 0]) keeper_layer(true);
+    part("Keeper side", qty = 2, at = [[x0, ys, kb], [x0, ys - 2 * t, kb]], rotate = [90, 0, 0]) keeper_layer(false);
   }
 }
-step("Turn the key to lock it")
-  place(at = [width / 2, 0, zc], rotate = orient([1, 0, 0], [0, -1, 0]))
-    material(name = "walnut") part("Key", at = [0, t / 2, 0], rotate = [90, 0, 0]) lock_key();
+step(inside ? "Turn the key in the keyhole to lock it" : "Turn the key to lock it")
+  lock_frame() material(name = "walnut") part("Key", at = [0, t / 2, inside ? t : 0], rotate = [90, 0, 0]) lock_key();

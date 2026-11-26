@@ -819,9 +819,15 @@ The sector's `[outer radius, inner radius, angle, slant length]`.
 
 A lock with a key, for boxes, diaries and money boxes. A flat key turns an
 eccentric cam that slides a bolt; half a turn throws its nose out past the
-lock's top edge into a notch in whatever it locks. It is three layers of
+lock's top edge into a slot in whatever it locks. It is three layers of
 the current material: a base, a frame with the cam and the bolt, and a
 plate with the keyhole.
+
+A bolt only holds against a pull across its travel. Set the lock so the
+bolt moves across the way the locked part opens, sideways for a lid that
+lifts, and cut the slot as a pocket with wood on the side the part pulls
+from, not a notch open that way. `examples/lock-box.kerf` shows both: the
+bolt slides sideways into a pocket in a keeper under the lid.
 
 ### `cam_lock(throw = 7, locked = true, name = "Lock", key = true, ring = true)`
 
@@ -833,7 +839,7 @@ cover. `throw` is how far the bolt moves; `locked` shows it thrown;
 ### `lock_bounds(throw = 7)`, `lock_nose(throw = 7)`
 
 The lock's outline as `[x0, y0, x1, y1]` round the key's axis, and the
-bolt's nose as `[width, y of its tip when locked]`: cut a notch a little
+bolt's nose as `[width, y of its tip when locked]`: cut a pocket a little
 wider than the nose where it goes.
 
 ### `lock_key(t = $thickness, ws = 5)`, `lock_dims(throw)`
