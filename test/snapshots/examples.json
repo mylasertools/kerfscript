@@ -6805,7 +6805,7 @@
      120
     ],
     "pieces": 1,
-    "cut": 600,
+    "cut": 573,
     "thickness": 3,
     "kerf": 0.15,
     "material": "plywood"
@@ -6827,14 +6827,27 @@
     "name": "Keeper",
     "qty": 1,
     "size": [
-     35.8,
-     13.5
+     12,
+     34.3
     ],
     "pieces": 1,
-    "cut": 116,
+    "cut": 105,
     "thickness": 3,
     "kerf": 0.15,
-    "material": "plywood"
+    "material": "walnut"
+   },
+   {
+    "name": "Keeper side",
+    "qty": 2,
+    "size": [
+     12,
+     31.3
+    ],
+    "pieces": 1,
+    "cut": 99,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "walnut"
    },
    {
     "name": "Key",
@@ -6853,7 +6866,7 @@
   "sheets": 2,
   "layers": {
    "cut": {
-    "area": 97603.78,
+    "area": 98258.01,
     "length": 0
    },
    "engrave": {

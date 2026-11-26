@@ -2,9 +2,12 @@
 // Copyright (c) 2026 MyLaserTools. AGPL-3.0-only or MyLaserTools commercial licence.
 //
 // A flat key turns an eccentric cam, which slides a bolt: half a turn
-// throws its nose out past the lock's top edge, into a notch or a slot in
-// whatever it locks, and half a turn back pulls it in. Pulling on what is
-// locked only presses the bolt against its slot. The lock is three layers
+// throws its nose out past the lock's top edge, into a slot in whatever it
+// locks, and half a turn back pulls it in. A bolt only holds against a pull
+// across its travel: set the lock so the bolt moves across the way the
+// locked part opens (sideways for a lid that lifts), and give the slot
+// wood on the side the part pulls from (a pocket, not a notch open that
+// way), so pulling presses the bolt against it. The lock is three layers
 // of the current material: a base with the cam's hub, a frame with the
 // cam and the bolt, and a plate with the keyhole.
 //
@@ -17,7 +20,7 @@
 function lock_bounds(throw = 7) = let (d = lock_dims(throw))
   [-d[6] / 2, d[8], d[6] / 2, d[7]];
 
-// Where the bolt's nose is: [width, y of its tip when locked]. Cut a notch
+// Where the bolt's nose is: [width, y of its tip when locked]. Cut a pocket
 // a little wider than this where it goes.
 function lock_nose(throw = 7) = let (d = lock_dims(throw)) [d[4], d[7] + d[5]];
 
