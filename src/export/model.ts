@@ -65,7 +65,10 @@ const xml = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 /** A 3MF package in millimetres: each part one object, its engraving and
- * scoring coloured parts of it, so a slicer prints them in their colours */
+ * scoring coloured parts of it, so a slicer prints them in their colours.
+ * Each colour is a base material, and also a filament (1, 2, ... in the
+ * same order) in Metadata/model_settings.config, which is what OrcaSlicer,
+ * Bambu Studio and the slicers based on them read */
 export function to3mf(bodies: Body[]): Uint8Array {
   const colours: string[] = [];
   const colourIndex = (b: Body) => {
@@ -76,6 +79,9 @@ export function to3mf(bodies: Body[]): Uint8Array {
   };
   const objects: string[] = [];
   const items: string[] = [];
+  const settings: string[] = [];
+  const meta = (key: string, value: string | number) =>
+    `<metadata key="${key}" value="${xml(String(value))}"/>`;
   // Bodies of one part copy together, the part first; hardware alone
   const groups = new Map<string, Body[]>();
   bodies.forEach((b, i) => {
@@ -85,6 +91,7 @@ export function to3mf(bodies: Body[]): Uint8Array {
   let id = 2;
   for (const group of groups.values()) {
     const ids: number[] = [];
+    const parts: string[] = [];
     for (const b of group) {
       const vs: string[] = [];
       for (let i = 0; i < b.positions.length; i += 3)
@@ -99,13 +106,20 @@ export function to3mf(bodies: Body[]): Uint8Array {
       objects.push(
         `<object id="${id}" type="model" name="${xml(copyName(b))}" pid="1" pindex="${colourIndex(b)}"><mesh><vertices>${vs.join('')}</vertices><triangles>${ts.join('')}</triangles></mesh></object>`,
       );
+      parts.push(
+        `<part id="${id}" subtype="normal_part">${meta('name', copyName(b))}${meta('extruder', colourIndex(b) + 1)}</part>`,
+      );
       ids.push(id++);
     }
-    if (ids.length === 1) items.push(`<item objectid="${ids[0]}"/>`);
-    else {
+    const head = `${meta('name', copyName(group[0]))}${meta('extruder', colourIndex(group[0]) + 1)}`;
+    if (ids.length === 1) {
+      items.push(`<item objectid="${ids[0]}"/>`);
+      settings.push(`<object id="${ids[0]}">${head}</object>`);
+    } else {
       objects.push(
         `<object id="${id}" type="model" name="${xml(copyName(group[0]))}"><components>${ids.map((i) => `<component objectid="${i}"/>`).join('')}</components></object>`,
       );
+      settings.push(`<object id="${id}">${head}${parts.join('')}</object>`);
       items.push(`<item objectid="${id++}"/>`);
     }
   }
@@ -131,7 +145,7 @@ export function to3mf(bodies: Body[]): Uint8Array {
     {
       name: '[Content_Types].xml',
       data: enc.encode(
-        '<?xml version="1.0" encoding="UTF-8"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/></Types>\n',
+        '<?xml version="1.0" encoding="UTF-8"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/><Default Extension="config" ContentType="text/xml"/></Types>\n',
       ),
     },
     {
@@ -141,6 +155,14 @@ export function to3mf(bodies: Body[]): Uint8Array {
       ),
     },
     { name: '3D/3dmodel.model', data: enc.encode(model) },
+    {
+      name: 'Metadata/model_settings.config',
+      data: enc.encode(
+        `<?xml version="1.0" encoding="UTF-8"?>
+<config>${settings.join('')}</config>
+`,
+      ),
+    },
   ]);
 }
 

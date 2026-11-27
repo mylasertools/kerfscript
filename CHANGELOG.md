@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+Fixes:
+
+- 3MF files open in OrcaSlicer, Bambu Studio and the slicers based on them
+  with each colour on its own filament, so the engraving and scoring print
+  in their colours instead of all on the first filament.
+
 ## 0.11.0 (2026-11-18)
 
 Language:
