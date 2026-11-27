@@ -215,6 +215,64 @@ test('STL, 3MF and GLB files hold the bodies', () => {
   assert.equal(toModel(r, 'stl').length, stl.length);
 });
 
+test('3MF files give each colour its own filament for Orca-based slicers', () => {
+  const r = render(
+    'hardware("steel", [5, 5, -5], [5, 5, 10], 2, label = "pin");\n' +
+      'part("lid", qty = 2, at = [[0, 0, 0], [50, 0, 0]]) { rect([40, 30]); engrave() translate([5, 5]) rect([10, 4]); }',
+  );
+  const bodies = meshBodies(r);
+  const zip = Buffer.from(to3mf(bodies)).toString('latin1');
+  assert.match(zip, /<Default Extension="config" ContentType="text\/xml"\/>/);
+  const model = zip.slice(zip.indexOf('<?xml', zip.indexOf('3D/3dmodel.model')));
+  const config = zip.slice(
+    zip.indexOf('<?xml', zip.indexOf('Metadata/model_settings.config')),
+    zip.indexOf('</config>') + 9,
+  );
+  // Filaments follow the order of the base materials
+  const objects = [...config.matchAll(/<object id="(\d+)">(.*?)<\/object>/g)];
+  const items = [...model.matchAll(/<item objectid="(\d+)"\/>/g)].map((m) => m[1]);
+  // One settings object per build item
+  assert.deepEqual(
+    objects.map((o) => o[1]),
+    items,
+  );
+  const ext = (s) => Number(/key="extruder" value="(\d+)"/.exec(s)[1]);
+  const seen = new Map();
+  for (const [, oid, body] of objects) {
+    const comps = /<object id="(\d+)"[^>]*><components>(.*?)<\/components>/.exec(
+      model.slice(model.indexOf(`<object id="${oid}"`)),
+    );
+    const parts = [...body.matchAll(/<part id="(\d+)" subtype="normal_part">(.*?)<\/part>/g)];
+    if (!comps) {
+      // A single mesh, as the hardware: only its own extruder
+      assert.equal(parts.length, 0);
+      continue;
+    }
+    // The parts are the component objects, each on its colour's filament
+    assert.deepEqual(
+      parts.map((p) => p[1]),
+      [...comps[2].matchAll(/objectid="(\d+)"/g)].map((m) => m[1]),
+    );
+    for (const [, pid, p] of parts) {
+      const pindex = Number(new RegExp(`<object id="${pid}"[^>]*pindex="(\\d+)"`).exec(model)[1]);
+      assert.equal(ext(p), pindex + 1);
+      const name = /key="name" value="([^"]*)"/.exec(p)[1].replace(/ \(\d+\)$/, '');
+      if (seen.has(name)) assert.equal(seen.get(name), ext(p), name);
+      seen.set(name, ext(p));
+    }
+  }
+  // The lid and its engraving on two filaments, both copies the same
+  assert.deepEqual(
+    [...seen.entries()],
+    [
+      ['lid', 1],
+      ['lid engrave', 2],
+    ],
+  );
+  assert.equal(objects.length, 3);
+  assert.ok(new Set(objects.map((o) => ext(o[2]))).size >= 2);
+});
+
 test('kerf render writes a 3D file by its extension', () => {
   const dir = mkdtempSync(join(tmpdir(), 'kerf-3d-'));
   const src = join(dir, 'm.kerf');

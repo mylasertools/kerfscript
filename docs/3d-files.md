@@ -55,11 +55,11 @@ stack with a part bent on a living hinge is laid out part by part, flat.
 
 ## Formats
 
-| File   | Units               | Holds                                                                                                                                                                 |
-| ------ | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.glb` | metres, y up (glTF) | a node and mesh for each body, with materials named after the sheet material or layer; each node's `extras` give its `kind` (part, mark, hardware), `part` and `copy` |
-| `.3mf` | millimetres, z up   | each part one object, with its engraving and scoring as coloured parts of it, so a slicer prints each in its own colour                                               |
-| `.stl` | millimetres, z up   | every body in one mesh, without colours                                                                                                                               |
+| File   | Units               | Holds                                                                                                                                                                                                              |
+| ------ | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `.glb` | metres, y up (glTF) | a node and mesh for each body, with materials named after the sheet material or layer; each node's `extras` give its `kind` (part, mark, hardware), `part` and `copy`                                              |
+| `.3mf` | millimetres, z up   | each part one object, with its engraving and scoring as coloured parts of it, so a slicer prints each in its own colour; each colour is its own filament in OrcaSlicer, Bambu Studio and the slicers based on them |
+| `.stl` | millimetres, z up   | every body in one mesh, without colours                                                                                                                                                                            |
 
 A GLB of the assembled model carries its lights (tealights, LEDs, bulbs
 and `light()`) as point lights (`KHR_lights_punctual`), each with its
