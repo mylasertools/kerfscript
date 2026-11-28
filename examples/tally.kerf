@@ -304,7 +304,6 @@ function drum_at(j, x) = [x, 0, shaft_at];
 // on the face, its x along the shaft
 function tile_at(j, ang) = [layer_x(j) + 2 * t, drum_face * cos(ang) - tile_width / 2 * sin(ang), shaft_at + drum_face * sin(ang) + tile_width / 2 * cos(ang)];
 crank_x = layer_x(-1);
-lid_x = -box_w - 3 * t;
 
 // Steps are numbered in the order they first run, so name them here in build order
 step("Glue the walls on the base and the bearing pad on the right wall") {}
@@ -358,11 +357,11 @@ if (output == "all" || output == "box") {
     part("Front", at = [-t, -box_front, t], rotate = [90, 0, 0]) front_panel();
     part("Back", at = [-t, box_back + t, t], rotate = [90, 0, 0]) back_panel();
   }
-  step("Glue the locators under the lid") {
-    // The lid is off, lying on the table against the left wall, pulled
-    // forward 50 mm so its name shows
-    part("Lid", at = [lid_x, -box_front - t - 50, t]) lid();
-    part("Lid locator", qty = 2, at = [[lid_x + t + 10, -box_front - 50, 0], [lid_x + t + 10, box_back - 58, 0]]) rect([box_w - 20, 8]);
+  // The lid sits on the walls, the count in its window; opened in the 3D
+  // view, it lifts off to show the drums
+  step("Glue the locators under the lid") slide([0, 0, 60]) {
+    part("Lid", at = [-t, -box_front - t, t + box_h]) lid();
+    part("Lid locator", qty = 2, at = [[10, -box_front, box_h], [10, box_back - 8, box_h]]) rect([box_w - 20, 8]);
   }
 }
 if (output == "all" || output == "coupon") part("Fit test", at = [0, -box_front - t - 70, 0]) coupon();

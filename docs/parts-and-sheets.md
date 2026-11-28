@@ -449,9 +449,10 @@ Close puts them back.
 
 - Points and directions are in the coordinates where `hinge()` or
   `slide()` is written: inside a `place()`, they move and turn with it.
-- Inside one another, the inner move happens first, the outer one after:
-  a flap hinged on a drawer turns, and the drawer with the turned flap
-  slides out.
+- Inside one another, the moves happen together, each a part of the way
+  at a time: a flap hinged on a drawer turns as the drawer slides out.
+  The inner move is measured where the part is closed, the outer one
+  carries it, turned, along with it.
 - A part glued on a moving part moves with it, after any move of its own.
 - Around shapes alone, as inside a part's shape, `hinge()` and `slide()`
   have nothing to move, and warn.

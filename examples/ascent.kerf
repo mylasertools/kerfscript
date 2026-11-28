@@ -240,8 +240,10 @@ if (output == "all" || output == "frame") {
   }
   step("Glue the cheeks onto the base with the gussets")
     part("Base", at = [0, 0, 0]) base();
+  // Opened in the 3D view, the gate hangs down off the loading port on its pivot
   step("Bolt the rear cheek, the shroud rings and the front cheek round the wheel, and pivot the gate on the front")
-    part("Loading gate", at = depth(cheek_gap / 2 + t, 0, -(R + 2 - D / 2)), rotate = facing()) gate();
+    hinge(depth(cheek_gap / 2 + t, D / 2 + 13, -(R + 2 - D / 2)), depth(cheek_gap / 2, D / 2 + 13, -(R + 2 - D / 2)), -90)
+      part("Loading gate", at = depth(cheek_gap / 2 + t, 0, -(R + 2 - D / 2)), rotate = facing()) gate();
   // Two behind the stand and two in front, at x = -50 and 50
   step("Glue the cheeks onto the base with the gussets")
     part("Gusset", qty = 4, at = [[-50 + t / 2, -cheek_gap / 2 - t, t], [50 + t / 2, -cheek_gap / 2 - t, t],
@@ -254,7 +256,8 @@ if (output == "all" || output == "chute") step("Glue in the chute floor and buil
   part("Chute floor", at = [(65 + 258) / 2 - t * sin(slope), 0, centre - (110 + 158.25) / 2 - t * cos(slope)], rotate = [0, slope, 0])
     rect([198.94, cheek_gap], center = true);
   part("Catch floor", at = [283, 0, floor_top - t]) catch_square();
-  part("Catch lid", at = [283, 0, floor_top + 22]) catch_square();
+  // Lifted off in the 3D view, to see the marbles in the catch
+  slide([0, 0, 40]) part("Catch lid", at = [283, 0, floor_top + 22]) catch_square();
   part("Catch side wall", qty = 2, at = [[283, 25, floor_top + 11], [283, 3 - 25, floor_top + 11]], rotate = facing()) catch_wall(50);
   part("Catch end wall", at = [308 - t, 0, floor_top + 11], rotate = across) catch_wall(50 - 2 * t);
   // From the base up to the underside of the catch floor

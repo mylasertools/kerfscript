@@ -18,7 +18,7 @@ height = 80; // [60:5:180]
 lock_at = "front"; // [front:On the front, inside:Inside the box]
 // How far the bolt moves
 throw = 7; // [5:0.5:10]
-// Show the lock locked
+// Show the lock locked; unlocked, the lid lifts off in the 3D view
 locked = true;
 
 /* [Material] */
@@ -76,23 +76,28 @@ step(inside
     : "Glue the lock on the front: the base and the cam hub, the frame, the cam and the bolt, then the plate")
   lock_frame() material(name = "walnut") cam_lock(throw, locked = locked, name = "Lock", key = false, ring = !inside);
 step(inside ? "Glue the insert under the lid, then the keeper under the insert" : "Glue the insert and the keeper under the lid") {
-  part("Lid", at = [0, -over, height], slots = inside ? [] : ["Keeper"]) rect([width, depth + over], r = 3);
-  part("Lid insert", glue = "Lid", face = "bottom", at = [t + 0.3, over + t + 0.3, 0], slots = inside ? ["Keeper"] : [])
-    rect([width - 2 * t - 0.6, depth - 2 * t - 0.6], r = 1);
-  // The keeper lies beside the lock, three layers in the lock's planes,
-  // the pocket through all three, open towards the bolt, so the lid's play
-  // never pinches the nose
-  module keeper_layer(tab) difference() {
-    union() {
-      rect([kw, kt - kb]);
-      if (tab) translate([kw / 2 - 3, kt - kb - 0.01]) rect([6, t + 0.01]);
+  module lid() {
+    part("Lid", at = [0, -over, height], slots = inside ? [] : ["Keeper"]) rect([width, depth + over], r = 3);
+    part("Lid insert", glue = "Lid", face = "bottom", at = [t + 0.3, over + t + 0.3, 0], slots = inside ? ["Keeper"] : [])
+      rect([width - 2 * t - 0.6, depth - 2 * t - 0.6], r = 1);
+    // The keeper lies beside the lock, three layers in the lock's planes,
+    // the pocket through all three, open towards the bolt, so the lid's play
+    // never pinches the nose
+    module keeper_layer(tab) difference() {
+      union() {
+        rect([kw, kt - kb]);
+        if (tab) translate([kw / 2 - 3, kt - kb - 0.01]) rect([6, t + 0.01]);
+      }
+      translate([-1, zc - kb - pocket[1] / 2]) rect([pocket[0] + 1, pocket[1]]);
     }
-    translate([-1, zc - kb - pocket[1] / 2]) rect([pocket[0] + 1, pocket[1]]);
+    material(name = "walnut") {
+      part("Keeper", at = [x0, ys - t, kb], rotate = [90, 0, 0]) keeper_layer(true);
+      part("Keeper side", qty = 2, at = [[x0, ys, kb], [x0, ys - 2 * t, kb]], rotate = [90, 0, 0]) keeper_layer(false);
+    }
   }
-  material(name = "walnut") {
-    part("Keeper", at = [x0, ys - t, kb], rotate = [90, 0, 0]) keeper_layer(true);
-    part("Keeper side", qty = 2, at = [[x0, ys, kb], [x0, ys - 2 * t, kb]], rotate = [90, 0, 0]) keeper_layer(false);
-  }
+  // Unlocked, the lid lifts off in the 3D view; locked, the bolt holds it
+  if (locked) lid();
+  else slide([0, 0, 60]) lid();
 }
 step(inside ? "Turn the key in the keyhole to lock it" : "Turn the key to lock it")
   lock_frame() material(name = "walnut") part("Key", at = [0, t / 2, inside ? t : 0], rotate = [90, 0, 0]) lock_key();
