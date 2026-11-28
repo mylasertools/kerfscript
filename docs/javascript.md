@@ -94,11 +94,13 @@ A part, hardware item or light inside `hinge()` or `slide()` has `moves`,
 how it moves when the model is opened, in assembled coordinates and
 innermost first: `{ turn: { from, to, angle } }`, a turn of `angle` degrees
 about the line from `from` to `to`, right-handed about that direction, or
-`{ slide: [x, y, z] }`. `moveMatrix(moves, t)` gives the 4 × 4 matrix, in
-the same row-major order as `matrix`, that puts it where it is when the
-model is opened by `t`, from 0 closed to 1 open: put it before the part's
-`matrix`, or before a hardware item's or light's own placement. The type
-of a move is exported as `Move`.
+`{ slide: [x, y, z] }`. A move inside others, or round others, has
+`span: [start, end]`, the part of the opening it moves in: nested moves
+happen one after another, the inner first. `moveMatrix(moves, t)` gives
+the 4 × 4 matrix, in the same row-major order as `matrix`, that puts it
+where it is when the model is opened by `t`, from 0 closed to 1 open: put
+it before the part's `matrix`, or before a hardware item's or light's own
+placement. The type of a move is exported as `Move`.
 
 ```js
 import { render, moveMatrix } from '@mylasertools/kerfscript';

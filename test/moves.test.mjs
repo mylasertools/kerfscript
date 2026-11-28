@@ -235,3 +235,54 @@ test('library drawers slide out and library lids lift off when opened', () => {
     );
   }
 });
+
+test('nested moves happen one after another, the inner first', async () => {
+  const { moveMatrix } = await import('../dist/index.js');
+  const r = render(`
+    slide([0, 0, 20]) slide([0, 15, 0]) part("hook", at = [0, 10, 6]) rect([40, 20]);
+  `);
+  const [forward, up] = r.assembly[0].moves;
+  assert.deepEqual(forward.span, [0, 0.5]);
+  assert.deepEqual(up.span, [0.5, 1]);
+  const at = (t) => {
+    const m = moveMatrix(r.assembly[0].moves, t);
+    return [m[3], m[7], m[11]];
+  };
+  assert.ok(close(at(0.25), [0, 7.5, 0]));
+  assert.ok(close(at(0.5), [0, 15, 0]));
+  assert.ok(close(at(0.75), [0, 15, 10]));
+  assert.ok(close(at(1), [0, 15, 20]));
+});
+
+test('a drawer and the flap hinged on it keep together, the flap turning first', () => {
+  const r = render(`
+    slide([0, -50, 0]) {
+      part("drawer", at = [0, 0, 0]) rect([60, 40]);
+      hinge([0, 0, 3], [60, 0, 3], 90) part("flap", at = [0, -20, 3]) rect([60, 20]);
+    }
+  `);
+  const drawer = r.assembly.find((p) => p.name === 'drawer').moves;
+  const flap = r.assembly.find((p) => p.name === 'flap').moves;
+  assert.deepEqual(flap[0].span, [0, 0.5]);
+  // The same slide, at the same time, for both
+  assert.deepEqual(drawer, [flap[1]]);
+  assert.deepEqual(drawer[0].span, [0.5, 1]);
+});
+
+test('moves that are not nested, or round nothing that moves, open all along', () => {
+  const r = render(`
+    slide([0, 0, 10]) part("a", at = [0, 0, 0]) rect([10, 10]);
+    slide([0, 0, 10]) { if (false) slide([5, 0, 0]) part("x", at = [0, 0, 0]) rect([5, 5]); part("b", at = [50, 0, 0]) rect([10, 10]); }
+  `);
+  for (const p of r.assembly) assert.equal(p.moves[0].span, undefined);
+});
+
+test('a hook under a ledge opens when it slides out before lifting, and not when it only lifts', () => {
+  const model = (moves) => `
+    part("ledge", at = [0, 0, 10]) rect([40, 20]);
+    ${moves} part("hook", at = [0, 10, 6]) rect([40, 20]);
+  `;
+  const runInto = (src) => render(src).warnings.filter((w) => w.includes('when the model is opened'));
+  assert.equal(runInto(model('slide([0, 0, 20])')).length, 1);
+  assert.deepEqual(runInto(model('slide([0, 0, 20]) slide([0, 15, 0])')), []);
+});

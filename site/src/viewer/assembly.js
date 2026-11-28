@@ -573,8 +573,15 @@ export function createAssemblyView(el, options = {}) {
     }
     const from = open;
     const start = performance.now();
+    // Moves one after another take longer: 0.9 s for each stage
+    const stages = Math.max(
+      1,
+      ...items.flatMap((it) =>
+        (it.moves ?? []).map((m) => (m.span ? Math.round(1 / (m.span[1] - m.span[0])) : 1)),
+      ),
+    );
     const tick = (time) => {
-      const u = Math.min(1, (time - start) / 900);
+      const u = Math.min(1, (time - start) / (900 * stages));
       open = from + (to - from) * (u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2);
       pose();
       opening = u < 1 ? requestAnimationFrame(tick) : null;

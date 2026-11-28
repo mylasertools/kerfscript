@@ -9,6 +9,14 @@ New:
   and `flex_box()` from `kerf/hinge` lift off. Parts these make now have
   `moves`, and opening them is checked like any other.
 
+Changes:
+
+- `hinge()` and `slide()` inside one another now move one after another,
+  the inner first, not all at once: a lid hooked under a ledge slides out,
+  then lifts. Each such move has a `span`, the part of the opening it
+  moves in, and `moveMatrix()` follows it. Moves not inside one another
+  open together as before.
+
 ## 0.12.0 (2026-11-28)
 
 New:

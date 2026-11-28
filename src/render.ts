@@ -2327,9 +2327,19 @@ function openingClashes(
   const key = (q: AssemblyPart) => JSON.stringify(partOf(q).moves ?? []);
   const moving = solids.filter((q) => partOf(q).moves?.length);
   if (!moving.length) return [];
-  // Steps of about a millimetre of travel at the edge that goes furthest
-  const travel = Math.max(...moving.map((q) => moveTravel(partOf(q).moves as Move[], worldBox(q))));
-  const n = Math.min(120, Math.max(8, Math.ceil(travel)));
+  // Steps of about a millimetre of travel at the edge that goes furthest,
+  // finer for a move that has only part of the opening to make it in
+  const travel = Math.max(
+    ...moving.map((q) =>
+      Math.max(
+        ...(partOf(q).moves as Move[]).map((m) => {
+          const [s0, s1] = m.span ?? [0, 1];
+          return moveTravel([m], worldBox(q)) / Math.max(s1 - s0, 1e-3);
+        }),
+      ),
+    ),
+  );
+  const n = Math.min(240, Math.max(8, Math.ceil(travel)));
   type Hit = { a: AssemblyPart; b: AssemblyPart; t: number; at: number[] };
   // By the parts themselves: two parts may share a name and copy number
   const hits = new Map<AssemblyPart, Map<AssemblyPart, Hit>>();

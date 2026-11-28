@@ -12239,10 +12239,10 @@
     "qty": 1,
     "size": [
      252.8,
-     166.8
+     164.2
     ],
     "pieces": 1,
-    "cut": 1082,
+    "cut": 1077,
     "thickness": 3,
     "kerf": 0.15,
     "material": "plywood"
@@ -12365,32 +12365,6 @@
     "material": "plywood"
    },
    {
-    "name": "Fence spacer",
-    "qty": 4,
-    "size": [
-     14,
-     14
-    ],
-    "pieces": 1,
-    "cut": 63,
-    "thickness": 3,
-    "kerf": 0.15,
-    "material": "plywood"
-   },
-   {
-    "name": "Fence keeper",
-    "qty": 2,
-    "size": [
-     16,
-     16
-    ],
-    "pieces": 1,
-    "cut": 61,
-    "thickness": 3,
-    "kerf": 0.15,
-    "material": "plywood"
-   },
-   {
     "name": "Knob stem",
     "qty": 3,
     "size": [
@@ -12417,6 +12391,32 @@
     "material": "plywood"
    },
    {
+    "name": "Fence spacer",
+    "qty": 4,
+    "size": [
+     14,
+     14
+    ],
+    "pieces": 1,
+    "cut": 63,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
+    "name": "Fence keeper",
+    "qty": 2,
+    "size": [
+     16,
+     16
+    ],
+    "pieces": 1,
+    "cut": 61,
+    "thickness": 3,
+    "kerf": 0.15,
+    "material": "plywood"
+   },
+   {
     "name": "Fit test",
     "qty": 1,
     "size": [
@@ -12437,7 +12437,7 @@
     "length": 2058.1
    },
    "cut": {
-    "area": 261059.87,
+    "area": 260402.2,
     "length": 0
    }
   },

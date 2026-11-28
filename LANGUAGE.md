@@ -375,7 +375,8 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
 - `slide(by) { ... }`: the parts and hardware inside move by `by` when the
   model is opened: a drawer, a sliding lid, a lid lifted off. Both take the
   placement of the `place()` round them, and `render()` returns each moving
-  part's, hardware item's and light's `moves`, innermost first. A part glued
+  part's, hardware item's and light's `moves`, innermost first; nested,
+  they happen one after another, the inner first. A part glued
   on a moving part moves with it, after any move of its own. The 3D view has
   an Open button for them, and the model is followed as it opens: parts that
   run into one another on the way, a lid turned the wrong way into its box

@@ -585,9 +585,17 @@ part's own `at` is. A part's `moves` list the enclosing `hinge()` and
 blocks that enclose both it and its host, which its host's moves already
 have; a chain of glued parts follows the whole chain, after every part has
 run. A turn is right-handed about the direction from `from` to `to`;
-`from` equal to `to` is an error. Opened by `t` from 0 to 1, each move
-applies a fraction `t` of the way: a turn by `t * angle`, a slide by
-`t * by`. Cases: `parts/*`.
+`from` equal to `to` is an error.
+
+Nested blocks move one after another. A block's level is 1 when no block
+inside it gives anything a move, else one more than the highest level
+inside it. Each outermost block, at level L, has the whole opening: a
+block inside it at level k moves from (k - 1) / L to k / L of the way,
+which is its `span`, left out when it is [0, 1]. Opened by `t` from 0 to
+1, a move with span [s0, s1] has gone f = clamp((t - s0) / (s1 - s0), 0,
+
+1. of the way: a turn by `f * angle`, a slide by `f * by`. Cases:
+   `parts/*`.
 
 ## Known differences
 

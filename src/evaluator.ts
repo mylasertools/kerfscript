@@ -420,6 +420,9 @@ export class Evaluator {
   // The hinge() and slide() blocks round the current statement, outermost
   // first, in assembled coordinates
   private moves: Move[] = [];
+  // Each hinge() or slide() as it runs: the one round it, the ones inside
+  // it, and whether it moves anything, for when in the opening it moves
+  private blocks = new Map<Move, { id: number; parent?: Move; inside: Move[]; used: boolean }>();
   readonly stepNames: string[] = [];
   // Inside step(substeps = false): inner steps add to it
   private stepFolded = false;
@@ -455,6 +458,7 @@ export class Evaluator {
     for (const [k, v] of Object.entries(defaults)) g.vars.set(k, v);
     const top = new Env(g);
     const shape = this.block(program.body, top, true);
+    this.timeMoves();
     const scale = top.vars.get('$scale');
     if (this.unscaled && scale !== undefined && scale !== 1)
       this.warn(
@@ -612,7 +616,7 @@ export class Evaluator {
     const text = out.join('');
     // The layers as they are defined now: a child made under other layer
     // modes (occlude() and paint() follow them) is not the same shape
-    return `${this.frame.join(',')}|${this.step}|${this.stepFolded}|${JSON.stringify(this.moves)}|${this.layerDefs}|${text}`;
+    return `${this.frame.join(',')}|${this.step}|${this.stepFolded}|${this.moves.map((m) => this.blocks.get(m)?.id).join(',')}|${this.layerDefs}|${text}`;
   }
 
   // A count of the things a statement can make besides its shape
@@ -1446,6 +1450,9 @@ export class Evaluator {
   private moving(name: string, move: Move, c: BuiltinCtx): Shape {
     const outer = this.moves;
     const things = this.hardware.length + this.lights.length;
+    const parent = outer[outer.length - 1];
+    this.blocks.set(move, { id: this.blocks.size, parent, inside: [], used: false });
+    if (parent) this.blocks.get(parent)!.inside.push(move);
     this.moves = [...outer, move];
     let out: Shape;
     try {
@@ -1465,7 +1472,33 @@ export class Evaluator {
 
   // The moves round a part, innermost first, the order they apply in
   private ownMoves(): Move[] {
+    for (const m of this.moves) this.blocks.get(m)!.used = true;
     return [...this.moves].reverse();
+  }
+
+  // When each hinge() and slide() moves: one with none inside it all
+  // along; one round others after them. A block's level is 1 with no
+  // moving blocks inside, else one more than the highest inside it; the
+  // outermost block of each nest, at level L, shares the opening out, so
+  // a block at level k moves from (k - 1) / L to k / L of the way.
+  private timeMoves() {
+    const level = new Map<Move, number>();
+    const of = (m: Move): number => {
+      const known = level.get(m);
+      if (known !== undefined) return known;
+      const b = this.blocks.get(m)!;
+      const k = 1 + Math.max(0, ...b.inside.filter((i) => this.blocks.get(i)!.used).map(of));
+      level.set(m, k);
+      return k;
+    };
+    const span = (m: Move, L: number) => {
+      const b = this.blocks.get(m)!;
+      if (!b.used) return;
+      const k = of(m);
+      if (L > 1) m.span = [(k - 1) / L, k / L];
+      for (const i of b.inside) span(i, L);
+    };
+    for (const [m, b] of this.blocks) if (!b.parent && b.used) span(m, of(m));
   }
 
   private vec3(v: Value, name: string): Vec3 {

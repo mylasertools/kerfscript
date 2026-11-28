@@ -25,7 +25,11 @@ export interface Placement {
 // line from `from` to `to` by `angle` degrees (right-handed about that
 // direction), or a slide by a vector, both in assembled coordinates. A
 // part's moves apply in order, the innermost hinge() or slide() first.
-export type Move = { turn: { from: Vec3; to: Vec3; angle: number } } | { slide: Vec3 };
+// `span` is when in the opening it moves, from 0 closed to 1 open: a
+// hinge() or slide() round others waits for them. Without it, all along.
+export type Move = ({ turn: { from: Vec3; to: Vec3; angle: number } } | { slide: Vec3 }) & {
+  span?: [number, number];
+};
 
 export interface AssemblyPart {
   name: string;
@@ -651,20 +655,24 @@ function turnAbout(at: Vec3, u: Vec3, deg: number): number[] {
 /**
  * Where a part is when the model is opened by `t`, 0 closed and 1 fully
  * open: the matrix to put before its placement. Its moves, from hinge() and
- * slide(), apply innermost first, each a fraction `t` of the way.
+ * slide(), apply innermost first, each as far as it has gone by `t` in its
+ * span: a move with span [0.5, 1] waits till half open, then goes all the way.
  */
 export function moveMatrix(moves: Move[], t: number): number[] {
   let m = translation(0, 0, 0);
   for (const move of moves) {
+    const [s0, s1] = move.span ?? [0, 1];
+    const f = s1 > s0 ? Math.min(1, Math.max(0, (t - s0) / (s1 - s0))) : t >= s1 ? 1 : 0;
+    if (f === 0) continue;
     if ('slide' in move) {
       const [x, y, z] = move.slide;
-      m = multiply(translation(x * t, y * t, z * t), m);
+      m = multiply(translation(x * f, y * f, z * f), m);
     } else {
       const { from, to, angle } = move.turn;
       const d: Vec3 = [to[0] - from[0], to[1] - from[1], to[2] - from[2]];
       const l = Math.hypot(...d);
       if (l === 0) continue;
-      m = multiply(turnAbout(from, [d[0] / l, d[1] / l, d[2] / l], angle * t), m);
+      m = multiply(turnAbout(from, [d[0] / l, d[1] / l, d[2] / l], angle * f), m);
     }
   }
   return m;
