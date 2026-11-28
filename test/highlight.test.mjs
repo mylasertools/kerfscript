@@ -16,7 +16,7 @@ test('definitions, layers, constants and calls', () => {
     'builtin:rect',
     'constant:PI',
   ]);
-  assert.deepEqual(kinds('f = function(x) hinge(x);'), ['keyword:function', 'call:hinge']);
+  assert.deepEqual(kinds('f = function(x) swing(x);'), ['keyword:function', 'call:swing']);
 });
 
 test('modifiers start a statement, a star after a value multiplies', () => {

@@ -643,6 +643,26 @@ export const SIGNATURES: Signature[] = [
     doc: 'Place the parts inside in the assembled view, with their own placements inside this one',
   },
   {
+    name: 'hinge',
+    kind: 'module',
+    params: [
+      p('from', 'One end of the line it turns about, [x, y, z]'),
+      p('to', 'The other end of that line, [x, y, z]'),
+      p('angle', 'How far it turns when opened, in degrees, right-handed about from to to', '90'),
+    ],
+    children: true,
+    section: 'Parts and sheets',
+    doc: 'The parts and hardware inside turn about a hinge line when the model is opened in a 3D view: a lid, a door, a flap',
+  },
+  {
+    name: 'slide',
+    kind: 'module',
+    params: [p('by', 'How far and which way it moves when opened, [x, y, z]')],
+    children: true,
+    section: 'Parts and sheets',
+    doc: 'The parts and hardware inside slide when the model is opened in a 3D view: a drawer, a sliding lid, a lid lifted off',
+  },
+  {
     name: 'call',
     kind: 'module',
     params: [p('name', 'The name of a module, as "roses"')],

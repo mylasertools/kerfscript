@@ -1,5 +1,35 @@
 # Changelog
 
+## Unreleased
+
+New:
+
+- `hinge(from, to, angle) { ... }` and `slide(by) { ... }` say how parts and
+  hardware move when the model is opened: a lid turns on its hinge line, a
+  drawer slides out. `render()` returns them as `moves` on each moving part,
+  hardware item and light, in assembled coordinates. The 3D view has an
+  Open button that turns the lids and slides out the drawers. The assembly
+  is still built and checked closed.
+- Opening the model is checked too: parts that run into one another on the
+  way, such as a lid turned the wrong way into its box or a drawer slid
+  through a wall, get a warning saying how far open and where.
+- A part glued on a moving part, or on a part glued on one, moves with it.
+- `hinge()` or `slide()` round shapes alone, as inside a part's shape,
+  warns that nothing moves.
+- `moveMatrix(moves, t)` gives where a moving part is when the model is
+  opened by `t`, for 3D views of your own.
+- The drawer stack example opens its drawers.
+- A module of your own named `hinge` or `slide` still runs as before, with
+  a warning that it hides the built-in.
+
+Fixes:
+
+- In the 3D view, a ball of hardware (`sides = 0`) now drops in with its
+  step like the rest.
+- A placed part of cut lines alone, such as a `living_hinge()` with no
+  `rect()` under it, was left out of the assembly without a word. It now
+  warns that it has no outline and says how to give it one.
+
 ## 0.11.1 (2026-11-27)
 
 Fixes:

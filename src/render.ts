@@ -11,12 +11,16 @@ import {
   foldPanels,
   invert,
   overlapPoint,
+  moveMatrix,
+  moveTravel,
   multiply,
   placementMatrix,
   runOf,
   translation,
+  worldBox,
   type AssemblyPart,
   type Mark,
+  type Move,
 } from './assembly.js';
 import { slotsFor, type Solid } from './slots.js';
 import { boreFor, FITS } from './bores.js';
@@ -522,6 +526,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
             ...(p.bends && { bends: p.bends }),
             ...(p.folds && { folds: p.folds }),
             ...(p.step && { step: p.step }),
+            ...(p.moves && { moves: p.moves }),
             ...(p.stack && { stack: p.stack }),
             ...(p.pressFit && { pressFit: true }),
           };
@@ -545,6 +550,12 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
             ...(p.step && { step: p.step }),
           });
     }
+    // Placed, but with no outline it has no sheet to show: only cut lines,
+    // as a living_hinge() or line() alone draws
+    else if (p.placements?.length && [...layers.values()].some((l) => l.lines.length))
+      warnings.push(
+        `Part "${p.name}" has no outline to cut it out, only lines, so it is not in the assembly. Draw its outline too, as rect() under living_hinge(), or use flex_rect().`,
+      );
     const split = pieces(material);
     const n = split.length;
     // pieces = "any" or the number it cuts into: meant to be loose
@@ -667,6 +678,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       if (on !== undefined) assembly[index].glued = on;
     });
   }
+  glueMoves(assembly);
 
   const pieceOf = new Map<AssemblyPart, AssemblyPart>();
   const solids = assembly
@@ -702,6 +714,15 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
   }
   if (clashes.length > 5)
     warnings.push(`${clashes.length - 5} more pairs of parts collide in the assembly.`);
+  // Opening the model: the parts that move must not run into the others
+  warnings.push(
+    ...openingClashes(
+      solids,
+      (q) => pieceOf.get(q) ?? q,
+      (a, b) => pressed(a, b) || pressed(b, a) || clashes.some(([c, d]) => c === a && d === b),
+      limits.maxCollisionPairs,
+    ),
+  );
   // $stands = true: a model meant to stand tips over if its weight is not
   // over what it stands on
   if (g('$stands') === true) {
@@ -2255,4 +2276,119 @@ function inPoly(p: [number, number][], x: number, y: number): boolean {
     if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
   }
   return c;
+}
+
+// A part glued on a moving part moves with it: its own moves, then all its
+// host's, leaving out the hinge() and slide() blocks round both, which the
+// host's moves already have. A chain of glued parts follows its whole chain.
+function glueMoves(assembly: AssemblyPart[]): void {
+  const own = assembly.map((p) => p.moves ?? []);
+  const key = (m: Move) => JSON.stringify(m);
+  const done = new Map<number, Move[]>();
+  const resolve = (i: number, seen: Set<number>): Move[] => {
+    const known = done.get(i);
+    if (known) return known;
+    const host = assembly[i].glued;
+    let moves = own[i];
+    if (host !== undefined && !seen.has(host)) {
+      seen.add(i);
+      const outer = resolve(host, seen);
+      // The blocks round both are at the end of both lists
+      let n = 0;
+      const h = own[host];
+      while (
+        n < moves.length &&
+        n < h.length &&
+        key(moves[moves.length - 1 - n]) === key(h[h.length - 1 - n])
+      )
+        n++;
+      moves = [...moves.slice(0, moves.length - n), ...outer];
+    }
+    done.set(i, moves);
+    return moves;
+  };
+  assembly.forEach((p, i) => {
+    const moves = resolve(i, new Set([i]));
+    if (moves.length) p.moves = moves;
+    else delete p.moves;
+  });
+}
+
+// Follow the model as it opens, a little at a time, and find the parts that
+// run into one another on the way: a lid that turns down into the box, a
+// drawer that slides through a wall. Only parts that move differently can
+// meet; `skip` leaves out pairs that may touch or already collide closed.
+function openingClashes(
+  solids: AssemblyPart[],
+  partOf: (piece: AssemblyPart) => AssemblyPart,
+  skip: (a: AssemblyPart, b: AssemblyPart) => boolean,
+  maxPairs: number,
+): string[] {
+  const key = (q: AssemblyPart) => JSON.stringify(partOf(q).moves ?? []);
+  const moving = solids.filter((q) => partOf(q).moves?.length);
+  if (!moving.length) return [];
+  // Steps of about a millimetre of travel at the edge that goes furthest
+  const travel = Math.max(...moving.map((q) => moveTravel(partOf(q).moves as Move[], worldBox(q))));
+  const n = Math.min(120, Math.max(8, Math.ceil(travel)));
+  type Hit = { a: AssemblyPart; b: AssemblyPart; t: number; at: number[] };
+  // By the parts themselves: two parts may share a name and copy number
+  const hits = new Map<AssemblyPart, Map<AssemblyPart, Hit>>();
+  const hit = (a: AssemblyPart, b: AssemblyPart) => hits.get(a)?.get(b) ?? hits.get(b)?.get(a);
+  const all = () => [...hits.values()].flatMap((m) => [...m.values()]);
+  for (let i = 1; i <= n; i++) {
+    const t = i / n;
+    const moved = new Map<AssemblyPart, AssemblyPart>();
+    const placed = solids.map((q) => {
+      const moves = partOf(q).moves;
+      const r = moves?.length ? { ...q, matrix: multiply(moveMatrix(moves, t), q.matrix) } : q;
+      moved.set(r, q);
+      return r;
+    });
+    const { found, complete } = collisions(
+      placed,
+      maxPairs,
+      undefined,
+      undefined,
+      undefined,
+      (a, b) => {
+        const [pa, pb] = [partOf(moved.get(a)!), partOf(moved.get(b)!)];
+        return (
+          pa !== pb &&
+          key(moved.get(a)!) !== key(moved.get(b)!) &&
+          !hit(pa, pb) &&
+          !skip(pa, pb) &&
+          !skip(pb, pa)
+        );
+      },
+    );
+    for (const [a, b, p] of found) {
+      const [pa, pb] = [partOf(moved.get(a)!), partOf(moved.get(b)!)];
+      if (hit(pa, pb)) continue;
+      if (!hits.has(pa)) hits.set(pa, new Map());
+      hits.get(pa)!.set(pb, { a: pa, b: pb, t, at: (overlapPoint(a, b) ?? p).map(round2) });
+    }
+    if (!complete)
+      return [
+        ...openingReport(all()),
+        `Opening the model touches more than ${maxPairs} pairs of parts, the limit, so it was checked only up to ${Math.round(t * 100)}% open.`,
+      ];
+  }
+  return openingReport(all());
+}
+
+function openingReport(
+  hits: { a: AssemblyPart; b: AssemblyPart; t: number; at: number[] }[],
+): string[] {
+  const name = (p: AssemblyPart) => `"${p.name}"${p.copy > 1 ? ` (copy ${p.copy})` : ''}`;
+  const out = hits
+    .slice(0, 5)
+    .map(
+      ({ a, b, t, at }) =>
+        `Parts ${name(a)} and ${name(b)} run into each other when the model is opened, ${t >= 1 ? 'fully open' : `about ${Math.max(1, Math.round(t * 100))}% of the way`}, around [${at.join(', ')}]. Check the hinge line, the angle and which way it turns, or how far it slides.`,
+    );
+  if (hits.length > 5)
+    out.push(
+      `${hits.length - 5} more pairs of parts run into each other when the model is opened.`,
+    );
+  return out;
 }

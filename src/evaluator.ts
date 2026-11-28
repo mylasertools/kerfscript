@@ -46,6 +46,7 @@ import {
   multiply as mul4,
   placementMatrix,
   translation,
+  type Move,
   type Placement,
   type Vec3,
 } from './assembly.js';
@@ -138,6 +139,8 @@ export interface HardwareItem {
   label?: string;
   // Its weight in grams, for the check that the model stands
   mass?: number;
+  // How it moves when the model is opened, from hinge() and slide()
+  moves?: Move[];
 }
 
 export const DEFAULT_LAYERS: LayerDef[] = [
@@ -372,6 +375,8 @@ function distance(a: string, b: string): number {
 interface BuiltinCtx {
   args: Args;
   env: Env;
+  // Where it is called, for warnings
+  pos: Pos;
   children: () => Shape;
   childList: () => Shape[];
   // The children one at a time, calling after() with each before the next
@@ -412,6 +417,9 @@ export class Evaluator {
   // The 3D placement place() blocks build up, and the current step
   private frame: number[] = IDENTITY4;
   private step = 0;
+  // The hinge() and slide() blocks round the current statement, outermost
+  // first, in assembled coordinates
+  private moves: Move[] = [];
   readonly stepNames: string[] = [];
   // Inside step(substeps = false): inner steps add to it
   private stepFolded = false;
@@ -604,7 +612,7 @@ export class Evaluator {
     const text = out.join('');
     // The layers as they are defined now: a child made under other layer
     // modes (occlude() and paint() follow them) is not the same shape
-    return `${this.frame.join(',')}|${this.step}|${this.stepFolded}|${this.layerDefs}|${text}`;
+    return `${this.frame.join(',')}|${this.step}|${this.stepFolded}|${JSON.stringify(this.moves)}|${this.layerDefs}|${text}`;
   }
 
   // A count of the things a statement can make besides its shape
@@ -703,6 +711,7 @@ export class Evaluator {
         return this.builtins.intersection({
           args: { pos: [], named: new Map(), all: [], at: s.pos },
           env,
+          pos: s.pos,
           children: () => merge(shapes),
           childList: () => shapes,
           childSeq: () => shapes,
@@ -870,6 +879,7 @@ export class Evaluator {
     const ctx: BuiltinCtx = {
       args,
       env: callEnv,
+      pos: s.pos,
       children: () => (s.children.length ? this.block(s.children, childEnv()) : emptyShape()),
       childList: () => {
         const e = childEnv();
@@ -1431,6 +1441,31 @@ export class Evaluator {
     if (Array.isArray(v) && ok(v[0]) && (v[1] === undefined || ok(v[1])))
       return [v[0] as number, (v[1] as number | undefined) ?? 0];
     throw new Error(`${name} must be a number or [x, y], got ${show(v)}`);
+  }
+
+  private moving(name: string, move: Move, c: BuiltinCtx): Shape {
+    const outer = this.moves;
+    const things = this.hardware.length + this.lights.length;
+    this.moves = [...outer, move];
+    let out: Shape;
+    try {
+      out = c.children();
+    } finally {
+      this.moves = outer;
+    }
+    // Shapes round nothing that moves: most likely inside a part, where
+    // it has nothing to move
+    const drawn = [...out.layers.values()].some((l) => l.regions.length || l.lines.length);
+    if (drawn && !out.parts.length && this.hardware.length + this.lights.length === things)
+      this.warn(
+        `${name}() moves only parts, hardware and lights, and has none inside, so nothing moves; put it round part() (${where(c.pos, false)})`,
+      );
+    return out;
+  }
+
+  // The moves round a part, innermost first, the order they apply in
+  private ownMoves(): Move[] {
+    return [...this.moves].reverse();
   }
 
   private vec3(v: Value, name: string): Vec3 {
@@ -2971,6 +3006,7 @@ export class Evaluator {
             ...(bores ? { bores, fit } : {}),
             ...(halving ? { halving, clearance } : {}),
             ...(this.step ? { step: this.step } : {}),
+            ...(this.moves.length ? { moves: this.ownMoves() } : {}),
             ...(glue !== undefined && { glue: { host: glue, face: face as 'top' | 'bottom' } }),
             ...(flip && { mirrored: true }),
             ...(!all && { copies }),
@@ -2999,6 +3035,26 @@ export class Evaluator {
         } finally {
           this.frame = outer;
         }
+      },
+      // The parts and hardware inside turn about the line from `from` to
+      // `to` by `angle` degrees when the model is opened in a 3D view
+      hinge: (c) => {
+        const from = this.vec3(this.arg(c.args, 'from', 0), 'from');
+        const to = this.vec3(this.arg(c.args, 'to', 1), 'to');
+        const angle = this.num(this.arg(c.args, 'angle', 2, 90), 'hinge', 'angle');
+        if (from.every((v, i) => Math.abs(v - to[i]) < 1e-9))
+          throw new Error('hinge(): from and to must be different points, the line it turns about');
+        const f = this.frame;
+        return this.moving(
+          'hinge',
+          { turn: { from: framePoint(f, from), to: framePoint(f, to), angle } },
+          c,
+        );
+      },
+      // The parts and hardware inside slide by `by` when the model is opened
+      slide: (c) => {
+        const by = this.vec3(this.arg(c.args, 'by', 0), 'by');
+        return this.moving('slide', { slide: frameVector(this.frame, by) }, c);
       },
       // An assembly step: the parts and hardware inside are added in it
       step: (c) => {
@@ -3101,6 +3157,7 @@ export class Evaluator {
           step: this.step,
           ...(label !== undefined ? { label: toText(label) } : {}),
           ...(mass !== undefined && { mass }),
+          ...(this.moves.length ? { moves: this.ownMoves() } : {}),
         };
         this.hardware.push(item);
         // Tealights, LEDs and bulbs light the model
@@ -3127,20 +3184,16 @@ export class Evaluator {
         if (this.lights.length >= this.limits.maxParts)
           throw new Error(`more than ${this.limits.maxParts} lights, the limit`);
         const f = this.frame;
-        const pt = (p: Vec3): Vec3 => [
-          f[0] * p[0] + f[1] * p[1] + f[2] * p[2] + f[3],
-          f[4] * p[0] + f[5] * p[1] + f[6] * p[2] + f[7],
-          f[8] * p[0] + f[9] * p[1] + f[10] * p[2] + f[11],
-        ];
         this.lights.push({
-          from: pt(at),
-          to: pt(to),
+          from: framePoint(f, at),
+          to: framePoint(f, to),
           color,
           lumens,
           flicker,
           source: 'light',
           step: this.step,
           ...(label !== undefined && { label: toText(label) }),
+          ...(this.moves.length ? { moves: this.ownMoves() } : {}),
         });
         return c.children();
       },
@@ -3269,4 +3322,20 @@ export class Evaluator {
       };
     }
   }
+}
+
+function framePoint(f: number[], p: Vec3): Vec3 {
+  return [
+    f[0] * p[0] + f[1] * p[1] + f[2] * p[2] + f[3],
+    f[4] * p[0] + f[5] * p[1] + f[6] * p[2] + f[7],
+    f[8] * p[0] + f[9] * p[1] + f[10] * p[2] + f[11],
+  ];
+}
+
+function frameVector(f: number[], p: Vec3): Vec3 {
+  return [
+    f[0] * p[0] + f[1] * p[1] + f[2] * p[2],
+    f[4] * p[0] + f[5] * p[1] + f[6] * p[2],
+    f[8] * p[0] + f[9] * p[1] + f[10] * p[2],
+  ];
 }

@@ -1,6 +1,6 @@
 // Copyright (c) 2026 MyLaserTools. SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-MyLaserTools-Commercial
 
-import type { Placement } from './assembly.js';
+import type { Move, Placement } from './assembly.js';
 import {
   Clipper64,
   ClipType,
@@ -66,6 +66,8 @@ export interface PartShape {
   halving?: string[];
   // The assembly step that adds it, 0 for none
   step?: number;
+  // How it moves when the model is opened, from hinge() and slide()
+  moves?: Move[];
   // Glued flat on another part's face, placed on it
   glue?: { host: string; face: 'top' | 'bottom' };
   // Pressed into the part it is glued to, as an inlay: they overlap on

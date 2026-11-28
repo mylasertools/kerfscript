@@ -64,21 +64,21 @@ The URL should point to a font file provided by your application.
 
 ### Result
 
-| Field             | Contents                                                                                                                                                                                                                                                                                                                             |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `svg`             | Combined SVG containing all sheets                                                                                                                                                                                                                                                                                                   |
-| `width`, `height` | Combined SVG dimensions in millimetres                                                                                                                                                                                                                                                                                               |
-| `sheets`          | Each sheet's dimensions, material, thickness, SVG, DXF, paths and placed items                                                                                                                                                                                                                                                       |
-| `parts`           | Part names, quantities, dimensions, piece counts, cut lengths and material properties                                                                                                                                                                                                                                                |
-| `assembly`        | One entry per copy of a part with `name`, `copy`, `thickness`, `material`, `outline`, a 4 × 4 `matrix` and `placed`, for showing the design put together. Parts without `at` or `rotate` have `placed: false`. A bent part has `bends`; a part in a step has `step`; `marks` holds what is engraved and scored on it, front and back |
-| `steps`           | The text of each assembly step, in order; a part's `step` counts from 1                                                                                                                                                                                                                                                              |
-| `hardware`        | Each `hardware()`: `kind`, `from`, `to`, `size`, `up`, `sides`, `step` and `label`                                                                                                                                                                                                                                                   |
-| `lights`          | Each light, from a tealight, LED, bulb or `light()`: `from` and `to` (the same point unless it is a strip), `color`, `lumens`, `flicker`, `source`, `step` and `label`                                                                                                                                                               |
-| `paths`           | Layer paths with `name`, `mode`, `color`, `d`, `regions` and `lines`                                                                                                                                                                                                                                                                 |
-| `layers`          | Layer definitions in output order                                                                                                                                                                                                                                                                                                    |
-| `warnings`        | Problems that did not stop the render                                                                                                                                                                                                                                                                                                |
-| `echoes`          | Output from the program's `echo()` calls                                                                                                                                                                                                                                                                                             |
-| `analysis`        | When requested: nominal cut regions and lines per definition, with compensation kerf; see [assembly verification](verification.md)                                                                                                                                                                                                   |
+| Field             | Contents                                                                                                                                                                                                                                                                                                                                                                                     |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `svg`             | Combined SVG containing all sheets                                                                                                                                                                                                                                                                                                                                                           |
+| `width`, `height` | Combined SVG dimensions in millimetres                                                                                                                                                                                                                                                                                                                                                       |
+| `sheets`          | Each sheet's dimensions, material, thickness, SVG, DXF, paths and placed items                                                                                                                                                                                                                                                                                                               |
+| `parts`           | Part names, quantities, dimensions, piece counts, cut lengths and material properties                                                                                                                                                                                                                                                                                                        |
+| `assembly`        | One entry per copy of a part with `name`, `copy`, `thickness`, `material`, `outline`, a 4 × 4 `matrix` and `placed`, for showing the design put together. Parts without `at` or `rotate` have `placed: false`. A bent part has `bends`; a part in a step has `step`; a part that moves when the model is opened has `moves`; `marks` holds what is engraved and scored on it, front and back |
+| `steps`           | The text of each assembly step, in order; a part's `step` counts from 1                                                                                                                                                                                                                                                                                                                      |
+| `hardware`        | Each `hardware()`: `kind`, `from`, `to`, `size`, `up`, `sides`, `step`, `label` and `moves`                                                                                                                                                                                                                                                                                                  |
+| `lights`          | Each light, from a tealight, LED, bulb or `light()`: `from` and `to` (the same point unless it is a strip), `color`, `lumens`, `flicker`, `source`, `step`, `label` and `moves`                                                                                                                                                                                                              |
+| `paths`           | Layer paths with `name`, `mode`, `color`, `d`, `regions` and `lines`                                                                                                                                                                                                                                                                                                                         |
+| `layers`          | Layer definitions in output order                                                                                                                                                                                                                                                                                                                                                            |
+| `warnings`        | Problems that did not stop the render                                                                                                                                                                                                                                                                                                                                                        |
+| `echoes`          | Output from the program's `echo()` calls                                                                                                                                                                                                                                                                                                                                                     |
+| `analysis`        | When requested: nominal cut regions and lines per definition, with compensation kerf; see [assembly verification](verification.md)                                                                                                                                                                                                                                                           |
 
 Each sheet with back-face marks has `back`, with its own `svg`, `dxf` and
 `paths`: the sheet turned over left to right.
@@ -89,6 +89,29 @@ part goes, in the part's own coordinates, before its `matrix`; and
 enough across its hinges to bend smoothly. A 3D view extrudes each piece
 by the thickness, moves its points with `bendPoint()` and then by the
 `matrix`.
+
+A part, hardware item or light inside `hinge()` or `slide()` has `moves`,
+how it moves when the model is opened, in assembled coordinates and
+innermost first: `{ turn: { from, to, angle } }`, a turn of `angle` degrees
+about the line from `from` to `to`, right-handed about that direction, or
+`{ slide: [x, y, z] }`. `moveMatrix(moves, t)` gives the 4 × 4 matrix, in
+the same row-major order as `matrix`, that puts it where it is when the
+model is opened by `t`, from 0 closed to 1 open: put it before the part's
+`matrix`, or before a hardware item's or light's own placement. The type
+of a move is exported as `Move`.
+
+```js
+import { render, moveMatrix } from '@mylasertools/kerfscript';
+
+// 4 × 4 matrices, row-major: a times b
+const multiply = (a, b) =>
+  a.map((_, i) => [0, 1, 2, 3].reduce((n, k) => n + a[(i & ~3) + k] * b[k * 4 + (i & 3)], 0));
+
+const { assembly } = render(source);
+const halfOpen = assembly.map((p) =>
+  p.moves ? multiply(moveMatrix(p.moves, 0.5), p.matrix) : p.matrix,
+);
+```
 
 Use `result.svg` for a combined preview. Use `result.sheets[i].svg` or
 `.dxf` to export individual sheets, particularly when they use different

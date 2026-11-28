@@ -4,6 +4,7 @@
 // and light(). The 3D view lights the model with them, and GLB files
 // carry them as point lights.
 
+import type { Move } from './assembly.js';
 import type { HardwareItem } from './evaluator.js';
 import { paintColor } from './colors.js';
 
@@ -24,6 +25,8 @@ export interface Light {
   /** The assembly step that adds it, 0 for none */
   step: number;
   label?: string;
+  /** How it moves when the model is opened, from hinge() and slide() */
+  moves?: Move[];
 }
 
 /** Colours a light may be named by, besides the paint colours */
@@ -52,7 +55,11 @@ const mid = (a: Vec3, b: Vec3): Vec3 => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (
 /** The light a piece of hardware gives off: a tealight's flame, an LED or
  * a strip of them, a bulb */
 export function hardwareLights(h: HardwareItem): Light[] {
-  const base = { step: h.step, ...(h.label !== undefined && { label: h.label }) };
+  const base = {
+    step: h.step,
+    ...(h.label !== undefined && { label: h.label }),
+    ...(h.moves && { moves: h.moves }),
+  };
   const d = sub(h.to, h.from);
   const l = len(d);
   if (h.kind === 'tealight') {

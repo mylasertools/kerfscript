@@ -422,6 +422,47 @@ step("Stand the walls in the base") {
 step("Slide the axle through the walls") hardware("dowel", [0, -45, 25], [0, 45, 25], 6);
 ```
 
+### Lids, doors and drawers that open
+
+`hinge(from, to, angle = 90) { ... }` and `slide(by) { ... }` say how the
+parts, hardware and lights inside move when the model is opened. A lid or
+a door turns about the line from `from` to `to` by `angle` degrees; a
+drawer, a sliding lid or a lid lifted off moves by `by`. The model is
+still built, cut and checked closed: the moves are only for opening it.
+
+The turn is right-handed about the direction from `from` to `to`: point
+your right thumb that way and your fingers curl the way it opens. Swap
+`from` and `to` to turn it the other way.
+
+```kerf
+part("base", at = [0, 0, 0]) rect([100, 60]);
+part("back", at = [0, 63, 3], rotate = [90, 0, 0]) rect([100, 37]);
+hinge(from = [100, 63, 40], to = [0, 63, 40], angle = 110) {
+  part("lid", at = [0, 0, 40]) rect([100, 63]);
+  hardware("ball", [50, 10, 46], size = 6, shape = "ball");
+}
+```
+
+The 3D view in the playground and on the model pages has an Open button
+when a model has moves: it turns the lids and slides out the drawers, and
+Close puts them back.
+
+- Points and directions are in the coordinates where `hinge()` or
+  `slide()` is written: inside a `place()`, they move and turn with it.
+- Inside one another, the inner move happens first, the outer one after:
+  a flap hinged on a drawer turns, and the drawer with the turned flap
+  slides out.
+- A part glued on a moving part moves with it, after any move of its own.
+- Around shapes alone, as inside a part's shape, `hinge()` and `slide()`
+  have nothing to move, and warn.
+
+Opening is checked too. The model is followed as it opens, a millimetre
+or so at a time, and parts that run into one another on the way get a
+warning saying how far open and where: a lid turned down into its box, a
+drawer slid back through the cabinet, a hinge line with no room to turn.
+Parts that move together are not checked against each other, and parts
+that already collide closed are reported once, closed.
+
 ## Materials
 
 `material()` sets the thickness, kerf and material name for its parts:

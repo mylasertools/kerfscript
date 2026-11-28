@@ -266,7 +266,9 @@ When a part is rendered:
 - Engrave, score and custom layers are clipped to the material, so nothing is
   marked inside holes or off the part. Score outlines become lines first.
 - Cut lines (from `line()`, `living_hinge()` and similar) are clipped to the
-  material.
+  material. A part of cut lines alone has no material: its lines are cut,
+  but it is not in the assembly, and placed it warns. Draw its outline too,
+  as `rect()` under `living_hinge()`, or use `flex_rect()`.
 - If the material breaks into more than one piece, the renderer warns.
 - In the output, holes and inner cuts come before outer outlines.
 
@@ -366,6 +368,19 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
   text as `steps` and each placed part's `step`. The 3D view shows the
   model built up a step at a time. A step inside a step is a sub-step,
   `"outer: inner"`; `step(text, substeps = false)` takes inner steps in.
+- `hinge(from, to, angle = 90) { ... }`: the parts and hardware inside turn
+  about the line from `from` to `to` by `angle` degrees when the model is
+  opened in a 3D view, right-handed about that direction: a lid, a door, a
+  flap. The assembly is built and checked for collisions closed.
+- `slide(by) { ... }`: the parts and hardware inside move by `by` when the
+  model is opened: a drawer, a sliding lid, a lid lifted off. Both take the
+  placement of the `place()` round them, and `render()` returns each moving
+  part's, hardware item's and light's `moves`, innermost first. A part glued
+  on a moving part moves with it, after any move of its own. The 3D view has
+  an Open button for them, and the model is followed as it opens: parts that
+  run into one another on the way, a lid turned the wrong way into its box
+  or a drawer slid through a wall, get a warning. They move only parts,
+  hardware and lights: round shapes alone, as inside a part, they warn.
 - `hardware(kind, from, to, size = 6, up, sides = 24, shape = "rod", label)`
   lists hardware the assembly needs, from one point to another: a dowel, a
   screw, a magnet, paper. `size` is a diameter, or `[w, h]` for a flat

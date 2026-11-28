@@ -42,6 +42,7 @@ import {
   HARDWARE_KINDS,
   lightPoints,
   meshPieces,
+  moveMatrix,
 } from './kerfscript.js';
 import { referenceKey, verificationFindings } from './verification.js';
 
@@ -213,7 +214,9 @@ function hardwareObject(h) {
   if (look?.glow) material.userData.glow = color;
   if (ball) {
     const mesh = new Mesh(new SphereGeometry(h.size / 2, 32, 16), material);
-    mesh.position.copy(a);
+    // Placed by its matrix, as the rest, so steps and opening move it
+    mesh.matrixAutoUpdate = false;
+    mesh.matrix.makeTranslation(a.x, a.y, a.z);
     return mesh;
   }
   const geo = Array.isArray(h.size)
@@ -264,6 +267,7 @@ export function createAssemblyView(el, options = {}) {
   <button type="button" data-kv="next" aria-label="Next step">▶</button>
   <p class="kv-step" aria-live="polite"></p>
   <button type="button" data-kv="all"><span>Whole model</span></button>
+  <button type="button" data-kv="open" aria-pressed="false" hidden><span>Open</span></button>
   <button type="button" data-kv="front" aria-pressed="false"><span>Front view</span></button>
   <button type="button" data-kv="dim" aria-pressed="false" hidden><span>Dim the room</span></button>
 </div><div class="kv-checks" aria-live="polite" hidden></div>`;
@@ -328,6 +332,9 @@ export function createAssemblyView(el, options = {}) {
   let current = 0; // 0: whole model
   let box = null;
   let anim = null;
+  // How open the model is, from hinge() and slide(): 0 closed, 1 open
+  let open = 0;
+  let opening = null;
   let front = false;
 
   function draw() {
@@ -433,6 +440,7 @@ export function createAssemblyView(el, options = {}) {
         object: g,
         step: part.step ?? 0,
         base: m,
+        moves: part.moves,
         ref: { part: part.name, copy: part.copy },
       });
     }
@@ -444,6 +452,7 @@ export function createAssemblyView(el, options = {}) {
         object: o,
         step: h.step ?? 0,
         base: o.matrix.clone(),
+        moves: h.moves,
         ref: { hardware: h.label ?? '' },
       });
     }
@@ -452,7 +461,13 @@ export function createAssemblyView(el, options = {}) {
       if (l.flicker) {
         const o = flameObject(l);
         model.add(o);
-        items.push({ object: o, step: l.step ?? 0, base: o.matrix.clone(), ref: {} });
+        items.push({
+          object: o,
+          step: l.step ?? 0,
+          base: o.matrix.clone(),
+          moves: l.moves,
+          ref: {},
+        });
       }
       for (const o of lightObjects(l)) {
         model.add(o);
@@ -460,6 +475,7 @@ export function createAssemblyView(el, options = {}) {
           object: o,
           step: l.step ?? 0,
           base: o.matrix.clone(),
+          moves: l.moves,
           ref: { light: l.label ?? '' },
         });
         if (l.flicker) flames.push(o);
@@ -470,7 +486,20 @@ export function createAssemblyView(el, options = {}) {
     empty.textContent = 'Give parts at or rotate to see them assembled here.';
     model.updateMatrixWorld(true);
     box = items.length ? new Box().setFromObjects(items.map((i) => i.object)) : null;
+    // The view takes in the model open too, so an open lid stays in sight
+    const opens = items.filter((i) => i.moves?.length);
+    if (box && opens.length) {
+      for (const it of opens)
+        it.object.matrix.copy(new Matrix4().set(...moveMatrix(it.moves, 1)).multiply(it.base));
+      model.updateMatrixWorld(true);
+      box.setFromObjects(opens.map((i) => i.object));
+      for (const it of opens) it.object.matrix.copy(it.base);
+      model.updateMatrixWorld(true);
+    }
     items.push(...lit);
+    const moves = items.some((i) => i.moves?.length);
+    btn('open').hidden = !moves;
+    if (!moves) setOpen(0, false);
     if (flames.length && !still()) flickering = requestAnimationFrame(flicker);
     // Keep the step when the model changes but has as many
     if (current > steps.length) current = 0;
@@ -489,7 +518,7 @@ export function createAssemblyView(el, options = {}) {
           material?.emissive?.set(material.userData?.glow ?? '#000000');
       });
       it.object.visible = k === 0 || it.step <= k;
-      it.object.matrix.copy(it.base);
+      it.object.matrix.copy(placed(it));
       const f = it.object.userData.face;
       if (f) f.emissive?.set(k !== 0 && it.step === k ? '#3a2a10' : '#000000');
     }
@@ -512,13 +541,45 @@ export function createAssemblyView(el, options = {}) {
         const e = 1 - (1 - u) ** 3;
         for (const it of now)
           it.object.matrix.copy(
-            new Matrix4().makeTranslation(0, 0, lift * (1 - e)).multiply(it.base),
+            new Matrix4().makeTranslation(0, 0, lift * (1 - e)).multiply(placed(it)),
           );
         draw();
         anim = u < 1 ? requestAnimationFrame(tick) : null;
       };
       anim = requestAnimationFrame(tick);
     } else draw();
+  }
+
+  // Where an item is as open as the model is now
+  function placed(it) {
+    if (!open || !it.moves?.length) return it.base;
+    return new Matrix4().set(...moveMatrix(it.moves, open)).multiply(it.base);
+  }
+
+  // Open or close the model, turning lids and sliding drawers
+  function setOpen(to, animate = true) {
+    if (opening) cancelAnimationFrame(opening);
+    opening = null;
+    btn('open').setAttribute('aria-pressed', String(to === 1));
+    btn('open').firstElementChild.textContent = to === 1 ? 'Close' : 'Open';
+    const pose = () => {
+      for (const it of items) if (it.moves?.length) it.object.matrix.copy(placed(it));
+      draw();
+    };
+    if (!animate || still()) {
+      open = to;
+      pose();
+      return;
+    }
+    const from = open;
+    const start = performance.now();
+    const tick = (time) => {
+      const u = Math.min(1, (time - start) / 900);
+      open = from + (to - from) * (u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2);
+      pose();
+      opening = u < 1 ? requestAnimationFrame(tick) : null;
+    };
+    opening = requestAnimationFrame(tick);
   }
 
   function verification(report, configuration) {
@@ -559,6 +620,7 @@ export function createAssemblyView(el, options = {}) {
   btn('prev').addEventListener('click', () => setStep(Math.max(1, current - 1)));
   btn('next').addEventListener('click', () => setStep(Math.min(steps.length, current + 1)));
   btn('all').addEventListener('click', () => setStep(0));
+  btn('open').addEventListener('click', () => setOpen(open > 0.5 ? 0 : 1));
   btn('dim').addEventListener('click', () => {
     dim = !dim;
     btn('dim').setAttribute('aria-pressed', String(dim));
@@ -580,7 +642,9 @@ export function createAssemblyView(el, options = {}) {
     show,
     verification,
     step: setStep,
+    open: (on = true) => setOpen(on ? 1 : 0),
     dispose() {
+      if (opening) cancelAnimationFrame(opening);
       observer.disconnect();
       clear();
       stopFlicker();

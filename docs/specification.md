@@ -408,7 +408,8 @@ A statement `name(args) children` calls a module:
    positions (a position outside them runs nothing);
    `$children` is the number of child statements that are not assignments
    or definitions. A child statement run again in the same call, with
-   the same special variables, `place()` frame and step, gives the same
+   the same special variables, `place()` frame, enclosing `hinge()` and
+   `slide()` and step, gives the same
    shape and may be reused rather than run again; one that echoes, warns,
    makes parts, hardware or steps is always run again.
 2. Otherwise a built-in module named `name` runs.
@@ -572,7 +573,21 @@ numbers steps from 1 in the order they first run; a part or hardware
 outside every step has step 0. A `step(text)` run inside another step is
 the step named `outer: text`, where `outer` is the enclosing step's name;
 inside `step(..., substeps = false)` an inner `step()` only runs its
-children, in the outer step. Cases: `parts/*`.
+children, in the outer step.
+
+`hinge(from, to, angle)` and `slide(by)` do not change where anything is
+placed. Each gives the parts, hardware and lights made inside it a move,
+in assembled coordinates: `from` and `to` are points and `by` a direction
+in the frame of the enclosing `place()` blocks, mapped through it as the
+part's own `at` is. A part's `moves` list the enclosing `hinge()` and
+`slide()` blocks innermost first, the order they apply in. A part with
+`glue` has its own moves, then all of its host's moves, leaving out the
+blocks that enclose both it and its host, which its host's moves already
+have; a chain of glued parts follows the whole chain, after every part has
+run. A turn is right-handed about the direction from `from` to `to`;
+`from` equal to `to` is an error. Opened by `t` from 0 to 1, each move
+applies a fraction `t` of the way: a turn by `t * angle`, a slide by
+`t * by`. Cases: `parts/*`.
 
 ## Known differences
 

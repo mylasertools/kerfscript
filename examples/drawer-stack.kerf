@@ -48,11 +48,14 @@ step("Glue up each drawer and slide it in")
     x = t + slide_ease;
     y = 2 - extension * dd;
     z = t + slide_ease + i * step;
-    part(str("Drawer ", i + 1, " floor"), at = [x, y, z]) finger_rect([dw, dd], "out");
-    part(str("Drawer ", i + 1, " front"), at = [x, y + t, z], rotate = [90, 0, 0]) difference() {
-      finger_rect([dw, drawer_height], ["in", "out", "flat", "out"]);
-      translate([dw / 2, drawer_height]) circle(d = min(24, drawer_height - 2 * t - 4));
+    // Opened in the 3D view, a drawer comes out as far as it may
+    slide(by = [0, -(0.6 - extension) * dd, 0]) {
+      part(str("Drawer ", i + 1, " floor"), at = [x, y, z]) finger_rect([dw, dd], "out");
+      part(str("Drawer ", i + 1, " front"), at = [x, y + t, z], rotate = [90, 0, 0]) difference() {
+        finger_rect([dw, drawer_height], ["in", "out", "flat", "out"]);
+        translate([dw / 2, drawer_height]) circle(d = min(24, drawer_height - 2 * t - 4));
+      }
+      part(str("Drawer ", i + 1, " back"), at = [x, y + dd, z], rotate = [90, 0, 0]) finger_rect([dw, drawer_height], ["in", "out", "flat", "out"]);
+      part(str("Drawer ", i + 1, " side"), qty = 2, at = [[x, y, z], [x + dw - t, y, z]], rotate = [90, 0, 90]) finger_rect([dd, drawer_height], ["in", "in", "flat", "in"]);
     }
-    part(str("Drawer ", i + 1, " back"), at = [x, y + dd, z], rotate = [90, 0, 0]) finger_rect([dw, drawer_height], ["in", "out", "flat", "out"]);
-    part(str("Drawer ", i + 1, " side"), qty = 2, at = [[x, y, z], [x + dw - t, y, z]], rotate = [90, 0, 90]) finger_rect([dd, drawer_height], ["in", "in", "flat", "in"]);
   }

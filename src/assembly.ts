@@ -21,6 +21,12 @@ export interface Placement {
   matrix?: number[];
 }
 
+// How a part moves when the model is opened in a 3D view: a turn about the
+// line from `from` to `to` by `angle` degrees (right-handed about that
+// direction), or a slide by a vector, both in assembled coordinates. A
+// part's moves apply in order, the innermost hinge() or slide() first.
+export type Move = { turn: { from: Vec3; to: Vec3; angle: number } } | { slide: Vec3 };
+
 export interface AssemblyPart {
   name: string;
   copy: number;
@@ -49,6 +55,8 @@ export interface AssemblyPart {
   pressFit?: boolean;
   // What is engraved and scored on it, in its own coordinates, for 3D views
   marks?: Mark[];
+  // How it moves when the model is opened: see Move
+  moves?: Move[];
 }
 
 export interface Mark {
@@ -448,6 +456,8 @@ export function collisions(
   eps = 0.05,
   pitch = 0.25,
   volume = 0.1,
+  // Only the pairs this says to check, when given
+  only?: (a: AssemblyPart, b: AssemblyPart) => boolean,
 ): { found: [AssemblyPart, AssemblyPart, Vec3][]; complete: boolean } {
   const boxes = parts.map(worldBox);
   const inverses = parts.map((p) => invertRigid(p.matrix));
@@ -461,8 +471,9 @@ export function collisions(
       const b = order[j];
       if (boxes[b][0][0] >= boxes[a][1][0] - eps) break;
       if (!overlaps(boxes[a], boxes[b], eps)) continue;
-      if (++checked > maxPairs) return { found, complete: false };
       const [A, B] = a < b ? [parts[a], parts[b]] : [parts[b], parts[a]];
+      if (only && !only(A, B)) continue;
+      if (++checked > maxPairs) return { found, complete: false };
       const [invA, invB] = a < b ? [inverses[a], inverses[b]] : [inverses[b], inverses[a]];
       const parallel = Math.hypot(...cross(normal(A.matrix), normal(B.matrix))) < 1e-9;
       const hit = parallel
@@ -635,6 +646,53 @@ function turnAbout(at: Vec3, u: Vec3, deg: number): number[] {
     0,
     1,
   ];
+}
+
+/**
+ * Where a part is when the model is opened by `t`, 0 closed and 1 fully
+ * open: the matrix to put before its placement. Its moves, from hinge() and
+ * slide(), apply innermost first, each a fraction `t` of the way.
+ */
+export function moveMatrix(moves: Move[], t: number): number[] {
+  let m = translation(0, 0, 0);
+  for (const move of moves) {
+    if ('slide' in move) {
+      const [x, y, z] = move.slide;
+      m = multiply(translation(x * t, y * t, z * t), m);
+    } else {
+      const { from, to, angle } = move.turn;
+      const d: Vec3 = [to[0] - from[0], to[1] - from[1], to[2] - from[2]];
+      const l = Math.hypot(...d);
+      if (l === 0) continue;
+      m = multiply(turnAbout(from, [d[0] / l, d[1] / l, d[2] / l], angle * t), m);
+    }
+  }
+  return m;
+}
+
+/**
+ * How far a point of a part goes, at most, when the model opens: for
+ * choosing how finely to follow it. `box` is where the part is closed.
+ */
+export function moveTravel(moves: Move[], box: [Vec3, Vec3]): number {
+  const [lo, hi] = box;
+  const corners: Vec3[] = [];
+  for (const x of [lo[0], hi[0]])
+    for (const y of [lo[1], hi[1]]) for (const z of [lo[2], hi[2]]) corners.push([x, y, z]);
+  let far = 0;
+  for (const move of moves) {
+    if ('slide' in move) far += Math.hypot(...move.slide);
+    else {
+      const { from, to, angle } = move.turn;
+      const d: Vec3 = [to[0] - from[0], to[1] - from[1], to[2] - from[2]];
+      const l = Math.hypot(...d) || 1;
+      const u: Vec3 = [d[0] / l, d[1] / l, d[2] / l];
+      // The corner furthest from the line, and how far it swings
+      const r = Math.max(...corners.map((c) => Math.hypot(...cross(add(c, from, -1), u))));
+      far += r * Math.abs(angle) * RAD;
+    }
+  }
+  return far;
 }
 
 const insideAny = (rings: Poly[], [x, y]: Vec2) => {

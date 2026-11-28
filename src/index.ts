@@ -28,10 +28,12 @@ export {
   bendPoint,
   foldPanels,
   meshPieces,
+  moveMatrix,
   panelMarks,
   placementMatrix,
   type AssemblyPart,
   type Mark,
+  type Move,
   type Placement,
 } from './assembly.js';
 export type { HardwareItem } from './evaluator.js';
