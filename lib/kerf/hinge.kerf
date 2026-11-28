@@ -47,7 +47,8 @@ module flex_box(size, r = 15, lid = true, clearance = 0.1, spacing = 1.5, bridge
       if (run[1] > 0) translate([run[0] + o, 1.5 * t]) slots(run[1], clearance = clearance);
   }
   part("bottom", at = [t, t, t]) flex_panel([w - 2 * t, d - 2 * t], r - t, sw, sd);
-  if (lid) {
+  // Opened in a 3D view, the lid lifts off
+  if (lid) slide([0, 0, 0.6 * h]) {
     part("lid", at = [0, 0, h]) rect([w, d], r = r);
     part("lid insert", at = [t, t, h - t])
       offset(delta = -clearance) rect([w - 2 * t, d - 2 * t], r = r - t);

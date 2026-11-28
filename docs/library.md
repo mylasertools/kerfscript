@@ -226,7 +226,8 @@ bent at the corners. The tabs of part `bottom` go through slots along the
 strip. Part `lid` rests on top, and part `lid insert`, glued under it,
 keeps it in place. `size` is the outside `[width, depth, height]`, lid
 included, and `r` the outside corner radius, more than two thicknesses.
-The assembled view shows the strip bent round the bottom.
+The assembled view shows the strip bent round the bottom; opened in a 3D
+view, the lid lifts off with its insert.
 
 ### `flex_panel(size, r, sw, sd)`
 
@@ -488,7 +489,8 @@ enclosure([150, 100, 60], cutouts = [
 
 Parts `bottom`, `lid`, `front`, `back`, `left` and `right`, placed for the
 assembled view. Two screws go into the front wall and two into the back,
-and one more each for every 80 mm of width.
+and one more each for every 80 mm of width. Opened in a 3D view, the lid
+lifts off.
 
 | Parameter      | Default                      | Meaning                                        |
 | -------------- | ---------------------------- | ---------------------------------------------- |
@@ -1107,7 +1109,8 @@ drawers(4, 6, [40, 30], 60, shuffle = 7) {
 `cols` by `rows` drawers, each cell `[w, h]` inside and the carcass `depth`
 deep, its front left bottom corner at the origin and the drawers facing
 -y. Drawers run on the shelves `ease` mm clear all round, and pull out
-`open` of their depth in the assembled view. `pull` is `"notch"` (a dip in
+`open` of their depth in the assembled view; opened in a 3D view, they
+slide out to 0.6 of it, as far as they go and stay in. `pull` is `"notch"` (a dip in
 the front's top edge), `"hole"` (a finger hole) or `"none"`. The numbers
 go row by row from the top left: 1 up, a list of your own in `numbers`
 (text works too), shuffled by a seed in `shuffle`, or none with `numbers

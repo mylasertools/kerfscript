@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+New:
+
+- `drawers()` from `kerf/drawers` slides its drawers out when the model is
+  opened in a 3D view, and the lids of `enclosure()` from `kerf/enclosure`
+  and `flex_box()` from `kerf/hinge` lift off. Parts these make now have
+  `moves`, and opening them is checked like any other.
+
 ## 0.12.0 (2026-11-28)
 
 New:

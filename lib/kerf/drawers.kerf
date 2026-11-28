@@ -25,9 +25,10 @@ function drawers_numbers(n, numbers, shuffle) =
 
 // A carcass of `cols` by `rows` drawers, each cell `cell` = [w, h] inside
 // and `depth` deep. Drawers run on the shelves `ease` mm clear all round,
-// and pull out `open` of their depth in the assembled view. `pull` is
-// "notch" (a dip in the front's top edge), "hole" (a finger hole) or
-// "none"; numbers are engraved on the fronts unless `numbers` is false.
+// and pull out `open` of their depth in the assembled view; opened in a 3D
+// view, they slide out to 0.6 of it. `pull` is "notch" (a dip in the
+// front's top edge), "hole" (a finger hole) or "none"; numbers are
+// engraved on the fronts unless `numbers` is false.
 // Children are a façade, drawn on the carcass's front from its bottom left
 // corner: the drawers' openings are cut through it and it is glued on.
 module drawers(cols = 4, rows = 6, cell = [40, 30], depth = 60, numbers, shuffle, pull = "notch", ease = 0.8, clearance = 0.15, open = 0, font_size, label = "") {
@@ -86,21 +87,23 @@ module drawers(cols = 4, rows = 6, cell = [40, 30], depth = 60, numbers, shuffle
       z = t + j * (cell[1] + t);
       num = len(labels) ? labels[k] : undef;
       name = str(n("drawer"), " ", is_undef(num) ? k + 1 : num);
-      part(str(name, " floor"), at = [x, y0, z]) finger_rect([dw, dd], "out");
-      part(str(name, " front"), at = [x, y0 + t, z], rotate = [90, 0, 0]) {
-        difference() {
-          finger_rect([dw, dh], ["in", "out", "flat", "out"]);
-          if (pull == "notch") translate([dw / 2, dh]) circle(d = min(18, dw / 2, (dh - t) * 0.8));
-          if (pull == "hole") translate([dw / 2, dh * 0.72]) circle(d = min(12, dh * 0.3, dw / 3));
+      slide([0, -(0.6 - open) * dd, 0]) {
+        part(str(name, " floor"), at = [x, y0, z]) finger_rect([dw, dd], "out");
+        part(str(name, " front"), at = [x, y0 + t, z], rotate = [90, 0, 0]) {
+          difference() {
+            finger_rect([dw, dh], ["in", "out", "flat", "out"]);
+            if (pull == "notch") translate([dw / 2, dh]) circle(d = min(18, dw / 2, (dh - t) * 0.8));
+            if (pull == "hole") translate([dw / 2, dh * 0.72]) circle(d = min(12, dh * 0.3, dw / 3));
+          }
+          if (!is_undef(num))
+            engrave() translate([dw / 2, pull == "hole" ? dh * 0.36 : dh * 0.42])
+              text(str(num), size = is_undef(font_size) ? min(dh * 0.45, dw * 0.4) : font_size,
+                fit = [dw * 0.7, pull == "hole" ? dh * 0.4 : dh * 0.5], halign = "center", valign = "center");
         }
-        if (!is_undef(num))
-          engrave() translate([dw / 2, pull == "hole" ? dh * 0.36 : dh * 0.42])
-            text(str(num), size = is_undef(font_size) ? min(dh * 0.45, dw * 0.4) : font_size,
-              fit = [dw * 0.7, pull == "hole" ? dh * 0.4 : dh * 0.5], halign = "center", valign = "center");
+        part(str(name, " back"), at = [x, y0 + dd, z], rotate = [90, 0, 0])
+          finger_rect([dw, dh], ["in", "out", "flat", "out"]);
+        part(str(name, " side"), qty = 2, at = [[x, y0, z], [x + dw - t, y0, z]], rotate = [90, 0, 90])
+          finger_rect([dd, dh], ["in", "in", "flat", "in"]);
       }
-      part(str(name, " back"), at = [x, y0 + dd, z], rotate = [90, 0, 0])
-        finger_rect([dw, dh], ["in", "out", "flat", "out"]);
-      part(str(name, " side"), qty = 2, at = [[x, y0, z], [x + dw - t, y0, z]], rotate = [90, 0, 90])
-        finger_rect([dd, dh], ["in", "in", "flat", "in"]);
     }
 }

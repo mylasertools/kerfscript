@@ -215,3 +215,23 @@ test('a placed part with only cut lines, as a living_hinge() alone, says why it 
   assert.ok(quiet('part("flex") living_hinge([60, 30]);'));
   assert.ok(quiet('part("e", at = [0, 0, 0]) union() {}'));
 });
+
+test('library drawers slide out and library lids lift off when opened', () => {
+  const drawers = render('use <kerf/drawers>\ndrawers(2, 1, open = 0.2, numbers = false);');
+  const floor = drawers.assembly.find((p) => p.name === 'drawer 1 floor');
+  assert.equal(floor.moves.length, 1);
+  assert.ok(floor.moves[0].slide[1] < 0 && floor.moves[0].slide[0] === 0);
+  assert.equal(drawers.assembly.find((p) => p.name === 'carcass floor').moves, undefined);
+  for (const src of [
+    'use <kerf/enclosure>\nenclosure([120, 80, 50]);',
+    'use <kerf/hinge>\nflex_box([100, 70, 50]);',
+  ]) {
+    const r = render(src);
+    assert.ok(r.assembly.find((p) => p.name === 'lid').moves[0].slide[2] > 0);
+    assert.equal(r.assembly.find((p) => p.name === 'bottom').moves, undefined);
+    assert.deepEqual(
+      r.warnings.filter((w) => w.includes('opened')),
+      [],
+    );
+  }
+});

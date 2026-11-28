@@ -9,7 +9,7 @@
 // depth, height], lid included. `screw` is the diameter and
 // `screw_length` the length under the head; `nut` is [width, height] of
 // the nut's slot. `cutouts` lists holes in the panels, see
-// enclosure_cutouts().
+// enclosure_cutouts(). Opened in a 3D view, the lid lifts off.
 module enclosure(size, screw = 3, screw_length = 12, nut = undef, lip = undef, cutouts = [], finger = undef) {
   t = $thickness;
   o = is_undef(lip) ? screw : lip;
@@ -28,7 +28,7 @@ module enclosure(size, screw = 3, screw_length = 12, nut = undef, lip = undef, c
     finger_rect([w, d], "out", finger = finger);
     enclosure_cutouts("bottom", cutouts);
   }
-  part("lid", at = [0, 0, h]) difference() {
+  slide([0, 0, 0.6 * h]) part("lid", at = [0, 0, h]) difference() {
     rect([w + 2 * o, d + 2 * o]);
     for (x = xs, y = [t / 2, d - t / 2]) translate([o + x, o + y]) circle(d = screw + 0.3, $fn = 24);
     enclosure_cutouts("lid", cutouts);
