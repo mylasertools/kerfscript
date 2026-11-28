@@ -395,6 +395,8 @@ export interface EvalResult {
   hardware: HardwareItem[];
   lights: Light[];
   steps: string[];
+  // The stages of opening the model, from hinge() and slide(), in order
+  stages: string[];
 }
 
 export const STDLIB: Record<string, string> = LIBRARIES;
@@ -422,7 +424,12 @@ export class Evaluator {
   private moves: Move[] = [];
   // Each hinge() or slide() as it runs: the one round it, the ones inside
   // it, and whether it moves anything, for when in the opening it moves
-  private blocks = new Map<Move, { id: number; parent?: Move; inside: Move[]; used: boolean }>();
+  private blocks = new Map<
+    Move,
+    { id: number; parent?: Move; inside: Move[]; used: boolean; stage?: number | string }
+  >();
+  // The stages hinge() and slide() name, in order once the program has run
+  readonly stageNames: string[] = [];
   readonly stepNames: string[] = [];
   // Inside step(substeps = false): inner steps add to it
   private stepFolded = false;
@@ -473,6 +480,7 @@ export class Evaluator {
       hardware: this.hardware,
       lights: this.lights,
       steps: this.stepNames,
+      stages: this.stageNames,
     };
   }
 
@@ -1447,11 +1455,19 @@ export class Evaluator {
     throw new Error(`${name} must be a number or [x, y], got ${show(v)}`);
   }
 
-  private moving(name: string, move: Move, c: BuiltinCtx): Shape {
+  // hinge()'s and slide()'s stage: a number or a name, or none
+  private stageArg(name: string, s: Value): number | string | undefined {
+    if (s === undefined) return undefined;
+    if (typeof s === 'number' && Number.isFinite(s)) return s;
+    if (typeof s === 'string' && s.trim() !== '') return s;
+    throw new Error(`${name}(): stage must be a number or a name, as "Unlock", got ${show(s)}`);
+  }
+
+  private moving(name: string, move: Move, c: BuiltinCtx, stage?: number | string): Shape {
     const outer = this.moves;
     const things = this.hardware.length + this.lights.length;
     const parent = outer[outer.length - 1];
-    this.blocks.set(move, { id: this.blocks.size, parent, inside: [], used: false });
+    this.blocks.set(move, { id: this.blocks.size, parent, inside: [], used: false, stage });
     if (parent) this.blocks.get(parent)!.inside.push(move);
     this.moves = [...outer, move];
     let out: Shape;
@@ -1476,29 +1492,75 @@ export class Evaluator {
     return [...this.moves].reverse();
   }
 
-  // When each hinge() and slide() moves: one with none inside it all
-  // along; one round others after them. A block's level is 1 with no
-  // moving blocks inside, else one more than the highest inside it; the
-  // outermost block of each nest, at level L, shares the opening out, so
-  // a block at level k moves from (k - 1) / L to k / L of the way.
+  // Named stages in the order they first run, except that a stage named
+  // inside another comes before it, as moves inside others go first
+  private orderNames(used: [Move, { parent?: Move; stage?: number | string }][]): string[] {
+    const names = [...new Set(used.map(([, b]) => b.stage).filter((s) => typeof s === 'string'))];
+    const before = new Map<string, Set<string>>(names.map((n) => [n, new Set()]));
+    for (const [, b] of used) {
+      if (typeof b.stage !== 'string') continue;
+      let up = b.parent;
+      while (up && typeof this.blocks.get(up)!.stage !== 'string') up = this.blocks.get(up)!.parent;
+      const outer = up && (this.blocks.get(up)!.stage as string);
+      if (outer && outer !== b.stage) before.get(outer)!.add(b.stage);
+    }
+    // Each in turn, the first by run order whose inner stages are all out;
+    // stages each inside the other keep run order
+    const out: string[] = [];
+    while (out.length < names.length) {
+      const left = names.filter((n) => !out.includes(n));
+      out.push(left.find((n) => [...before.get(n)!].every((i) => out.includes(i))) ?? left[0]);
+    }
+    return out;
+  }
+
+  // When each hinge() and slide() moves. With `stage`, it moves in that
+  // stage: numbered stages first, in number order, then named ones in the
+  // order they first run, one named inside another before it, each 1 / S
+  // of the opening. Without, it moves in
+  // the stage of the nearest block round it that has one, or else all
+  // through the opening. Within that, blocks inside one another move in
+  // turn, the inner first: a block's level is 1 with no moving block of
+  // its own timing inside, else one more than the highest inside it, and
+  // the outermost, at level L, shares its time out, level k getting the
+  // k-th of L equal parts.
   private timeMoves() {
+    const used = [...this.blocks].filter(([, b]) => b.used);
+    const numbers = [...new Set(used.map(([, b]) => b.stage).filter((s) => typeof s === 'number'))];
+    numbers.sort((a, b) => (a as number) - (b as number));
+    const names = this.orderNames(used);
+    const order = [...numbers, ...names];
+    this.stageNames.push(...order.map((s) => String(s)));
+    const S = order.length;
+    // Each block's own timing: its own stage, or the root of its nest
+    const leads = (m: Move) => {
+      const b = this.blocks.get(m)!;
+      return b.stage !== undefined || !b.parent;
+    };
     const level = new Map<Move, number>();
     const of = (m: Move): number => {
       const known = level.get(m);
       if (known !== undefined) return known;
-      const b = this.blocks.get(m)!;
-      const k = 1 + Math.max(0, ...b.inside.filter((i) => this.blocks.get(i)!.used).map(of));
+      const inside = this.blocks
+        .get(m)!
+        .inside.filter((i) => this.blocks.get(i)!.used && !leads(i));
+      const k = 1 + Math.max(0, ...inside.map(of));
       level.set(m, k);
       return k;
     };
-    const span = (m: Move, L: number) => {
+    const time = (m: Move, at: number, len: number, L: number) => {
       const b = this.blocks.get(m)!;
-      if (!b.used) return;
       const k = of(m);
-      if (L > 1) m.span = [(k - 1) / L, k / L];
-      for (const i of b.inside) span(i, L);
+      const span: [number, number] = [at + ((k - 1) / L) * len, at + (k / L) * len];
+      if (span[0] !== 0 || span[1] !== 1) m.span = span;
+      for (const i of b.inside) if (this.blocks.get(i)!.used && !leads(i)) time(i, at, len, L);
     };
-    for (const [m, b] of this.blocks) if (!b.parent && b.used) span(m, of(m));
+    for (const [m, b] of used)
+      if (leads(m)) {
+        const k = b.stage === undefined ? -1 : order.indexOf(b.stage);
+        if (k < 0) time(m, 0, 1, of(m));
+        else time(m, k / S, 1 / S, of(m));
+      }
   }
 
   private vec3(v: Value, name: string): Vec3 {
@@ -3077,17 +3139,20 @@ export class Evaluator {
         const angle = this.num(this.arg(c.args, 'angle', 2, 90), 'hinge', 'angle');
         if (from.every((v, i) => Math.abs(v - to[i]) < 1e-9))
           throw new Error('hinge(): from and to must be different points, the line it turns about');
+        const stage = this.stageArg('hinge', this.arg(c.args, 'stage', -1));
         const f = this.frame;
         return this.moving(
           'hinge',
           { turn: { from: framePoint(f, from), to: framePoint(f, to), angle } },
           c,
+          stage,
         );
       },
       // The parts and hardware inside slide by `by` when the model is opened
       slide: (c) => {
         const by = this.vec3(this.arg(c.args, 'by', 0), 'by');
-        return this.moving('slide', { slide: frameVector(this.frame, by) }, c);
+        const stage = this.stageArg('slide', this.arg(c.args, 'stage', -1));
+        return this.moving('slide', { slide: frameVector(this.frame, by) }, c, stage);
       },
       // An assembly step: the parts and hardware inside are added in it
       step: (c) => {

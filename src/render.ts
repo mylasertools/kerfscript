@@ -153,6 +153,9 @@ export interface RenderResult {
   // Light sources: tealights, LEDs, bulbs and light()
   lights: Light[];
   steps: string[];
+  // The stages of opening the model, from hinge() and slide(), in order:
+  // a numbered stage by its number, a named one by its name
+  stages: string[];
 }
 
 const perimeter = (p: [number, number][], closed: boolean) => {
@@ -721,6 +724,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
       (q) => pieceOf.get(q) ?? q,
       (a, b) => pressed(a, b) || pressed(b, a) || clashes.some(([c, d]) => c === a && d === b),
       limits.maxCollisionPairs,
+      res.stages,
     ),
   );
   // $stands = true: a model meant to stand tips over if its weight is not
@@ -1055,6 +1059,7 @@ export function render(source: string, options: RenderOptions = {}): RenderResul
     hardware: res.hardware,
     lights: res.lights,
     steps: res.steps,
+    stages: res.stages,
   };
 }
 
@@ -2323,6 +2328,7 @@ function openingClashes(
   partOf: (piece: AssemblyPart) => AssemblyPart,
   skip: (a: AssemblyPart, b: AssemblyPart) => boolean,
   maxPairs: number,
+  stages: string[],
 ): string[] {
   const key = (q: AssemblyPart) => JSON.stringify(partOf(q).moves ?? []);
   const moving = solids.filter((q) => partOf(q).moves?.length);
@@ -2379,22 +2385,35 @@ function openingClashes(
     }
     if (!complete)
       return [
-        ...openingReport(all()),
+        ...openingReport(all(), stages),
         `Opening the model touches more than ${maxPairs} pairs of parts, the limit, so it was checked only up to ${Math.round(t * 100)}% open.`,
       ];
   }
-  return openingReport(all());
+  return openingReport(all(), stages);
 }
 
 function openingReport(
   hits: { a: AssemblyPart; b: AssemblyPart; t: number; at: number[] }[],
+  stages: string[],
 ): string[] {
   const name = (p: AssemblyPart) => `"${p.name}"${p.copy > 1 ? ` (copy ${p.copy})` : ''}`;
+  // How far open: in which stage, and how far through it, when it has them
+  const S = stages.length;
+  const when = (t: number) => {
+    if (t >= 1 && S < 2) return 'fully open';
+    if (S < 1) return `about ${Math.max(1, Math.round(t * 100))}% of the way`;
+    const k = Math.min(S, Math.max(1, Math.ceil(t * S - 1e-9)));
+    const label = /^-?[\d.]+$/.test(stages[k - 1])
+      ? `stage ${k} of ${S}`
+      : `"${stages[k - 1]}", stage ${k} of ${S}`;
+    const through = Math.max(1, Math.round((t * S - (k - 1)) * 100));
+    return `in ${label}, ${through >= 100 ? 'at its end' : `about ${through}% through it`}`;
+  };
   const out = hits
     .slice(0, 5)
     .map(
       ({ a, b, t, at }) =>
-        `Parts ${name(a)} and ${name(b)} run into each other when the model is opened, ${t >= 1 ? 'fully open' : `about ${Math.max(1, Math.round(t * 100))}% of the way`}, around [${at.join(', ')}]. Check the hinge line, the angle and which way it turns, or how far it slides.`,
+        `Parts ${name(a)} and ${name(b)} run into each other when the model is opened, ${when(t)}, around [${at.join(', ')}]. Check the hinge line, the angle and which way it turns, or how far it slides.`,
     );
   if (hits.length > 5)
     out.push(

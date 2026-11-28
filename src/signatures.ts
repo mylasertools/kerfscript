@@ -649,6 +649,7 @@ export const SIGNATURES: Signature[] = [
       p('from', 'One end of the line it turns about, [x, y, z]'),
       p('to', 'The other end of that line, [x, y, z]'),
       p('angle', 'How far it turns when opened, in degrees, right-handed about from to to', '90'),
+      named('stage', 'When it moves as the model opens: a stage number, or a name as "Unlock"'),
     ],
     children: true,
     section: 'Parts and sheets',
@@ -657,7 +658,10 @@ export const SIGNATURES: Signature[] = [
   {
     name: 'slide',
     kind: 'module',
-    params: [p('by', 'How far and which way it moves when opened, [x, y, z]')],
+    params: [
+      p('by', 'How far and which way it moves when opened, [x, y, z]'),
+      named('stage', 'When it moves as the model opens: a stage number, or a name as "Unlock"'),
+    ],
     children: true,
     section: 'Parts and sheets',
     doc: 'The parts and hardware inside slide when the model is opened in a 3D view: a drawer, a sliding lid, a lid lifted off',

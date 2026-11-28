@@ -228,7 +228,7 @@ if (output == "all" || output == "enclosure") step("Glue up the box: the walls o
   part("Lid ledge", qty = 4, at = [for (x = [t + 12, W - t], k = [0:1]) [x, 50, H - 2 * t + k * t]], rotate = along) rect([100, 12]);
 }
 // The lid and everything on it, in one move so it all opens together
-slide([0, 0, lid_lift]) slide([0, -(lid_front - 0.2), 0]) {
+slide([0, 0, lid_lift], stage = "Lift the lid out") slide([0, -(lid_front - 0.2), 0], stage = "Slide the lid forward") {
   if (output == "all" || output == "lid") step("Glue the bearing pads and the rear tongues under the lid") {
     part("Lid", at = on_lid(0, 0, H)) lid();
     part("Bearing pad", qty = 6, at = [for (x = dial_x, k = [0:1]) on_lid(x, 75, H - 2 * t + k * t)]) annulus(32, 18 + rotor_clearance);
@@ -243,7 +243,7 @@ slide([0, 0, lid_lift]) slide([0, -(lid_front - 0.2), 0]) {
       hub();
   }
   if (output == "all" || output == "fence") step("Hang the fence under the lid and bolt the knob on through the slot") {
-    slide([0, 10 - fence_slide, 0]) {
+    slide([0, 10 - fence_slide, 0], stage = "Slide the knob back") {
       part("Fence", at = on_lid(0, fence_slide, H - 3 * t)) fence();
       part("Knob stem", qty = 3, at = [for (k = [0:2]) on_lid(130, 20 + fence_slide, H - 2 * t + 1 + k * t)]) annulus(8, 4.4);
       part("Knob", at = on_lid(130, 20 + fence_slide, H + t + 1)) annulus(24, 4.4);

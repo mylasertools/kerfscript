@@ -4,10 +4,18 @@
 
 New:
 
+- `hinge()` and `slide()` take `stage`, a number or a name, to put moves
+  in order that are not inside one another: a door swings open, then the
+  drawer behind it slides out. `render()` returns the stages as `stages`,
+  the 3D view gets a Next stage button that opens the model a stage at a
+  time with each stage's name, and opening warnings say which stage they
+  happen in.
 - `drawers()` from `kerf/drawers` slides its drawers out when the model is
   opened in a 3D view, and the lids of `enclosure()` from `kerf/enclosure`
   and `flex_box()` from `kerf/hinge` lift off. Parts these make now have
   `moves`, and opening them is checked like any other.
+- The lock box, jewel tray box, tally and marble lift examples open in the
+  3D view.
 
 Changes:
 
@@ -16,6 +24,15 @@ Changes:
   then lifts. Each such move has a `span`, the part of the opening it
   moves in, and `moveMatrix()` follows it. Moves not inside one another
   open together as before.
+
+Fixes:
+
+- The vault example's lid could not come out: its rear tongues reached
+  2.5 mm into the wall with only 0.6 mm to slide forward. The lid is now
+  2.6 mm shorter, leaving a 3.2 mm gap in front to push it by, so once
+  the fence is off its catch it slides forward and lifts out; locked, the
+  fence still stops it. It is shown locked, and opens in three named
+  stages: slide the knob back, slide the lid forward, lift the lid out.
 
 ## 0.12.0 (2026-11-28)
 

@@ -368,11 +368,11 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
   text as `steps` and each placed part's `step`. The 3D view shows the
   model built up a step at a time. A step inside a step is a sub-step,
   `"outer: inner"`; `step(text, substeps = false)` takes inner steps in.
-- `hinge(from, to, angle = 90) { ... }`: the parts and hardware inside turn
+- `hinge(from, to, angle = 90, stage) { ... }`: the parts and hardware inside turn
   about the line from `from` to `to` by `angle` degrees when the model is
   opened in a 3D view, right-handed about that direction: a lid, a door, a
   flap. The assembly is built and checked for collisions closed.
-- `slide(by) { ... }`: the parts and hardware inside move by `by` when the
+- `slide(by, stage) { ... }`: the parts and hardware inside move by `by` when the
   model is opened: a drawer, a sliding lid, a lid lifted off. Both take the
   placement of the `place()` round them, and `render()` returns each moving
   part's, hardware item's and light's `moves`, innermost first; nested,
@@ -382,6 +382,10 @@ material(thickness = 4, kerf = 0.12, name = "birch") {
   run into one another on the way, a lid turned the wrong way into its box
   or a drawer slid through a wall, get a warning. They move only parts,
   hardware and lights: round shapes alone, as inside a part, they warn.
+  `stage = n` or `stage = "name"` orders moves that are not nested: each
+  stage in turn, numbers first in number order, then names as they first
+  run (one named inside another first); `render()` returns them as
+  `stages`.
 - `hardware(kind, from, to, size = 6, up, sides = 24, shape = "rod", label)`
   lists hardware the assembly needs, from one point to another: a dowel, a
   screw, a magnet, paper. `size` is a diameter, or `[w, h]` for a flat

@@ -587,11 +587,25 @@ have; a chain of glued parts follows the whole chain, after every part has
 run. A turn is right-handed about the direction from `from` to `to`;
 `from` equal to `to` is an error.
 
-Nested blocks move one after another. A block's level is 1 when no block
-inside it gives anything a move, else one more than the highest level
-inside it. Each outermost block, at level L, has the whole opening: a
-block inside it at level k moves from (k - 1) / L to k / L of the way,
-which is its `span`, left out when it is [0, 1]. Opened by `t` from 0 to
+`stage = s`, a finite number or a name that is not empty, puts a block in
+a stage; anything else is the error `hinge(): stage must be a number or a
+name, as "Unlock", got <value>` (or `slide()`). The stages that give
+anything a move, S of them, are ordered: numbers first, in number order,
+then names in the order a block with each first ran, except that a name
+used by a block inside a block with another name comes before that name
+(where that cannot hold for every pair, run order decides). Stage k has
+the part of the opening from (k - 1) / S to k / S. `render()` returns
+their names as `stages`, a number as its text.
+
+A block with a stage, or with no block round it, leads its own timing; a
+block with neither moves in the time of the nearest block round it. Within
+a leading block's time, nested blocks move one after another. A block's
+level is 1 when no block inside it of the same timing gives anything a
+move, else one more than the highest level of those inside it. A leading
+block at level L has its stage's part of the opening, or the whole
+opening without a stage: a block of its timing at level k moves in the
+k-th of L equal parts of it, which is its `span`, left out when it is
+[0, 1]. Opened by `t` from 0 to
 1, a move with span [s0, s1] has gone f = clamp((t - s0) / (s1 - s0), 0,
 
 1. of the way: a turn by `f * angle`, a slide by `f * by`. Cases:

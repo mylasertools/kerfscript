@@ -455,12 +455,40 @@ Close puts them back.
   slides out from under it, then lifts. Moves not inside one another
   happen together, all through the opening.
 - Put everything that moves together in the same `hinge()` or `slide()`,
-  round all the steps it is built in if need be: two blocks with the same
-  numbers are still two moves, and with others inside them may not keep
-  time.
+  round all the steps it is built in if need be, or give the blocks the
+  same `stage`: two blocks with the same numbers are still two moves, and
+  with others inside them may not keep time.
 - A part glued on a moving part moves with it, after any move of its own.
 - Around shapes alone, as inside a part's shape, `hinge()` and `slide()`
   have nothing to move, and warn.
+
+#### Stages
+
+`stage` puts moves in order that are not inside one another: a cabinet's
+door swings open, then the drawer behind it slides out. Each `hinge()` or
+`slide()` given a stage moves in that stage, and the stages share the
+opening out one after another.
+
+```kerf
+hinge([0, -3, 0], [0, -3, 1], -95, stage = "Open the door")
+  part("door", at = [0, 0, 0], rotate = [90, 0, 0]) rect([60, 30]);
+slide([0, -50, 0], stage = "Pull out the drawer")
+  part("drawer", at = [5, 2, 10]) rect([50, 40]);
+```
+
+- A stage is a number or a name. Numbered stages go first, in number
+  order; named ones after, in the order they first run, except that a
+  stage named inside another comes before it.
+- A `hinge()` or `slide()` with no stage, inside one with a stage, moves
+  in that stage, the inner one first; one with no stage round it moves
+  all through the opening, as without stages.
+- Blocks given the same stage move at the same time, so a mechanism built
+  over several steps keeps together.
+
+`render()` returns the stages, in order, as `stages`. The 3D view's Next
+stage button opens the model a stage at a time, with each stage's name,
+and the warnings when the model is opened say in which stage parts run
+into one another.
 
 Opening is checked too. The model is followed as it opens, a millimetre
 or so at a time, and parts that run into one another on the way get a

@@ -268,6 +268,7 @@ export function createAssemblyView(el, options = {}) {
   <p class="kv-step" aria-live="polite"></p>
   <button type="button" data-kv="all"><span>Whole model</span></button>
   <button type="button" data-kv="open" aria-pressed="false" hidden><span>Open</span></button>
+  <button type="button" data-kv="stage" hidden><span>Next stage</span></button>
   <button type="button" data-kv="front" aria-pressed="false"><span>Front view</span></button>
   <button type="button" data-kv="dim" aria-pressed="false" hidden><span>Dim the room</span></button>
 </div><div class="kv-checks" aria-live="polite" hidden></div>`;
@@ -335,6 +336,8 @@ export function createAssemblyView(el, options = {}) {
   // How open the model is, from hinge() and slide(): 0 closed, 1 open
   let open = 0;
   let opening = null;
+  // The stages of opening it, from hinge(stage) and slide(stage)
+  let stages = [];
   let front = false;
 
   function draw() {
@@ -399,6 +402,7 @@ export function createAssemblyView(el, options = {}) {
     clear();
     const parts = (result.assembly ?? []).filter((p) => p.placed !== false);
     steps = result.steps ?? [];
+    stages = result.stages ?? [];
     for (const part of parts) {
       const g = new Group();
       // A painted part shows its paint
@@ -499,6 +503,8 @@ export function createAssemblyView(el, options = {}) {
     items.push(...lit);
     const moves = items.some((i) => i.moves?.length);
     btn('open').hidden = !moves;
+    btn('stage').hidden = !moves || stages.length < 2;
+    if (stages.length) btn('stage').firstElementChild.textContent = stageLabel();
     if (!moves) setOpen(0, false);
     if (flames.length && !still()) flickering = requestAnimationFrame(flicker);
     // Keep the step when the model changes but has as many
@@ -557,6 +563,16 @@ export function createAssemblyView(el, options = {}) {
   }
 
   // Open or close the model, turning lids and sliding drawers
+  // The stage the model is opened to, and the label of the next stage
+  // button: what pressing it does
+  function stageLabel() {
+    const S = stages.length;
+    if (open >= 1 - 1e-9) return 'Start again';
+    const k = Math.min(S, Math.floor(open * S + 1e-6) + 1);
+    const name = stages[k - 1];
+    return /^-?[\d.]+$/.test(name) ? `Stage ${k} of ${S}` : `Stage ${k} of ${S}: ${name}`;
+  }
+
   function setOpen(to, animate = true) {
     if (opening) cancelAnimationFrame(opening);
     opening = null;
@@ -564,6 +580,7 @@ export function createAssemblyView(el, options = {}) {
     btn('open').firstElementChild.textContent = to === 1 ? 'Close' : 'Open';
     const pose = () => {
       for (const it of items) if (it.moves?.length) it.object.matrix.copy(placed(it));
+      btn('stage').firstElementChild.textContent = stageLabel();
       draw();
     };
     if (!animate || still()) {
@@ -573,20 +590,32 @@ export function createAssemblyView(el, options = {}) {
     }
     const from = open;
     const start = performance.now();
-    // Moves one after another take longer: 0.9 s for each stage
-    const stages = Math.max(
+    // Moves one after another take longer: 0.9 s for each stage it goes
+    // through, each stage easing in and out on its own
+    const per = Math.max(
       1,
+      stages.length,
       ...items.flatMap((it) =>
         (it.moves ?? []).map((m) => (m.span ? Math.round(1 / (m.span[1] - m.span[0])) : 1)),
       ),
     );
+    const n = Math.max(1, Math.round(Math.abs(to - from) * per));
+    const ease = (u) => (u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2);
     const tick = (time) => {
-      const u = Math.min(1, (time - start) / (900 * stages));
-      open = from + (to - from) * (u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2);
+      const u = Math.min(1, (time - start) / (900 * n));
+      const i = Math.min(n - 1, Math.floor(u * n));
+      open = from + ((to - from) * (i + ease(u * n - i))) / n;
       pose();
       opening = u < 1 ? requestAnimationFrame(tick) : null;
     };
     opening = requestAnimationFrame(tick);
+  }
+
+  // One stage further open, or closed again once fully open
+  function nextStage() {
+    const S = stages.length;
+    if (open >= 1 - 1e-9) return setOpen(0);
+    setOpen(Math.min(1, (Math.floor(open * S + 1e-6) + 1) / S));
   }
 
   function verification(report, configuration) {
@@ -627,7 +656,8 @@ export function createAssemblyView(el, options = {}) {
   btn('prev').addEventListener('click', () => setStep(Math.max(1, current - 1)));
   btn('next').addEventListener('click', () => setStep(Math.min(steps.length, current + 1)));
   btn('all').addEventListener('click', () => setStep(0));
-  btn('open').addEventListener('click', () => setOpen(open > 0.5 ? 0 : 1));
+  btn('open').addEventListener('click', () => setOpen(open >= 1 - 1e-9 ? 0 : 1));
+  btn('stage').addEventListener('click', nextStage);
   btn('dim').addEventListener('click', () => {
     dim = !dim;
     btn('dim').setAttribute('aria-pressed', String(dim));
@@ -650,6 +680,7 @@ export function createAssemblyView(el, options = {}) {
     verification,
     step: setStep,
     open: (on = true) => setOpen(on ? 1 : 0),
+    nextStage,
     dispose() {
       if (opening) cancelAnimationFrame(opening);
       observer.disconnect();

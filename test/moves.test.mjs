@@ -282,7 +282,110 @@ test('a hook under a ledge opens when it slides out before lifting, and not when
     part("ledge", at = [0, 0, 10]) rect([40, 20]);
     ${moves} part("hook", at = [0, 10, 6]) rect([40, 20]);
   `;
-  const runInto = (src) => render(src).warnings.filter((w) => w.includes('when the model is opened'));
+  const runInto = (src) =>
+    render(src).warnings.filter((w) => w.includes('when the model is opened'));
   assert.equal(runInto(model('slide([0, 0, 20])')).length, 1);
   assert.deepEqual(runInto(model('slide([0, 0, 20]) slide([0, 15, 0])')), []);
+});
+
+const cabinet = (door, drawer) => `
+  hinge([0, -3, 0], [0, -3, 1], -95${door}) part("door", at = [0, 0, 0], rotate = [90, 0, 0]) rect([60, 30]);
+  slide([0, -50, 0]${drawer}) part("drawer", at = [5, 2, 10]) rect([50, 40]);
+`;
+const opened = (r) => r.warnings.filter((w) => w.includes('when the model is opened'));
+
+test('stages put moves that are not nested in order: the door opens, then the drawer comes out', () => {
+  const together = render(cabinet('', ''));
+  assert.equal(opened(together).length, 1, together.warnings.join('\n'));
+  const staged = render(cabinet(', stage = 1', ', stage = 2'));
+  assert.deepEqual(opened(staged), []);
+  assert.deepEqual(staged.stages, ['1', '2']);
+  const door = staged.assembly.find((p) => p.name === 'door').moves[0];
+  const drawer = staged.assembly.find((p) => p.name === 'drawer').moves[0];
+  assert.deepEqual(door.span, [0, 0.5]);
+  assert.deepEqual(drawer.span, [0.5, 1]);
+});
+
+test('stages are numbers in order, then names in the order they first run', () => {
+  const r = render(`
+    slide([0, 0, 5], stage = "Lift") part("a", at = [0, 0, 0]) rect([5, 5]);
+    slide([0, 0, 5], stage = 10) part("b", at = [10, 0, 0]) rect([5, 5]);
+    slide([0, 0, 5], stage = "Unlock") part("c", at = [20, 0, 0]) rect([5, 5]);
+    slide([0, 0, 5], stage = 2) part("d", at = [30, 0, 0]) rect([5, 5]);
+    slide([0, 0, 5], stage = "Lift") part("e", at = [40, 0, 0]) rect([5, 5]);
+  `);
+  assert.deepEqual(r.stages, ['2', '10', 'Lift', 'Unlock']);
+  const span = (n) => r.assembly.find((p) => p.name === n).moves[0].span;
+  assert.deepEqual(span('d'), [0, 0.25]);
+  assert.deepEqual(span('b'), [0.25, 0.5]);
+  assert.deepEqual(span('a'), [0.5, 0.75]);
+  assert.deepEqual(span('e'), [0.5, 0.75]);
+  assert.deepEqual(span('c'), [0.75, 1]);
+});
+
+test('a move with no stage inside a staged one shares its stage, the inner first', () => {
+  const r = render(`
+    slide([0, 0, 5], stage = 1) part("first", at = [50, 0, 0]) rect([5, 5]);
+    slide([0, 0, 20], stage = 2) slide([0, 10, 0]) part("lid", at = [0, 0, 0]) rect([5, 5]);
+  `);
+  const [forward, up] = r.assembly.find((p) => p.name === 'lid').moves;
+  assert.deepEqual(forward.span, [0.5, 0.75]);
+  assert.deepEqual(up.span, [0.75, 1]);
+});
+
+test('parts of one mechanism in separate blocks keep time when they share a stage', () => {
+  const r = render(`
+    slide([0, 0, 20], stage = "Lift") slide([0, 5, 0], stage = "Slide") part("lid", at = [0, 0, 0]) rect([40, 40]);
+    slide([0, 0, 20], stage = "Lift") part("handle", at = [10, 10, 3]) rect([10, 5]);
+    slide([0, 0, 20], stage = "Lift") slide([0, 5, 0], stage = "Slide") part("insert", at = [5, 5, -3]) rect([30, 30]);
+  `);
+  const lift = (n) => r.assembly.find((p) => p.name === n).moves.at(-1).span;
+  assert.deepEqual(lift('lid'), lift('handle'));
+  assert.deepEqual(lift('lid'), lift('insert'));
+  // Slide is inside Lift, so it comes first
+  assert.deepEqual(r.stages, ['Slide', 'Lift']);
+});
+
+test('a stage must be a number or a name', () => {
+  assert.throws(
+    () => render('slide([0, 0, 5], stage = [1]) part("a", at = [0, 0, 0]) rect([5, 5]);'),
+    /stage must be a number or a name/,
+  );
+  assert.throws(
+    () => render('hinge([0, 0, 0], [1, 0, 0], stage = "") part("a", at = [0, 0, 0]) rect([5, 5]);'),
+    /stage must be a number or a name/,
+  );
+});
+
+test('opening warnings say which stage they happen in', () => {
+  const r = render(cabinet(', stage = "Open the door"', ', stage = "Open the door"'));
+  assert.match(
+    opened(r)[0],
+    /when the model is opened, in "Open the door", stage 1 of 1, about \d+% through it/,
+  );
+  const n = render(cabinet(', stage = 1', ', stage = 1'));
+  assert.match(opened(n)[0], /in stage 1 of 1, about \d+% through it/);
+});
+
+test('without stages, the model has none', () => {
+  assert.deepEqual(render('slide([0, 0, 5]) part("a", at = [0, 0, 0]) rect([5, 5]);').stages, []);
+  assert.deepEqual(render('part("a", at = [0, 0, 0]) rect([5, 5]);').stages, []);
+});
+
+test('a stage named inside another comes before it', () => {
+  const r = render(`
+    slide([0, 0, 20], stage = "Lift") slide([0, -3, 0], stage = "Slide")
+      slide([0, 10, 0], stage = "Unlock") part("fence", at = [0, 0, 0]) rect([5, 5]);
+    slide([0, 0, 20], stage = "Lift") slide([0, -3, 0], stage = "Slide") part("lid", at = [10, 0, 0]) rect([5, 5]);
+  `);
+  assert.deepEqual(r.stages, ['Unlock', 'Slide', 'Lift']);
+  const [unlock, slide, lift] = r.assembly.find((p) => p.name === 'fence').moves;
+  assert.deepEqual(
+    [unlock.span, slide.span, lift.span],
+    [
+      [0, 1 / 3],
+      [1 / 3, 2 / 3],
+      [2 / 3, 1],
+    ],
+  );
 });
