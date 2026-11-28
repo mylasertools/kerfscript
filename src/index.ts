@@ -41,7 +41,7 @@ export { HARDWARE_KINDS, HARDWARE_COLORS, type HardwareKind } from './hardware.j
 export { LIGHT_COLORS, lightPoints, type Light } from './lights.js';
 export { PAINT_COLORS } from './colors.js';
 
-export const VERSION = '0.11.1';
+export const VERSION = '0.12.0';
 export const LANGUAGE_VERSION = '0.3';
 export { diffRenders, type DiffEntry } from './diff.js';
 export { instructionsHtml } from './instructions.js';

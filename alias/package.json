@@ -1,6 +1,6 @@
 {
   "name": "kerfscript",
-  "version": "0.11.1",
+  "version": "0.12.0",
   "description": "KerfScript: a programming language for laser cutting. Same package as @mylasertools/kerfscript.",
   "type": "module",
   "license": "AGPL-3.0-only",
@@ -52,6 +52,6 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@mylasertools/kerfscript": "0.11.1"
+    "@mylasertools/kerfscript": "0.12.0"
   }
 }
